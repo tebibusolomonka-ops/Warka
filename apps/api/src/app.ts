@@ -52,6 +52,12 @@ import {
 } from './learningMaterialService.js'
 import { registerLearningMaterialRoutes } from './learningMaterialRoutes.js'
 import {
+  prismaAnnouncementService,
+  AnnouncementAccessError,
+  type AnnouncementService,
+} from './announcementService.js'
+import { registerAnnouncementRoutes } from './announcementRoutes.js'
+import {
   prismaStudentAccountService,
   StudentAccountConflictError,
   StudentEnrollmentNotFoundError,
@@ -82,6 +88,7 @@ export function buildApp(
     studentAccounts?: StudentAccountService
     studentPortal?: StudentPortalService
     materials?: LearningMaterialService
+    announcements?: AnnouncementService
     studentOptions?: StudentOptionsService
     enrollments?: EnrollmentService
     academic?: AcademicService
@@ -97,6 +104,8 @@ export function buildApp(
   const getAccess = () => options.access ?? createSchoolAccess(getDatabase())
   const getStudents = () =>
     options.students ?? prismaStudentService(getDatabase())
+  const getAnnouncements = () =>
+    options.announcements ?? prismaAnnouncementService(getDatabase())
   const getMaterials = () =>
     options.materials ?? prismaLearningMaterialService(getDatabase())
   const getStudentPortal = () =>
@@ -131,6 +140,7 @@ export function buildApp(
   )
   registerStudentPortalRoutes(app, getStudentPortal, authenticate)
   registerLearningMaterialRoutes(app, getMaterials, authenticate)
+  registerAnnouncementRoutes(app, getAnnouncements, authenticate)
   registerAcademicRoutes(app, getAcademic, authenticate)
   registerEnrollmentRoutes(
     app,
@@ -167,6 +177,11 @@ export function buildApp(
           error: { code: 'INVALID_REQUEST', message: 'Invalid request data' },
         }),
       )
+    }
+    if (error instanceof AnnouncementAccessError) {
+      return reply.code(404).send({
+        error: { code: 'ANNOUNCEMENT_NOT_FOUND', message: error.message },
+      })
     }
     if (error instanceof LearningMaterialAccessError) {
       return reply

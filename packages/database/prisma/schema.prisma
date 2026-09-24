@@ -45,6 +45,7 @@ model School {
   resultSets          ResultSet[]
   publishedResults    PublishedResult[]
   learningMaterials   LearningMaterial[]
+  announcements       Announcement[]
   id                  String               @id @default(uuid())
   organizationId      String
   name                String
@@ -71,6 +72,7 @@ model User {
   publishedResultSets     ResultSet[]              @relation("ResultSetPublishedBy")
   resultCorrections       ResultCorrection[]
   learningMaterials       LearningMaterial[]
+  announcements           Announcement[]
   id                      String                   @id @default(uuid())
   email                   String                   @unique
   displayName             String
@@ -173,6 +175,7 @@ model GradeLevel {
 model SchoolClass {
   resultSets          ResultSet[]
   learningMaterials   LearningMaterial[]
+  announcements       Announcement[]
   id                  String               @id @default(uuid())
   schoolId            String
   academicYearId      String
@@ -312,6 +315,26 @@ model LearningMaterial {
   createdBy        User @relation(fields: [createdById], references: [id], onDelete: Restrict)
 
   @@index([schoolId, academicYearId, schoolClassId, publishedAt])
+  @@index([createdById, schoolId])
+}
+
+model Announcement {
+  id            String @id @default(uuid())
+  schoolId      String
+  schoolClassId String?
+  title         String
+  body          String
+  publishedAt   DateTime?
+  expiresAt     DateTime?
+  createdById   String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  school        School @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  schoolClass   SchoolClass? @relation(fields: [schoolClassId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  createdBy     User @relation(fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@index([schoolId, publishedAt, expiresAt])
+  @@index([schoolClassId, schoolId])
   @@index([createdById, schoolId])
 }
 
