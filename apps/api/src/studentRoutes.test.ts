@@ -40,7 +40,9 @@ const enrollment = {
   schoolClassId: null,
   status: 'draft',
   approvedAt: null,
+  approvedById: null,
   withdrawnAt: null,
+  withdrawnById: null,
   createdAt: new Date(),
   updatedAt: new Date(),
 } satisfies Enrollment
@@ -126,6 +128,15 @@ function testApp() {
     },
     async canRegisterStudents(userId, item) {
       return roles.has(userId) && item.id === school.id
+    },
+    async canSubmitEnrollment() {
+      return false
+    },
+    async canApproveEnrollment() {
+      return false
+    },
+    async canWithdrawEnrollment() {
+      return false
     },
   }
   const students: StudentService = {

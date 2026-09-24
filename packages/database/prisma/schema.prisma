@@ -61,6 +61,8 @@ model User {
   schoolMemberships       SchoolMembership[]
   passwordCredential      PasswordCredential?
   sessions                Session[]
+  approvedEnrollments     Enrollment[]             @relation("EnrollmentApprovedBy")
+  withdrawnEnrollments    Enrollment[]             @relation("EnrollmentWithdrawnBy")
 }
 
 model OrganizationMembership {
@@ -202,7 +204,9 @@ model Enrollment {
   schoolClassId  String?
   status         EnrollmentStatus @default(draft)
   approvedAt     DateTime?
+  approvedById   String?
   withdrawnAt    DateTime?
+  withdrawnById  String?
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
   student        Student          @relation(fields: [studentId], references: [id], onDelete: Restrict)
@@ -210,8 +214,12 @@ model Enrollment {
   academicYear   AcademicYear     @relation(fields: [academicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
   gradeLevel     GradeLevel       @relation(fields: [gradeLevelId, schoolId], references: [id, schoolId], onDelete: Restrict)
   schoolClass    SchoolClass?     @relation(fields: [schoolClassId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  approvedBy     User?            @relation("EnrollmentApprovedBy", fields: [approvedById], references: [id], onDelete: Restrict)
+  withdrawnBy    User?            @relation("EnrollmentWithdrawnBy", fields: [withdrawnById], references: [id], onDelete: Restrict)
 
   @@unique([studentId, schoolId, academicYearId])
   @@index([schoolId, academicYearId, status])
   @@index([schoolId, gradeLevelId])
+  @@index([approvedById])
+  @@index([withdrawnById])
 }

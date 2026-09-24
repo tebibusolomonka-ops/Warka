@@ -28,12 +28,6 @@ const allowedStatuses: Record<EnrollmentAction, readonly EnrollmentStatus[]> = {
   withdraw: ['draft', 'pending', 'approved'],
 }
 
-const nextStatus: Record<EnrollmentAction, EnrollmentStatus> = {
-  submit: 'pending',
-  approve: 'approved',
-  withdraw: 'withdrawn',
-}
-
 export class InvalidEnrollmentStructureError extends Error {
   constructor() {
     super('Academic year, grade level, and class must match the school')
@@ -136,18 +130,29 @@ async function applyTransition(
   id: string,
   action: EnrollmentAction,
   now: Date,
+  actorId?: string,
 ): Promise<Enrollment> {
+  const data: Prisma.EnrollmentUncheckedUpdateManyInput =
+    action === 'submit'
+      ? { status: 'pending' }
+      : action === 'approve'
+        ? {
+            status: 'approved',
+            approvedAt: now,
+            approvedById: z.uuid().parse(actorId),
+          }
+        : {
+            status: 'withdrawn',
+            withdrawnAt: now,
+            withdrawnById: z.uuid().parse(actorId),
+          }
   const result = await database.enrollment.updateMany({
     where: {
       id,
       schoolId,
       status: { in: [...allowedStatuses[action]] },
     },
-    data: {
-      status: nextStatus[action],
-      ...(action === 'approve' ? { approvedAt: now } : {}),
-      ...(action === 'withdraw' ? { withdrawnAt: now } : {}),
-    },
+    data,
   })
   if (result.count === 0) {
     const existing = await findEnrollmentById(database, schoolId, id)
@@ -171,16 +176,20 @@ export function approveEnrollment(
   database: EnrollmentStore,
   schoolId: string,
   id: string,
+  userId: string,
   now: Date = new Date(),
 ): Promise<Enrollment> {
-  return applyTransition(database, schoolId, id, 'approve', now)
+  z.uuid().parse(userId)
+  return applyTransition(database, schoolId, id, 'approve', now, userId)
 }
 
 export function withdrawEnrollment(
   database: EnrollmentStore,
   schoolId: string,
   id: string,
+  userId: string,
   now: Date = new Date(),
 ): Promise<Enrollment> {
-  return applyTransition(database, schoolId, id, 'withdraw', now)
+  z.uuid().parse(userId)
+  return applyTransition(database, schoolId, id, 'withdraw', now, userId)
 }

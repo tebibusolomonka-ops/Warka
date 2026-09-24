@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import { afterAll, describe, expect, it } from 'vitest'
 import { createDatabaseClient } from './index.js'
 import { createOrganization } from './organizations.js'
@@ -6,6 +7,7 @@ import { createAcademicYear } from './academicYears.js'
 import { createGradeLevel } from './gradeLevels.js'
 import { createSchoolClass } from './schoolClasses.js'
 import { createStudent } from './students.js'
+import { createUser } from './users.js'
 import {
   approveEnrollment,
   createEnrollment,
@@ -27,7 +29,7 @@ afterAll(async () => {
 })
 
 describe.skipIf(!database)('enrollment lifecycle in PostgreSQL', () => {
-  it('enforces structure, uniqueness, and explicit transitions', async () => {
+  it('enforces school structure, transitions, and actor history', async () => {
     const organization = await createOrganization(database!, {
       name: 'Enrollment test organization',
     })
@@ -42,6 +44,10 @@ describe.skipIf(!database)('enrollment lifecycle in PostgreSQL', () => {
     const schoolIds = [school.id, otherSchool.id]
     const student = await createStudent(database!, { givenName: 'Hana' })
     const secondStudent = await createStudent(database!, { givenName: 'Marta' })
+    const actor = await createUser(database!, {
+      email: 'enrollment-' + randomUUID() + '@example.test',
+      displayName: 'Enrollment reviewer',
+    })
 
     try {
       const year = await createAcademicYear(database!, {
@@ -87,6 +93,7 @@ describe.skipIf(!database)('enrollment lifecycle in PostgreSQL', () => {
       const draft = await createEnrollment(database!, input)
       expect(draft.status).toBe('draft')
       expect(draft.approvedAt).toBeNull()
+      expect(draft.approvedById).toBeNull()
       expect(await findEnrollmentById(database!, school.id, draft.id)).toEqual(
         draft,
       )
@@ -96,28 +103,19 @@ describe.skipIf(!database)('enrollment lifecycle in PostgreSQL', () => {
       await expect(createEnrollment(database!, input)).rejects.toBeInstanceOf(
         DuplicateEnrollmentError,
       )
-      await expect(
-        createEnrollment(database!, {
-          ...input,
-          studentId: secondStudent.id,
-          academicYearId: otherYear.id,
-        }),
-      ).rejects.toBeInstanceOf(InvalidEnrollmentStructureError)
-      await expect(
-        createEnrollment(database!, {
-          ...input,
-          studentId: secondStudent.id,
-          gradeLevelId: otherGrade.id,
-        }),
-      ).rejects.toBeInstanceOf(InvalidEnrollmentStructureError)
-
-      await expect(
-        createEnrollment(database!, {
-          ...input,
-          studentId: secondStudent.id,
-          schoolClassId: otherClass.id,
-        }),
-      ).rejects.toBeInstanceOf(InvalidEnrollmentStructureError)
+      for (const invalid of [
+        { academicYearId: otherYear.id },
+        { gradeLevelId: otherGrade.id },
+        { schoolClassId: otherClass.id },
+      ]) {
+        await expect(
+          createEnrollment(database!, {
+            ...input,
+            ...invalid,
+            studentId: secondStudent.id,
+          }),
+        ).rejects.toBeInstanceOf(InvalidEnrollmentStructureError)
+      }
       await expect(
         database!.enrollment.create({
           data: {
@@ -130,7 +128,7 @@ describe.skipIf(!database)('enrollment lifecycle in PostgreSQL', () => {
       ).rejects.toThrow()
 
       await expect(
-        approveEnrollment(database!, school.id, draft.id),
+        approveEnrollment(database!, school.id, draft.id, actor.id),
       ).rejects.toBeInstanceOf(InvalidEnrollmentTransitionError)
       const pending = await submitEnrollment(database!, school.id, draft.id)
       expect(pending.status).toBe('pending')
@@ -142,54 +140,44 @@ describe.skipIf(!database)('enrollment lifecycle in PostgreSQL', () => {
         database!,
         school.id,
         draft.id,
+        actor.id,
         approvalTime,
       )
       expect(approved.status).toBe('approved')
       expect(approved.approvedAt).toEqual(approvalTime)
+      expect(approved.approvedById).toBe(actor.id)
       await expect(
-        createEnrollment(database!, {
-          ...input,
-          studentId: secondStudent.id,
-          schoolClassId: otherClass.id,
-        }),
-      ).rejects.toBeInstanceOf(InvalidEnrollmentStructureError)
-      await expect(
-        database!.enrollment.create({
-          data: {
-            studentId: secondStudent.id,
-            schoolId: school.id,
-            academicYearId: otherYear.id,
-            gradeLevelId: grade.id,
-          },
-        }),
-      ).rejects.toThrow()
-
-      await expect(
-        approveEnrollment(database!, school.id, draft.id),
+        approveEnrollment(database!, school.id, draft.id, actor.id),
       ).rejects.toBeInstanceOf(InvalidEnrollmentTransitionError)
+
       const withdrawalTime = new Date('2026-09-25T10:00:00.000Z')
       const withdrawn = await withdrawEnrollment(
         database!,
         school.id,
         draft.id,
+        actor.id,
         withdrawalTime,
       )
       expect(withdrawn.status).toBe('withdrawn')
       expect(withdrawn.approvedAt).toEqual(approvalTime)
+      expect(withdrawn.approvedById).toBe(actor.id)
       expect(withdrawn.withdrawnAt).toEqual(withdrawalTime)
+      expect(withdrawn.withdrawnById).toBe(actor.id)
       await expect(
-        withdrawEnrollment(database!, school.id, draft.id),
+        withdrawEnrollment(database!, school.id, draft.id, actor.id),
       ).rejects.toBeInstanceOf(InvalidEnrollmentTransitionError)
 
       const secondDraft = await createEnrollment(database!, {
-        ...input,
         studentId: secondStudent.id,
-        schoolClassId: undefined,
+        schoolId: school.id,
+        academicYearId: year.id,
+        gradeLevelId: grade.id,
       })
       const secondWithdrawn = await withdrawEnrollment(
         database!,
         school.id,
         secondDraft.id,
+        actor.id,
       )
       expect(secondWithdrawn.status).toBe('withdrawn')
     } finally {
@@ -208,6 +196,7 @@ describe.skipIf(!database)('enrollment lifecycle in PostgreSQL', () => {
       await database!.student.deleteMany({
         where: { id: { in: [student.id, secondStudent.id] } },
       })
+      await database!.user.delete({ where: { id: actor.id } })
       await database!.school.deleteMany({
         where: { organizationId: organization.id },
       })

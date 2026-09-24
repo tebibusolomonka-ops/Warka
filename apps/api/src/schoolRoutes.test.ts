@@ -95,7 +95,13 @@ function testApp() {
     },
     async logout() {},
   }
-  const access: Omit<SchoolAccess, 'canRegisterStudents'> = {
+  const access: Omit<
+    SchoolAccess,
+    | 'canRegisterStudents'
+    | 'canSubmitEnrollment'
+    | 'canApproveEnrollment'
+    | 'canWithdrawEnrollment'
+  > = {
     async organizationsForUser(userId) {
       return [...organizationRoles.entries()]
         .filter(([key]) => key.startsWith(`${userId}:`))
@@ -117,7 +123,13 @@ function testApp() {
   return buildApp({
     store,
     auth,
-    access: { ...access, canRegisterStudents: async () => false },
+    access: {
+      ...access,
+      canRegisterStudents: async () => false,
+      canSubmitEnrollment: async () => false,
+      canApproveEnrollment: async () => false,
+      canWithdrawEnrollment: async () => false,
+    },
   })
 }
 

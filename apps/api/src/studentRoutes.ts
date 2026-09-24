@@ -39,7 +39,7 @@ function studentResponse(student: Student) {
   })
 }
 
-function enrollmentResponse(enrollment: Enrollment) {
+export function enrollmentResponse(enrollment: Enrollment) {
   return EnrollmentSchema.parse({
     id: enrollment.id,
     studentId: enrollment.studentId,
@@ -49,7 +49,9 @@ function enrollmentResponse(enrollment: Enrollment) {
     schoolClassId: enrollment.schoolClassId,
     status: enrollment.status,
     approvedAt: enrollment.approvedAt?.toISOString() ?? null,
+    approvedById: enrollment.approvedById,
     withdrawnAt: enrollment.withdrawnAt?.toISOString() ?? null,
+    withdrawnById: enrollment.withdrawnById,
     createdAt: enrollment.createdAt.toISOString(),
     updatedAt: enrollment.updatedAt.toISOString(),
   })

@@ -131,4 +131,35 @@ describe('school access', () => {
       expect(await access.canRegisterStudents(userId, school)).toBe(false)
     }
   })
+
+  it('separates submission, approval, and withdrawal permissions', async () => {
+    const organizations = new Map([
+      ['owner:' + organizationId, 'owner'],
+      ['administrator:' + organizationId, 'administrator'],
+    ])
+    const schools = new Map([
+      ['schoolAdministrator:' + schoolId, 'administrator'],
+      ['registrar:' + schoolId, 'registrar'],
+      ['approver:' + schoolId, 'approver'],
+      ['teacher:' + schoolId, 'teacher'],
+      ['otherApprover:' + otherSchoolId, 'approver'],
+    ])
+    const access = accessFor(organizations, schools)
+    for (const userId of ['owner', 'administrator', 'schoolAdministrator']) {
+      expect(await access.canSubmitEnrollment(userId, school)).toBe(true)
+      expect(await access.canApproveEnrollment(userId, school)).toBe(true)
+      expect(await access.canWithdrawEnrollment(userId, school)).toBe(true)
+    }
+    expect(await access.canSubmitEnrollment('registrar', school)).toBe(true)
+    expect(await access.canApproveEnrollment('registrar', school)).toBe(false)
+    expect(await access.canWithdrawEnrollment('registrar', school)).toBe(false)
+    expect(await access.canSubmitEnrollment('approver', school)).toBe(false)
+    expect(await access.canApproveEnrollment('approver', school)).toBe(true)
+    expect(await access.canWithdrawEnrollment('approver', school)).toBe(false)
+    for (const userId of ['teacher', 'otherApprover']) {
+      expect(await access.canSubmitEnrollment(userId, school)).toBe(false)
+      expect(await access.canApproveEnrollment(userId, school)).toBe(false)
+      expect(await access.canWithdrawEnrollment(userId, school)).toBe(false)
+    }
+  })
 })

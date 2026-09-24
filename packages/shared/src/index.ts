@@ -78,7 +78,9 @@ export const EnrollmentSchema = z.object({
   schoolClassId: z.uuid().nullable(),
   status: z.enum(['draft', 'pending', 'approved', 'withdrawn']),
   approvedAt: z.iso.datetime().nullable(),
+  approvedById: z.uuid().nullable(),
   withdrawnAt: z.iso.datetime().nullable(),
+  withdrawnById: z.uuid().nullable(),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
 })

@@ -3,7 +3,9 @@ import cookie from '@fastify/cookie'
 import {
   createDatabaseClient,
   DuplicateEnrollmentError,
+  EnrollmentNotFoundError,
   InvalidEnrollmentStructureError,
+  InvalidEnrollmentTransitionError,
   type PrismaClient,
 } from '@warka/database'
 import { ErrorResponseSchema, HealthResponseSchema } from '@warka/shared'
@@ -20,6 +22,11 @@ import {
 import { registerSchoolRoutes } from './schoolRoutes.js'
 import { prismaStudentService, type StudentService } from './studentService.js'
 import { registerStudentRoutes } from './studentRoutes.js'
+import {
+  prismaEnrollmentService,
+  type EnrollmentService,
+} from './enrollmentService.js'
+import { registerEnrollmentRoutes } from './enrollmentRoutes.js'
 
 export function buildApp(
   options: {
@@ -27,6 +34,7 @@ export function buildApp(
     auth?: AuthService
     access?: SchoolAccess
     students?: StudentService
+    enrollments?: EnrollmentService
     production?: boolean
   } = {},
 ) {
@@ -39,6 +47,8 @@ export function buildApp(
   const getAccess = () => options.access ?? createSchoolAccess(getDatabase())
   const getStudents = () =>
     options.students ?? prismaStudentService(getDatabase())
+  const getEnrollments = () =>
+    options.enrollments ?? prismaEnrollmentService(getDatabase())
   const authenticate = authenticateRequest(getAuth)
 
   app.register(cookie)
@@ -51,6 +61,13 @@ export function buildApp(
   )
   registerSchoolRoutes(app, getStore, getAccess, authenticate)
   registerStudentRoutes(app, getStore, getAccess, getStudents, authenticate)
+  registerEnrollmentRoutes(
+    app,
+    getStore,
+    getAccess,
+    getEnrollments,
+    authenticate,
+  )
 
   app.setNotFoundHandler((_request, reply) =>
     reply.code(404).send(
@@ -84,6 +101,26 @@ export function buildApp(
       return reply.code(404).send(
         ErrorResponseSchema.parse({
           error: { code: error.code, message: error.message },
+        }),
+      )
+    }
+    if (error instanceof EnrollmentNotFoundError) {
+      return reply.code(404).send(
+        ErrorResponseSchema.parse({
+          error: {
+            code: 'ENROLLMENT_NOT_FOUND',
+            message: error.message,
+          },
+        }),
+      )
+    }
+    if (error instanceof InvalidEnrollmentTransitionError) {
+      return reply.code(409).send(
+        ErrorResponseSchema.parse({
+          error: {
+            code: 'INVALID_ENROLLMENT_TRANSITION',
+            message: error.message,
+          },
         }),
       )
     }
