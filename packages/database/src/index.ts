@@ -108,3 +108,13 @@ export {
 } from './schoolClasses.js'
 export type { CreateSchoolClass } from './schoolClasses.js'
 export type { SchoolClass } from '@prisma/client'
+
+export {
+  CreateStudentSchema,
+  createStudent,
+  findStudentById,
+  findStudentByReference,
+  generateStudentReference,
+} from './students.js'
+export type { CreateStudent } from './students.js'
+export type { Student } from '@prisma/client'

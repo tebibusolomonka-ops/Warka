@@ -145,3 +145,13 @@ model SchoolClass {
   @@unique([schoolId, academicYearId, gradeLevelId, name])
   @@index([schoolId, gradeLevelId])
 }
+
+model Student {
+  id               String    @id @default(uuid())
+  studentReference String    @unique
+  givenName        String
+  familyName       String?
+  dateOfBirth      DateTime? @db.Date
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
