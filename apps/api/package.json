@@ -14,7 +14,9 @@
     "fastify": "^5.6.0",
     "@warka/shared": "workspace:*",
     "@warka/database": "workspace:*",
-    "zod": "^4.0.0"
+    "zod": "^4.0.0",
+    "@warka/auth": "workspace:*",
+    "@fastify/cookie": "^11.1.2"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

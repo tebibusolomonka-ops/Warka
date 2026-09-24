@@ -45,3 +45,11 @@ export const LoginCredentialsSchema = z.object({
 })
 
 export type LoginCredentials = z.infer<typeof LoginCredentialsSchema>
+
+export const UserIdentitySchema = z.object({
+  id: z.uuid(),
+  email: z.email(),
+  displayName: z.string(),
+})
+
+export type UserIdentity = z.infer<typeof UserIdentitySchema>

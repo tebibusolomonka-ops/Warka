@@ -1,7 +1,10 @@
 import Fastify from 'fastify'
+import cookie from '@fastify/cookie'
 import { createDatabaseClient, type PrismaClient } from '@warka/database'
 import { ErrorResponseSchema, HealthResponseSchema } from '@warka/shared'
 import { ZodError } from 'zod'
+import { createAuthService, type AuthService } from './authService.js'
+import { registerAuthRoutes } from './authRoutes.js'
 import {
   RecordNotFound,
   prismaSchoolStore,
@@ -9,17 +12,27 @@ import {
 } from './schoolService.js'
 import { registerSchoolRoutes } from './schoolRoutes.js'
 
-export function buildApp(options: { store?: SchoolStore } = {}) {
+export function buildApp(
+  options: {
+    store?: SchoolStore
+    auth?: AuthService
+    production?: boolean
+  } = {},
+) {
   const app = Fastify()
   let database: PrismaClient | undefined
 
-  const getStore = () => {
-    if (options.store) return options.store
-    database ??= createDatabaseClient()
-    return prismaSchoolStore(database)
-  }
+  const getDatabase = () => (database ??= createDatabaseClient())
+  const getStore = () => options.store ?? prismaSchoolStore(getDatabase())
+  const getAuth = () => options.auth ?? createAuthService(getDatabase())
 
+  app.register(cookie)
   app.get('/health', async () => HealthResponseSchema.parse({ status: 'ok' }))
+  registerAuthRoutes(
+    app,
+    getAuth,
+    options.production ?? process.env.NODE_ENV === 'production',
+  )
   registerSchoolRoutes(app, getStore)
 
   app.setErrorHandler((error, _request, reply) => {
