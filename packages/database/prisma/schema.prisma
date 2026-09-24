@@ -19,6 +19,13 @@ enum SchoolRole {
   approver
 }
 
+enum EnrollmentStatus {
+  draft
+  pending
+  approved
+  withdrawn
+}
+
 model Organization {
   id          String                   @id @default(uuid())
   name        String
@@ -39,6 +46,7 @@ model School {
   academicYears  AcademicYear[]
   gradeLevels    GradeLevel[]
   classes        SchoolClass[]
+  enrollments    Enrollment[]
 
   @@index([organizationId])
 }
@@ -102,15 +110,16 @@ model Session {
 }
 
 model AcademicYear {
-  id        String        @id @default(uuid())
-  schoolId  String
-  name      String
-  startsOn  DateTime      @db.Date
-  endsOn    DateTime      @db.Date
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
-  school    School        @relation(fields: [schoolId], references: [id], onDelete: Restrict)
-  classes   SchoolClass[]
+  id          String        @id @default(uuid())
+  schoolId    String
+  name        String
+  startsOn    DateTime      @db.Date
+  endsOn      DateTime      @db.Date
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  school      School        @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  classes     SchoolClass[]
+  enrollments Enrollment[]
 
   @@unique([schoolId, name])
   @@unique([id, schoolId])
@@ -118,13 +127,14 @@ model AcademicYear {
 }
 
 model GradeLevel {
-  id        String        @id @default(uuid())
-  schoolId  String
-  name      String
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
-  school    School        @relation(fields: [schoolId], references: [id], onDelete: Restrict)
-  classes   SchoolClass[]
+  id          String        @id @default(uuid())
+  schoolId    String
+  name        String
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  school      School        @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  classes     SchoolClass[]
+  enrollments Enrollment[]
 
   @@unique([schoolId, name])
   @@unique([id, schoolId])
@@ -141,8 +151,10 @@ model SchoolClass {
   school         School       @relation(fields: [schoolId], references: [id], onDelete: Restrict)
   academicYear   AcademicYear @relation(fields: [academicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
   gradeLevel     GradeLevel   @relation(fields: [gradeLevelId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  enrollments    Enrollment[]
 
   @@unique([schoolId, academicYearId, gradeLevelId, name])
+  @@unique([id, schoolId])
   @@index([schoolId, gradeLevelId])
 }
 
@@ -155,6 +167,7 @@ model Student {
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
   guardians        StudentGuardian[]
+  enrollments      Enrollment[]
 }
 
 model Guardian {
@@ -178,4 +191,27 @@ model StudentGuardian {
 
   @@id([studentId, guardianId])
   @@index([guardianId])
+}
+
+model Enrollment {
+  id             String           @id @default(uuid())
+  studentId      String
+  schoolId       String
+  academicYearId String
+  gradeLevelId   String
+  schoolClassId  String?
+  status         EnrollmentStatus @default(draft)
+  approvedAt     DateTime?
+  withdrawnAt    DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  student        Student          @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  school         School           @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  academicYear   AcademicYear     @relation(fields: [academicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  gradeLevel     GradeLevel       @relation(fields: [gradeLevelId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  schoolClass    SchoolClass?     @relation(fields: [schoolClassId, schoolId], references: [id, schoolId], onDelete: Restrict)
+
+  @@unique([studentId, schoolId, academicYearId])
+  @@index([schoolId, academicYearId, status])
+  @@index([schoolId, gradeLevelId])
 }

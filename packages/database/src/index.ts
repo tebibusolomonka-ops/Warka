@@ -135,3 +135,19 @@ export type {
   StudentForGuardian,
 } from './guardians.js'
 export type { Guardian, StudentGuardian } from '@prisma/client'
+
+export {
+  CreateEnrollmentSchema,
+  InvalidEnrollmentStructureError,
+  DuplicateEnrollmentError,
+  EnrollmentNotFoundError,
+  InvalidEnrollmentTransitionError,
+  canTransition,
+  createEnrollment,
+  findEnrollmentById,
+  submitEnrollment,
+  approveEnrollment,
+  withdrawEnrollment,
+} from './enrollments.js'
+export type { CreateEnrollment, EnrollmentAction } from './enrollments.js'
+export type { Enrollment, EnrollmentStatus } from '@prisma/client'
