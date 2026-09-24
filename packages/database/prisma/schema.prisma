@@ -36,6 +36,7 @@ model School {
   updatedAt      DateTime           @updatedAt
   organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   staff          SchoolMembership[]
+  academicYears  AcademicYear[]
 
   @@index([organizationId])
 }
@@ -85,6 +86,7 @@ model PasswordCredential {
   updatedAt    DateTime @updatedAt
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
+
 model Session {
   id        String   @id @default(uuid())
   userId    String
@@ -95,4 +97,18 @@ model Session {
 
   @@index([userId])
   @@index([expiresAt])
+}
+
+model AcademicYear {
+  id        String   @id @default(uuid())
+  schoolId  String
+  name      String
+  startsOn  DateTime @db.Date
+  endsOn    DateTime @db.Date
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  school    School   @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+
+  @@unique([schoolId, name])
+  @@index([schoolId, startsOn])
 }

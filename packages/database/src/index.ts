@@ -79,3 +79,13 @@ export {
 } from './sessions.js'
 export type { CreateSessionRecord } from './sessions.js'
 export type { Session } from '@prisma/client'
+
+export {
+  CreateAcademicYearSchema,
+  DuplicateAcademicYearError,
+  createAcademicYear,
+  findAcademicYearById,
+  listAcademicYearsForSchool,
+} from './academicYears.js'
+export type { CreateAcademicYear } from './academicYears.js'
+export type { AcademicYear } from '@prisma/client'
