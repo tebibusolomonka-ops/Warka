@@ -51,7 +51,7 @@ export class MarkNotFoundError extends Error {
   }
 }
 
-async function canRecordMark(
+export async function canRecordAssessment(
   database: PrismaClient,
   actorId: string,
   assessment: Assessment,
@@ -107,7 +107,7 @@ async function validMarkContext(
   ) {
     throw new InvalidMarkContextError()
   }
-  if (!(await canRecordMark(database, actorId, assessment))) {
+  if (!(await canRecordAssessment(database, actorId, assessment))) {
     throw new MarkPermissionError()
   }
   const score = new Prisma.Decimal(data.score)

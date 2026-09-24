@@ -19,6 +19,11 @@ import { createUser } from './users.js'
 import { assignUserToSchool } from './schoolMemberships.js'
 import { assignTeacher } from './teachingAssignments.js'
 import {
+  applyMarkImport,
+  InvalidMarkImportError,
+  validateMarkImport,
+} from './markImport.js'
+import {
   DuplicateMarkError,
   getMarksForAssessment,
   getMarksForStudentContext,
@@ -260,6 +265,59 @@ describe.skipIf(!database)('student marks in PostgreSQL', () => {
         score: '100',
       })
       expect(maximum.score.toString()).toBe('100')
+      const validCsv =
+        'studentReference,score\n' + student.studentReference + ',15.25'
+      const invalidCsv =
+        validCsv + '\n' + secondStudent.studentReference + ',12'
+      const invalidReview = await validateMarkImport(
+        database!,
+        teacher.id,
+        school.id,
+        assessment.id,
+        invalidCsv,
+      )
+      expect(invalidReview.problems).toContainEqual({
+        line: 3,
+        code: 'OUTSIDE_CLASS',
+        studentReference: secondStudent.studentReference,
+      })
+      await expect(
+        applyMarkImport(
+          database!,
+          teacher.id,
+          school.id,
+          assessment.id,
+          invalidCsv,
+        ),
+      ).rejects.toBeInstanceOf(InvalidMarkImportError)
+      expect(
+        (
+          await getMarksForAssessment(database!, school.id, assessment.id)
+        )[0]!.score.toString(),
+      ).toBe('25.5')
+      expect(
+        await applyMarkImport(
+          database!,
+          teacher.id,
+          school.id,
+          assessment.id,
+          validCsv,
+        ),
+      ).toEqual({ created: 0, updated: 1 })
+      expect(
+        (
+          await getMarksForAssessment(database!, school.id, assessment.id)
+        )[0]!.score.toString(),
+      ).toBe('15.25')
+      await expect(
+        validateMarkImport(
+          database!,
+          registrar.id,
+          school.id,
+          assessment.id,
+          validCsv,
+        ),
+      ).rejects.toBeInstanceOf(MarkPermissionError)
       await expect(
         database!.mark.create({
           data: {

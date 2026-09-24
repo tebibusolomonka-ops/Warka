@@ -214,6 +214,7 @@ export {
   InvalidMarkScoreError,
   DuplicateMarkError,
   MarkNotFoundError,
+  canRecordAssessment,
   recordMark,
   updateDraftMark,
   getMarksForAssessment,
@@ -221,3 +222,15 @@ export {
 } from './marks.js'
 export type { RecordMark } from './marks.js'
 export type { Mark } from '@prisma/client'
+
+export {
+  InvalidMarkImportError,
+  validateMarkImport,
+  applyMarkImport,
+} from './markImport.js'
+export type {
+  ImportProblem,
+  ImportProblemCode,
+  ImportReview,
+  ImportRow,
+} from './markImport.js'
