@@ -19,7 +19,18 @@ export type StudentIdentity = {
   }
 }
 
+export type StudentResult = {
+  academicYear: string
+  gradingPeriod: string
+  subject: string
+  percentage: number
+  gradeLabel: string
+  publishedAt: string
+  corrected: boolean
+}
+
 export type StudentPortalService = {
+  results(userId: string): Promise<StudentResult[]>
   identity(userId: string, now?: Date): Promise<StudentIdentity>
 }
 
@@ -27,6 +38,32 @@ export function prismaStudentPortalService(
   database: PrismaClient,
 ): StudentPortalService {
   return {
+    async results(userId) {
+      const access = await findStudentAccessForUser(database, userId)
+      if (!access) throw new StudentPortalAccessError()
+      const rows = await database.publishedResult.findMany({
+        where: {
+          studentId: access.studentId,
+          resultSet: { status: 'published' },
+        },
+        include: {
+          resultSet: {
+            include: { academicYear: true, gradingPeriod: true, subject: true },
+          },
+          corrections: { select: { id: true }, take: 1 },
+        },
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      })
+      return rows.map((row) => ({
+        academicYear: row.resultSet.academicYear.name,
+        gradingPeriod: row.resultSet.gradingPeriod.name,
+        subject: row.resultSet.subject.name,
+        percentage: row.currentPercentage.toNumber(),
+        gradeLabel: row.currentGradeLabel,
+        publishedAt: row.resultSet.publishedAt!.toISOString(),
+        corrected: row.corrections.length > 0,
+      }))
+    },
     async identity(userId, now = new Date()) {
       const access = await findStudentAccessForUser(database, userId)
       if (!access) throw new StudentPortalAccessError()
