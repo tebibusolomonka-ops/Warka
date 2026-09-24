@@ -194,3 +194,15 @@ export {
 } from './gradingPeriods.js'
 export type { CreateGradingPeriod } from './gradingPeriods.js'
 export type { GradingPeriod } from '@prisma/client'
+
+export {
+  CreateAssessmentSchema,
+  InvalidAssessmentContextError,
+  DuplicateAssessmentError,
+  assessmentConfiguration,
+  createAssessment,
+  findAssessmentById,
+  listAssessments,
+} from './assessments.js'
+export type { CreateAssessment } from './assessments.js'
+export type { Assessment } from '@prisma/client'

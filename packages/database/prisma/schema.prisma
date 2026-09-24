@@ -50,6 +50,7 @@ model School {
   enrollments         Enrollment[]
   teachingAssignments TeachingAssignment[]
   gradingPeriods      GradingPeriod[]
+  assessments         Assessment[]
 
   @@index([organizationId])
 }
@@ -128,6 +129,7 @@ model AcademicYear {
   teachingAssignments TeachingAssignment[]
   gradingPeriods      GradingPeriod[]
   enrollments         Enrollment[]
+  assessments         Assessment[]
 
   @@unique([schoolId, name])
   @@unique([id, schoolId])
@@ -161,6 +163,7 @@ model SchoolClass {
   gradeLevel          GradeLevel           @relation(fields: [gradeLevelId, schoolId], references: [id, schoolId], onDelete: Restrict)
   enrollments         Enrollment[]
   teachingAssignments TeachingAssignment[]
+  assessments         Assessment[]
 
   @@unique([schoolId, academicYearId, gradeLevelId, name])
   @@unique([id, schoolId])
@@ -241,6 +244,7 @@ model Subject {
   updatedAt           DateTime             @updatedAt
   school              School               @relation(fields: [schoolId], references: [id], onDelete: Restrict)
   teachingAssignments TeachingAssignment[]
+  assessments         Assessment[]
 
   @@unique([schoolId, name])
   @@unique([schoolId, code])
@@ -278,8 +282,33 @@ model GradingPeriod {
   updatedAt      DateTime     @updatedAt
   school         School       @relation(fields: [schoolId], references: [id], onDelete: Restrict)
   academicYear   AcademicYear @relation(fields: [academicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  assessments    Assessment[]
 
   @@unique([schoolId, academicYearId, name])
   @@unique([id, schoolId, academicYearId])
   @@index([schoolId, academicYearId, startsOn])
+}
+
+model Assessment {
+  id              String        @id @default(uuid())
+  schoolId        String
+  academicYearId  String
+  gradingPeriodId String
+  schoolClassId   String
+  subjectId       String
+  name            String
+  maximumScore    Decimal       @db.Decimal(8, 2)
+  weight          Decimal       @db.Decimal(5, 2)
+  position        Int
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  school          School        @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  academicYear    AcademicYear  @relation(fields: [academicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  gradingPeriod   GradingPeriod @relation(fields: [gradingPeriodId, schoolId, academicYearId], references: [id, schoolId, academicYearId], onDelete: Restrict)
+  schoolClass     SchoolClass   @relation(fields: [schoolClassId, schoolId, academicYearId], references: [id, schoolId, academicYearId], onDelete: Restrict)
+  subject         Subject       @relation(fields: [subjectId, schoolId], references: [id, schoolId], onDelete: Restrict)
+
+  @@unique([schoolId, academicYearId, gradingPeriodId, schoolClassId, subjectId, name], map: "Assessment_context_name_key")
+  @@unique([schoolId, academicYearId, gradingPeriodId, schoolClassId, subjectId, position], map: "Assessment_context_position_key")
+  @@index([schoolId, academicYearId, gradingPeriodId, schoolClassId, subjectId])
 }
