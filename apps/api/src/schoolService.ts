@@ -1,10 +1,8 @@
 import {
-  createOrganization,
   createSchool,
   findOrganizationById,
   findSchoolById,
   listSchoolsForOrganization,
-  type CreateOrganization,
   type CreateSchool,
   type Organization,
   type PrismaClient,
@@ -12,7 +10,6 @@ import {
 } from '@warka/database'
 
 export type SchoolStore = {
-  createOrganization(data: CreateOrganization): Promise<Organization>
   findOrganizationById(id: string): Promise<Organization | null>
   createSchool(data: CreateSchool): Promise<School>
   findSchoolById(id: string): Promise<School | null>
@@ -21,7 +18,6 @@ export type SchoolStore = {
 
 export function prismaSchoolStore(database: PrismaClient): SchoolStore {
   return {
-    createOrganization: (data) => createOrganization(database, data),
     findOrganizationById: (id) => findOrganizationById(database, id),
     createSchool: (data) => createSchool(database, data),
     findSchoolById: (id) => findSchoolById(database, id),
@@ -44,7 +40,6 @@ export class RecordNotFound extends Error {
 
 export function schoolService(store: SchoolStore) {
   return {
-    createOrganization: (name: string) => store.createOrganization({ name }),
     async createSchool(organizationId: string, name: string) {
       if (!(await store.findOrganizationById(organizationId))) {
         throw new RecordNotFound('ORGANIZATION_NOT_FOUND')

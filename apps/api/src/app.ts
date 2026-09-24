@@ -5,6 +5,8 @@ import { ErrorResponseSchema, HealthResponseSchema } from '@warka/shared'
 import { ZodError } from 'zod'
 import { createAuthService, type AuthService } from './authService.js'
 import { registerAuthRoutes } from './authRoutes.js'
+import { authenticateRequest } from './authenticateRequest.js'
+import { createSchoolAccess, type SchoolAccess } from './schoolAccess.js'
 import {
   RecordNotFound,
   prismaSchoolStore,
@@ -16,6 +18,7 @@ export function buildApp(
   options: {
     store?: SchoolStore
     auth?: AuthService
+    access?: SchoolAccess
     production?: boolean
   } = {},
 ) {
@@ -25,15 +28,25 @@ export function buildApp(
   const getDatabase = () => (database ??= createDatabaseClient())
   const getStore = () => options.store ?? prismaSchoolStore(getDatabase())
   const getAuth = () => options.auth ?? createAuthService(getDatabase())
+  const getAccess = () => options.access ?? createSchoolAccess(getDatabase())
 
   app.register(cookie)
+  app.decorateRequest('currentUser', null)
   app.get('/health', async () => HealthResponseSchema.parse({ status: 'ok' }))
   registerAuthRoutes(
     app,
     getAuth,
     options.production ?? process.env.NODE_ENV === 'production',
   )
-  registerSchoolRoutes(app, getStore)
+  registerSchoolRoutes(app, getStore, getAccess, authenticateRequest(getAuth))
+
+  app.setNotFoundHandler((_request, reply) =>
+    reply.code(404).send(
+      ErrorResponseSchema.parse({
+        error: { code: 'NOT_FOUND', message: 'Route not found' },
+      }),
+    ),
+  )
 
   app.setErrorHandler((error, _request, reply) => {
     if (error instanceof ZodError) {

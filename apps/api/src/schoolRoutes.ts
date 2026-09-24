@@ -1,13 +1,18 @@
-import type { FastifyInstance } from 'fastify'
+import type { FastifyInstance, preHandlerHookHandler } from 'fastify'
 import {
-  CreateOrganizationSchema,
   CreateSchoolSchema,
-  OrganizationSchema,
+  OrganizationsResponseSchema,
   SchoolSchema,
   SchoolsResponseSchema,
 } from '@warka/shared'
 import { z } from 'zod'
-import { schoolService, type SchoolStore } from './schoolService.js'
+import { authenticatedUser } from './authenticateRequest.js'
+import type { SchoolAccess } from './schoolAccess.js'
+import {
+  RecordNotFound,
+  schoolService,
+  type SchoolStore,
+} from './schoolService.js'
 
 const organizationParams = z.object({ organizationId: z.uuid() })
 const schoolParams = z.object({ schoolId: z.uuid() })
@@ -25,35 +30,64 @@ function serializeDates<T extends { createdAt: Date; updatedAt: Date }>(
 export function registerSchoolRoutes(
   app: FastifyInstance,
   getStore: () => SchoolStore,
+  getAccess: () => SchoolAccess,
+  authenticate: preHandlerHookHandler,
 ) {
-  app.post('/organizations', async (request, reply) => {
-    const { name } = CreateOrganizationSchema.parse(request.body)
-    const organization =
-      await schoolService(getStore()).createOrganization(name)
-    return reply
-      .code(201)
-      .send(OrganizationSchema.parse(serializeDates(organization)))
-  })
-
-  app.post('/organizations/:organizationId/schools', async (request, reply) => {
-    const { organizationId } = organizationParams.parse(request.params)
-    const { name } = CreateSchoolSchema.parse(request.body)
-    const school = await schoolService(getStore()).createSchool(
-      organizationId,
-      name,
+  app.get('/organizations', { preHandler: authenticate }, async (request) => {
+    const user = authenticatedUser(request)
+    const organizations = await getAccess().organizationsForUser(user.id)
+    return OrganizationsResponseSchema.parse(
+      organizations.map(({ organization, role }) => ({
+        organization: serializeDates(organization),
+        role,
+      })),
     )
-    return reply.code(201).send(SchoolSchema.parse(serializeDates(school)))
   })
 
-  app.get('/organizations/:organizationId/schools', async (request) => {
-    const { organizationId } = organizationParams.parse(request.params)
-    const schools = await schoolService(getStore()).listSchools(organizationId)
-    return SchoolsResponseSchema.parse(schools.map(serializeDates))
-  })
+  app.post(
+    '/organizations/:organizationId/schools',
+    { preHandler: authenticate },
+    async (request, reply) => {
+      const user = authenticatedUser(request)
+      const { organizationId } = organizationParams.parse(request.params)
+      const { name } = CreateSchoolSchema.parse(request.body)
+      if (!(await getAccess().canManageOrganization(user.id, organizationId))) {
+        throw new RecordNotFound('ORGANIZATION_NOT_FOUND')
+      }
+      const school = await schoolService(getStore()).createSchool(
+        organizationId,
+        name,
+      )
+      return reply.code(201).send(SchoolSchema.parse(serializeDates(school)))
+    },
+  )
 
-  app.get('/schools/:schoolId', async (request) => {
-    const { schoolId } = schoolParams.parse(request.params)
-    const school = await schoolService(getStore()).findSchool(schoolId)
-    return SchoolSchema.parse(serializeDates(school))
-  })
+  app.get(
+    '/organizations/:organizationId/schools',
+    { preHandler: authenticate },
+    async (request) => {
+      const user = authenticatedUser(request)
+      const { organizationId } = organizationParams.parse(request.params)
+      if (!(await getAccess().canManageOrganization(user.id, organizationId))) {
+        throw new RecordNotFound('ORGANIZATION_NOT_FOUND')
+      }
+      const schools =
+        await schoolService(getStore()).listSchools(organizationId)
+      return SchoolsResponseSchema.parse(schools.map(serializeDates))
+    },
+  )
+
+  app.get(
+    '/schools/:schoolId',
+    { preHandler: authenticate },
+    async (request) => {
+      const user = authenticatedUser(request)
+      const { schoolId } = schoolParams.parse(request.params)
+      const school = await schoolService(getStore()).findSchool(schoolId)
+      if (!(await getAccess().canViewSchool(user.id, school))) {
+        throw new RecordNotFound('SCHOOL_NOT_FOUND')
+      }
+      return SchoolSchema.parse(serializeDates(school))
+    },
+  )
 }

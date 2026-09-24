@@ -53,3 +53,12 @@ export const UserIdentitySchema = z.object({
 })
 
 export type UserIdentity = z.infer<typeof UserIdentitySchema>
+
+export const OrganizationAccessSchema = z.object({
+  organization: OrganizationSchema,
+  role: z.enum(['owner', 'administrator']),
+})
+
+export const OrganizationsResponseSchema = z.array(OrganizationAccessSchema)
+
+export type OrganizationAccess = z.infer<typeof OrganizationAccessSchema>
