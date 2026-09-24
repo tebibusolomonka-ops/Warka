@@ -50,7 +50,7 @@ export function apiBaseUrl(value: string | undefined, origin: string): string {
   return url.toString().replace(/\/$/, '')
 }
 
-async function requestJson(
+export async function requestJson(
   baseUrl: string,
   path: string,
   options: RequestInit = {},

@@ -256,6 +256,7 @@ export {
   publishResults,
   correctPublishedResult,
   listPendingResultSets,
+  listPublishedResultSets,
   listResultCorrections,
 } from './results.js'
 export type { ResultContext } from './results.js'

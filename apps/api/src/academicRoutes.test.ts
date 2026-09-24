@@ -85,6 +85,7 @@ function fixture() {
       .mockResolvedValue({ status: 'draft', complete: true, rows: [] }),
     submit: vi.fn().mockResolvedValue({ id: resultSetId, status: 'pending' }),
     pending: vi.fn().mockResolvedValue([]),
+    published: vi.fn().mockResolvedValue([]),
     publish: vi
       .fn()
       .mockResolvedValue({ id: resultSetId, status: 'published' }),
@@ -328,6 +329,15 @@ describe('academic routes', () => {
         })
       ).statusCode,
     ).toBe(200)
+    expect(
+      (
+        await app.inject({
+          url: base + '/result-sets/published',
+          headers: cookie('approver'),
+        })
+      ).statusCode,
+    ).toBe(200)
+    expect(academic.published).toHaveBeenCalledWith('approver', schoolId)
     vi.mocked(academic.publish).mockRejectedValueOnce(
       new ResultPermissionError(),
     )

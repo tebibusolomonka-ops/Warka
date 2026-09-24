@@ -16,6 +16,7 @@ import {
 } from './api'
 import { SchoolDirectory } from './SchoolDirectory'
 import { StudentWorkspace } from './StudentWorkspace'
+import { AcademicWorkspace } from './AcademicWorkspace'
 
 type Authentication =
   | { status: 'checking' }
@@ -159,6 +160,17 @@ function SignedInShell({
                 ))}
               </select>
             </div>
+            {selectedSchool &&
+              (selectedSchool.capabilities.canApprove ||
+                !selectedSchool.capabilities.canRegister) && (
+                <AcademicWorkspace
+                  key={selectedSchool.school.id}
+                  baseUrl={baseUrl}
+                  schoolId={selectedSchool.school.id}
+                  schoolName={selectedSchool.school.name}
+                  onSessionExpired={sessionExpired}
+                />
+              )}
             {selectedSchool &&
               (selectedSchool.capabilities.canRegister ||
                 selectedSchool.capabilities.canApprove) && (

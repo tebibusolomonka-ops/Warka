@@ -12,6 +12,7 @@ import {
   listAssessments,
   listGradingPeriods,
   listPendingResultSets,
+  listPublishedResultSets,
   listResultCorrections,
   listSubjectsForSchool,
   listTeacherAssignments,
@@ -205,6 +206,9 @@ export function prismaAcademicService(database: PrismaClient) {
     },
     pending(actorId: string, schoolId: string) {
       return listPendingResultSets(database, actorId, schoolId)
+    },
+    published(actorId: string, schoolId: string) {
+      return listPublishedResultSets(database, actorId, schoolId)
     },
     publish(actorId: string, schoolId: string, resultSetId: string) {
       return publishResults(database, actorId, schoolId, resultSetId)

@@ -289,6 +289,15 @@ export function registerAcademicRoutes(
     },
   )
 
+  app.get(
+    '/schools/:schoolId/result-sets/published',
+    { preHandler: authenticate },
+    async (request) => {
+      const { schoolId } = schoolParams.parse(request.params)
+      return getAcademic().published(authenticatedUser(request).id, schoolId)
+    },
+  )
+
   app.post(
     '/schools/:schoolId/result-sets/:resultSetId/publish',
     { preHandler: authenticate },

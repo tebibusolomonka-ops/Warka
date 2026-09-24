@@ -134,3 +134,89 @@ li {
 .status-withdrawn {
   background: #eee4e4;
 }
+.academic-workspace {
+  margin-top: 2rem;
+}
+
+.academic-panel {
+  padding: 1rem;
+  margin: 1.25rem 0;
+  border: 1px solid #cbd8ce;
+  border-radius: 0.4rem;
+  background: white;
+}
+
+.academic-panel h3,
+.academic-panel h4 {
+  margin-top: 0.5rem;
+}
+
+.academic-fields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 0.75rem;
+}
+
+.academic-fields label,
+.academic-import label,
+.academic-corrections label,
+.academic-panel form > label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.academic-table-wrap {
+  overflow-x: auto;
+  margin: 1rem 0;
+}
+
+.academic-table-wrap table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.academic-table-wrap th,
+.academic-table-wrap td {
+  border-bottom: 1px solid #cbd8ce;
+  padding: 0.6rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.mark-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.mark-cell input {
+  min-width: 5rem;
+  width: 5rem;
+}
+
+.mark-cell small {
+  width: 100%;
+}
+
+.academic-import,
+.academic-corrections {
+  margin: 1rem 0;
+  padding-top: 1rem;
+  border-top: 1px solid #cbd8ce;
+}
+
+.academic-panel textarea {
+  min-width: 16rem;
+  padding: 0.55rem;
+  border: 1px solid #82958a;
+  border-radius: 0.25rem;
+  font: inherit;
+}
+
+.academic-panel textarea:focus-visible {
+  outline: 2px solid #18543d;
+  outline-offset: 2px;
+}

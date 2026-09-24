@@ -480,6 +480,20 @@ describe.skipIf(!database)('student marks in PostgreSQL', () => {
           snapshot.id,
         ),
       ).toHaveLength(1)
+      await database!.enrollment.update({
+        where: { id: firstEnrollment.id },
+        data: { status: 'withdrawn' },
+      })
+      const publishedPreview = await previewResults(
+        database!,
+        approver.id,
+        context,
+      )
+      expect(publishedPreview.rows).toHaveLength(1)
+      expect(publishedPreview.rows[0]!.calculation.percentage).toBe('88.00')
+      expect(publishedPreview.rows[0]!.published?.percentage.toString()).toBe(
+        snapshot.percentage.toString(),
+      )
     } finally {
       await database!.resultCorrection.deleteMany({
         where: { schoolId: { in: schools } },

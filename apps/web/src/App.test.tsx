@@ -19,6 +19,8 @@ import {
   logout,
 } from './api'
 
+vi.mock('./AcademicWorkspace', () => ({ AcademicWorkspace: () => null }))
+
 vi.mock('./api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('./api')>()
   return {
@@ -152,9 +154,11 @@ describe('authenticated web shell', () => {
     ])
     render(<App />)
     await screen.findByLabelText('Organization')
-    expect(getSchools).toHaveBeenCalledWith(
-      baseUrl,
-      firstOrganization.organization.id,
+    await waitFor(() =>
+      expect(getSchools).toHaveBeenCalledWith(
+        baseUrl,
+        firstOrganization.organization.id,
+      ),
     )
     fireEvent.change(screen.getByLabelText('Organization'), {
       target: { value: secondOrganization.organization.id },

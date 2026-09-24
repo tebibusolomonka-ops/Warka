@@ -137,7 +137,7 @@ export async function previewResults(
   ) {
     throw new InvalidResultContextError()
   }
-  const [assessments, scheme, enrollments, resultSet] = await Promise.all([
+  const [assessments, scheme, resultSet] = await Promise.all([
     listAssessments(
       database,
       context.schoolId,
@@ -147,20 +147,6 @@ export async function previewResults(
       context.subjectId,
     ),
     getGradingScheme(database, context.schoolId),
-    database.enrollment.findMany({
-      where: {
-        schoolId: context.schoolId,
-        academicYearId: context.academicYearId,
-        schoolClassId: context.schoolClassId,
-        status: 'approved',
-      },
-      include: {
-        student: {
-          select: { studentReference: true, givenName: true, familyName: true },
-        },
-      },
-      orderBy: [{ student: { studentReference: 'asc' } }],
-    }),
     database.resultSet.findUnique({
       where: {
         schoolId_academicYearId_gradingPeriodId_schoolClassId_subjectId:
@@ -169,6 +155,22 @@ export async function previewResults(
       include: { results: true },
     }),
   ])
+  const enrollments = await database.enrollment.findMany({
+    where: {
+      schoolId: context.schoolId,
+      academicYearId: context.academicYearId,
+      schoolClassId: context.schoolClassId,
+      ...(resultSet?.status === 'published'
+        ? { id: { in: resultSet.results.map((item) => item.enrollmentId) } }
+        : { status: 'approved' as const }),
+    },
+    include: {
+      student: {
+        select: { studentReference: true, givenName: true, familyName: true },
+      },
+    },
+    orderBy: [{ student: { studentReference: 'asc' } }],
+  })
   const marks =
     assessments.length && enrollments.length
       ? await database.mark.findMany({
@@ -179,28 +181,49 @@ export async function previewResults(
           },
         })
       : []
-  const rows = enrollments.map((enrollment) => ({
-    enrollmentId: enrollment.id,
-    studentId: enrollment.studentId,
-    studentReference: enrollment.student.studentReference,
-    givenName: enrollment.student.givenName,
-    familyName: enrollment.student.familyName,
-    marks: marks
-      .filter((mark) => mark.enrollmentId === enrollment.id)
-      .map((mark) => ({
-        id: mark.id,
-        assessmentId: mark.assessmentId,
-        score: mark.score.toFixed(2),
-      })),
-    calculation: calculateResult(
-      assessments,
-      marks.filter((mark) => mark.enrollmentId === enrollment.id),
-      scheme?.bands ?? [],
-    ),
-    published:
+  const rows = enrollments.map((enrollment) => {
+    const published =
       resultSet?.results.find((item) => item.enrollmentId === enrollment.id) ??
-      null,
-  }))
+      null
+    const calculation =
+      resultSet?.status === 'published'
+        ? published
+          ? {
+              status: 'ready' as const,
+              percentage: published.currentPercentage.toFixed(2),
+              gradeLabel: published.currentGradeLabel,
+              missingAssessmentIds: [],
+              configurationProblems: [],
+            }
+          : {
+              status: 'incomplete_configuration' as const,
+              percentage: null,
+              gradeLabel: null,
+              missingAssessmentIds: [],
+              configurationProblems: ['PUBLISHED_SNAPSHOT_MISSING'],
+            }
+        : calculateResult(
+            assessments,
+            marks.filter((mark) => mark.enrollmentId === enrollment.id),
+            scheme?.bands ?? [],
+          )
+    return {
+      enrollmentId: enrollment.id,
+      studentId: enrollment.studentId,
+      studentReference: enrollment.student.studentReference,
+      givenName: enrollment.student.givenName,
+      familyName: enrollment.student.familyName,
+      marks: marks
+        .filter((mark) => mark.enrollmentId === enrollment.id)
+        .map((mark) => ({
+          id: mark.id,
+          assessmentId: mark.assessmentId,
+          score: mark.score.toFixed(2),
+        })),
+      calculation,
+      published,
+    }
+  })
   return {
     context,
     assessments: assessments.map((item) => ({
@@ -403,6 +426,25 @@ export async function listPendingResultSets(
       submittedBy: { select: { displayName: true } },
     },
     orderBy: [{ submittedAt: 'asc' }, { id: 'asc' }],
+  })
+}
+
+export async function listPublishedResultSets(
+  database: PrismaClient,
+  actorId: string,
+  schoolId: string,
+) {
+  await requirePublisher(database, actorId, schoolId)
+  return database.resultSet.findMany({
+    where: { schoolId, status: 'published' },
+    include: {
+      academicYear: true,
+      gradingPeriod: true,
+      schoolClass: true,
+      subject: true,
+      submittedBy: { select: { displayName: true } },
+    },
+    orderBy: [{ publishedAt: 'desc' }, { id: 'asc' }],
   })
 }
 
