@@ -16,6 +16,10 @@
     "test:api": "pnpm --filter @warka/api test",
     "build:shared": "pnpm --filter @warka/shared build",
     "typecheck:shared": "pnpm --filter @warka/shared typecheck",
-    "test:web": "pnpm --filter @warka/web test"
+    "test:web": "pnpm --filter @warka/web test",
+    "db:generate": "pnpm --filter @warka/database generate",
+    "db:validate": "pnpm --filter @warka/database validate",
+    "typecheck:database": "pnpm --filter @warka/database typecheck",
+    "build:database": "pnpm --filter @warka/database build"
   }
 }
