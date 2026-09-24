@@ -183,3 +183,14 @@ export {
 } from './teachingAssignments.js'
 export type { AssignTeacher } from './teachingAssignments.js'
 export type { TeachingAssignment } from '@prisma/client'
+
+export {
+  CreateGradingPeriodSchema,
+  InvalidGradingPeriodError,
+  DuplicateGradingPeriodError,
+  createGradingPeriod,
+  findGradingPeriodById,
+  listGradingPeriods,
+} from './gradingPeriods.js'
+export type { CreateGradingPeriod } from './gradingPeriods.js'
+export type { GradingPeriod } from '@prisma/client'

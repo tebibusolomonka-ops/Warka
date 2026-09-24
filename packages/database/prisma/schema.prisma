@@ -49,6 +49,7 @@ model School {
   classes             SchoolClass[]
   enrollments         Enrollment[]
   teachingAssignments TeachingAssignment[]
+  gradingPeriods      GradingPeriod[]
 
   @@index([organizationId])
 }
@@ -125,6 +126,7 @@ model AcademicYear {
   school              School               @relation(fields: [schoolId], references: [id], onDelete: Restrict)
   classes             SchoolClass[]
   teachingAssignments TeachingAssignment[]
+  gradingPeriods      GradingPeriod[]
   enrollments         Enrollment[]
 
   @@unique([schoolId, name])
@@ -263,4 +265,21 @@ model TeachingAssignment {
   @@unique([userId, schoolClassId, subjectId, academicYearId])
   @@index([schoolId, academicYearId, userId])
   @@index([schoolId, schoolClassId, subjectId])
+}
+
+model GradingPeriod {
+  id             String       @id @default(uuid())
+  schoolId       String
+  academicYearId String
+  name           String
+  startsOn       DateTime     @db.Date
+  endsOn         DateTime     @db.Date
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  school         School       @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  academicYear   AcademicYear @relation(fields: [academicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
+
+  @@unique([schoolId, academicYearId, name])
+  @@unique([id, schoolId, academicYearId])
+  @@index([schoolId, academicYearId, startsOn])
 }
