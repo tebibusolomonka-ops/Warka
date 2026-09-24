@@ -4,12 +4,23 @@ import { buildApp } from './app.js'
 import type { SchoolStore } from './schoolService.js'
 
 function memoryStore(): SchoolStore {
-  const organizations = new Map<string, Awaited<ReturnType<SchoolStore['createOrganization']>>>()
-  const schools = new Map<string, Awaited<ReturnType<SchoolStore['createSchool']>>>()
+  const organizations = new Map<
+    string,
+    Awaited<ReturnType<SchoolStore['createOrganization']>>
+  >()
+  const schools = new Map<
+    string,
+    Awaited<ReturnType<SchoolStore['createSchool']>>
+  >()
 
   return {
     async createOrganization({ name }) {
-      const organization = { id: randomUUID(), name, createdAt: new Date(), updatedAt: new Date() }
+      const organization = {
+        id: randomUUID(),
+        name,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
       organizations.set(organization.id, organization)
       return organization
     },
@@ -17,7 +28,13 @@ function memoryStore(): SchoolStore {
       return organizations.get(id) ?? null
     },
     async createSchool({ organizationId, name }) {
-      const school = { id: randomUUID(), organizationId, name, createdAt: new Date(), updatedAt: new Date() }
+      const school = {
+        id: randomUUID(),
+        organizationId,
+        name,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
       schools.set(school.id, school)
       return school
     },
@@ -25,7 +42,9 @@ function memoryStore(): SchoolStore {
       return schools.get(id) ?? null
     },
     async listSchoolsForOrganization(organizationId) {
-      return [...schools.values()].filter((school) => school.organizationId === organizationId)
+      return [...schools.values()].filter(
+        (school) => school.organizationId === organizationId,
+      )
     },
   }
 }
@@ -77,7 +96,12 @@ describe('school routes', () => {
       expect(invalidName.statusCode).toBe(400)
       expect(invalidName.json().error.code).toBe('INVALID_REQUEST')
 
-      const malformed = await app.inject({ method: 'POST', url: '/organizations', payload: '{', headers: { 'content-type': 'application/json' } })
+      const malformed = await app.inject({
+        method: 'POST',
+        url: '/organizations',
+        payload: '{',
+        headers: { 'content-type': 'application/json' },
+      })
       expect(malformed.statusCode).toBe(400)
       expect(malformed.json().error.code).toBe('INVALID_REQUEST')
 

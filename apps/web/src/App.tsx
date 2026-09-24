@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { apiBaseUrl, getHealth } from './api'
+import { SchoolDirectory } from './SchoolDirectory'
 
 type ServiceStatus = 'checking' | 'available' | 'unavailable'
 
@@ -10,7 +11,10 @@ export function App() {
     let active = true
 
     try {
-      const baseUrl = apiBaseUrl(import.meta.env.VITE_API_URL, window.location.origin)
+      const baseUrl = apiBaseUrl(
+        import.meta.env.VITE_API_URL,
+        window.location.origin,
+      )
       getHealth(baseUrl)
         .then(() => {
           if (active) setStatus('available')
@@ -35,9 +39,12 @@ export function App() {
 
   return (
     <main className="shell">
-      <h1>Warka</h1>
-      <p>School records and services</p>
-      <p role="status">{message}</p>
+      <header>
+        <h1>Warka</h1>
+        <p>School records and services</p>
+        <p role="status">{message}</p>
+      </header>
+      <SchoolDirectory />
     </main>
   )
 }

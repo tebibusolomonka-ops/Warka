@@ -17,3 +17,7 @@ Copy `.env.example` to `.env` and set a PostgreSQL connection URL before running
 ## Repository integration tests
 
 Organization repository tests need a separate PostgreSQL database. Apply migrations to it with `pnpm db:deploy` using `DATABASE_URL`, then set `TEST_DATABASE_URL` to that database URL and run `pnpm test:database`. Tests skip when `TEST_DATABASE_URL` is absent. PostgreSQL is not available in this development environment, so the integration test has not run here.
+
+## School directory
+
+The web directory stores the selected organization ID in browser storage for local use. Create an organization in the page or enter an existing ID, then add schools under it. This is a development workflow; it does not provide authentication or organization discovery.

@@ -12,7 +12,9 @@ import { schoolService, type SchoolStore } from './schoolService.js'
 const organizationParams = z.object({ organizationId: z.uuid() })
 const schoolParams = z.object({ schoolId: z.uuid() })
 
-function serializeDates<T extends { createdAt: Date; updatedAt: Date }>(record: T) {
+function serializeDates<T extends { createdAt: Date; updatedAt: Date }>(
+  record: T,
+) {
   return {
     ...record,
     createdAt: record.createdAt.toISOString(),
@@ -20,17 +22,26 @@ function serializeDates<T extends { createdAt: Date; updatedAt: Date }>(record: 
   }
 }
 
-export function registerSchoolRoutes(app: FastifyInstance, getStore: () => SchoolStore) {
+export function registerSchoolRoutes(
+  app: FastifyInstance,
+  getStore: () => SchoolStore,
+) {
   app.post('/organizations', async (request, reply) => {
     const { name } = CreateOrganizationSchema.parse(request.body)
-    const organization = await schoolService(getStore()).createOrganization(name)
-    return reply.code(201).send(OrganizationSchema.parse(serializeDates(organization)))
+    const organization =
+      await schoolService(getStore()).createOrganization(name)
+    return reply
+      .code(201)
+      .send(OrganizationSchema.parse(serializeDates(organization)))
   })
 
   app.post('/organizations/:organizationId/schools', async (request, reply) => {
     const { organizationId } = organizationParams.parse(request.params)
     const { name } = CreateSchoolSchema.parse(request.body)
-    const school = await schoolService(getStore()).createSchool(organizationId, name)
+    const school = await schoolService(getStore()).createSchool(
+      organizationId,
+      name,
+    )
     return reply.code(201).send(SchoolSchema.parse(serializeDates(school)))
   })
 

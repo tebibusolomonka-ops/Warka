@@ -22,6 +22,18 @@
     "typecheck:database": "pnpm --filter @warka/database typecheck",
     "build:database": "pnpm --filter @warka/database build",
     "test:database": "pnpm --filter @warka/database test",
-    "db:deploy": "pnpm --filter @warka/database migrate:deploy"
+    "db:deploy": "pnpm --filter @warka/database migrate:deploy",
+    "test": "pnpm db:generate && pnpm build:shared && pnpm build:database && pnpm -r --if-present test",
+    "typecheck": "pnpm db:generate && pnpm build:shared && pnpm build:database && pnpm -r typecheck",
+    "build": "pnpm db:generate && pnpm -r build",
+    "lint": "eslint apps packages",
+    "format:check": "prettier --check package.json apps packages"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.36.0",
+    "typescript-eslint": "^8.46.0",
+    "globals": "^16.4.0",
+    "eslint": "^9.36.0",
+    "prettier": "^3.6.0"
   }
 }

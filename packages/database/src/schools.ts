@@ -5,11 +5,17 @@ export type CreateSchool = {
   name: string
 }
 
-export function createSchool(database: PrismaClient, data: CreateSchool): Promise<School> {
+export function createSchool(
+  database: PrismaClient,
+  data: CreateSchool,
+): Promise<School> {
   return database.school.create({ data })
 }
 
-export function findSchoolById(database: PrismaClient, id: string): Promise<School | null> {
+export function findSchoolById(
+  database: PrismaClient,
+  id: string,
+): Promise<School | null> {
   return database.school.findUnique({ where: { id } })
 }
 

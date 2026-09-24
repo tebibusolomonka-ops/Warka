@@ -25,13 +25,20 @@ export function prismaSchoolStore(database: PrismaClient): SchoolStore {
     findOrganizationById: (id) => findOrganizationById(database, id),
     createSchool: (data) => createSchool(database, data),
     findSchoolById: (id) => findSchoolById(database, id),
-    listSchoolsForOrganization: (id) => listSchoolsForOrganization(database, id),
+    listSchoolsForOrganization: (id) =>
+      listSchoolsForOrganization(database, id),
   }
 }
 
 export class RecordNotFound extends Error {
-  constructor(public readonly code: 'ORGANIZATION_NOT_FOUND' | 'SCHOOL_NOT_FOUND') {
-    super(code === 'ORGANIZATION_NOT_FOUND' ? 'Organization not found' : 'School not found')
+  constructor(
+    public readonly code: 'ORGANIZATION_NOT_FOUND' | 'SCHOOL_NOT_FOUND',
+  ) {
+    super(
+      code === 'ORGANIZATION_NOT_FOUND'
+        ? 'Organization not found'
+        : 'School not found',
+    )
   }
 }
 
