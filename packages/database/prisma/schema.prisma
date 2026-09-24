@@ -45,6 +45,7 @@ model School {
   staff          SchoolMembership[]
   academicYears  AcademicYear[]
   gradeLevels    GradeLevel[]
+  subjects       Subject[]
   classes        SchoolClass[]
   enrollments    Enrollment[]
 
@@ -222,4 +223,18 @@ model Enrollment {
   @@index([schoolId, gradeLevelId])
   @@index([approvedById])
   @@index([withdrawnById])
+}
+
+model Subject {
+  id        String   @id @default(uuid())
+  schoolId  String
+  name      String
+  code      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  school    School   @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+
+  @@unique([schoolId, name])
+  @@unique([schoolId, code])
+  @@unique([id, schoolId])
 }

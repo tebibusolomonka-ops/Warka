@@ -160,3 +160,13 @@ export type {
   PossibleDuplicate,
   StudentRegistration,
 } from './studentRegistration.js'
+
+export {
+  CreateSubjectSchema,
+  DuplicateSubjectError,
+  createSubject,
+  findSubjectById,
+  listSubjectsForSchool,
+} from './subjects.js'
+export type { CreateSubject } from './subjects.js'
+export type { Subject } from '@prisma/client'
