@@ -12,4 +12,16 @@ model Organization {
   name      String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  schools   School[]
+}
+
+model School {
+  id             String       @id @default(uuid())
+  organizationId String
+  name           String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+
+  @@index([organizationId])
 }
