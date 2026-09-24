@@ -1,6 +1,7 @@
 import { Prisma, type PrismaClient } from '@prisma/client'
 import { z } from 'zod'
 import { findAssessmentById } from './assessments.js'
+import { assertResultSetDraft } from './results.js'
 import {
   canRecordAssessment,
   InvalidMarkContextError,
@@ -129,6 +130,7 @@ export async function validateMarkImport(
   if (!(await canRecordAssessment(database, actorId, assessment))) {
     throw new MarkPermissionError()
   }
+  await assertResultSetDraft(database, assessment)
   let csvRows: CsvRow[]
   try {
     csvRows = parseCsv(csv.replace(/^\uFEFF/, ''))

@@ -19,6 +19,12 @@ enum SchoolRole {
   approver
 }
 
+enum ResultSetStatus {
+  draft
+  pending
+  published
+}
+
 enum EnrollmentStatus {
   draft
   pending
@@ -36,6 +42,8 @@ model Organization {
 }
 
 model School {
+  resultSets          ResultSet[]
+  publishedResults    PublishedResult[]
   id                  String               @id @default(uuid())
   organizationId      String
   name                String
@@ -58,6 +66,9 @@ model School {
 }
 
 model User {
+  submittedResultSets     ResultSet[]              @relation("ResultSetSubmittedBy")
+  publishedResultSets     ResultSet[]              @relation("ResultSetPublishedBy")
+  resultCorrections       ResultCorrection[]
   id                      String                   @id @default(uuid())
   email                   String                   @unique
   displayName             String
@@ -120,6 +131,7 @@ model Session {
 }
 
 model AcademicYear {
+  resultSets          ResultSet[]
   id                  String               @id @default(uuid())
   schoolId            String
   name                String
@@ -154,6 +166,7 @@ model GradeLevel {
 }
 
 model SchoolClass {
+  resultSets          ResultSet[]
   id                  String               @id @default(uuid())
   schoolId            String
   academicYearId      String
@@ -175,6 +188,7 @@ model SchoolClass {
 }
 
 model Student {
+  publishedResults PublishedResult[]
   id               String            @id @default(uuid())
   studentReference String            @unique
   givenName        String
@@ -211,27 +225,28 @@ model StudentGuardian {
 }
 
 model Enrollment {
-  id             String           @id @default(uuid())
-  studentId      String
-  schoolId       String
-  academicYearId String
-  gradeLevelId   String
-  schoolClassId  String?
-  status         EnrollmentStatus @default(draft)
-  approvedAt     DateTime?
-  approvedById   String?
-  withdrawnAt    DateTime?
-  withdrawnById  String?
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  student        Student          @relation(fields: [studentId], references: [id], onDelete: Restrict)
-  school         School           @relation(fields: [schoolId], references: [id], onDelete: Restrict)
-  academicYear   AcademicYear     @relation(fields: [academicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
-  gradeLevel     GradeLevel       @relation(fields: [gradeLevelId, schoolId], references: [id, schoolId], onDelete: Restrict)
-  schoolClass    SchoolClass?     @relation(fields: [schoolClassId, schoolId], references: [id, schoolId], onDelete: Restrict)
-  approvedBy     User?            @relation("EnrollmentApprovedBy", fields: [approvedById], references: [id], onDelete: Restrict)
-  withdrawnBy    User?            @relation("EnrollmentWithdrawnBy", fields: [withdrawnById], references: [id], onDelete: Restrict)
-  marks          Mark[]
+  publishedResults PublishedResult[]
+  id               String            @id @default(uuid())
+  studentId        String
+  schoolId         String
+  academicYearId   String
+  gradeLevelId     String
+  schoolClassId    String?
+  status           EnrollmentStatus  @default(draft)
+  approvedAt       DateTime?
+  approvedById     String?
+  withdrawnAt      DateTime?
+  withdrawnById    String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  student          Student           @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  school           School            @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  academicYear     AcademicYear      @relation(fields: [academicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  gradeLevel       GradeLevel        @relation(fields: [gradeLevelId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  schoolClass      SchoolClass?      @relation(fields: [schoolClassId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  approvedBy       User?             @relation("EnrollmentApprovedBy", fields: [approvedById], references: [id], onDelete: Restrict)
+  withdrawnBy      User?             @relation("EnrollmentWithdrawnBy", fields: [withdrawnById], references: [id], onDelete: Restrict)
+  marks            Mark[]
 
   @@unique([studentId, schoolId, academicYearId])
   @@unique([id, schoolId, studentId])
@@ -242,6 +257,7 @@ model Enrollment {
 }
 
 model Subject {
+  resultSets          ResultSet[]
   id                  String               @id @default(uuid())
   schoolId            String
   name                String
@@ -278,6 +294,7 @@ model TeachingAssignment {
 }
 
 model GradingPeriod {
+  resultSets     ResultSet[]
   id             String       @id @default(uuid())
   schoolId       String
   academicYearId String
@@ -361,4 +378,71 @@ model GradeBand {
   @@unique([gradingSchemeId, label])
   @@unique([gradingSchemeId, minimumPercentage])
   @@index([gradingSchemeId, minimumPercentage])
+}
+
+model ResultSet {
+  id              String            @id @default(uuid())
+  schoolId        String
+  academicYearId  String
+  gradingPeriodId String
+  schoolClassId   String
+  subjectId       String
+  status          ResultSetStatus   @default(draft)
+  submittedAt     DateTime?
+  submittedById   String?
+  publishedAt     DateTime?
+  publishedById   String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  school          School            @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  academicYear    AcademicYear      @relation(fields: [academicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  gradingPeriod   GradingPeriod     @relation(fields: [gradingPeriodId, schoolId, academicYearId], references: [id, schoolId, academicYearId], onDelete: Restrict)
+  schoolClass     SchoolClass       @relation(fields: [schoolClassId, schoolId, academicYearId], references: [id, schoolId, academicYearId], onDelete: Restrict)
+  subject         Subject           @relation(fields: [subjectId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  submittedBy     User?             @relation("ResultSetSubmittedBy", fields: [submittedById], references: [id], onDelete: Restrict)
+  publishedBy     User?             @relation("ResultSetPublishedBy", fields: [publishedById], references: [id], onDelete: Restrict)
+  results         PublishedResult[]
+
+  @@unique([schoolId, academicYearId, gradingPeriodId, schoolClassId, subjectId], map: "ResultSet_context_key")
+  @@unique([id, schoolId])
+  @@index([schoolId, status])
+}
+
+model PublishedResult {
+  id                String             @id @default(uuid())
+  schoolId          String
+  resultSetId       String
+  studentId         String
+  enrollmentId      String
+  percentage        Decimal            @db.Decimal(5, 2)
+  gradeLabel        String
+  currentPercentage Decimal            @db.Decimal(5, 2)
+  currentGradeLabel String
+  createdAt         DateTime           @default(now())
+  school            School             @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  resultSet         ResultSet          @relation(fields: [resultSetId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  student           Student            @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  enrollment        Enrollment         @relation(fields: [enrollmentId, schoolId, studentId], references: [id, schoolId, studentId], onDelete: Restrict)
+  corrections       ResultCorrection[]
+
+  @@unique([resultSetId, enrollmentId])
+  @@unique([id, schoolId])
+  @@index([schoolId, studentId])
+}
+
+model ResultCorrection {
+  id                 String          @id @default(uuid())
+  schoolId           String
+  publishedResultId  String
+  previousPercentage Decimal         @db.Decimal(5, 2)
+  previousGradeLabel String
+  newPercentage      Decimal         @db.Decimal(5, 2)
+  newGradeLabel      String
+  reason             String
+  actorId            String
+  effectiveAt        DateTime        @default(now())
+  publishedResult    PublishedResult @relation(fields: [publishedResultId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  actor              User            @relation(fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([schoolId, publishedResultId, effectiveAt])
 }

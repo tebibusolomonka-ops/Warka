@@ -244,3 +244,24 @@ export {
 } from './grading.js'
 export type { SaveGradingScheme, CalculatedResult } from './grading.js'
 export type { GradingScheme, GradeBand } from '@prisma/client'
+export {
+  ResultContextSchema,
+  assertResultSetDraft,
+  InvalidResultContextError,
+  ResultPermissionError,
+  ResultStateError,
+  IncompleteResultsError,
+  previewResults,
+  submitResults,
+  publishResults,
+  correctPublishedResult,
+  listPendingResultSets,
+  listResultCorrections,
+} from './results.js'
+export type { ResultContext } from './results.js'
+export type {
+  ResultSet,
+  PublishedResult,
+  ResultCorrection,
+  ResultSetStatus,
+} from '@prisma/client'

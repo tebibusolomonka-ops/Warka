@@ -9,6 +9,17 @@ import { createSchoolClass } from './schoolClasses.js'
 import { createSubject } from './subjects.js'
 import { createGradingPeriod } from './gradingPeriods.js'
 import { createAssessment } from './assessments.js'
+import { saveGradingScheme } from './grading.js'
+import {
+  correctPublishedResult,
+  IncompleteResultsError,
+  listResultCorrections,
+  previewResults,
+  publishResults,
+  ResultPermissionError,
+  ResultStateError,
+  submitResults,
+} from './results.js'
 import { createStudent } from './students.js'
 import {
   approveEnrollment,
@@ -69,11 +80,21 @@ describe.skipIf(!database)('student marks in PostgreSQL', () => {
       email: randomUUID() + '@example.test',
       displayName: 'Test Registrar',
     })
+    const approver = await createUser(database!, {
+      email: randomUUID() + '@example.test',
+      displayName: 'Test Approver',
+    })
     const otherTeacher = await createUser(database!, {
       email: randomUUID() + '@example.test',
       displayName: 'Other Teacher',
     })
-    const users = [teacher.id, administrator.id, registrar.id, otherTeacher.id]
+    const users = [
+      teacher.id,
+      administrator.id,
+      registrar.id,
+      approver.id,
+      otherTeacher.id,
+    ]
     const student = await createStudent(database!, { givenName: 'Synthetic A' })
     const secondStudent = await createStudent(database!, {
       givenName: 'Synthetic B',
@@ -149,6 +170,11 @@ describe.skipIf(!database)('student marks in PostgreSQL', () => {
         userId: registrar.id,
         schoolId: school.id,
         role: 'registrar',
+      })
+      await assignUserToSchool(database!, {
+        userId: approver.id,
+        schoolId: school.id,
+        role: 'approver',
       })
       await assignUserToSchool(database!, {
         userId: otherTeacher.id,
@@ -333,7 +359,143 @@ describe.skipIf(!database)('student marks in PostgreSQL', () => {
       expect(
         await getMarksForAssessment(database!, otherSchool.id, assessment.id),
       ).toEqual([])
+      await saveGradingScheme(database!, {
+        schoolId: school.id,
+        bands: [
+          { label: 'Upper', minimumPercentage: '80' },
+          { label: 'Lower', minimumPercentage: '0' },
+        ],
+      })
+      const context = {
+        schoolId: school.id,
+        academicYearId: year.id,
+        gradingPeriodId: period.id,
+        schoolClassId: firstClass.id,
+        subjectId: subject.id,
+      }
+      await expect(
+        publishResults(database!, approver.id, school.id, randomUUID()),
+      ).rejects.toThrow()
+      const preview = await previewResults(database!, teacher.id, context)
+      expect(preview.complete).toBe(true)
+      expect(preview.rows[0]!.calculation.status).toBe('ready')
+      const pending = await submitResults(database!, teacher.id, context)
+      expect(pending.status).toBe('pending')
+      expect(pending.submittedById).toBe(teacher.id)
+      await expect(
+        submitResults(database!, teacher.id, context),
+      ).rejects.toBeInstanceOf(ResultStateError)
+      await expect(
+        updateDraftMark(database!, teacher.id, school.id, mark.id, '10'),
+      ).rejects.toBeInstanceOf(ResultStateError)
+      await expect(
+        applyMarkImport(
+          database!,
+          teacher.id,
+          school.id,
+          assessment.id,
+          validCsv,
+        ),
+      ).rejects.toBeInstanceOf(ResultStateError)
+      await expect(
+        publishResults(database!, teacher.id, school.id, pending.id),
+      ).rejects.toBeInstanceOf(ResultPermissionError)
+      await expect(
+        publishResults(database!, registrar.id, school.id, pending.id),
+      ).rejects.toBeInstanceOf(ResultPermissionError)
+      await expect(
+        publishResults(database!, otherTeacher.id, otherSchool.id, pending.id),
+      ).rejects.toThrow()
+      await database!.mark.delete({ where: { id: maximum.id } })
+      await expect(
+        publishResults(database!, approver.id, school.id, pending.id),
+      ).rejects.toBeInstanceOf(IncompleteResultsError)
+      await database!.mark.create({
+        data: {
+          schoolId: school.id,
+          studentId: student.id,
+          enrollmentId: firstEnrollment.id,
+          assessmentId: finalAssessment.id,
+          score: '100',
+          recordedById: administrator.id,
+        },
+      })
+      const published = await publishResults(
+        database!,
+        approver.id,
+        school.id,
+        pending.id,
+      )
+      expect(published.status).toBe('published')
+      expect(published.publishedById).toBe(approver.id)
+      await expect(
+        publishResults(database!, approver.id, school.id, pending.id),
+      ).rejects.toBeInstanceOf(ResultStateError)
+      const snapshot = await database!.publishedResult.findFirstOrThrow({
+        where: { resultSetId: pending.id },
+      })
+      expect(snapshot.percentage.toString()).toBe('83.92')
+      await database!.assessment.update({
+        where: { id: finalAssessment.id },
+        data: { maximumScore: '200' },
+      })
+      const stable = await database!.publishedResult.findUniqueOrThrow({
+        where: { id: snapshot.id },
+      })
+      expect(stable.percentage.toString()).toBe(snapshot.percentage.toString())
+      await expect(
+        correctPublishedResult(
+          database!,
+          teacher.id,
+          school.id,
+          snapshot.id,
+          '88',
+          'Verified correction',
+        ),
+      ).rejects.toBeInstanceOf(ResultPermissionError)
+      const correction = await correctPublishedResult(
+        database!,
+        approver.id,
+        school.id,
+        snapshot.id,
+        '88',
+        'Verified correction',
+      )
+      expect(correction.previousPercentage.toString()).toBe(
+        snapshot.percentage.toString(),
+      )
+      expect(correction.newGradeLabel).toBe('Upper')
+      const corrected = await database!.publishedResult.findUniqueOrThrow({
+        where: { id: snapshot.id },
+      })
+      expect(corrected.percentage.toString()).toBe(
+        snapshot.percentage.toString(),
+      )
+      expect(corrected.currentPercentage.toString()).toBe('88')
+      expect(
+        await listResultCorrections(
+          database!,
+          approver.id,
+          school.id,
+          snapshot.id,
+        ),
+      ).toHaveLength(1)
     } finally {
+      await database!.resultCorrection.deleteMany({
+        where: { schoolId: { in: schools } },
+      })
+      await database!.publishedResult.deleteMany({
+        where: { schoolId: { in: schools } },
+      })
+      await database!.resultSet.deleteMany({
+        where: { schoolId: { in: schools } },
+      })
+      await database!.gradeBand.deleteMany({
+        where: { gradingScheme: { schoolId: { in: schools } } },
+      })
+      await database!.gradingScheme.deleteMany({
+        where: { schoolId: { in: schools } },
+      })
       await database!.mark.deleteMany({ where: { schoolId: { in: schools } } })
       await database!.teachingAssignment.deleteMany({
         where: { schoolId: { in: schools } },

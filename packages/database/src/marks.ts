@@ -11,6 +11,7 @@ import { findEnrollmentById } from './enrollments.js'
 import { hasOrganizationAdminRole } from './organizationMemberships.js'
 import { findSchoolMembership } from './schoolMemberships.js'
 import { mayManageClassSubject } from './teachingAssignments.js'
+import { assertResultSetDraft } from './results.js'
 
 export const RecordMarkSchema = z.object({
   schoolId: z.uuid(),
@@ -110,6 +111,7 @@ async function validMarkContext(
   if (!(await canRecordAssessment(database, actorId, assessment))) {
     throw new MarkPermissionError()
   }
+  await assertResultSetDraft(database, assessment)
   const score = new Prisma.Decimal(data.score)
   if (score.lt(0) || score.gt(assessment.maximumScore)) {
     throw new InvalidMarkScoreError()
