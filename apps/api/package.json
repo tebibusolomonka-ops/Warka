@@ -12,7 +12,9 @@
   },
   "dependencies": {
     "fastify": "^5.6.0",
-    "@warka/shared": "workspace:*"
+    "@warka/shared": "workspace:*",
+    "@warka/database": "workspace:*",
+    "zod": "^4.0.0"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

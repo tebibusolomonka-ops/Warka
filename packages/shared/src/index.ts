@@ -5,3 +5,36 @@ export const HealthResponseSchema = z.object({
 })
 
 export type HealthResponse = z.infer<typeof HealthResponseSchema>
+
+export const NameSchema = z.string().trim().min(1).max(200)
+
+export const CreateOrganizationSchema = z.object({
+  name: NameSchema,
+})
+
+export const CreateSchoolSchema = z.object({
+  name: NameSchema,
+})
+
+export const OrganizationSchema = z.object({
+  id: z.uuid(),
+  name: z.string(),
+  createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
+})
+
+export const SchoolSchema = OrganizationSchema.extend({
+  organizationId: z.uuid(),
+})
+
+export const SchoolsResponseSchema = z.array(SchoolSchema)
+
+export const ErrorResponseSchema = z.object({
+  error: z.object({
+    code: z.string(),
+    message: z.string(),
+  }),
+})
+
+export type Organization = z.infer<typeof OrganizationSchema>
+export type School = z.infer<typeof SchoolSchema>
