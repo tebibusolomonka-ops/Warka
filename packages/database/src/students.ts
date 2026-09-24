@@ -14,8 +14,10 @@ export function generateStudentReference(): string {
   return 'WKA-' + randomBytes(10).toString('hex').toUpperCase()
 }
 
+type StudentStore = Pick<PrismaClient, 'student'>
+
 export async function createStudent(
-  database: PrismaClient,
+  database: StudentStore,
   input: CreateStudent,
 ): Promise<Student> {
   const student = CreateStudentSchema.parse(input)
@@ -48,14 +50,14 @@ export async function createStudent(
 }
 
 export function findStudentById(
-  database: PrismaClient,
+  database: StudentStore,
   id: string,
 ): Promise<Student | null> {
   return database.student.findUnique({ where: { id } })
 }
 
 export function findStudentByReference(
-  database: PrismaClient,
+  database: StudentStore,
   studentReference: string,
 ): Promise<Student | null> {
   return database.student.findUnique({ where: { studentReference } })

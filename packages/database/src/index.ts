@@ -151,3 +151,12 @@ export {
 } from './enrollments.js'
 export type { CreateEnrollment, EnrollmentAction } from './enrollments.js'
 export type { Enrollment, EnrollmentStatus } from '@prisma/client'
+
+export {
+  findPossibleDuplicates,
+  registerStudentRecord,
+} from './studentRegistration.js'
+export type {
+  PossibleDuplicate,
+  StudentRegistration,
+} from './studentRegistration.js'
