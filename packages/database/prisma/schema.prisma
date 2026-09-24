@@ -147,11 +147,35 @@ model SchoolClass {
 }
 
 model Student {
-  id               String    @id @default(uuid())
-  studentReference String    @unique
+  id               String            @id @default(uuid())
+  studentReference String            @unique
   givenName        String
   familyName       String?
-  dateOfBirth      DateTime? @db.Date
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  dateOfBirth      DateTime?         @db.Date
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  guardians        StudentGuardian[]
+}
+
+model Guardian {
+  id        String            @id @default(uuid())
+  name      String
+  phone     String?
+  email     String?
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  students  StudentGuardian[]
+}
+
+model StudentGuardian {
+  studentId    String
+  guardianId   String
+  relationship String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  student      Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  guardian     Guardian @relation(fields: [guardianId], references: [id], onDelete: Cascade)
+
+  @@id([studentId, guardianId])
+  @@index([guardianId])
 }

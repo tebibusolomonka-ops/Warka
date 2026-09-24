@@ -118,3 +118,20 @@ export {
 } from './students.js'
 export type { CreateStudent } from './students.js'
 export type { Student } from '@prisma/client'
+
+export {
+  CreateGuardianSchema,
+  LinkGuardianSchema,
+  DuplicateGuardianLinkError,
+  createGuardian,
+  linkGuardianToStudent,
+  listGuardiansForStudent,
+  listStudentsForGuardian,
+} from './guardians.js'
+export type {
+  CreateGuardian,
+  LinkGuardian,
+  GuardianForStudent,
+  StudentForGuardian,
+} from './guardians.js'
+export type { Guardian, StudentGuardian } from '@prisma/client'
