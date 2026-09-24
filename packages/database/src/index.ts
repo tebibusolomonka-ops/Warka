@@ -30,3 +30,12 @@ export {
 } from './schools.js'
 export type { CreateSchool } from './schools.js'
 export type { Organization, School } from '@prisma/client'
+export {
+  createUser,
+  findUserById,
+  findUserByEmail,
+  normalizeEmail,
+  DuplicateEmailError,
+} from './users.js'
+export type { CreateUser } from './users.js'
+export type { User } from '@prisma/client'
