@@ -20,3 +20,7 @@ Set `TEST_DATABASE_URL` to the migrated `warka_test` database and run `pnpm db:t
 ## School directory
 
 The web directory stores the selected organization ID in browser storage for local use. Create an organization in the page or enter an existing ID, then add schools under it. This is a development workflow; it does not provide authentication or organization discovery.
+
+## Initial owner
+
+Set `DATABASE_URL` to a migrated database and supply a strong `WARKA_OWNER_PASSWORD` in the operator shell. Run `pnpm auth:bootstrap --email <email> --display-name "<name>" --organization "<organization>"`. Remove the password environment variable afterward. The command creates one user, password credential, organization, and owner membership in a transaction. It rejects an existing email or organization name.

@@ -67,3 +67,7 @@ export type {
   StaffAssignment,
 } from './schoolMemberships.js'
 export type { SchoolMembership, SchoolRole } from '@prisma/client'
+export {
+  savePasswordHash,
+  findPasswordHashForUser,
+} from './passwordCredentials.js'

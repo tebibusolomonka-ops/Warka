@@ -38,3 +38,10 @@ export const ErrorResponseSchema = z.object({
 
 export type Organization = z.infer<typeof OrganizationSchema>
 export type School = z.infer<typeof SchoolSchema>
+
+export const LoginCredentialsSchema = z.object({
+  email: z.string().trim().toLowerCase().pipe(z.email()),
+  password: z.string().min(1).max(1024),
+})
+
+export type LoginCredentials = z.infer<typeof LoginCredentialsSchema>

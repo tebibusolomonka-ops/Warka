@@ -31,7 +31,11 @@
     "db:up": "docker compose up -d --wait",
     "db:down": "docker compose down",
     "db:migrate": "pnpm db:deploy",
-    "db:test": "pnpm db:generate && pnpm test:database"
+    "db:test": "pnpm db:generate && pnpm test:database",
+    "auth:bootstrap": "pnpm db:generate && pnpm build:shared && pnpm build:database && pnpm --filter @warka/auth bootstrap",
+    "build:auth": "pnpm build:shared && pnpm build:database && pnpm --filter @warka/auth build",
+    "typecheck:auth": "pnpm build:shared && pnpm build:database && pnpm --filter @warka/auth typecheck",
+    "test:auth": "pnpm --filter @warka/auth test"
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",
