@@ -17,7 +17,7 @@ export function normalizeEmail(email: string): string {
 }
 
 export async function createUser(
-  database: PrismaClient,
+  database: Pick<PrismaClient, 'user'>,
   data: CreateUser,
 ): Promise<User> {
   try {

@@ -14,6 +14,7 @@ import type { SchoolAccess } from './schoolAccess.js'
 import type { SchoolStore } from './schoolService.js'
 import type { StudentService } from './studentService.js'
 import type { StudentOptionsService } from './studentOptionsService.js'
+import type { StudentAccountService } from './studentAccountService.js'
 
 const school = {
   id: randomUUID(),
@@ -164,14 +165,80 @@ function testApp() {
       classes: [],
     }),
   }
+  const studentAccounts: StudentAccountService = {
+    create: vi
+      .fn()
+      .mockResolvedValue({
+        id: randomUUID(),
+        email: 'student@example.test',
+        displayName: 'Student',
+        mustChangePassword: true,
+      }),
+  }
   return {
-    app: buildApp({ auth, store, access, students, studentOptions }),
+    app: buildApp({
+      auth,
+      store,
+      access,
+      students,
+      studentOptions,
+      studentAccounts,
+    }),
+    studentAccounts,
     students,
     studentOptions,
   }
 }
 
 describe('student routes', () => {
+  it('provisions only for authorized school staff and never returns the initial password', async () => {
+    const { app, studentAccounts } = testApp()
+    const payload = {
+      email: 'student@example.test',
+      displayName: 'Student',
+      initialPassword: 'initial password',
+    }
+    try {
+      const url = `/schools/${school.id}/students/${student.id}/access`
+      const anonymous = await app.inject({ method: 'POST', url, payload })
+      expect(anonymous.statusCode).toBe(401)
+      for (const role of ['teacher', 'approver']) {
+        const denied = await app.inject({
+          method: 'POST',
+          url,
+          headers: cookie(role),
+          payload,
+        })
+        expect(denied.statusCode).toBe(404)
+      }
+      const other = await app.inject({
+        method: 'POST',
+        url: `/schools/${otherSchool.id}/students/${student.id}/access`,
+        headers: cookie('registrar'),
+        payload,
+      })
+      expect(other.statusCode).toBe(404)
+      const allowed = await app.inject({
+        method: 'POST',
+        url,
+        headers: cookie('registrar'),
+        payload,
+      })
+      expect(allowed.statusCode).toBe(201)
+      expect(allowed.json()).toMatchObject({
+        email: payload.email,
+        mustChangePassword: true,
+      })
+      expect(allowed.body).not.toContain(payload.initialPassword)
+      expect(studentAccounts.create).toHaveBeenCalledWith(
+        school.id,
+        student.id,
+        payload,
+      )
+    } finally {
+      await app.close()
+    }
+  })
   it('requires authentication on every route', async () => {
     const { app } = testApp()
     try {

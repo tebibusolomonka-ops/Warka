@@ -20,6 +20,10 @@ import { authenticatedUser } from './authenticateRequest.js'
 import type { SchoolAccess } from './schoolAccess.js'
 import { RecordNotFound, type SchoolStore } from './schoolService.js'
 import type { StudentService } from './studentService.js'
+import {
+  ProvisionStudentAccountSchema,
+  type StudentAccountService,
+} from './studentAccountService.js'
 import type { StudentOptionsService } from './studentOptionsService.js'
 
 const schoolParams = z.object({ schoolId: z.uuid() })
@@ -88,6 +92,7 @@ export function registerStudentRoutes(
   getStore: () => SchoolStore,
   getAccess: () => SchoolAccess,
   getStudents: () => StudentService,
+  getStudentAccounts: () => StudentAccountService,
   getOptions: () => StudentOptionsService,
   authenticate: preHandlerHookHandler,
 ) {
@@ -137,6 +142,20 @@ export function registerStudentRoutes(
           },
         }),
       )
+    },
+  )
+
+  app.post(
+    '/schools/:schoolId/students/:studentId/access',
+    { preHandler: authenticate },
+    async (request, reply) => {
+      const user = authenticatedUser(request)
+      const { schoolId, studentId } = studentParams.parse(request.params)
+      await requireSchool(user.id, schoolId)
+      const input = ProvisionStudentAccountSchema.parse(request.body)
+      return reply
+        .code(201)
+        .send(await getStudentAccounts().create(schoolId, studentId, input))
     },
   )
 

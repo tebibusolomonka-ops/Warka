@@ -40,6 +40,12 @@ import { registerSchoolRoutes } from './schoolRoutes.js'
 import { prismaStudentService, type StudentService } from './studentService.js'
 import { registerStudentRoutes } from './studentRoutes.js'
 import {
+  prismaStudentAccountService,
+  StudentAccountConflictError,
+  StudentEnrollmentNotFoundError,
+  type StudentAccountService,
+} from './studentAccountService.js'
+import {
   prismaStudentOptionsService,
   type StudentOptionsService,
 } from './studentOptionsService.js'
@@ -61,6 +67,7 @@ export function buildApp(
     auth?: AuthService
     access?: SchoolAccess
     students?: StudentService
+    studentAccounts?: StudentAccountService
     studentOptions?: StudentOptionsService
     enrollments?: EnrollmentService
     academic?: AcademicService
@@ -76,6 +83,8 @@ export function buildApp(
   const getAccess = () => options.access ?? createSchoolAccess(getDatabase())
   const getStudents = () =>
     options.students ?? prismaStudentService(getDatabase())
+  const getStudentAccounts = () =>
+    options.studentAccounts ?? prismaStudentAccountService(getDatabase())
   const getStudentOptions = () =>
     options.studentOptions ?? prismaStudentOptionsService(getDatabase())
   const getEnrollments = () =>
@@ -98,6 +107,7 @@ export function buildApp(
     getStore,
     getAccess,
     getStudents,
+    getStudentAccounts,
     getStudentOptions,
     authenticate,
   )
@@ -137,6 +147,20 @@ export function buildApp(
           error: { code: 'INVALID_REQUEST', message: 'Invalid request data' },
         }),
       )
+    }
+    if (error instanceof StudentAccountConflictError) {
+      return reply
+        .code(409)
+        .send({
+          error: { code: 'STUDENT_ACCOUNT_CONFLICT', message: error.message },
+        })
+    }
+    if (error instanceof StudentEnrollmentNotFoundError) {
+      return reply
+        .code(404)
+        .send({
+          error: { code: 'STUDENT_NOT_FOUND', message: 'Student not found' },
+        })
     }
     if (error instanceof RecordNotFound) {
       return reply.code(404).send(
