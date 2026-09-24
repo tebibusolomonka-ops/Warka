@@ -44,6 +44,7 @@ model Organization {
 model School {
   resultSets          ResultSet[]
   publishedResults    PublishedResult[]
+  learningMaterials   LearningMaterial[]
   id                  String               @id @default(uuid())
   organizationId      String
   name                String
@@ -69,6 +70,7 @@ model User {
   submittedResultSets     ResultSet[]              @relation("ResultSetSubmittedBy")
   publishedResultSets     ResultSet[]              @relation("ResultSetPublishedBy")
   resultCorrections       ResultCorrection[]
+  learningMaterials       LearningMaterial[]
   id                      String                   @id @default(uuid())
   email                   String                   @unique
   displayName             String
@@ -134,6 +136,7 @@ model Session {
 
 model AcademicYear {
   resultSets          ResultSet[]
+  learningMaterials   LearningMaterial[]
   id                  String               @id @default(uuid())
   schoolId            String
   name                String
@@ -169,6 +172,7 @@ model GradeLevel {
 
 model SchoolClass {
   resultSets          ResultSet[]
+  learningMaterials   LearningMaterial[]
   id                  String               @id @default(uuid())
   schoolId            String
   academicYearId      String
@@ -271,6 +275,7 @@ model Enrollment {
 
 model Subject {
   resultSets          ResultSet[]
+  learningMaterials   LearningMaterial[]
   id                  String               @id @default(uuid())
   schoolId            String
   name                String
@@ -284,6 +289,30 @@ model Subject {
   @@unique([schoolId, name])
   @@unique([schoolId, code])
   @@unique([id, schoolId])
+}
+
+model LearningMaterial {
+  id               String    @id @default(uuid())
+  schoolId         String
+  academicYearId   String
+  schoolClassId    String
+  subjectId        String
+  title            String
+  description      String?
+  resourceType     String
+  resourceLocation String
+  publishedAt      DateTime?
+  createdById      String
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  school           School    @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  academicYear     AcademicYear @relation(fields: [academicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  schoolClass      SchoolClass @relation(fields: [schoolClassId, schoolId, academicYearId], references: [id, schoolId, academicYearId], onDelete: Restrict)
+  subject          Subject @relation(fields: [subjectId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  createdBy        User @relation(fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@index([schoolId, academicYearId, schoolClassId, publishedAt])
+  @@index([createdById, schoolId])
 }
 
 model TeachingAssignment {

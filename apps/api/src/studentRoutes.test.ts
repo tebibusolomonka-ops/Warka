@@ -166,14 +166,12 @@ function testApp() {
     }),
   }
   const studentAccounts: StudentAccountService = {
-    create: vi
-      .fn()
-      .mockResolvedValue({
-        id: randomUUID(),
-        email: 'student@example.test',
-        displayName: 'Student',
-        mustChangePassword: true,
-      }),
+    create: vi.fn().mockResolvedValue({
+      id: randomUUID(),
+      email: 'student@example.test',
+      displayName: 'Student',
+      mustChangePassword: true,
+    }),
   }
   return {
     app: buildApp({

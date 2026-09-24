@@ -46,6 +46,12 @@ import {
 } from './studentPortalService.js'
 import { registerStudentPortalRoutes } from './studentPortalRoutes.js'
 import {
+  prismaLearningMaterialService,
+  LearningMaterialAccessError,
+  type LearningMaterialService,
+} from './learningMaterialService.js'
+import { registerLearningMaterialRoutes } from './learningMaterialRoutes.js'
+import {
   prismaStudentAccountService,
   StudentAccountConflictError,
   StudentEnrollmentNotFoundError,
@@ -75,6 +81,7 @@ export function buildApp(
     students?: StudentService
     studentAccounts?: StudentAccountService
     studentPortal?: StudentPortalService
+    materials?: LearningMaterialService
     studentOptions?: StudentOptionsService
     enrollments?: EnrollmentService
     academic?: AcademicService
@@ -90,6 +97,8 @@ export function buildApp(
   const getAccess = () => options.access ?? createSchoolAccess(getDatabase())
   const getStudents = () =>
     options.students ?? prismaStudentService(getDatabase())
+  const getMaterials = () =>
+    options.materials ?? prismaLearningMaterialService(getDatabase())
   const getStudentPortal = () =>
     options.studentPortal ?? prismaStudentPortalService(getDatabase())
   const getStudentAccounts = () =>
@@ -121,6 +130,7 @@ export function buildApp(
     authenticate,
   )
   registerStudentPortalRoutes(app, getStudentPortal, authenticate)
+  registerLearningMaterialRoutes(app, getMaterials, authenticate)
   registerAcademicRoutes(app, getAcademic, authenticate)
   registerEnrollmentRoutes(
     app,
@@ -158,12 +168,15 @@ export function buildApp(
         }),
       )
     }
-    if (error instanceof StudentPortalAccessError) {
+    if (error instanceof LearningMaterialAccessError) {
       return reply
-        .code(403)
-        .send({
-          error: { code: 'STUDENT_ACCESS_REQUIRED', message: error.message },
-        })
+        .code(404)
+        .send({ error: { code: 'MATERIAL_NOT_FOUND', message: error.message } })
+    }
+    if (error instanceof StudentPortalAccessError) {
+      return reply.code(403).send({
+        error: { code: 'STUDENT_ACCESS_REQUIRED', message: error.message },
+      })
     }
     if (error instanceof StudentAccountConflictError) {
       return reply.code(409).send({
