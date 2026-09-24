@@ -52,6 +52,7 @@ model School {
   gradingPeriods      GradingPeriod[]
   assessments         Assessment[]
   marks               Mark[]
+  gradingScheme       GradingScheme?
 
   @@index([organizationId])
 }
@@ -339,4 +340,25 @@ model Mark {
   @@unique([enrollmentId, assessmentId])
   @@index([schoolId, assessmentId])
   @@index([schoolId, studentId])
+}
+
+model GradingScheme {
+  id        String      @id @default(uuid())
+  schoolId  String      @unique
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  school    School      @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  bands     GradeBand[]
+}
+
+model GradeBand {
+  id                String        @id @default(uuid())
+  gradingSchemeId   String
+  label             String
+  minimumPercentage Decimal       @db.Decimal(5, 2)
+  gradingScheme     GradingScheme @relation(fields: [gradingSchemeId], references: [id], onDelete: Cascade)
+
+  @@unique([gradingSchemeId, label])
+  @@unique([gradingSchemeId, minimumPercentage])
+  @@index([gradingSchemeId, minimumPercentage])
 }

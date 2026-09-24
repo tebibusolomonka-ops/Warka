@@ -234,3 +234,13 @@ export type {
   ImportReview,
   ImportRow,
 } from './markImport.js'
+export {
+  SaveGradingSchemeSchema,
+  InvalidGradingSchemeError,
+  orderedGradeBands,
+  saveGradingScheme,
+  getGradingScheme,
+  calculateResult,
+} from './grading.js'
+export type { SaveGradingScheme, CalculatedResult } from './grading.js'
+export type { GradingScheme, GradeBand } from '@prisma/client'
