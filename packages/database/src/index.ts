@@ -39,3 +39,16 @@ export {
 } from './users.js'
 export type { CreateUser } from './users.js'
 export type { User } from '@prisma/client'
+export {
+  OrganizationRoleSchema,
+  createOrganizationMembership,
+  findOrganizationMembership,
+  listOrganizationsForUser,
+  hasOrganizationAdminRole,
+  DuplicateOrganizationMembershipError,
+} from './organizationMemberships.js'
+export type {
+  CreateOrganizationMembership,
+  OrganizationAccess,
+} from './organizationMemberships.js'
+export type { OrganizationMembership, OrganizationRole } from '@prisma/client'
