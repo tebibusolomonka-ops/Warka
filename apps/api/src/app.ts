@@ -40,6 +40,12 @@ import { registerSchoolRoutes } from './schoolRoutes.js'
 import { prismaStudentService, type StudentService } from './studentService.js'
 import { registerStudentRoutes } from './studentRoutes.js'
 import {
+  prismaStudentPortalService,
+  StudentPortalAccessError,
+  type StudentPortalService,
+} from './studentPortalService.js'
+import { registerStudentPortalRoutes } from './studentPortalRoutes.js'
+import {
   prismaStudentAccountService,
   StudentAccountConflictError,
   StudentEnrollmentNotFoundError,
@@ -68,6 +74,7 @@ export function buildApp(
     access?: SchoolAccess
     students?: StudentService
     studentAccounts?: StudentAccountService
+    studentPortal?: StudentPortalService
     studentOptions?: StudentOptionsService
     enrollments?: EnrollmentService
     academic?: AcademicService
@@ -83,6 +90,8 @@ export function buildApp(
   const getAccess = () => options.access ?? createSchoolAccess(getDatabase())
   const getStudents = () =>
     options.students ?? prismaStudentService(getDatabase())
+  const getStudentPortal = () =>
+    options.studentPortal ?? prismaStudentPortalService(getDatabase())
   const getStudentAccounts = () =>
     options.studentAccounts ?? prismaStudentAccountService(getDatabase())
   const getStudentOptions = () =>
@@ -111,6 +120,7 @@ export function buildApp(
     getStudentOptions,
     authenticate,
   )
+  registerStudentPortalRoutes(app, getStudentPortal, authenticate)
   registerAcademicRoutes(app, getAcademic, authenticate)
   registerEnrollmentRoutes(
     app,
@@ -148,19 +158,22 @@ export function buildApp(
         }),
       )
     }
-    if (error instanceof StudentAccountConflictError) {
+    if (error instanceof StudentPortalAccessError) {
       return reply
-        .code(409)
+        .code(403)
         .send({
-          error: { code: 'STUDENT_ACCOUNT_CONFLICT', message: error.message },
+          error: { code: 'STUDENT_ACCESS_REQUIRED', message: error.message },
         })
     }
+    if (error instanceof StudentAccountConflictError) {
+      return reply.code(409).send({
+        error: { code: 'STUDENT_ACCOUNT_CONFLICT', message: error.message },
+      })
+    }
     if (error instanceof StudentEnrollmentNotFoundError) {
-      return reply
-        .code(404)
-        .send({
-          error: { code: 'STUDENT_NOT_FOUND', message: 'Student not found' },
-        })
+      return reply.code(404).send({
+        error: { code: 'STUDENT_NOT_FOUND', message: 'Student not found' },
+      })
     }
     if (error instanceof RecordNotFound) {
       return reply.code(404).send(
