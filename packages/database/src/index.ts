@@ -89,3 +89,22 @@ export {
 } from './academicYears.js'
 export type { CreateAcademicYear } from './academicYears.js'
 export type { AcademicYear } from '@prisma/client'
+
+export {
+  CreateGradeLevelSchema,
+  DuplicateGradeLevelError,
+  createGradeLevel,
+  listGradeLevelsForSchool,
+} from './gradeLevels.js'
+export type { CreateGradeLevel } from './gradeLevels.js'
+export type { GradeLevel } from '@prisma/client'
+export {
+  CreateSchoolClassSchema,
+  DuplicateSchoolClassError,
+  InvalidClassStructureError,
+  createSchoolClass,
+  findSchoolClassById,
+  listClassesForAcademicYear,
+} from './schoolClasses.js'
+export type { CreateSchoolClass } from './schoolClasses.js'
+export type { SchoolClass } from '@prisma/client'

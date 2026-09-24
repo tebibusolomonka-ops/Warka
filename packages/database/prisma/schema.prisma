@@ -37,6 +37,8 @@ model School {
   organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   staff          SchoolMembership[]
   academicYears  AcademicYear[]
+  gradeLevels    GradeLevel[]
+  classes        SchoolClass[]
 
   @@index([organizationId])
 }
@@ -100,15 +102,46 @@ model Session {
 }
 
 model AcademicYear {
-  id        String   @id @default(uuid())
+  id        String        @id @default(uuid())
   schoolId  String
   name      String
-  startsOn  DateTime @db.Date
-  endsOn    DateTime @db.Date
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  school    School   @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  startsOn  DateTime      @db.Date
+  endsOn    DateTime      @db.Date
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  school    School        @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  classes   SchoolClass[]
 
   @@unique([schoolId, name])
+  @@unique([id, schoolId])
   @@index([schoolId, startsOn])
+}
+
+model GradeLevel {
+  id        String        @id @default(uuid())
+  schoolId  String
+  name      String
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  school    School        @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  classes   SchoolClass[]
+
+  @@unique([schoolId, name])
+  @@unique([id, schoolId])
+}
+
+model SchoolClass {
+  id             String       @id @default(uuid())
+  schoolId       String
+  academicYearId String
+  gradeLevelId   String
+  name           String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  school         School       @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  academicYear   AcademicYear @relation(fields: [academicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  gradeLevel     GradeLevel   @relation(fields: [gradeLevelId, schoolId], references: [id, schoolId], onDelete: Restrict)
+
+  @@unique([schoolId, academicYearId, gradeLevelId, name])
+  @@index([schoolId, gradeLevelId])
 }
