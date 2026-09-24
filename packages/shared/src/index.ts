@@ -8,10 +8,6 @@ export type HealthResponse = z.infer<typeof HealthResponseSchema>
 
 export const NameSchema = z.string().trim().min(1).max(200)
 
-export const CreateOrganizationSchema = z.object({
-  name: NameSchema,
-})
-
 export const CreateSchoolSchema = z.object({
   name: NameSchema,
 })

@@ -23,23 +23,38 @@ h1 {
   margin-bottom: 0.5rem;
 }
 
+.account {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
 form {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: end;
   gap: 0.75rem;
   margin: 1rem 0;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
 }
 
 label {
   font-weight: 600;
 }
 
-input {
+input,
+select {
   padding: 0.55rem;
   border: 1px solid #82958a;
   border-radius: 0.25rem;
   min-width: 14rem;
+  font: inherit;
 }
 
 button {
@@ -49,6 +64,14 @@ button {
   background: #18543d;
   color: white;
   cursor: pointer;
+  font: inherit;
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid #18543d;
+  outline-offset: 2px;
 }
 
 button:disabled {

@@ -7,100 +7,87 @@ import {
   waitFor,
 } from '@testing-library/react'
 import { SchoolDirectory } from './SchoolDirectory'
-import { getSchools, postOrganization, postSchool } from './api'
+import { ApiError, getSchools, postSchool } from './api'
 
-vi.mock('./api', () => ({
-  apiBaseUrl: () => 'http://localhost/api',
-  getSchools: vi.fn(),
-  postOrganization: vi.fn(),
-  postSchool: vi.fn(),
-}))
-
-const organizationId = '123e4567-e89b-42d3-a456-426614174000'
-const schoolId = '123e4567-e89b-42d3-a456-426614174001'
-const now = '2026-09-24T00:00:00.000Z'
-
-beforeEach(() => {
-  window.localStorage.clear()
-  vi.resetAllMocks()
+vi.mock('./api', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./api')>()
+  return { ...actual, getSchools: vi.fn(), postSchool: vi.fn() }
 })
 
+const baseUrl = 'http://localhost:5173/api'
+const organizationId = '123e4567-e89b-42d3-a456-426614174000'
+const now = '2026-09-24T00:00:00.000Z'
+const first = {
+  id: '123e4567-e89b-42d3-a456-426614174001',
+  organizationId,
+  name: 'First school',
+  createdAt: now,
+  updatedAt: now,
+}
+const second = {
+  ...first,
+  id: '123e4567-e89b-42d3-a456-426614174002',
+  name: 'Second school',
+}
+
+beforeEach(() => vi.resetAllMocks())
 afterEach(cleanup)
 
+function directory(canCreate = true, onSessionExpired = vi.fn()) {
+  render(
+    <SchoolDirectory
+      baseUrl={baseUrl}
+      organizationId={organizationId}
+      canCreate={canCreate}
+      onSessionExpired={onSessionExpired}
+    />,
+  )
+  return onSessionExpired
+}
+
 describe('school directory', () => {
-  it('creates an organization and shows an empty directory', async () => {
-    vi.mocked(postOrganization).mockResolvedValue({
-      id: organizationId,
-      name: 'Regional office',
-      createdAt: now,
-      updatedAt: now,
-    })
+  it('shows empty directory and hides creation without administrative access', async () => {
     vi.mocked(getSchools).mockResolvedValue([])
-
-    render(<SchoolDirectory />)
-    fireEvent.change(screen.getByLabelText('New organization name'), {
-      target: { value: ' Regional office ' },
-    })
-    fireEvent.click(screen.getByRole('button', { name: 'Create organization' }))
-
-    await screen.findByText('No schools yet')
-    expect(postOrganization).toHaveBeenCalledWith(
-      'http://localhost/api',
-      'Regional office',
-    )
-    expect(window.localStorage.getItem('warka.organizationId')).toBe(
-      organizationId,
-    )
+    directory(false)
+    await screen.findByText('No schools yet.')
+    expect(screen.queryByRole('button', { name: 'Create school' })).toBeNull()
   })
 
-  it('loads schools and refreshes after creating one', async () => {
-    window.localStorage.setItem('warka.organizationId', organizationId)
-    const first = {
-      id: schoolId,
-      organizationId,
-      name: 'First school',
-      createdAt: now,
-      updatedAt: now,
-    }
-    const second = {
-      ...first,
-      id: '123e4567-e89b-42d3-a456-426614174002',
-      name: 'Second school',
-    }
+  it('loads schools and refreshes after creation', async () => {
     vi.mocked(getSchools)
       .mockResolvedValueOnce([first])
       .mockResolvedValueOnce([first, second])
     vi.mocked(postSchool).mockResolvedValue(second)
-
-    render(<SchoolDirectory />)
+    directory()
     await screen.findByText('First school')
-
     fireEvent.change(screen.getByLabelText('School name'), {
       target: { value: ' Second school ' },
     })
     fireEvent.click(screen.getByRole('button', { name: 'Create school' }))
-
     await screen.findByText('Second school')
     expect(postSchool).toHaveBeenCalledWith(
-      'http://localhost/api',
+      baseUrl,
       organizationId,
       'Second school',
     )
     expect(getSchools).toHaveBeenCalledTimes(2)
   })
 
-  it('shows a request failure and allows changing organizations', async () => {
-    window.localStorage.setItem('warka.organizationId', organizationId)
-    vi.mocked(getSchools).mockRejectedValue(new Error('offline'))
+  it('shows network errors and can retry', async () => {
+    vi.mocked(getSchools)
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockResolvedValueOnce([])
+    directory()
+    await screen.findByText('Could not load schools.')
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }))
+    await screen.findByText('No schools yet.')
+  })
 
-    render(<SchoolDirectory />)
-    await screen.findByRole('alert')
-    expect(screen.getByText('Could not load schools')).toBeTruthy()
-
-    fireEvent.click(screen.getByRole('button', { name: 'Change organization' }))
-    await waitFor(() =>
-      expect(screen.getByLabelText('Organization ID')).toBeTruthy(),
+  it('reports an expired session', async () => {
+    vi.mocked(getSchools).mockRejectedValue(
+      new ApiError('Authentication required', 401, 'UNAUTHENTICATED'),
     )
-    expect(window.localStorage.getItem('warka.organizationId')).toBeNull()
+    const expired = directory()
+    await waitFor(() => expect(expired).toHaveBeenCalledOnce())
   })
 })

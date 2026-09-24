@@ -1,13 +1,23 @@
 import {
   ErrorResponseSchema,
-  HealthResponseSchema,
-  OrganizationSchema,
+  OrganizationsResponseSchema,
   SchoolSchema,
   SchoolsResponseSchema,
-  type HealthResponse,
-  type Organization,
+  UserIdentitySchema,
+  type OrganizationAccess,
   type School,
+  type UserIdentity,
 } from '@warka/shared'
+
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+    readonly code: string,
+  ) {
+    super(message)
+  }
+}
 
 export function apiBaseUrl(value: string | undefined, origin: string): string {
   if (!value?.trim()) {
@@ -18,31 +28,87 @@ export function apiBaseUrl(value: string | undefined, origin: string): string {
   if (
     !['http:', 'https:'].includes(url.protocol) ||
     url.username ||
-    url.password
+    url.password ||
+    url.origin !== origin
   ) {
-    throw new Error('VITE_API_URL must be an HTTP URL without credentials')
+    throw new Error('VITE_API_URL must be a same-origin HTTP URL')
   }
 
   return url.toString().replace(/\/$/, '')
 }
 
-async function responseJson(response: Response): Promise<unknown> {
+async function requestJson(
+  baseUrl: string,
+  path: string,
+  options: RequestInit = {},
+  request: typeof fetch = fetch,
+): Promise<unknown> {
+  const response = await request(baseUrl + path, {
+    ...options,
+    credentials: 'include',
+  })
+
+  if (response.status === 204) {
+    if (!response.ok)
+      throw new ApiError('Request failed', response.status, 'REQUEST_FAILED')
+    return null
+  }
+
   const body: unknown = await response.json()
   if (!response.ok) {
     const parsed = ErrorResponseSchema.safeParse(body)
-    throw new Error(
+    throw new ApiError(
       parsed.success ? parsed.data.error.message : 'Request failed',
+      response.status,
+      parsed.success ? parsed.data.error.code : 'REQUEST_FAILED',
     )
   }
   return body
 }
 
-export async function getHealth(
+export async function getCurrentUser(
   baseUrl: string,
   request: typeof fetch = fetch,
-): Promise<HealthResponse> {
-  const response = await request(`${baseUrl}/health`)
-  return HealthResponseSchema.parse(await responseJson(response))
+): Promise<UserIdentity> {
+  return UserIdentitySchema.parse(
+    await requestJson(baseUrl, '/auth/me', {}, request),
+  )
+}
+
+export async function login(
+  baseUrl: string,
+  email: string,
+  password: string,
+  request: typeof fetch = fetch,
+): Promise<UserIdentity> {
+  return UserIdentitySchema.parse(
+    await requestJson(
+      baseUrl,
+      '/auth/login',
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      },
+      request,
+    ),
+  )
+}
+
+export async function logout(
+  baseUrl: string,
+  request: typeof fetch = fetch,
+): Promise<void> {
+  await requestJson(baseUrl, '/auth/logout', { method: 'POST' }, request)
+}
+
+export async function getOrganizations(
+  baseUrl: string,
+  request: typeof fetch = fetch,
+): Promise<OrganizationAccess[]> {
+  return OrganizationsResponseSchema.parse(
+    await requestJson(baseUrl, '/organizations', {}, request),
+  )
 }
 
 export async function getSchools(
@@ -50,23 +116,14 @@ export async function getSchools(
   organizationId: string,
   request: typeof fetch = fetch,
 ): Promise<School[]> {
-  const response = await request(
-    `${baseUrl}/organizations/${organizationId}/schools`,
+  return SchoolsResponseSchema.parse(
+    await requestJson(
+      baseUrl,
+      '/organizations/' + encodeURIComponent(organizationId) + '/schools',
+      {},
+      request,
+    ),
   )
-  return SchoolsResponseSchema.parse(await responseJson(response))
-}
-
-export async function postOrganization(
-  baseUrl: string,
-  name: string,
-  request: typeof fetch = fetch,
-): Promise<Organization> {
-  const response = await request(`${baseUrl}/organizations`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ name }),
-  })
-  return OrganizationSchema.parse(await responseJson(response))
 }
 
 export async function postSchool(
@@ -75,13 +132,16 @@ export async function postSchool(
   name: string,
   request: typeof fetch = fetch,
 ): Promise<School> {
-  const response = await request(
-    `${baseUrl}/organizations/${organizationId}/schools`,
-    {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ name }),
-    },
+  return SchoolSchema.parse(
+    await requestJson(
+      baseUrl,
+      '/organizations/' + encodeURIComponent(organizationId) + '/schools',
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ name }),
+      },
+      request,
+    ),
   )
-  return SchoolSchema.parse(await responseJson(response))
 }
