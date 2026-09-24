@@ -71,3 +71,11 @@ export {
   savePasswordHash,
   findPasswordHashForUser,
 } from './passwordCredentials.js'
+export {
+  createSessionRecord,
+  findSessionByHash,
+  revokeSessionByHash,
+  revokeSessionsForUser,
+} from './sessions.js'
+export type { CreateSessionRecord } from './sessions.js'
+export type { Session } from '@prisma/client'

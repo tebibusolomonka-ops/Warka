@@ -35,7 +35,7 @@
     "auth:bootstrap": "pnpm db:generate && pnpm build:shared && pnpm build:database && pnpm --filter @warka/auth bootstrap",
     "build:auth": "pnpm build:shared && pnpm build:database && pnpm --filter @warka/auth build",
     "typecheck:auth": "pnpm build:shared && pnpm build:database && pnpm --filter @warka/auth typecheck",
-    "test:auth": "pnpm --filter @warka/auth test"
+    "test:auth": "pnpm build:shared && pnpm build:database && pnpm --filter @warka/auth test"
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",
