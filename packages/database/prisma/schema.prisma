@@ -36,18 +36,19 @@ model Organization {
 }
 
 model School {
-  id             String             @id @default(uuid())
-  organizationId String
-  name           String
-  createdAt      DateTime           @default(now())
-  updatedAt      DateTime           @updatedAt
-  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Restrict)
-  staff          SchoolMembership[]
-  academicYears  AcademicYear[]
-  gradeLevels    GradeLevel[]
-  subjects       Subject[]
-  classes        SchoolClass[]
-  enrollments    Enrollment[]
+  id                  String               @id @default(uuid())
+  organizationId      String
+  name                String
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  organization        Organization         @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  staff               SchoolMembership[]
+  academicYears       AcademicYear[]
+  gradeLevels         GradeLevel[]
+  subjects            Subject[]
+  classes             SchoolClass[]
+  enrollments         Enrollment[]
+  teachingAssignments TeachingAssignment[]
 
   @@index([organizationId])
 }
@@ -64,6 +65,7 @@ model User {
   sessions                Session[]
   approvedEnrollments     Enrollment[]             @relation("EnrollmentApprovedBy")
   withdrawnEnrollments    Enrollment[]             @relation("EnrollmentWithdrawnBy")
+  teachingAssignments     TeachingAssignment[]
 }
 
 model OrganizationMembership {
@@ -113,16 +115,17 @@ model Session {
 }
 
 model AcademicYear {
-  id          String        @id @default(uuid())
-  schoolId    String
-  name        String
-  startsOn    DateTime      @db.Date
-  endsOn      DateTime      @db.Date
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  school      School        @relation(fields: [schoolId], references: [id], onDelete: Restrict)
-  classes     SchoolClass[]
-  enrollments Enrollment[]
+  id                  String               @id @default(uuid())
+  schoolId            String
+  name                String
+  startsOn            DateTime             @db.Date
+  endsOn              DateTime             @db.Date
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  school              School               @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  classes             SchoolClass[]
+  teachingAssignments TeachingAssignment[]
+  enrollments         Enrollment[]
 
   @@unique([schoolId, name])
   @@unique([id, schoolId])
@@ -144,20 +147,22 @@ model GradeLevel {
 }
 
 model SchoolClass {
-  id             String       @id @default(uuid())
-  schoolId       String
-  academicYearId String
-  gradeLevelId   String
-  name           String
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  school         School       @relation(fields: [schoolId], references: [id], onDelete: Restrict)
-  academicYear   AcademicYear @relation(fields: [academicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
-  gradeLevel     GradeLevel   @relation(fields: [gradeLevelId, schoolId], references: [id, schoolId], onDelete: Restrict)
-  enrollments    Enrollment[]
+  id                  String               @id @default(uuid())
+  schoolId            String
+  academicYearId      String
+  gradeLevelId        String
+  name                String
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  school              School               @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  academicYear        AcademicYear         @relation(fields: [academicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  gradeLevel          GradeLevel           @relation(fields: [gradeLevelId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  enrollments         Enrollment[]
+  teachingAssignments TeachingAssignment[]
 
   @@unique([schoolId, academicYearId, gradeLevelId, name])
   @@unique([id, schoolId])
+  @@unique([id, schoolId, academicYearId])
   @@index([schoolId, gradeLevelId])
 }
 
@@ -226,15 +231,36 @@ model Enrollment {
 }
 
 model Subject {
-  id        String   @id @default(uuid())
-  schoolId  String
-  name      String
-  code      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  school    School   @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  id                  String               @id @default(uuid())
+  schoolId            String
+  name                String
+  code                String?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  school              School               @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  teachingAssignments TeachingAssignment[]
 
   @@unique([schoolId, name])
   @@unique([schoolId, code])
   @@unique([id, schoolId])
+}
+
+model TeachingAssignment {
+  id             String       @id @default(uuid())
+  schoolId       String
+  userId         String
+  academicYearId String
+  schoolClassId  String
+  subjectId      String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  school         School       @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Restrict)
+  academicYear   AcademicYear @relation(fields: [academicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  schoolClass    SchoolClass  @relation(fields: [schoolClassId, schoolId, academicYearId], references: [id, schoolId, academicYearId], onDelete: Restrict)
+  subject        Subject      @relation(fields: [subjectId, schoolId], references: [id, schoolId], onDelete: Restrict)
+
+  @@unique([userId, schoolClassId, subjectId, academicYearId])
+  @@index([schoolId, academicYearId, userId])
+  @@index([schoolId, schoolClassId, subjectId])
 }

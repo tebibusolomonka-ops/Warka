@@ -170,3 +170,16 @@ export {
 } from './subjects.js'
 export type { CreateSubject } from './subjects.js'
 export type { Subject } from '@prisma/client'
+
+export {
+  AssignTeacherSchema,
+  InvalidTeachingAssignmentError,
+  DuplicateTeachingAssignmentError,
+  assignTeacher,
+  removeTeachingAssignment,
+  listTeacherAssignments,
+  listClassSubjectAssignments,
+  mayManageClassSubject,
+} from './teachingAssignments.js'
+export type { AssignTeacher } from './teachingAssignments.js'
+export type { TeachingAssignment } from '@prisma/client'
