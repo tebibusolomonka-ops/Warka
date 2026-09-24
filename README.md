@@ -5,3 +5,7 @@ Warka is an education platform for school records and services. This repository 
 ## Development
 
 Use Node.js 24.11.1 and pnpm 11.25.0. Run `pnpm install` from the repository root. Applications and packages will be added as the platform develops.
+
+## Run locally
+
+Run `pnpm dev:api` and `pnpm dev:web` in separate terminals. Copy `apps/web/.env.example` to `apps/web/.env` before starting the web app. The Vite development server proxies `/api` to the API on port 3000. Set `VITE_API_URL` to the deployed API base URL when building for another environment.

@@ -8,13 +8,14 @@
   },
   "scripts": {
     "dev:web": "pnpm --filter @warka/web dev",
-    "build:web": "pnpm --filter @warka/web build",
-    "typecheck:web": "pnpm --filter @warka/web typecheck",
+    "build:web": "pnpm build:shared && pnpm --filter @warka/web build",
+    "typecheck:web": "pnpm typecheck:shared && pnpm --filter @warka/web typecheck",
     "dev:api": "pnpm --filter @warka/api dev",
     "build:api": "pnpm build:shared && pnpm --filter @warka/api build",
     "typecheck:api": "pnpm typecheck:shared && pnpm --filter @warka/api typecheck",
     "test:api": "pnpm --filter @warka/api test",
     "build:shared": "pnpm --filter @warka/shared build",
-    "typecheck:shared": "pnpm --filter @warka/shared typecheck"
+    "typecheck:shared": "pnpm --filter @warka/shared typecheck",
+    "test:web": "pnpm --filter @warka/web test"
   }
 }
