@@ -20,6 +20,8 @@
     "db:generate": "pnpm --filter @warka/database generate",
     "db:validate": "pnpm --filter @warka/database validate",
     "typecheck:database": "pnpm --filter @warka/database typecheck",
-    "build:database": "pnpm --filter @warka/database build"
+    "build:database": "pnpm --filter @warka/database build",
+    "test:database": "pnpm --filter @warka/database test",
+    "db:deploy": "pnpm --filter @warka/database migrate:deploy"
   }
 }

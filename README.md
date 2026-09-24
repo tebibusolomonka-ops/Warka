@@ -13,3 +13,7 @@ Run `pnpm dev:api` and `pnpm dev:web` in separate terminals. Copy `apps/web/.env
 ## Database
 
 Copy `.env.example` to `.env` and set a PostgreSQL connection URL before running database commands. Run `pnpm db:generate` after schema changes. Generated Prisma client files stay in `node_modules`.
+
+## Repository integration tests
+
+Organization repository tests need a separate PostgreSQL database. Apply migrations to it with `pnpm db:deploy` using `DATABASE_URL`, then set `TEST_DATABASE_URL` to that database URL and run `pnpm test:database`. Tests skip when `TEST_DATABASE_URL` is absent. PostgreSQL is not available in this development environment, so the integration test has not run here.

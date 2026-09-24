@@ -16,3 +16,5 @@ export function createDatabaseClient(env: NodeJS.ProcessEnv = process.env): Pris
 }
 
 export type { PrismaClient }
+export { createOrganization, findOrganizationById } from './organizations.js'
+export type { CreateOrganization } from './organizations.js'
