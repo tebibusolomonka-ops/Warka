@@ -61,6 +61,7 @@ export const UserIdentitySchema = z.object({
   id: z.uuid(),
   email: z.email(),
   displayName: z.string(),
+  mustChangePassword: z.boolean().optional(),
 })
 
 export type UserIdentity = z.infer<typeof UserIdentitySchema>

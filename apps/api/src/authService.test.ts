@@ -57,3 +57,85 @@ describe('authentication service', () => {
     expect(await auth.currentUser(login!.token)).toBeNull()
   })
 })
+
+describe('password changes', () => {
+  it('checks the authenticated session, clears the first-login flag, and revokes other sessions', async () => {
+    const user = {
+      id: randomUUID(),
+      email: 'student@example.test',
+      displayName: 'Student',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } satisfies User
+    let passwordHash = await hashPassword('initial password')
+    let mustChangePassword = true
+    const sessions = new Map<string, { user: User; expiresAt: Date }>()
+    const database = {
+      passwordCredential: {
+        findUnique: vi.fn().mockImplementation(async () => ({
+          passwordHash,
+          mustChangePassword,
+        })),
+        update: vi.fn().mockImplementation(async ({ data }) => {
+          passwordHash = data.passwordHash
+          mustChangePassword = data.mustChangePassword
+          return {}
+        }),
+      },
+      session: {
+        create: vi.fn().mockImplementation(async ({ data }) => {
+          sessions.set(data.tokenHash, { user, expiresAt: data.expiresAt })
+          return { id: randomUUID(), ...data }
+        }),
+        findUnique: vi
+          .fn()
+          .mockImplementation(
+            async ({ where }) => sessions.get(where.tokenHash) ?? null,
+          ),
+        deleteMany: vi.fn().mockImplementation(async ({ where }) => {
+          for (const key of sessions.keys())
+            if (where.tokenHash?.not !== key) sessions.delete(key)
+          return { count: 1 }
+        }),
+      },
+      $transaction: vi
+        .fn()
+        .mockImplementation(async (items) => Promise.all(items)),
+    } as unknown as PrismaClient
+    const auth = createAuthService(database)
+    const first = await (
+      await import('@warka/auth')
+    ).createSession(database, user.id)
+    const other = await (
+      await import('@warka/auth')
+    ).createSession(database, user.id)
+    expect(await auth.passwordState!(first.token)).toBe(true)
+    expect(
+      await auth.changePassword!(
+        first.token,
+        'wrong password',
+        'new long password',
+      ),
+    ).toBe('invalid-current')
+    await expect(
+      auth.changePassword!(first.token, 'initial password', 'short'),
+    ).rejects.toThrow()
+    expect(
+      await auth.changePassword!(
+        first.token,
+        'initial password',
+        'new long password',
+      ),
+    ).toBe('changed')
+    expect(await auth.passwordState!(first.token)).toBe(false)
+    expect(await auth.currentUser(first.token)).toEqual(user)
+    expect(await auth.currentUser(other.token)).toBeNull()
+    expect(
+      await auth.changePassword!(
+        other.token,
+        'new long password',
+        'another long password',
+      ),
+    ).toBe('unauthenticated')
+  })
+})

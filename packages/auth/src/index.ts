@@ -12,4 +12,5 @@ export {
   resolveSession,
   revokeSession,
   revokeAllSessionsForUser,
+  hashSessionToken,
 } from './sessions.js'

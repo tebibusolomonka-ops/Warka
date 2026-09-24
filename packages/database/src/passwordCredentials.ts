@@ -22,3 +22,14 @@ export async function findPasswordHashForUser(
   })
   return credential?.passwordHash ?? null
 }
+
+export async function mustChangePassword(
+  database: PrismaClient,
+  userId: string,
+): Promise<boolean> {
+  const credential = await database.passwordCredential.findUnique({
+    where: { userId },
+    select: { mustChangePassword: true },
+  })
+  return credential?.mustChangePassword ?? false
+}

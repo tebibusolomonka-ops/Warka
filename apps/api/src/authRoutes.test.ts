@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import { describe, expect, it } from 'vitest'
 import type { User } from '@warka/database'
 import { buildApp } from './app.js'
@@ -31,6 +32,88 @@ function testAuth() {
 }
 
 describe('authentication routes', () => {
+  it('requires a session and current password to change a password', async () => {
+    const { auth, sessions } = testAuth()
+    let forced = true
+    auth.passwordState = async () => forced
+    auth.changePassword = async (_token, currentPassword, newPassword) => {
+      if (currentPassword !== 'correct password') return 'invalid-current'
+      if (newPassword.length < 12) throw new Error('Invalid new password')
+      forced = false
+      return 'changed'
+    }
+    const app = buildApp({ auth })
+    try {
+      const anonymous = await app.inject({
+        method: 'POST',
+        url: '/auth/change-password',
+        payload: {
+          currentPassword: 'correct password',
+          newPassword: 'another long password',
+        },
+      })
+      expect(anonymous.statusCode).toBe(401)
+      const login = await app.inject({
+        method: 'POST',
+        url: '/auth/login',
+        payload: { email: user.email, password: 'correct password' },
+      })
+      const cookie = String(login.headers['set-cookie']).split(';')[0]!
+      const before = await app.inject({
+        method: 'GET',
+        url: '/auth/me',
+        headers: { cookie },
+      })
+      expect(before.json().mustChangePassword).toBe(true)
+      const wrong = await app.inject({
+        method: 'POST',
+        url: '/auth/change-password',
+        headers: { cookie },
+        payload: {
+          currentPassword: 'wrong password',
+          newPassword: 'another long password',
+        },
+      })
+      expect(wrong.statusCode).toBe(403)
+      const invalid = await app.inject({
+        method: 'POST',
+        url: '/auth/change-password',
+        headers: { cookie },
+        payload: { currentPassword: 'correct password', newPassword: 'short' },
+      })
+      expect(invalid.statusCode).toBe(400)
+      const changed = await app.inject({
+        method: 'POST',
+        url: '/auth/change-password',
+        headers: { cookie },
+        payload: {
+          currentPassword: 'correct password',
+          newPassword: 'another long password',
+          userId: randomUUID(),
+        },
+      })
+      expect(changed.statusCode).toBe(400)
+      const success = await app.inject({
+        method: 'POST',
+        url: '/auth/change-password',
+        headers: { cookie },
+        payload: {
+          currentPassword: 'correct password',
+          newPassword: 'another long password',
+        },
+      })
+      expect(success.statusCode).toBe(204)
+      const after = await app.inject({
+        method: 'GET',
+        url: '/auth/me',
+        headers: { cookie },
+      })
+      expect(after.json().mustChangePassword).toBe(false)
+      sessions.clear()
+    } finally {
+      await app.close()
+    }
+  })
   it('logs in, reads the current user, and logs out through an HttpOnly cookie', async () => {
     const { auth } = testAuth()
     const app = buildApp({ auth, production: false })
@@ -61,7 +144,10 @@ describe('authentication routes', () => {
         headers: { cookie },
       })
       expect(current.statusCode).toBe(200)
-      expect(current.json()).toEqual(login.json())
+      expect(current.json()).toEqual({
+        ...login.json(),
+        mustChangePassword: false,
+      })
 
       const logout = await app.inject({
         method: 'POST',

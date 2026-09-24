@@ -70,6 +70,7 @@ export type { SchoolMembership, SchoolRole } from '@prisma/client'
 export {
   savePasswordHash,
   findPasswordHashForUser,
+  mustChangePassword,
 } from './passwordCredentials.js'
 export {
   createSessionRecord,
