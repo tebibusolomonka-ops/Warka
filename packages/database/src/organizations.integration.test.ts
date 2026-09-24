@@ -2,7 +2,7 @@ import { afterAll, describe, expect, it } from 'vitest'
 import { createDatabaseClient } from './index.js'
 import { createOrganization, findOrganizationById } from './organizations.js'
 
-const testUrl = process.env.TEST_DATABASE_URL
+const testUrl = process.env.TEST_DATABASE_URL ?? process.env.DATABASE_URL
 const database = testUrl
   ? createDatabaseClient({ DATABASE_URL: testUrl })
   : null

@@ -27,7 +27,11 @@
     "typecheck": "pnpm db:generate && pnpm build:shared && pnpm build:database && pnpm -r typecheck",
     "build": "pnpm db:generate && pnpm -r build",
     "lint": "eslint apps packages",
-    "format:check": "prettier --check package.json apps packages"
+    "format:check": "prettier --check package.json apps packages",
+    "db:up": "docker compose up -d --wait",
+    "db:down": "docker compose down",
+    "db:migrate": "pnpm db:deploy",
+    "db:test": "pnpm db:generate && pnpm test:database"
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",

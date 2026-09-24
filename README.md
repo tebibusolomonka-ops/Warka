@@ -12,12 +12,11 @@ Run `pnpm dev:api` and `pnpm dev:web` in separate terminals. Copy `apps/web/.env
 
 ## Database
 
-Copy `.env.example` to `.env` and set a PostgreSQL connection URL before running database commands. Run `pnpm db:generate` after schema changes. Generated Prisma client files stay in `node_modules`.
+Run `pnpm db:up` to start PostgreSQL 17. The Compose setup creates `warka` and `warka_test` databases. Use the local URLs in `.env.example` as shell environment variables; do not commit a credential-bearing `.env` file. Run `pnpm db:migrate` with `DATABASE_URL` set to each database in turn. For example, in PowerShell set `$env:DATABASE_URL` to the `warka` URL and run `pnpm db:migrate`, then set it to the `warka_test` URL and run the command again. Run `pnpm db:generate` after schema changes. Generated Prisma client files stay in `node_modules`. Stop the service with `pnpm db:down`.
 
 ## Repository integration tests
 
-Organization repository tests need a separate PostgreSQL database. Apply migrations to it with `pnpm db:deploy` using `DATABASE_URL`, then set `TEST_DATABASE_URL` to that database URL and run `pnpm test:database`. Tests skip when `TEST_DATABASE_URL` is absent. PostgreSQL is not available in this development environment, so the integration test has not run here.
-
+Set `TEST_DATABASE_URL` to the migrated `warka_test` database and run `pnpm db:test`. When `TEST_DATABASE_URL` is absent, tests use `DATABASE_URL`; when neither is present, they skip. Use a disposable database for integration tests because they write and remove records.
 ## School directory
 
 The web directory stores the selected organization ID in browser storage for local use. Create an organization in the page or enter an existing ID, then add schools under it. This is a development workflow; it does not provide authentication or organization discovery.

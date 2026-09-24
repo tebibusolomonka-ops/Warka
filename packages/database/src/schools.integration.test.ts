@@ -7,7 +7,7 @@ import {
   listSchoolsForOrganization,
 } from './schools.js'
 
-const testUrl = process.env.TEST_DATABASE_URL
+const testUrl = process.env.TEST_DATABASE_URL ?? process.env.DATABASE_URL
 const database = testUrl
   ? createDatabaseClient({ DATABASE_URL: testUrl })
   : null
