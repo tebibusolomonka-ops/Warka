@@ -12,6 +12,13 @@ enum OrganizationRole {
   administrator
 }
 
+enum SchoolRole {
+  administrator
+  registrar
+  teacher
+  approver
+}
+
 model Organization {
   id          String                   @id @default(uuid())
   name        String
@@ -22,12 +29,13 @@ model Organization {
 }
 
 model School {
-  id             String       @id @default(uuid())
+  id             String             @id @default(uuid())
   organizationId String
   name           String
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  staff          SchoolMembership[]
 
   @@index([organizationId])
 }
@@ -39,6 +47,7 @@ model User {
   createdAt               DateTime                 @default(now())
   updatedAt               DateTime                 @updatedAt
   organizationMemberships OrganizationMembership[]
+  schoolMemberships       SchoolMembership[]
 }
 
 model OrganizationMembership {
@@ -52,4 +61,17 @@ model OrganizationMembership {
 
   @@id([userId, organizationId])
   @@index([organizationId])
+}
+
+model SchoolMembership {
+  userId    String
+  schoolId  String
+  role      SchoolRole
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  school    School     @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@id([userId, schoolId])
+  @@index([schoolId])
 }

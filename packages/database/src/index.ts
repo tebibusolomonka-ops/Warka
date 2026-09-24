@@ -52,3 +52,18 @@ export type {
   OrganizationAccess,
 } from './organizationMemberships.js'
 export type { OrganizationMembership, OrganizationRole } from '@prisma/client'
+export {
+  SchoolRoleSchema,
+  assignUserToSchool,
+  findSchoolMembership,
+  listSchoolAssignmentsForUser,
+  listStaffAssignmentsForSchool,
+  hasSchoolRole,
+  DuplicateSchoolMembershipError,
+} from './schoolMemberships.js'
+export type {
+  CreateSchoolMembership,
+  SchoolAssignment,
+  StaffAssignment,
+} from './schoolMemberships.js'
+export type { SchoolMembership, SchoolRole } from '@prisma/client'
