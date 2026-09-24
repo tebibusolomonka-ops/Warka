@@ -6,6 +6,23 @@ import {
   EnrollmentNotFoundError,
   InvalidEnrollmentStructureError,
   InvalidEnrollmentTransitionError,
+  DuplicateAssessmentError,
+  DuplicateGradingPeriodError,
+  DuplicateSubjectError,
+  DuplicateTeachingAssignmentError,
+  DuplicateMarkError,
+  InvalidAssessmentContextError,
+  InvalidGradingPeriodError,
+  InvalidTeachingAssignmentError,
+  InvalidMarkContextError,
+  InvalidMarkScoreError,
+  InvalidMarkImportError,
+  InvalidGradingSchemeError,
+  InvalidResultContextError,
+  MarkPermissionError,
+  ResultPermissionError,
+  ResultStateError,
+  IncompleteResultsError,
   type PrismaClient,
 } from '@warka/database'
 import { ErrorResponseSchema, HealthResponseSchema } from '@warka/shared'
@@ -31,6 +48,12 @@ import {
   type EnrollmentService,
 } from './enrollmentService.js'
 import { registerEnrollmentRoutes } from './enrollmentRoutes.js'
+import {
+  AcademicAccessError,
+  prismaAcademicService,
+  type AcademicService,
+} from './academicService.js'
+import { registerAcademicRoutes } from './academicRoutes.js'
 
 export function buildApp(
   options: {
@@ -40,6 +63,7 @@ export function buildApp(
     students?: StudentService
     studentOptions?: StudentOptionsService
     enrollments?: EnrollmentService
+    academic?: AcademicService
     production?: boolean
   } = {},
 ) {
@@ -56,6 +80,8 @@ export function buildApp(
     options.studentOptions ?? prismaStudentOptionsService(getDatabase())
   const getEnrollments = () =>
     options.enrollments ?? prismaEnrollmentService(getDatabase())
+  const getAcademic = () =>
+    options.academic ?? prismaAcademicService(getDatabase())
   const authenticate = authenticateRequest(getAuth)
 
   app.register(cookie)
@@ -75,6 +101,7 @@ export function buildApp(
     getStudentOptions,
     authenticate,
   )
+  registerAcademicRoutes(app, getAcademic, authenticate)
   registerEnrollmentRoutes(
     app,
     getStore,
@@ -154,6 +181,61 @@ export function buildApp(
           error: { code: 'DUPLICATE_ENROLLMENT', message: error.message },
         }),
       )
+    }
+    if (
+      error instanceof AcademicAccessError ||
+      error instanceof ResultPermissionError ||
+      error instanceof MarkPermissionError ||
+      error instanceof InvalidResultContextError ||
+      error instanceof InvalidMarkContextError
+    ) {
+      return reply.code(404).send({
+        error: {
+          code: 'ACADEMIC_RESOURCE_NOT_FOUND',
+          message: 'Academic resource not found',
+        },
+      })
+    }
+    if (error instanceof InvalidMarkImportError) {
+      return reply.code(422).send({
+        error: {
+          code: 'INVALID_MARK_IMPORT',
+          message: error.message,
+          problems: error.problems,
+        },
+      })
+    }
+    if (error instanceof ResultStateError) {
+      return reply.code(409).send({
+        error: { code: 'RESULT_STATE', message: error.message },
+      })
+    }
+    if (error instanceof IncompleteResultsError) {
+      return reply.code(422).send({
+        error: { code: 'INCOMPLETE_RESULTS', message: error.message },
+      })
+    }
+    if (
+      error instanceof DuplicateAssessmentError ||
+      error instanceof DuplicateGradingPeriodError ||
+      error instanceof DuplicateSubjectError ||
+      error instanceof DuplicateTeachingAssignmentError ||
+      error instanceof DuplicateMarkError
+    ) {
+      return reply.code(409).send({
+        error: { code: 'ACADEMIC_DUPLICATE', message: error.message },
+      })
+    }
+    if (
+      error instanceof InvalidAssessmentContextError ||
+      error instanceof InvalidGradingPeriodError ||
+      error instanceof InvalidTeachingAssignmentError ||
+      error instanceof InvalidMarkScoreError ||
+      error instanceof InvalidGradingSchemeError
+    ) {
+      return reply.code(400).send({
+        error: { code: 'INVALID_ACADEMIC_DATA', message: error.message },
+      })
     }
     app.log.error(error)
     return reply.code(500).send(
