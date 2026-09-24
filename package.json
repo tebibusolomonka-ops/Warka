@@ -3,10 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "packageManager": "pnpm@11.25.0",
-  "engines": { "node": ">=24 <25" },
+  "engines": {
+    "node": ">=24 <25"
+  },
   "scripts": {
     "dev:web": "pnpm --filter @warka/web dev",
     "build:web": "pnpm --filter @warka/web build",
-    "typecheck:web": "pnpm --filter @warka/web typecheck"
+    "typecheck:web": "pnpm --filter @warka/web typecheck",
+    "dev:api": "pnpm --filter @warka/api dev",
+    "build:api": "pnpm --filter @warka/api build",
+    "typecheck:api": "pnpm --filter @warka/api typecheck",
+    "test:api": "pnpm --filter @warka/api test"
   }
 }
