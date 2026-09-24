@@ -95,7 +95,7 @@ function testApp() {
     },
     async logout() {},
   }
-  const access: SchoolAccess = {
+  const access: Omit<SchoolAccess, 'canRegisterStudents'> = {
     async organizationsForUser(userId) {
       return [...organizationRoles.entries()]
         .filter(([key]) => key.startsWith(`${userId}:`))
@@ -114,7 +114,11 @@ function testApp() {
       )
     },
   }
-  return buildApp({ store, auth, access })
+  return buildApp({
+    store,
+    auth,
+    access: { ...access, canRegisterStudents: async () => false },
+  })
 }
 
 function cookie(userId: string) {

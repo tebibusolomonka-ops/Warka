@@ -14,6 +14,11 @@ export const CreateEnrollmentSchema = z.strictObject({
   schoolClassId: z.uuid().optional(),
 })
 
+type EnrollmentStore = Pick<
+  PrismaClient,
+  'academicYear' | 'gradeLevel' | 'schoolClass' | 'enrollment'
+>
+
 export type CreateEnrollment = z.input<typeof CreateEnrollmentSchema>
 export type EnrollmentAction = 'submit' | 'approve' | 'withdraw'
 
@@ -61,7 +66,7 @@ export function canTransition(
 }
 
 export async function createEnrollment(
-  database: PrismaClient,
+  database: EnrollmentStore,
   input: CreateEnrollment,
 ): Promise<Enrollment> {
   const data = CreateEnrollmentSchema.parse(input)
@@ -118,7 +123,7 @@ export async function createEnrollment(
 }
 
 export function findEnrollmentById(
-  database: PrismaClient,
+  database: EnrollmentStore,
   schoolId: string,
   id: string,
 ): Promise<Enrollment | null> {
@@ -126,7 +131,7 @@ export function findEnrollmentById(
 }
 
 async function applyTransition(
-  database: PrismaClient,
+  database: EnrollmentStore,
   schoolId: string,
   id: string,
   action: EnrollmentAction,
@@ -155,7 +160,7 @@ async function applyTransition(
 }
 
 export function submitEnrollment(
-  database: PrismaClient,
+  database: EnrollmentStore,
   schoolId: string,
   id: string,
 ): Promise<Enrollment> {
@@ -163,7 +168,7 @@ export function submitEnrollment(
 }
 
 export function approveEnrollment(
-  database: PrismaClient,
+  database: EnrollmentStore,
   schoolId: string,
   id: string,
   now: Date = new Date(),
@@ -172,7 +177,7 @@ export function approveEnrollment(
 }
 
 export function withdrawEnrollment(
-  database: PrismaClient,
+  database: EnrollmentStore,
   schoolId: string,
   id: string,
   now: Date = new Date(),

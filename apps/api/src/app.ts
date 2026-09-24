@@ -1,6 +1,11 @@
 import Fastify from 'fastify'
 import cookie from '@fastify/cookie'
-import { createDatabaseClient, type PrismaClient } from '@warka/database'
+import {
+  createDatabaseClient,
+  DuplicateEnrollmentError,
+  InvalidEnrollmentStructureError,
+  type PrismaClient,
+} from '@warka/database'
 import { ErrorResponseSchema, HealthResponseSchema } from '@warka/shared'
 import { ZodError } from 'zod'
 import { createAuthService, type AuthService } from './authService.js'
@@ -13,12 +18,15 @@ import {
   type SchoolStore,
 } from './schoolService.js'
 import { registerSchoolRoutes } from './schoolRoutes.js'
+import { prismaStudentService, type StudentService } from './studentService.js'
+import { registerStudentRoutes } from './studentRoutes.js'
 
 export function buildApp(
   options: {
     store?: SchoolStore
     auth?: AuthService
     access?: SchoolAccess
+    students?: StudentService
     production?: boolean
   } = {},
 ) {
@@ -29,6 +37,9 @@ export function buildApp(
   const getStore = () => options.store ?? prismaSchoolStore(getDatabase())
   const getAuth = () => options.auth ?? createAuthService(getDatabase())
   const getAccess = () => options.access ?? createSchoolAccess(getDatabase())
+  const getStudents = () =>
+    options.students ?? prismaStudentService(getDatabase())
+  const authenticate = authenticateRequest(getAuth)
 
   app.register(cookie)
   app.decorateRequest('currentUser', null)
@@ -38,7 +49,8 @@ export function buildApp(
     getAuth,
     options.production ?? process.env.NODE_ENV === 'production',
   )
-  registerSchoolRoutes(app, getStore, getAccess, authenticateRequest(getAuth))
+  registerSchoolRoutes(app, getStore, getAccess, authenticate)
+  registerStudentRoutes(app, getStore, getAccess, getStudents, authenticate)
 
   app.setNotFoundHandler((_request, reply) =>
     reply.code(404).send(
@@ -72,6 +84,23 @@ export function buildApp(
       return reply.code(404).send(
         ErrorResponseSchema.parse({
           error: { code: error.code, message: error.message },
+        }),
+      )
+    }
+    if (error instanceof InvalidEnrollmentStructureError) {
+      return reply.code(400).send(
+        ErrorResponseSchema.parse({
+          error: {
+            code: 'INVALID_ENROLLMENT_STRUCTURE',
+            message: error.message,
+          },
+        }),
+      )
+    }
+    if (error instanceof DuplicateEnrollmentError) {
+      return reply.code(409).send(
+        ErrorResponseSchema.parse({
+          error: { code: 'DUPLICATE_ENROLLMENT', message: error.message },
         }),
       )
     }

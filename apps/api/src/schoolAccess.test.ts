@@ -105,4 +105,30 @@ describe('school access', () => {
     )
     expect(await access.canViewSchool('outsider', school)).toBe(false)
   })
+
+  it('limits student registration to organization administrators and assigned registrars', async () => {
+    const organizations = new Map([
+      ['owner:' + organizationId, 'owner'],
+      ['administrator:' + organizationId, 'administrator'],
+    ])
+    const schools = new Map([
+      ['schoolAdministrator:' + schoolId, 'administrator'],
+      ['registrar:' + schoolId, 'registrar'],
+      ['teacher:' + schoolId, 'teacher'],
+      ['approver:' + schoolId, 'approver'],
+      ['otherRegistrar:' + otherSchoolId, 'registrar'],
+    ])
+    const access = accessFor(organizations, schools)
+    for (const userId of [
+      'owner',
+      'administrator',
+      'schoolAdministrator',
+      'registrar',
+    ]) {
+      expect(await access.canRegisterStudents(userId, school)).toBe(true)
+    }
+    for (const userId of ['teacher', 'approver', 'otherRegistrar']) {
+      expect(await access.canRegisterStudents(userId, school)).toBe(false)
+    }
+  })
 })

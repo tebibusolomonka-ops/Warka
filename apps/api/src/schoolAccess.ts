@@ -14,6 +14,7 @@ export type SchoolAccess = {
     organizationId: string,
   ): Promise<boolean>
   canViewSchool(userId: string, school: School): Promise<boolean>
+  canRegisterStudents(userId: string, school: School): Promise<boolean>
 }
 
 export function createSchoolAccess(database: PrismaClient): SchoolAccess {
@@ -29,6 +30,17 @@ export function createSchoolAccess(database: PrismaClient): SchoolAccess {
         return true
       }
       return (await findSchoolMembership(database, userId, school.id)) !== null
+    },
+    async canRegisterStudents(userId, school) {
+      if (
+        await hasOrganizationAdminRole(database, userId, school.organizationId)
+      ) {
+        return true
+      }
+      const membership = await findSchoolMembership(database, userId, school.id)
+      return (
+        membership?.role === 'administrator' || membership?.role === 'registrar'
+      )
     },
   }
 }

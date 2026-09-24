@@ -13,6 +13,8 @@ export const CreateGuardianSchema = z.strictObject({
   email: z.string().trim().toLowerCase().pipe(z.email()).optional(),
 })
 
+type GuardianStore = Pick<PrismaClient, 'guardian' | 'studentGuardian'>
+
 export type CreateGuardian = z.input<typeof CreateGuardianSchema>
 
 export const LinkGuardianSchema = z.strictObject({
@@ -40,7 +42,7 @@ export class DuplicateGuardianLinkError extends Error {
 }
 
 export function createGuardian(
-  database: PrismaClient,
+  database: GuardianStore,
   input: CreateGuardian,
 ): Promise<Guardian> {
   const data = CreateGuardianSchema.parse(input)
@@ -54,7 +56,7 @@ export function createGuardian(
 }
 
 export async function linkGuardianToStudent(
-  database: PrismaClient,
+  database: GuardianStore,
   input: LinkGuardian,
 ): Promise<StudentGuardian> {
   const data = LinkGuardianSchema.parse(input)
@@ -72,7 +74,7 @@ export async function linkGuardianToStudent(
 }
 
 export async function listGuardiansForStudent(
-  database: PrismaClient,
+  database: GuardianStore,
   studentId: string,
 ): Promise<GuardianForStudent[]> {
   const links = await database.studentGuardian.findMany({
@@ -87,7 +89,7 @@ export async function listGuardiansForStudent(
 }
 
 export async function listStudentsForGuardian(
-  database: PrismaClient,
+  database: GuardianStore,
   guardianId: string,
 ): Promise<StudentForGuardian[]> {
   const links = await database.studentGuardian.findMany({
