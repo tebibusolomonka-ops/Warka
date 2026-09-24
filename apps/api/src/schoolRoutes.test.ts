@@ -102,6 +102,20 @@ function testApp() {
     | 'canApproveEnrollment'
     | 'canWithdrawEnrollment'
   > = {
+    async schoolsForUser(userId) {
+      return userId === 'registrar'
+        ? [
+            {
+              school,
+              capabilities: {
+                canRegister: true,
+                canSubmit: true,
+                canApprove: false,
+              },
+            },
+          ]
+        : []
+    },
     async organizationsForUser(userId) {
       return [...organizationRoles.entries()]
         .filter(([key]) => key.startsWith(`${userId}:`))
@@ -143,6 +157,7 @@ describe('protected school routes', () => {
     try {
       for (const request of [
         app.inject('/organizations'),
+        app.inject('/schools'),
         app.inject(`/organizations/${organization.id}/schools`),
         app.inject(`/schools/${school.id}`),
         app.inject({
@@ -167,6 +182,38 @@ describe('protected school routes', () => {
         payload: { name: 'More' },
       })
       expect(authenticatedCreate.statusCode).toBe(404)
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('lists only accessible school context with server permissions', async () => {
+    const app = testApp()
+    try {
+      const registrar = await app.inject({
+        url: '/schools',
+        headers: cookie('registrar'),
+      })
+      expect(registrar.statusCode).toBe(200)
+      expect(registrar.json()).toEqual([
+        {
+          school: {
+            ...school,
+            createdAt: school.createdAt.toISOString(),
+            updatedAt: school.updatedAt.toISOString(),
+          },
+          capabilities: {
+            canRegister: true,
+            canSubmit: true,
+            canApprove: false,
+          },
+        },
+      ])
+      const outsider = await app.inject({
+        url: '/schools',
+        headers: cookie('outsider'),
+      })
+      expect(outsider.json()).toEqual([])
     } finally {
       await app.close()
     }

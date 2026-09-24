@@ -10,9 +10,11 @@ import type { UserIdentity } from '@warka/shared'
 import { App } from './App'
 import {
   ApiError,
+  getAccessibleSchools,
   getCurrentUser,
   getOrganizations,
   getSchools,
+  getStudents,
   login,
   logout,
 } from './api'
@@ -21,9 +23,11 @@ vi.mock('./api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('./api')>()
   return {
     ...actual,
+    getAccessibleSchools: vi.fn(),
     getCurrentUser: vi.fn(),
     getOrganizations: vi.fn(),
     getSchools: vi.fn(),
+    getStudents: vi.fn(),
     login: vi.fn(),
     logout: vi.fn(),
   }
@@ -62,6 +66,8 @@ beforeEach(() => {
   vi.resetAllMocks()
   vi.stubEnv('VITE_API_URL', '/api')
   vi.mocked(getSchools).mockResolvedValue([])
+  vi.mocked(getAccessibleSchools).mockResolvedValue([])
+  vi.mocked(getStudents).mockResolvedValue({ items: [], limit: 50, offset: 0 })
   vi.mocked(logout).mockResolvedValue(undefined)
 })
 afterEach(() => {
@@ -167,6 +173,45 @@ describe('authenticated web shell', () => {
     render(<App />)
     await screen.findByText('No organizations available for this account.')
     expect(screen.queryByText('School directory')).toBeNull()
+  })
+
+  it('opens assigned school students for registrars and hides controls from teachers', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(user)
+    vi.mocked(getOrganizations).mockResolvedValue([])
+    const assignedSchool = {
+      school: {
+        id: '123e4567-e89b-42d3-a456-426614174010',
+        organizationId: firstOrganization.organization.id,
+        name: 'Assigned school',
+        createdAt: '2026-09-24T00:00:00.000Z',
+        updatedAt: '2026-09-24T00:00:00.000Z',
+      },
+      capabilities: {
+        canRegister: true,
+        canSubmit: true,
+        canApprove: false,
+      },
+    }
+    vi.mocked(getAccessibleSchools).mockResolvedValue([assignedSchool])
+    const { unmount } = render(<App />)
+    await screen.findByText('Students · Assigned school')
+    expect(
+      screen.getByRole('button', { name: 'Register student' }),
+    ).toBeTruthy()
+    unmount()
+    vi.mocked(getAccessibleSchools).mockResolvedValue([
+      {
+        ...assignedSchool,
+        capabilities: {
+          canRegister: false,
+          canSubmit: false,
+          canApprove: false,
+        },
+      },
+    ])
+    render(<App />)
+    await screen.findByText('Assigned school')
+    expect(screen.queryByText('Students · Assigned school')).toBeNull()
   })
 
   it('handles network failures and expired sessions', async () => {

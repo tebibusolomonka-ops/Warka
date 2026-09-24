@@ -38,7 +38,18 @@ function accessFor(
         return role ? [{ organization, role }] : []
       }),
     },
+    school: {
+      findMany: vi.fn().mockResolvedValue([school, otherSchool]),
+    },
     schoolMembership: {
+      findMany: vi.fn().mockImplementation(async ({ where }) =>
+        [...schoolRoles.entries()]
+          .filter(([key]) => key.startsWith(where.userId + ':'))
+          .map(([key, role]) => ({
+            school: key.endsWith(':' + schoolId) ? school : otherSchool,
+            role,
+          })),
+      ),
       findUnique: vi.fn().mockImplementation(async ({ where }) => {
         const { userId, schoolId: id } = where.userId_schoolId
         const role = schoolRoles.get(`${userId}:${id}`)
@@ -130,6 +141,37 @@ describe('school access', () => {
     for (const userId of ['teacher', 'approver', 'otherRegistrar']) {
       expect(await access.canRegisterStudents(userId, school)).toBe(false)
     }
+  })
+
+  it('lists assigned schools and organization schools with appropriate capabilities', async () => {
+    const access = accessFor(
+      new Map([['owner:' + organizationId, 'owner']]),
+      new Map([
+        ['registrar:' + schoolId, 'registrar'],
+        ['approver:' + schoolId, 'approver'],
+        ['teacher:' + schoolId, 'teacher'],
+      ]),
+    )
+    expect(
+      (await access.schoolsForUser('owner')).map(({ school }) => school.id),
+    ).toEqual(expect.arrayContaining([schoolId, otherSchoolId]))
+    expect((await access.schoolsForUser('registrar'))[0]?.capabilities).toEqual(
+      {
+        canRegister: true,
+        canSubmit: true,
+        canApprove: false,
+      },
+    )
+    expect((await access.schoolsForUser('approver'))[0]?.capabilities).toEqual({
+      canRegister: false,
+      canSubmit: false,
+      canApprove: true,
+    })
+    expect((await access.schoolsForUser('teacher'))[0]?.capabilities).toEqual({
+      canRegister: false,
+      canSubmit: false,
+      canApprove: false,
+    })
   })
 
   it('separates submission, approval, and withdrawal permissions', async () => {

@@ -25,6 +25,21 @@ export const SchoolSchema = OrganizationSchema.extend({
 
 export const SchoolsResponseSchema = z.array(SchoolSchema)
 
+export const StudentCapabilitiesSchema = z.object({
+  canRegister: z.boolean(),
+  canSubmit: z.boolean(),
+  canApprove: z.boolean(),
+})
+
+export const AccessibleSchoolSchema = z.object({
+  school: SchoolSchema,
+  capabilities: StudentCapabilitiesSchema,
+})
+
+export const AccessibleSchoolsResponseSchema = z.array(AccessibleSchoolSchema)
+
+export type AccessibleSchool = z.infer<typeof AccessibleSchoolSchema>
+
 export const ErrorResponseSchema = z.object({
   error: z.object({
     code: z.string(),
@@ -58,6 +73,31 @@ export const OrganizationAccessSchema = z.object({
 export const OrganizationsResponseSchema = z.array(OrganizationAccessSchema)
 
 export type OrganizationAccess = z.infer<typeof OrganizationAccessSchema>
+
+export const AcademicYearOptionSchema = z.object({
+  id: z.uuid(),
+  name: z.string(),
+})
+
+export const GradeLevelOptionSchema = z.object({
+  id: z.uuid(),
+  name: z.string(),
+})
+
+export const SchoolClassOptionSchema = z.object({
+  id: z.uuid(),
+  name: z.string(),
+  gradeLevelId: z.uuid(),
+  academicYearId: z.uuid(),
+})
+
+export const StudentOptionsSchema = z.object({
+  academicYears: z.array(AcademicYearOptionSchema),
+  gradeLevels: z.array(GradeLevelOptionSchema),
+  classes: z.array(SchoolClassOptionSchema),
+})
+
+export type StudentOptions = z.infer<typeof StudentOptionsSchema>
 
 export const StudentSchema = z.object({
   id: z.uuid(),

@@ -1,13 +1,19 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
+  actOnEnrollment,
   ApiError,
   apiBaseUrl,
+  getAccessibleSchools,
   getCurrentUser,
   getOrganizations,
   getSchools,
+  getStudentDetail,
+  getStudentOptions,
+  getStudents,
   login,
   logout,
   postSchool,
+  registerStudent,
 } from './api'
 
 const baseUrl = 'http://localhost:5173/api'
@@ -99,6 +105,121 @@ describe('authenticated API client', () => {
         credentials: 'include',
       },
     )
+  })
+
+  it('uses authenticated school-scoped endpoints for student work', async () => {
+    const studentId = '123e4567-e89b-42d3-a456-426614174003'
+    const enrollmentId = '123e4567-e89b-42d3-a456-426614174004'
+    const yearId = '123e4567-e89b-42d3-a456-426614174005'
+    const gradeId = '123e4567-e89b-42d3-a456-426614174006'
+    const student = {
+      id: studentId,
+      studentReference: 'WKA-123456789',
+      givenName: 'Hana',
+      familyName: null,
+      dateOfBirth: null,
+      createdAt: organization.createdAt,
+      updatedAt: organization.updatedAt,
+    }
+    const enrollment = {
+      id: enrollmentId,
+      studentId,
+      schoolId: school.id,
+      academicYearId: yearId,
+      gradeLevelId: gradeId,
+      schoolClassId: null,
+      status: 'draft',
+      approvedAt: null,
+      approvedById: null,
+      withdrawnAt: null,
+      withdrawnById: null,
+      createdAt: organization.createdAt,
+      updatedAt: organization.updatedAt,
+    }
+    const request = vi
+      .fn()
+      .mockResolvedValueOnce(
+        response([
+          {
+            school,
+            capabilities: {
+              canRegister: true,
+              canSubmit: true,
+              canApprove: false,
+            },
+          },
+        ]),
+      )
+      .mockResolvedValueOnce(
+        response({
+          academicYears: [{ id: yearId, name: '2026' }],
+          gradeLevels: [{ id: gradeId, name: 'Grade 1' }],
+          classes: [],
+        }),
+      )
+      .mockResolvedValueOnce(
+        response({
+          items: [
+            {
+              student: {
+                id: studentId,
+                studentReference: student.studentReference,
+                givenName: student.givenName,
+                familyName: null,
+              },
+              enrollment,
+            },
+          ],
+          limit: 50,
+          offset: 0,
+        }),
+      )
+      .mockResolvedValueOnce(
+        response({ student, enrollments: [enrollment], guardians: [] }),
+      )
+      .mockResolvedValueOnce(
+        response(
+          {
+            student,
+            enrollment,
+            guardians: [],
+            duplicateWarnings: { requiresHumanReview: true, candidates: [] },
+          },
+          201,
+        ),
+      )
+      .mockResolvedValueOnce(response({ ...enrollment, status: 'pending' }))
+    await getAccessibleSchools(baseUrl, request)
+    await getStudentOptions(baseUrl, school.id, request)
+    await getStudents(baseUrl, school.id, 0, request)
+    await getStudentDetail(baseUrl, school.id, studentId, request)
+    await registerStudent(
+      baseUrl,
+      school.id,
+      {
+        student: { givenName: 'Hana' },
+        academicYearId: yearId,
+        gradeLevelId: gradeId,
+      },
+      request,
+    )
+    await actOnEnrollment(baseUrl, school.id, enrollmentId, 'submit', request)
+    expect(request.mock.calls.map(([url]) => url)).toEqual([
+      baseUrl + '/schools',
+      baseUrl + '/schools/' + school.id + '/student-options',
+      baseUrl + '/schools/' + school.id + '/students?limit=50&offset=0',
+      baseUrl + '/schools/' + school.id + '/students/' + studentId,
+      baseUrl + '/schools/' + school.id + '/students',
+      baseUrl +
+        '/schools/' +
+        school.id +
+        '/enrollments/' +
+        enrollmentId +
+        '/submit',
+    ])
+    for (const [, options] of request.mock.calls) {
+      expect(options.credentials).toBe('include')
+    }
   })
 
   it('preserves API status and rejects invalid or unavailable responses', async () => {

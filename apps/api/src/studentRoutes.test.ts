@@ -13,6 +13,7 @@ import type { AuthService } from './authService.js'
 import type { SchoolAccess } from './schoolAccess.js'
 import type { SchoolStore } from './schoolService.js'
 import type { StudentService } from './studentService.js'
+import type { StudentOptionsService } from './studentOptionsService.js'
 
 const school = {
   id: randomUUID(),
@@ -117,6 +118,9 @@ function testApp() {
     },
   }
   const access: SchoolAccess = {
+    async schoolsForUser() {
+      return []
+    },
     async organizationsForUser() {
       return []
     },
@@ -132,8 +136,8 @@ function testApp() {
     async canSubmitEnrollment() {
       return false
     },
-    async canApproveEnrollment() {
-      return false
+    async canApproveEnrollment(userId, item) {
+      return userId === 'approver' && item.id === school.id
     },
     async canWithdrawEnrollment() {
       return false
@@ -153,7 +157,18 @@ function testApp() {
       guardians: [{ guardian, relationship: 'Aunt' }],
     }),
   }
-  return { app: buildApp({ auth, store, access, students }), students }
+  const studentOptions: StudentOptionsService = {
+    list: vi.fn().mockResolvedValue({
+      academicYears: [{ id: enrollment.academicYearId, name: '2026' }],
+      gradeLevels: [{ id: enrollment.gradeLevelId, name: 'Grade 1' }],
+      classes: [],
+    }),
+  }
+  return {
+    app: buildApp({ auth, store, access, students, studentOptions }),
+    students,
+    studentOptions,
+  }
 }
 
 describe('student routes', () => {
@@ -167,10 +182,61 @@ describe('student routes', () => {
           payload: input,
         }),
         app.inject('/schools/' + school.id + '/students'),
+        app.inject('/schools/' + school.id + '/student-options'),
         app.inject('/schools/' + school.id + '/students/' + student.id),
       ]) {
         expect((await response).statusCode).toBe(401)
       }
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('provides school-scoped academic choices to registration roles', async () => {
+    const { app, studentOptions } = testApp()
+    try {
+      const allowed = await app.inject({
+        url: '/schools/' + school.id + '/student-options',
+        headers: cookie('registrar'),
+      })
+      expect(allowed.statusCode).toBe(200)
+      expect(allowed.json().academicYears[0].id).toBe(enrollment.academicYearId)
+      expect(studentOptions.list).toHaveBeenCalledWith(school.id)
+      for (const userId of ['teacher', 'approver', 'outsider']) {
+        const denied = await app.inject({
+          url: '/schools/' + school.id + '/student-options',
+          headers: cookie(userId),
+        })
+        expect(denied.statusCode).toBe(404)
+      }
+      const crossSchool = await app.inject({
+        url: '/schools/' + otherSchool.id + '/student-options',
+        headers: cookie('registrar'),
+      })
+      expect(crossSchool.statusCode).toBe(404)
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('allows approvers to read pending students without registration permission', async () => {
+    const { app } = testApp()
+    try {
+      const list = await app.inject({
+        url: '/schools/' + school.id + '/students',
+        headers: cookie('approver'),
+      })
+      const detail = await app.inject({
+        url: '/schools/' + school.id + '/students/' + student.id,
+        headers: cookie('approver'),
+      })
+      expect(list.statusCode).toBe(200)
+      expect(detail.statusCode).toBe(200)
+      const crossSchool = await app.inject({
+        url: '/schools/' + otherSchool.id + '/students',
+        headers: cookie('approver'),
+      })
+      expect(crossSchool.statusCode).toBe(404)
     } finally {
       await app.close()
     }

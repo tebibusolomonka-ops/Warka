@@ -1,5 +1,6 @@
 import type { FastifyInstance, preHandlerHookHandler } from 'fastify'
 import {
+  AccessibleSchoolsResponseSchema,
   CreateSchoolSchema,
   OrganizationsResponseSchema,
   SchoolSchema,
@@ -44,6 +45,16 @@ export function registerSchoolRoutes(
     )
   })
 
+  app.get('/schools', { preHandler: authenticate }, async (request) => {
+    const user = authenticatedUser(request)
+    const schools = await getAccess().schoolsForUser(user.id)
+    return AccessibleSchoolsResponseSchema.parse(
+      schools.map(({ school, capabilities }) => ({
+        school: serializeDates(school),
+        capabilities,
+      })),
+    )
+  })
   app.post(
     '/organizations/:organizationId/schools',
     { preHandler: authenticate },

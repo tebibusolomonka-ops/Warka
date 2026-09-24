@@ -1,18 +1,21 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import {
   LoginCredentialsSchema,
+  type AccessibleSchool,
   type OrganizationAccess,
   type UserIdentity,
 } from '@warka/shared'
 import {
   ApiError,
   apiBaseUrl,
+  getAccessibleSchools,
   getCurrentUser,
   getOrganizations,
   login,
   logout,
 } from './api'
 import { SchoolDirectory } from './SchoolDirectory'
+import { StudentWorkspace } from './StudentWorkspace'
 
 type Authentication =
   | { status: 'checking' }
@@ -23,6 +26,11 @@ type Organizations =
   | { status: 'loading' }
   | { status: 'error' }
   | { status: 'loaded'; access: OrganizationAccess[] }
+
+type Schools =
+  | { status: 'loading' }
+  | { status: 'error' }
+  | { status: 'loaded'; access: AccessibleSchool[] }
 
 function isExpired(error: unknown): boolean {
   return error instanceof ApiError && error.status === 401
@@ -43,6 +51,8 @@ function SignedInShell({
     status: 'loading',
   })
   const [selectedId, setSelectedId] = useState('')
+  const [schools, setSchools] = useState<Schools>({ status: 'loading' })
+  const [selectedSchoolId, setSelectedSchoolId] = useState('')
   const [refresh, setRefresh] = useState(0)
 
   useEffect(() => {
@@ -70,6 +80,29 @@ function SignedInShell({
     }
   }, [baseUrl, refresh, onSignedOut])
 
+  useEffect(() => {
+    let active = true
+    setSchools({ status: 'loading' })
+    getAccessibleSchools(baseUrl)
+      .then((access) => {
+        if (!active) return
+        setSchools({ status: 'loaded', access })
+        setSelectedSchoolId((current) =>
+          access.some((item) => item.school.id === current)
+            ? current
+            : (access[0]?.school.id ?? ''),
+        )
+      })
+      .catch((error: unknown) => {
+        if (!active) return
+        if (isExpired(error))
+          onSignedOut('Your session expired. Sign in again.')
+        else setSchools({ status: 'error' })
+      })
+    return () => {
+      active = false
+    }
+  }, [baseUrl, refresh, onSignedOut])
   const sessionExpired = useCallback(() => {
     onSignedOut('Your session expired. Sign in again.')
   }, [onSignedOut])
@@ -77,6 +110,10 @@ function SignedInShell({
   const selected =
     organizations.status === 'loaded'
       ? organizations.access.find((item) => item.organization.id === selectedId)
+      : undefined
+  const selectedSchool =
+    schools.status === 'loaded'
+      ? schools.access.find((item) => item.school.id === selectedSchoolId)
       : undefined
   const canManage =
     selected?.role === 'owner' || selected?.role === 'administrator'
@@ -89,6 +126,52 @@ function SignedInShell({
           Sign out
         </button>
       </div>
+      <section aria-labelledby="accessible-schools-heading">
+        <h2 id="accessible-schools-heading">My schools</h2>
+        {schools.status === 'loading' && <p role="status">Loading schools</p>}
+        {schools.status === 'error' && (
+          <div role="alert">
+            <p>Could not load accessible schools.</p>
+            <button
+              type="button"
+              onClick={() => setRefresh((value) => value + 1)}
+            >
+              Retry
+            </button>
+          </div>
+        )}
+        {schools.status === 'loaded' && schools.access.length === 0 && (
+          <p>No schools available for this account.</p>
+        )}
+        {schools.status === 'loaded' && schools.access.length > 0 && (
+          <>
+            <div className="field">
+              <label htmlFor="accessible-school">School</label>
+              <select
+                id="accessible-school"
+                value={selectedSchoolId}
+                onChange={(event) => setSelectedSchoolId(event.target.value)}
+              >
+                {schools.access.map((item) => (
+                  <option key={item.school.id} value={item.school.id}>
+                    {item.school.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {selectedSchool &&
+              (selectedSchool.capabilities.canRegister ||
+                selectedSchool.capabilities.canApprove) && (
+                <StudentWorkspace
+                  key={selectedSchool.school.id}
+                  baseUrl={baseUrl}
+                  access={selectedSchool}
+                  onSessionExpired={sessionExpired}
+                />
+              )}
+          </>
+        )}
+      </section>
       {organizations.status === 'loading' && (
         <p role="status">Loading organizations</p>
       )}
@@ -104,7 +187,9 @@ function SignedInShell({
         </div>
       )}
       {organizations.status === 'loaded' &&
-        organizations.access.length === 0 && (
+        organizations.access.length === 0 &&
+        schools.status === 'loaded' &&
+        schools.access.length === 0 && (
           <p>No organizations available for this account.</p>
         )}
       {organizations.status === 'loaded' && organizations.access.length > 0 && (
@@ -137,6 +222,7 @@ function SignedInShell({
               organizationId={selected.organization.id}
               canCreate={canManage}
               onSessionExpired={sessionExpired}
+              onCreated={() => setRefresh((value) => value + 1)}
             />
           )}
         </>

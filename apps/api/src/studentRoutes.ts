@@ -6,6 +6,7 @@ import {
   RegistrationResponseSchema,
   StudentDetailResponseSchema,
   StudentListResponseSchema,
+  StudentOptionsSchema,
   StudentSchema,
 } from '@warka/shared'
 import type {
@@ -19,6 +20,7 @@ import { authenticatedUser } from './authenticateRequest.js'
 import type { SchoolAccess } from './schoolAccess.js'
 import { RecordNotFound, type SchoolStore } from './schoolService.js'
 import type { StudentService } from './studentService.js'
+import type { StudentOptionsService } from './studentOptionsService.js'
 
 const schoolParams = z.object({ schoolId: z.uuid() })
 const studentParams = z.object({ schoolId: z.uuid(), studentId: z.uuid() })
@@ -86,15 +88,33 @@ export function registerStudentRoutes(
   getStore: () => SchoolStore,
   getAccess: () => SchoolAccess,
   getStudents: () => StudentService,
+  getOptions: () => StudentOptionsService,
   authenticate: preHandlerHookHandler,
 ) {
-  async function requireSchool(userId: string, schoolId: string) {
+  async function requireSchool(
+    userId: string,
+    schoolId: string,
+    permission: 'register' | 'view' = 'register',
+  ) {
     const school = await getStore().findSchoolById(schoolId)
-    if (!school || !(await getAccess().canRegisterStudents(userId, school))) {
-      throw new RecordNotFound('SCHOOL_NOT_FOUND')
-    }
+    if (!school) throw new RecordNotFound('SCHOOL_NOT_FOUND')
+    const allowed =
+      permission === 'register'
+        ? await getAccess().canRegisterStudents(userId, school)
+        : (await getAccess().canRegisterStudents(userId, school)) ||
+          (await getAccess().canApproveEnrollment(userId, school))
+    if (!allowed) throw new RecordNotFound('SCHOOL_NOT_FOUND')
   }
-
+  app.get(
+    '/schools/:schoolId/student-options',
+    { preHandler: authenticate },
+    async (request) => {
+      const user = authenticatedUser(request)
+      const { schoolId } = schoolParams.parse(request.params)
+      await requireSchool(user.id, schoolId)
+      return StudentOptionsSchema.parse(await getOptions().list(schoolId))
+    },
+  )
   app.post(
     '/schools/:schoolId/students',
     { preHandler: authenticate },
@@ -126,7 +146,7 @@ export function registerStudentRoutes(
     async (request) => {
       const user = authenticatedUser(request)
       const { schoolId } = schoolParams.parse(request.params)
-      await requireSchool(user.id, schoolId)
+      await requireSchool(user.id, schoolId, 'view')
       const { limit, offset } = pagination.parse(request.query)
       const items = await getStudents().list(schoolId, limit, offset)
       return StudentListResponseSchema.parse({
@@ -146,7 +166,7 @@ export function registerStudentRoutes(
     async (request) => {
       const user = authenticatedUser(request)
       const { schoolId, studentId } = studentParams.parse(request.params)
-      await requireSchool(user.id, schoolId)
+      await requireSchool(user.id, schoolId, 'view')
       const detail = await getStudents().find(schoolId, studentId)
       if (!detail) throw new RecordNotFound('STUDENT_NOT_FOUND')
       return StudentDetailResponseSchema.parse({

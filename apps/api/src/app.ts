@@ -23,6 +23,10 @@ import { registerSchoolRoutes } from './schoolRoutes.js'
 import { prismaStudentService, type StudentService } from './studentService.js'
 import { registerStudentRoutes } from './studentRoutes.js'
 import {
+  prismaStudentOptionsService,
+  type StudentOptionsService,
+} from './studentOptionsService.js'
+import {
   prismaEnrollmentService,
   type EnrollmentService,
 } from './enrollmentService.js'
@@ -34,6 +38,7 @@ export function buildApp(
     auth?: AuthService
     access?: SchoolAccess
     students?: StudentService
+    studentOptions?: StudentOptionsService
     enrollments?: EnrollmentService
     production?: boolean
   } = {},
@@ -47,6 +52,8 @@ export function buildApp(
   const getAccess = () => options.access ?? createSchoolAccess(getDatabase())
   const getStudents = () =>
     options.students ?? prismaStudentService(getDatabase())
+  const getStudentOptions = () =>
+    options.studentOptions ?? prismaStudentOptionsService(getDatabase())
   const getEnrollments = () =>
     options.enrollments ?? prismaEnrollmentService(getDatabase())
   const authenticate = authenticateRequest(getAuth)
@@ -60,7 +67,14 @@ export function buildApp(
     options.production ?? process.env.NODE_ENV === 'production',
   )
   registerSchoolRoutes(app, getStore, getAccess, authenticate)
-  registerStudentRoutes(app, getStore, getAccess, getStudents, authenticate)
+  registerStudentRoutes(
+    app,
+    getStore,
+    getAccess,
+    getStudents,
+    getStudentOptions,
+    authenticate,
+  )
   registerEnrollmentRoutes(
     app,
     getStore,

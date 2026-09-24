@@ -1,11 +1,24 @@
 import {
+  AccessibleSchoolsResponseSchema,
+  EnrollmentSchema,
   ErrorResponseSchema,
   OrganizationsResponseSchema,
+  RegisterStudentSchema,
+  RegistrationResponseSchema,
   SchoolSchema,
   SchoolsResponseSchema,
+  StudentDetailResponseSchema,
+  StudentListResponseSchema,
+  StudentOptionsSchema,
   UserIdentitySchema,
+  type AccessibleSchool,
   type OrganizationAccess,
+  type RegisterStudent,
+  type RegistrationResponse,
   type School,
+  type StudentDetailResponse,
+  type StudentListResponse,
+  type StudentOptions,
   type UserIdentity,
 } from '@warka/shared'
 
@@ -141,6 +154,108 @@ export async function postSchool(
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ name }),
       },
+      request,
+    ),
+  )
+}
+
+export async function getAccessibleSchools(
+  baseUrl: string,
+  request: typeof fetch = fetch,
+): Promise<AccessibleSchool[]> {
+  return AccessibleSchoolsResponseSchema.parse(
+    await requestJson(baseUrl, '/schools', {}, request),
+  )
+}
+
+function studentPath(schoolId: string): string {
+  return '/schools/' + encodeURIComponent(schoolId) + '/students'
+}
+
+export async function getStudentOptions(
+  baseUrl: string,
+  schoolId: string,
+  request: typeof fetch = fetch,
+): Promise<StudentOptions> {
+  return StudentOptionsSchema.parse(
+    await requestJson(
+      baseUrl,
+      '/schools/' + encodeURIComponent(schoolId) + '/student-options',
+      {},
+      request,
+    ),
+  )
+}
+
+export async function getStudents(
+  baseUrl: string,
+  schoolId: string,
+  offset = 0,
+  request: typeof fetch = fetch,
+): Promise<StudentListResponse> {
+  return StudentListResponseSchema.parse(
+    await requestJson(
+      baseUrl,
+      studentPath(schoolId) + '?limit=50&offset=' + offset,
+      {},
+      request,
+    ),
+  )
+}
+
+export async function getStudentDetail(
+  baseUrl: string,
+  schoolId: string,
+  studentId: string,
+  request: typeof fetch = fetch,
+): Promise<StudentDetailResponse> {
+  return StudentDetailResponseSchema.parse(
+    await requestJson(
+      baseUrl,
+      studentPath(schoolId) + '/' + encodeURIComponent(studentId),
+      {},
+      request,
+    ),
+  )
+}
+
+export async function registerStudent(
+  baseUrl: string,
+  schoolId: string,
+  input: RegisterStudent,
+  request: typeof fetch = fetch,
+): Promise<RegistrationResponse> {
+  return RegistrationResponseSchema.parse(
+    await requestJson(
+      baseUrl,
+      studentPath(schoolId),
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(RegisterStudentSchema.parse(input)),
+      },
+      request,
+    ),
+  )
+}
+
+export async function actOnEnrollment(
+  baseUrl: string,
+  schoolId: string,
+  enrollmentId: string,
+  action: 'submit' | 'approve',
+  request: typeof fetch = fetch,
+) {
+  return EnrollmentSchema.parse(
+    await requestJson(
+      baseUrl,
+      '/schools/' +
+        encodeURIComponent(schoolId) +
+        '/enrollments/' +
+        encodeURIComponent(enrollmentId) +
+        '/' +
+        action,
+      { method: 'POST' },
       request,
     ),
   )

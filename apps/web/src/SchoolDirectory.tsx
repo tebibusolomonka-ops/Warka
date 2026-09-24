@@ -13,11 +13,13 @@ export function SchoolDirectory({
   organizationId,
   canCreate,
   onSessionExpired,
+  onCreated,
 }: {
   baseUrl: string
   organizationId: string
   canCreate: boolean
   onSessionExpired: () => void
+  onCreated?: () => void
 }) {
   const [schoolName, setSchoolName] = useState('')
   const [formError, setFormError] = useState('')
@@ -65,6 +67,7 @@ export function SchoolDirectory({
     try {
       await postSchool(baseUrl, organizationId, parsed.data.name)
       setSchoolName('')
+      onCreated?.()
       setRefresh((value) => value + 1)
     } catch (error) {
       if (error instanceof ApiError && error.status === 401) {

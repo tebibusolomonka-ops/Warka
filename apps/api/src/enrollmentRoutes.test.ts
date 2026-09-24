@@ -111,6 +111,9 @@ function testApp() {
     },
   }
   const access: SchoolAccess = {
+    async schoolsForUser() {
+      return []
+    },
     async organizationsForUser() {
       return []
     },
