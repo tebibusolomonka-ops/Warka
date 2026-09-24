@@ -51,6 +51,7 @@ model School {
   teachingAssignments TeachingAssignment[]
   gradingPeriods      GradingPeriod[]
   assessments         Assessment[]
+  marks               Mark[]
 
   @@index([organizationId])
 }
@@ -68,6 +69,7 @@ model User {
   approvedEnrollments     Enrollment[]             @relation("EnrollmentApprovedBy")
   withdrawnEnrollments    Enrollment[]             @relation("EnrollmentWithdrawnBy")
   teachingAssignments     TeachingAssignment[]
+  marks                   Mark[]
 }
 
 model OrganizationMembership {
@@ -181,6 +183,7 @@ model Student {
   updatedAt        DateTime          @updatedAt
   guardians        StudentGuardian[]
   enrollments      Enrollment[]
+  marks            Mark[]
 }
 
 model Guardian {
@@ -227,8 +230,10 @@ model Enrollment {
   schoolClass    SchoolClass?     @relation(fields: [schoolClassId, schoolId], references: [id, schoolId], onDelete: Restrict)
   approvedBy     User?            @relation("EnrollmentApprovedBy", fields: [approvedById], references: [id], onDelete: Restrict)
   withdrawnBy    User?            @relation("EnrollmentWithdrawnBy", fields: [withdrawnById], references: [id], onDelete: Restrict)
+  marks          Mark[]
 
   @@unique([studentId, schoolId, academicYearId])
+  @@unique([id, schoolId, studentId])
   @@index([schoolId, academicYearId, status])
   @@index([schoolId, gradeLevelId])
   @@index([approvedById])
@@ -307,8 +312,31 @@ model Assessment {
   gradingPeriod   GradingPeriod @relation(fields: [gradingPeriodId, schoolId, academicYearId], references: [id, schoolId, academicYearId], onDelete: Restrict)
   schoolClass     SchoolClass   @relation(fields: [schoolClassId, schoolId, academicYearId], references: [id, schoolId, academicYearId], onDelete: Restrict)
   subject         Subject       @relation(fields: [subjectId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  marks           Mark[]
 
+  @@unique([id, schoolId])
   @@unique([schoolId, academicYearId, gradingPeriodId, schoolClassId, subjectId, name], map: "Assessment_context_name_key")
   @@unique([schoolId, academicYearId, gradingPeriodId, schoolClassId, subjectId, position], map: "Assessment_context_position_key")
   @@index([schoolId, academicYearId, gradingPeriodId, schoolClassId, subjectId])
+}
+
+model Mark {
+  id           String     @id @default(uuid())
+  schoolId     String
+  studentId    String
+  enrollmentId String
+  assessmentId String
+  score        Decimal    @db.Decimal(8, 2)
+  recordedById String
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  school       School     @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  student      Student    @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  enrollment   Enrollment @relation(fields: [enrollmentId, schoolId, studentId], references: [id, schoolId, studentId], onDelete: Restrict)
+  assessment   Assessment @relation(fields: [assessmentId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  recordedBy   User       @relation(fields: [recordedById], references: [id], onDelete: Restrict)
+
+  @@unique([enrollmentId, assessmentId])
+  @@index([schoolId, assessmentId])
+  @@index([schoolId, studentId])
 }

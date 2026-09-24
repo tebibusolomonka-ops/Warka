@@ -206,3 +206,18 @@ export {
 } from './assessments.js'
 export type { CreateAssessment } from './assessments.js'
 export type { Assessment } from '@prisma/client'
+
+export {
+  RecordMarkSchema,
+  InvalidMarkContextError,
+  MarkPermissionError,
+  InvalidMarkScoreError,
+  DuplicateMarkError,
+  MarkNotFoundError,
+  recordMark,
+  updateDraftMark,
+  getMarksForAssessment,
+  getMarksForStudentContext,
+} from './marks.js'
+export type { RecordMark } from './marks.js'
+export type { Mark } from '@prisma/client'
