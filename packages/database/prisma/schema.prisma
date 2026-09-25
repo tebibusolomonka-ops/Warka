@@ -37,6 +37,13 @@ enum ReportingSubmissionStatus {
   returned
 }
 
+enum VerificationResultStatus {
+  active
+  corrected
+  withdrawn
+  unavailable
+}
+
 enum ResultSetStatus {
   draft
   pending
@@ -131,6 +138,7 @@ model School {
   familyConversations FamilyConversation[]
   reportingRequirements ReportingRequirement[]
   reportingSubmissions ReportingSubmission[]
+  verificationEvents VerificationEvent[]
 
   @@index([organizationId])
 }
@@ -720,12 +728,24 @@ model IssuedDocument {
   withdrawnBy           User?          @relation("DocumentWithdrawnBy", fields: [withdrawnById], references: [id], onDelete: Restrict)
   supersedes            IssuedDocument? @relation("DocumentVersion", fields: [supersedesId], references: [id], onDelete: Restrict)
   replacedBy            IssuedDocument? @relation("DocumentVersion")
+  verificationEvents    VerificationEvent[]
 
   @@index([schoolId, studentId, issuedAt])
   @@index([schoolId, issuedAt])
 }
 
 
+model VerificationEvent {
+  id               String                   @id @default(uuid())
+  issuedDocumentId String?
+  schoolId         String?
+  resultStatus     VerificationResultStatus
+  occurredAt       DateTime                 @default(now())
+  issuedDocument   IssuedDocument?          @relation(fields: [issuedDocumentId], references: [id], onDelete: SetNull)
+  school           School?                  @relation(fields: [schoolId], references: [id], onDelete: SetNull)
+
+  @@index([schoolId, occurredAt, resultStatus])
+}
 model TransferRequest {
   id                 String         @id @default(uuid())
   studentId          String

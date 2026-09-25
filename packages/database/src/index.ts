@@ -407,3 +407,13 @@ export {
   summarizeAcademicOutcomes,
 } from './academicReporting.js'
 export type { AcademicOutcomeAggregate } from './academicReporting.js'
+
+export {
+  buildRegionalActivityAggregate,
+  emptyRegionalActivity,
+} from './activityReporting.js'
+export type { RegionalActivityAggregate } from './activityReporting.js'
+export type {
+  VerificationEvent,
+  VerificationResultStatus,
+} from '@prisma/client'
