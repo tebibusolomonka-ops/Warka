@@ -12,6 +12,7 @@ if (process.env.TEST_DATABASE_URL !== process.env.DATABASE_URL) {
 export default defineConfig({
   testDir: './tests/e2e',
   workers: 1,
+  forbidOnly: !!process.env.CI,
   use: {
     baseURL: 'http://127.0.0.1:4173',
     ...devices['Desktop Chrome'],
@@ -26,7 +27,7 @@ export default defineConfig({
     {
       command:
         'pnpm --filter @warka/web dev --host 127.0.0.1 --port 4173 --strictPort',
-      url: 'http://127.0.0.1:4173',
+      url: 'http://127.0.0.1:4173/api/health',
       reuseExistingServer: false,
       env: { VITE_API_URL: '/api' },
     },
