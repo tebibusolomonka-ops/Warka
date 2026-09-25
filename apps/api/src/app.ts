@@ -85,6 +85,12 @@ import {
 import { registerTransferRoutes } from './transferRoutes.js'
 import { registerParentServiceRoutes } from './parentServiceRoutes.js'
 import { registerGuardianAccountRoutes } from './guardianAccountRoutes.js'
+import { registerParentPortalRoutes } from './parentPortalRoutes.js'
+import {
+  prismaParentPortalService,
+  ParentPortalAccessError,
+  type ParentPortalService,
+} from './parentPortalService.js'
 import {
   prismaGuardianAccountService,
   GuardianAccountConflictError,
@@ -121,6 +127,7 @@ export function buildApp(
     students?: StudentService
     studentAccounts?: StudentAccountService
     guardianAccounts?: GuardianAccountService
+    parentPortal?: ParentPortalService
     studentPortal?: StudentPortalService
     materials?: LearningMaterialService
     announcements?: AnnouncementService
@@ -180,6 +187,11 @@ export function buildApp(
   registerLearningMaterialRoutes(app, getMaterials, authenticate)
   registerAnnouncementRoutes(app, getAnnouncements, authenticate)
   registerParentServiceRoutes(app, getDatabase, authenticate)
+  registerParentPortalRoutes(
+    app,
+    () => options.parentPortal ?? prismaParentPortalService(getDatabase()),
+    authenticate,
+  )
   registerGuardianAccountRoutes(
     app,
     () =>
@@ -219,6 +231,11 @@ export function buildApp(
   )
 
   app.setErrorHandler((error, _request, reply) => {
+    if (error instanceof ParentPortalAccessError) {
+      return reply.code(403).send({
+        error: { code: 'PARENT_ACCESS_REQUIRED', message: error.message },
+      })
+    }
     if (error instanceof GuardianAccountUnavailableError) {
       return reply
         .code(404)

@@ -50,6 +50,9 @@ describe.skipIf(!database)(
       const guardian = await database!.guardian.create({
         data: { name: 'Guardian' },
       })
+      const secondGuardian = await database!.guardian.create({
+        data: { name: 'Second guardian' },
+      })
       const student = await database!.student.create({
         data: { studentReference: `PROVISION-${suffix}`, givenName: 'Child' },
       })
@@ -142,6 +145,30 @@ describe.skipIf(!database)(
             where: { email: `second-${suffix}@example.test` },
           }),
         ).toBe(0)
+        await linkGuardianToStudent(database!, {
+          studentId: student.id,
+          guardianId: secondGuardian.id,
+          relationship: 'Aunt',
+        })
+        await verifyGuardianRelationship(
+          database!,
+          admin.id,
+          school.id,
+          student.id,
+          secondGuardian.id,
+        )
+        await expect(
+          service.create(admin.id, school.id, {
+            ...input,
+            guardianId: secondGuardian.id,
+            displayName: 'Duplicate email',
+          }),
+        ).rejects.toBeInstanceOf(GuardianAccountConflictError)
+        expect(
+          await database!.guardianAccess.findUnique({
+            where: { guardianId: secondGuardian.id },
+          }),
+        ).toBeNull()
       } finally {
         await database!.guardianAccess.deleteMany({
           where: { guardianId: guardian.id },
