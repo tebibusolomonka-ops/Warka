@@ -359,3 +359,13 @@ export type {
   FamilyConversationRoute,
   FamilyConversationStatus,
 } from '@prisma/client'
+
+export {
+  grantBureauAccess,
+  revokeBureauAccess,
+  resolveBureauScope,
+  requireBureauPermission,
+  DuplicateBureauAccessError,
+  BureauAccessDeniedError,
+} from './bureauAccess.js'
+export type { BureauAccess, BureauRole } from '@prisma/client'
