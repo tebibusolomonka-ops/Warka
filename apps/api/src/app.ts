@@ -26,6 +26,11 @@ import {
   DocumentPermissionError,
   DocumentSourceError,
   DocumentStateError,
+  DuplicateActiveTransferError,
+  TransferDestinationError,
+  TransferPermissionError,
+  TransferSourceError,
+  TransferStateError,
   type PrismaClient,
 } from '@warka/database'
 import { ErrorResponseSchema, HealthResponseSchema } from '@warka/shared'
@@ -72,6 +77,12 @@ import {
 } from './documentManagementService.js'
 import { registerDocumentManagementRoutes } from './documentManagementRoutes.js'
 import {
+  TransferNotFoundError,
+  prismaTransferManagementService,
+  type TransferManagementService,
+} from './transferManagementService.js'
+import { registerTransferRoutes } from './transferRoutes.js'
+import {
   prismaStudentAccountService,
   StudentAccountConflictError,
   StudentEnrollmentNotFoundError,
@@ -105,6 +116,7 @@ export function buildApp(
     announcements?: AnnouncementService
     verification?: DocumentVerificationService
     documents?: DocumentManagementService
+    transfers?: TransferManagementService
     studentOptions?: StudentOptionsService
     enrollments?: EnrollmentService
     academic?: AcademicService
@@ -157,6 +169,11 @@ export function buildApp(
   registerStudentPortalRoutes(app, getStudentPortal, authenticate)
   registerLearningMaterialRoutes(app, getMaterials, authenticate)
   registerAnnouncementRoutes(app, getAnnouncements, authenticate)
+  registerTransferRoutes(
+    app,
+    () => options.transfers ?? prismaTransferManagementService(getDatabase()),
+    authenticate,
+  )
   registerDocumentManagementRoutes(
     app,
     () => options.documents ?? prismaDocumentManagementService(getDatabase()),
@@ -185,6 +202,30 @@ export function buildApp(
   )
 
   app.setErrorHandler((error, _request, reply) => {
+    if (
+      error instanceof TransferPermissionError ||
+      error instanceof TransferNotFoundError
+    ) {
+      return reply.code(404).send({
+        error: { code: 'TRANSFER_NOT_FOUND', message: 'Transfer not found' },
+      })
+    }
+    if (
+      error instanceof TransferSourceError ||
+      error instanceof TransferDestinationError
+    ) {
+      return reply.code(400).send({
+        error: { code: 'INVALID_TRANSFER', message: error.message },
+      })
+    }
+    if (
+      error instanceof TransferStateError ||
+      error instanceof DuplicateActiveTransferError
+    ) {
+      return reply.code(409).send({
+        error: { code: 'TRANSFER_CONFLICT', message: error.message },
+      })
+    }
     if (
       error instanceof DocumentPermissionError ||
       error instanceof DocumentStudentNotFoundError

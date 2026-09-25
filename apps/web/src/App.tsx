@@ -23,6 +23,7 @@ import { PasswordChange } from './PasswordChange'
 import { StudentPortal } from './StudentPortal'
 import { ResourceWorkspace } from './ResourceWorkspace'
 import { DocumentVerificationPage } from './DocumentVerificationPage'
+import { TransferWorkspace } from './TransferWorkspace'
 
 type Authentication =
   | { status: 'checking' }
@@ -278,6 +279,17 @@ function SignedInShell({
                     onSessionExpired={sessionExpired}
                   />
                 </>
+              )}
+            {selectedSchool &&
+              (selectedSchool.capabilities.canRegister ||
+                selectedSchool.capabilities.canApprove) && (
+                <TransferWorkspace
+                  key={'transfers-' + selectedSchool.school.id}
+                  baseUrl={baseUrl}
+                  schoolId={selectedSchool.school.id}
+                  schoolName={selectedSchool.school.name}
+                  onSessionExpired={sessionExpired}
+                />
               )}
             {selectedSchool &&
               (selectedSchool.capabilities.canRegister ||

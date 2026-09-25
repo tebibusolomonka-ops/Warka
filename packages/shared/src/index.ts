@@ -312,3 +312,65 @@ export const StudentDocumentsSchema = z.strictObject({
   eligibleYears: z.array(z.strictObject({ id: z.uuid(), name: z.string() })),
 })
 export type StudentDocuments = z.infer<typeof StudentDocumentsSchema>
+
+export const TransferStatusSchema = z.enum([
+  'requested',
+  'approvedBySendingSchool',
+  'acceptedByReceivingSchool',
+  'rejected',
+  'cancelled',
+])
+export const TransferViewSchema = z.strictObject({
+  id: z.uuid(),
+  status: TransferStatusSchema,
+  student: z.strictObject({
+    displayName: z.string(),
+    studentReference: z.string(),
+  }),
+  sendingSchool: z.string(),
+  receivingSchool: z.string(),
+  sourceEnrollment: z.strictObject({
+    status: z.enum(['draft', 'pending', 'approved', 'withdrawn']),
+    academicYear: z.string(),
+    gradeLevel: z.string(),
+    schoolClass: z.string().nullable(),
+  }),
+  receivingEnrollment: z
+    .strictObject({
+      status: z.enum(['draft', 'pending', 'approved', 'withdrawn']),
+      academicYear: z.string(),
+      gradeLevel: z.string(),
+      schoolClass: z.string().nullable(),
+    })
+    .nullable(),
+  requestedAt: z.iso.datetime(),
+  sendingApprovedAt: z.iso.datetime().nullable(),
+  completedAt: z.iso.datetime().nullable(),
+  rejectionReason: z.string().nullable(),
+  cancellationReason: z.string().nullable(),
+})
+export type TransferView = z.infer<typeof TransferViewSchema>
+export const TransferOptionsSchema = z.strictObject({
+  eligibleStudents: z.array(
+    z.strictObject({
+      studentId: z.uuid(),
+      studentReference: z.string(),
+      displayName: z.string(),
+      sourceEnrollmentId: z.uuid(),
+      academicYear: z.string(),
+      gradeLevel: z.string(),
+    }),
+  ),
+  receivingSchools: z.array(z.strictObject({ id: z.uuid(), name: z.string() })),
+  academicYears: z.array(z.strictObject({ id: z.uuid(), name: z.string() })),
+  gradeLevels: z.array(z.strictObject({ id: z.uuid(), name: z.string() })),
+  classes: z.array(
+    z.strictObject({
+      id: z.uuid(),
+      name: z.string(),
+      academicYearId: z.uuid(),
+      gradeLevelId: z.uuid(),
+    }),
+  ),
+})
+export type TransferOptions = z.infer<typeof TransferOptionsSchema>

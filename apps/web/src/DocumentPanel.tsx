@@ -174,9 +174,9 @@ export function DocumentPanel({
                       ? 'Report card'
                       : 'Transcript'}
                   </strong>
-                  {' � '}
+                  {' · '}
                   {document.status}
-                  {' � '}
+                  {' · '}
                   {document.issuedAt.slice(0, 10)}
                   <p>
                     Verification reference: {document.verificationReference}
