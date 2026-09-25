@@ -22,6 +22,7 @@ import { AcademicWorkspace } from './AcademicWorkspace'
 import { PasswordChange } from './PasswordChange'
 import { StudentPortal } from './StudentPortal'
 import { ResourceWorkspace } from './ResourceWorkspace'
+import { DocumentVerificationPage } from './DocumentVerificationPage'
 
 type Authentication =
   | { status: 'checking' }
@@ -350,7 +351,7 @@ function SignedInShell({
   )
 }
 
-export function App() {
+function AuthenticatedApp() {
   const [authentication, setAuthentication] = useState<Authentication>({
     status: 'checking',
   })
@@ -535,4 +536,17 @@ export function App() {
         )}
     </main>
   )
+}
+
+export function App() {
+  const path = window.location.pathname
+  if (path === '/verify' || path === '/verify/')
+    return <DocumentVerificationPage />
+  if (path.startsWith('/verify/'))
+    return (
+      <DocumentVerificationPage
+        initialReference={path.slice('/verify/'.length)}
+      />
+    )
+  return <AuthenticatedApp />
 }

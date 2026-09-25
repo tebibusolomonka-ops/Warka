@@ -1,5 +1,6 @@
 import {
   AccessibleSchoolsResponseSchema,
+  DocumentVerificationSchema,
   EnrollmentSchema,
   ErrorResponseSchema,
   OrganizationsResponseSchema,
@@ -17,6 +18,7 @@ import {
   StudentAccountStatusSchema,
   UserIdentitySchema,
   type AccessibleSchool,
+  type DocumentVerification,
   type OrganizationAccess,
   type RegisterStudent,
   type RegistrationResponse,
@@ -357,5 +359,20 @@ export async function provisionStudentAccount(
       body: JSON.stringify(input),
     },
     request,
+  )
+}
+
+export async function verifyDocument(
+  baseUrl: string,
+  reference: string,
+  request: typeof fetch = fetch,
+): Promise<DocumentVerification> {
+  return DocumentVerificationSchema.parse(
+    await requestJson(
+      baseUrl,
+      '/verify/documents/' + encodeURIComponent(reference),
+      {},
+      request,
+    ),
   )
 }
