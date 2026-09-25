@@ -395,3 +395,9 @@ export type {
   ReportingSubmission,
   ReportingSubmissionStatus,
 } from '@prisma/client'
+
+export {
+  buildEnrollmentAggregate,
+  summarizeEnrollmentRows,
+} from './enrollmentReporting.js'
+export type { EnrollmentAggregate } from './enrollmentReporting.js'
