@@ -344,3 +344,11 @@ export {
   GuardianRelationshipStateError,
 } from './guardianRelationships.js'
 export type { GuardianVerificationStatus } from '@prisma/client'
+
+export {
+  getParentPortalSetting,
+  setParentPortalEnabled,
+  canAccessParentChild,
+  ParentServicePermissionError,
+} from './parentService.js'
+export type { SchoolServiceAccess } from '@prisma/client'

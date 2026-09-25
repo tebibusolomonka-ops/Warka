@@ -92,6 +92,7 @@ model School {
   outgoingTransfers   TransferRequest[] @relation("SendingTransfers")
   incomingTransfers   TransferRequest[] @relation("ReceivingTransfers")
   verifiedGuardianRelationships StudentGuardian[]
+  serviceAccess       SchoolServiceAccess?
 
   @@index([organizationId])
 }
@@ -121,6 +122,7 @@ model User {
   studentAccess           StudentAccess?
   guardianVerifications   StudentGuardian[] @relation("GuardianVerifiedBy")
   guardianRevocations     StudentGuardian[] @relation("GuardianRevokedBy")
+  schoolServiceUpdates    SchoolServiceAccess[]
   guardianAccess          GuardianAccess?
   sessions                Session[]
   approvedEnrollments     Enrollment[]             @relation("EnrollmentApprovedBy")
@@ -653,4 +655,16 @@ model TransferRequest {
   @@index([sendingSchoolId, status, requestedAt])
   @@index([receivingSchoolId, status, requestedAt])
   @@index([studentId, requestedAt])
+}
+
+model SchoolServiceAccess {
+  id                  String   @id @default(uuid())
+  schoolId            String   @unique
+  parentPortalEnabled Boolean  @default(false)
+  enabledAt           DateTime?
+  updatedById         String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  school              School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  updatedBy           User?    @relation(fields: [updatedById], references: [id], onDelete: Restrict)
 }

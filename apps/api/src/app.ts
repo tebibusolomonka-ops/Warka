@@ -31,6 +31,7 @@ import {
   TransferPermissionError,
   TransferSourceError,
   TransferStateError,
+  ParentServicePermissionError,
   type PrismaClient,
 } from '@warka/database'
 import { ErrorResponseSchema, HealthResponseSchema } from '@warka/shared'
@@ -82,6 +83,7 @@ import {
   type TransferManagementService,
 } from './transferManagementService.js'
 import { registerTransferRoutes } from './transferRoutes.js'
+import { registerParentServiceRoutes } from './parentServiceRoutes.js'
 import {
   prismaStudentAccountService,
   StudentAccountConflictError,
@@ -169,6 +171,7 @@ export function buildApp(
   registerStudentPortalRoutes(app, getStudentPortal, authenticate)
   registerLearningMaterialRoutes(app, getMaterials, authenticate)
   registerAnnouncementRoutes(app, getAnnouncements, authenticate)
+  registerParentServiceRoutes(app, getDatabase, authenticate)
   registerTransferRoutes(
     app,
     () => options.transfers ?? prismaTransferManagementService(getDatabase()),
@@ -202,6 +205,11 @@ export function buildApp(
   )
 
   app.setErrorHandler((error, _request, reply) => {
+    if (error instanceof ParentServicePermissionError) {
+      return reply.code(404).send({
+        error: { code: 'PARENT_SERVICE_NOT_FOUND', message: error.message },
+      })
+    }
     if (
       error instanceof TransferPermissionError ||
       error instanceof TransferNotFoundError
