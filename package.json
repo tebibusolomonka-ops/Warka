@@ -26,8 +26,8 @@
     "test": "pnpm build && pnpm -r --if-present test",
     "typecheck": "pnpm build && pnpm -r typecheck",
     "build": "pnpm db:generate && pnpm -r build",
-    "lint": "eslint apps packages",
-    "format:check": "prettier --check package.json apps packages",
+    "lint": "eslint apps packages tests playwright.config.ts",
+    "format:check": "prettier --check package.json apps packages tests playwright.config.ts",
     "db:up": "docker compose up -d --wait",
     "db:down": "docker compose down",
     "db:migrate": "pnpm db:deploy",
@@ -35,13 +35,15 @@
     "auth:bootstrap": "pnpm db:generate && pnpm build:shared && pnpm build:database && pnpm --filter @warka/auth bootstrap",
     "build:auth": "pnpm build:shared && pnpm build:database && pnpm --filter @warka/auth build",
     "typecheck:auth": "pnpm build:shared && pnpm build:database && pnpm --filter @warka/auth typecheck",
-    "test:auth": "pnpm build:shared && pnpm build:database && pnpm --filter @warka/auth test"
+    "test:auth": "pnpm build:shared && pnpm build:database && pnpm --filter @warka/auth test",
+    "test:e2e": "pnpm build && playwright test"
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",
-    "typescript-eslint": "^8.46.0",
-    "globals": "^16.4.0",
+    "@playwright/test": "^1.63.0",
     "eslint": "^9.36.0",
-    "prettier": "^3.6.0"
+    "globals": "^16.4.0",
+    "prettier": "^3.6.0",
+    "typescript-eslint": "^8.46.0"
   }
 }

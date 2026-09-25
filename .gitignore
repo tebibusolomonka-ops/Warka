@@ -7,3 +7,5 @@ coverage/
 *.tsbuildinfo
 .vite/
 *.log
+playwright-report/
+test-results/
