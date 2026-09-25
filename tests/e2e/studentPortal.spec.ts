@@ -177,7 +177,7 @@ test('staff provisions student portal access with official records', async ({
     await page.getByLabel('School', { exact: true }).selectOption(schoolId)
     await page.getByRole('button', { name: /Browser Learner/ }).click()
     await expect(
-      page.getByRole('heading', { name: 'Portal access' }),
+      page.getByRole('heading', { name: 'Portal access', exact: true }),
     ).toBeVisible()
     await page.getByLabel('Account email').fill(studentEmail)
     await page.getByLabel('Display name').fill('Browser Learner')
