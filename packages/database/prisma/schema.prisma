@@ -25,6 +25,17 @@ enum ResultSetStatus {
   published
 }
 
+enum DocumentType {
+  reportCard
+  transcript
+}
+
+enum DocumentStatus {
+  active
+  corrected
+  withdrawn
+}
+
 enum EnrollmentStatus {
   draft
   pending
@@ -63,12 +74,14 @@ model School {
   assessments         Assessment[]
   marks               Mark[]
   gradingScheme       GradingScheme?
+  issuedDocuments     IssuedDocument[]
 
   @@index([organizationId])
 }
 
 model User {
   submittedResultSets     ResultSet[]              @relation("ResultSetSubmittedBy")
+  issuedDocuments         IssuedDocument[]
   publishedResultSets     ResultSet[]              @relation("ResultSetPublishedBy")
   resultCorrections       ResultCorrection[]
   learningMaterials       LearningMaterial[]
@@ -138,6 +151,7 @@ model Session {
 
 model AcademicYear {
   resultSets          ResultSet[]
+  issuedDocuments     IssuedDocument[]
   learningMaterials   LearningMaterial[]
   id                  String               @id @default(uuid())
   schoolId            String
@@ -197,6 +211,7 @@ model SchoolClass {
 }
 
 model Student {
+  issuedDocuments  IssuedDocument[]
   publishedResults PublishedResult[]
   id               String            @id @default(uuid())
   studentReference String            @unique
@@ -510,4 +525,25 @@ model ResultCorrection {
   actor              User            @relation(fields: [actorId], references: [id], onDelete: Restrict)
 
   @@index([schoolId, publishedResultId, effectiveAt])
+}
+
+model IssuedDocument {
+  id                    String         @id @default(uuid())
+  studentId             String
+  schoolId              String
+  academicYearId        String
+  documentType          DocumentType
+  verificationReference String         @unique
+  status                DocumentStatus @default(active)
+  issuedAt              DateTime       @default(now())
+  issuedById            String
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+  student               Student        @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  school                School         @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  academicYear          AcademicYear   @relation(fields: [academicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  issuedBy              User           @relation(fields: [issuedById], references: [id], onDelete: Restrict)
+
+  @@index([schoolId, studentId, issuedAt])
+  @@index([schoolId, issuedAt])
 }

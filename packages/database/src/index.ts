@@ -275,3 +275,22 @@ export type {
   ResultCorrection,
   ResultSetStatus,
 } from '@prisma/client'
+
+export {
+  IssueDocumentSchema,
+  DocumentPermissionError,
+  DocumentSourceError,
+  requireDocumentAuthority,
+  generateVerificationReference,
+  issueDocument,
+  findIssuedDocument,
+  findDocumentByReference,
+  listStudentDocuments,
+  listSchoolDocuments,
+} from './issuedDocuments.js'
+export type {
+  IssueDocument,
+  DocumentType,
+  DocumentStatus,
+  IssuedDocument,
+} from './issuedDocuments.js'
