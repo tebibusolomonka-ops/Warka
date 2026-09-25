@@ -129,6 +129,15 @@ export {
 export type { StudentAccess } from '@prisma/client'
 
 export {
+  linkGuardianUser,
+  findGuardianAccessForUser,
+  findLinkedUserForGuardian,
+  removeGuardianAccess,
+  DuplicateGuardianAccessError,
+} from './guardianAccess.js'
+export type { GuardianAccess } from '@prisma/client'
+
+export {
   CreateGuardianSchema,
   LinkGuardianSchema,
   DuplicateGuardianLinkError,

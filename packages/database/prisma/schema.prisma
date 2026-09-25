@@ -112,6 +112,7 @@ model User {
   schoolMemberships       SchoolMembership[]
   passwordCredential      PasswordCredential?
   studentAccess           StudentAccess?
+  guardianAccess          GuardianAccess?
   sessions                Session[]
   approvedEnrollments     Enrollment[]             @relation("EnrollmentApprovedBy")
   withdrawnEnrollments    Enrollment[]             @relation("EnrollmentWithdrawnBy")
@@ -262,6 +263,17 @@ model Guardian {
   createdAt DateTime          @default(now())
   updatedAt DateTime          @updatedAt
   students  StudentGuardian[]
+  access    GuardianAccess?
+}
+
+model GuardianAccess {
+  id         String   @id @default(uuid())
+  userId     String   @unique
+  guardianId String   @unique
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  guardian   Guardian @relation(fields: [guardianId], references: [id], onDelete: Cascade)
 }
 
 model StudentGuardian {
