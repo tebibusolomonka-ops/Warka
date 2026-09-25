@@ -82,6 +82,8 @@ model School {
 model User {
   submittedResultSets     ResultSet[]              @relation("ResultSetSubmittedBy")
   issuedDocuments         IssuedDocument[]
+  correctedDocuments      IssuedDocument[]         @relation("DocumentCorrectedBy")
+  withdrawnDocuments      IssuedDocument[]         @relation("DocumentWithdrawnBy")
   publishedResultSets     ResultSet[]              @relation("ResultSetPublishedBy")
   resultCorrections       ResultCorrection[]
   learningMaterials       LearningMaterial[]
@@ -534,6 +536,13 @@ model IssuedDocument {
   academicYearId        String
   documentType          DocumentType
   snapshot              Json           @default("{}")
+  supersedesId          String?        @unique
+  correctionReason      String?
+  correctedById         String?
+  correctedAt           DateTime?
+  withdrawalReason      String?
+  withdrawnById         String?
+  withdrawnAt           DateTime?
   verificationReference String         @unique
   status                DocumentStatus @default(active)
   issuedAt              DateTime       @default(now())
@@ -544,6 +553,10 @@ model IssuedDocument {
   school                School         @relation(fields: [schoolId], references: [id], onDelete: Restrict)
   academicYear          AcademicYear   @relation(fields: [academicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
   issuedBy              User           @relation(fields: [issuedById], references: [id], onDelete: Restrict)
+  correctedBy           User?          @relation("DocumentCorrectedBy", fields: [correctedById], references: [id], onDelete: Restrict)
+  withdrawnBy           User?          @relation("DocumentWithdrawnBy", fields: [withdrawnById], references: [id], onDelete: Restrict)
+  supersedes            IssuedDocument? @relation("DocumentVersion", fields: [supersedesId], references: [id], onDelete: Restrict)
+  replacedBy            IssuedDocument? @relation("DocumentVersion")
 
   @@index([schoolId, studentId, issuedAt])
   @@index([schoolId, issuedAt])

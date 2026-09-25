@@ -36,6 +36,14 @@ export const DocumentSnapshotSchema = z.strictObject({
 
 export type DocumentSnapshot = z.infer<typeof DocumentSnapshotSchema>
 
+export const DocumentReasonSchema = z.string().trim().min(3).max(1000)
+
+export class DocumentStateError extends Error {
+  constructor() {
+    super('Document is not active')
+  }
+}
+
 export class DocumentPermissionError extends Error {
   constructor() {
     super('Document authority required')
@@ -79,65 +87,140 @@ export async function issueDocument(
   const data = IssueDocumentSchema.parse(input)
   z.uuid().parse(actorId)
   await requireDocumentAuthority(database, actorId, data.schoolId)
+  return database.$transaction((transaction) =>
+    createDocumentInTransaction(transaction, actorId, data),
+  )
+}
+
+async function createDocumentInTransaction(
+  transaction: Prisma.TransactionClient,
+  actorId: string,
+  data: IssueDocument,
+  supersedesId?: string,
+) {
+  const [student, school, year, official] = await Promise.all([
+    transaction.student.findUnique({ where: { id: data.studentId } }),
+    transaction.school.findUnique({ where: { id: data.schoolId } }),
+    transaction.academicYear.findFirst({
+      where: { id: data.academicYearId, schoolId: data.schoolId },
+    }),
+    transaction.publishedResult.findMany({
+      where: {
+        studentId: data.studentId,
+        schoolId: data.schoolId,
+        resultSet: {
+          academicYearId: data.academicYearId,
+          status: 'published',
+          publishedAt: { not: null },
+        },
+        enrollment: { status: { in: ['approved', 'withdrawn'] } },
+      },
+      include: {
+        resultSet: {
+          include: { subject: true, gradingPeriod: true },
+        },
+      },
+      orderBy: [
+        { resultSet: { gradingPeriod: { startsOn: 'asc' } } },
+        { resultSet: { subject: { name: 'asc' } } },
+      ],
+    }),
+  ])
+  if (!student || !school || !year || official.length === 0)
+    throw new DocumentSourceError()
+  const issuedAt = new Date()
+  const snapshot = DocumentSnapshotSchema.parse({
+    student: {
+      displayName: [student.givenName, student.familyName]
+        .filter(Boolean)
+        .join(' '),
+      studentReference: student.studentReference,
+    },
+    issuingSchool: school.name,
+    documentType: data.documentType,
+    issuedAt: issuedAt.toISOString(),
+    academicYear: year.name,
+    subjects: official.map((result) => ({
+      subject: result.resultSet.subject.name,
+      gradingPeriod: result.resultSet.gradingPeriod.name,
+      percentage: result.currentPercentage.toNumber(),
+      gradeLabel: result.currentGradeLabel,
+    })),
+  })
+  return transaction.issuedDocument.create({
+    data: {
+      ...data,
+      issuedAt,
+      issuedById: actorId,
+      verificationReference: generateVerificationReference(),
+      ...(supersedesId ? { supersedesId } : {}),
+      snapshot: snapshot as Prisma.InputJsonValue,
+    },
+  })
+}
+
+export async function correctDocument(
+  database: PrismaClient,
+  actorId: string,
+  schoolId: string,
+  documentId: string,
+  reason: string,
+) {
+  z.uuid().parse(documentId)
+  const correctionReason = DocumentReasonSchema.parse(reason)
+  await requireDocumentAuthority(database, actorId, schoolId)
   return database.$transaction(async (transaction) => {
-    const [student, school, year, official] = await Promise.all([
-      transaction.student.findUnique({ where: { id: data.studentId } }),
-      transaction.school.findUnique({ where: { id: data.schoolId } }),
-      transaction.academicYear.findFirst({
-        where: { id: data.academicYearId, schoolId: data.schoolId },
-      }),
-      transaction.publishedResult.findMany({
-        where: {
-          studentId: data.studentId,
-          schoolId: data.schoolId,
-          resultSet: {
-            academicYearId: data.academicYearId,
-            status: 'published',
-            publishedAt: { not: null },
-          },
-          enrollment: { status: { in: ['approved', 'withdrawn'] } },
-        },
-        include: {
-          resultSet: {
-            include: { subject: true, gradingPeriod: true },
-          },
-        },
-        orderBy: [
-          { resultSet: { gradingPeriod: { startsOn: 'asc' } } },
-          { resultSet: { subject: { name: 'asc' } } },
-        ],
-      }),
-    ])
-    if (!student || !school || !year || official.length === 0)
-      throw new DocumentSourceError()
-    const issuedAt = new Date()
-    const snapshot = DocumentSnapshotSchema.parse({
-      student: {
-        displayName: [student.givenName, student.familyName]
-          .filter(Boolean)
-          .join(' '),
-        studentReference: student.studentReference,
-      },
-      issuingSchool: school.name,
-      documentType: data.documentType,
-      issuedAt: issuedAt.toISOString(),
-      academicYear: year.name,
-      subjects: official.map((result) => ({
-        subject: result.resultSet.subject.name,
-        gradingPeriod: result.resultSet.gradingPeriod.name,
-        percentage: result.currentPercentage.toNumber(),
-        gradeLabel: result.currentGradeLabel,
-      })),
+    const previous = await transaction.issuedDocument.findFirst({
+      where: { id: documentId, schoolId },
     })
-    return transaction.issuedDocument.create({
+    if (!previous || previous.status !== 'active')
+      throw new DocumentStateError()
+    const changed = await transaction.issuedDocument.updateMany({
+      where: { id: previous.id, status: 'active' },
       data: {
-        ...data,
-        issuedAt,
-        issuedById: actorId,
-        verificationReference: generateVerificationReference(),
-        snapshot: snapshot as Prisma.InputJsonValue,
+        status: 'corrected',
+        correctionReason,
+        correctedById: actorId,
+        correctedAt: new Date(),
       },
     })
+    if (changed.count !== 1) throw new DocumentStateError()
+    return createDocumentInTransaction(
+      transaction,
+      actorId,
+      {
+        schoolId,
+        studentId: previous.studentId,
+        academicYearId: previous.academicYearId,
+        documentType: previous.documentType,
+      },
+      previous.id,
+    )
+  })
+}
+
+export async function withdrawDocument(
+  database: PrismaClient,
+  actorId: string,
+  schoolId: string,
+  documentId: string,
+  reason: string,
+) {
+  z.uuid().parse(documentId)
+  const withdrawalReason = DocumentReasonSchema.parse(reason)
+  await requireDocumentAuthority(database, actorId, schoolId)
+  const changed = await database.issuedDocument.updateMany({
+    where: { id: documentId, schoolId, status: 'active' },
+    data: {
+      status: 'withdrawn',
+      withdrawalReason,
+      withdrawnById: actorId,
+      withdrawnAt: new Date(),
+    },
+  })
+  if (changed.count !== 1) throw new DocumentStateError()
+  return database.issuedDocument.findUniqueOrThrow({
+    where: { id: documentId },
   })
 }
 

@@ -3,6 +3,9 @@ import { afterAll, describe, expect, it } from 'vitest'
 import { createDatabaseClient } from './index.js'
 import {
   DocumentPermissionError,
+  DocumentStateError,
+  correctDocument,
+  withdrawDocument,
   DocumentSnapshotSchema,
   DocumentSourceError,
   findDocumentByReference,
@@ -38,6 +41,15 @@ describe.skipIf(!database)('issued documents in PostgreSQL', () => {
         displayName: 'Document approver',
         schoolMemberships: {
           create: { schoolId: school.id, role: 'approver' },
+        },
+      },
+    })
+    const teacher = await database!.user.create({
+      data: {
+        email: 'teacher-' + randomUUID() + '@example.test',
+        displayName: 'Document teacher',
+        schoolMemberships: {
+          create: { schoolId: school.id, role: 'teacher' },
         },
       },
     })
@@ -225,14 +237,88 @@ describe.skipIf(!database)('issued documents in PostgreSQL', () => {
           schoolId: otherSchool.id,
         }),
       ).rejects.toBeInstanceOf(DocumentPermissionError)
-      await database!.issuedDocument.update({
-        where: { id: first.id },
-        data: { status: 'withdrawn' },
-      })
+      await expect(
+        correctDocument(
+          database!,
+          teacher.id,
+          school.id,
+          first.id,
+          'Corrected result',
+        ),
+      ).rejects.toBeInstanceOf(DocumentPermissionError)
+      await expect(
+        withdrawDocument(
+          database!,
+          teacher.id,
+          school.id,
+          first.id,
+          'Teacher request',
+        ),
+      ).rejects.toBeInstanceOf(DocumentPermissionError)
+      await expect(
+        correctDocument(
+          database!,
+          actor.id,
+          otherSchool.id,
+          first.id,
+          'Wrong school',
+        ),
+      ).rejects.toBeInstanceOf(DocumentPermissionError)
+      const replacement = await correctDocument(
+        database!,
+        actor.id,
+        school.id,
+        first.id,
+        'Official result correction',
+      )
+      expect(replacement.status).toBe('active')
+      expect(replacement.supersedesId).toBe(first.id)
+      expect(replacement.verificationReference).not.toBe(
+        first.verificationReference,
+      )
+      const prior = await findDocumentByReference(
+        database!,
+        first.verificationReference,
+      )
+      expect(prior?.status).toBe('corrected')
+      expect(prior?.correctionReason).toBe('Official result correction')
+      expect(prior?.correctedById).toBe(actor.id)
+      expect(prior?.correctedAt).not.toBeNull()
       expect(
-        (await findDocumentByReference(database!, first.verificationReference))
-          ?.status,
+        DocumentSnapshotSchema.parse(replacement.snapshot).subjects[0]
+          ?.gradeLabel,
+      ).toBe('A')
+      await expect(
+        correctDocument(database!, actor.id, school.id, first.id, 'Again'),
+      ).rejects.toBeInstanceOf(DocumentStateError)
+      const withdrawn = await withdrawDocument(
+        database!,
+        actor.id,
+        school.id,
+        replacement.id,
+        'Issued in error',
+      )
+      expect(withdrawn.status).toBe('withdrawn')
+      expect(withdrawn.withdrawalReason).toBe('Issued in error')
+      expect(withdrawn.withdrawnById).toBe(actor.id)
+      expect(withdrawn.withdrawnAt).not.toBeNull()
+      expect(
+        (
+          await findDocumentByReference(
+            database!,
+            replacement.verificationReference,
+          )
+        )?.status,
       ).toBe('withdrawn')
+      await expect(
+        withdrawDocument(
+          database!,
+          actor.id,
+          school.id,
+          replacement.id,
+          'Again',
+        ),
+      ).rejects.toBeInstanceOf(DocumentStateError)
       await expect(
         database!.issuedDocument.update({
           where: { id: second.id },
@@ -241,6 +327,15 @@ describe.skipIf(!database)('issued documents in PostgreSQL', () => {
       ).rejects.toThrow()
     } finally {
       await database!.issuedDocument.deleteMany({
+        where: { schoolId: school.id, supersedesId: { not: null } },
+      })
+      await database!.issuedDocument.deleteMany({
+        where: { schoolId: school.id },
+      })
+      await database!.gradeBand.deleteMany({
+        where: { gradingScheme: { schoolId: school.id } },
+      })
+      await database!.gradingScheme.deleteMany({
         where: { schoolId: school.id },
       })
       await database!.publishedResult.deleteMany({
@@ -261,6 +356,7 @@ describe.skipIf(!database)('issued documents in PostgreSQL', () => {
       await database!.schoolMembership.deleteMany({
         where: { schoolId: school.id },
       })
+      await database!.user.delete({ where: { id: teacher.id } })
       await database!.user.delete({ where: { id: actor.id } })
       await database!.school.delete({ where: { id: otherSchool.id } })
       await database!.school.delete({ where: { id: school.id } })
