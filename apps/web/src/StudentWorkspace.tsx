@@ -8,6 +8,7 @@ import {
   type StudentOptions,
 } from '@warka/shared'
 import { StudentAccountPanel } from './StudentAccountPanel'
+import { DocumentPanel } from './DocumentPanel'
 import {
   actOnEnrollment,
   ApiError,
@@ -539,6 +540,14 @@ export function StudentWorkspace({
               )}
               {access.capabilities.canRegister && (
                 <StudentAccountPanel
+                  baseUrl={baseUrl}
+                  schoolId={schoolId}
+                  studentId={detail.data.student.id}
+                  onSessionExpired={onSessionExpired}
+                />
+              )}
+              {access.capabilities.canApprove && (
+                <DocumentPanel
                   baseUrl={baseUrl}
                   schoolId={schoolId}
                   studentId={detail.data.student.id}

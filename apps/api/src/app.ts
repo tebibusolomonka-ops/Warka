@@ -23,6 +23,9 @@ import {
   ResultPermissionError,
   ResultStateError,
   IncompleteResultsError,
+  DocumentPermissionError,
+  DocumentSourceError,
+  DocumentStateError,
   type PrismaClient,
 } from '@warka/database'
 import { ErrorResponseSchema, HealthResponseSchema } from '@warka/shared'
@@ -63,6 +66,12 @@ import {
 } from './documentVerificationService.js'
 import { registerDocumentVerificationRoutes } from './documentVerificationRoutes.js'
 import {
+  DocumentStudentNotFoundError,
+  prismaDocumentManagementService,
+  type DocumentManagementService,
+} from './documentManagementService.js'
+import { registerDocumentManagementRoutes } from './documentManagementRoutes.js'
+import {
   prismaStudentAccountService,
   StudentAccountConflictError,
   StudentEnrollmentNotFoundError,
@@ -95,6 +104,7 @@ export function buildApp(
     materials?: LearningMaterialService
     announcements?: AnnouncementService
     verification?: DocumentVerificationService
+    documents?: DocumentManagementService
     studentOptions?: StudentOptionsService
     enrollments?: EnrollmentService
     academic?: AcademicService
@@ -147,6 +157,11 @@ export function buildApp(
   registerStudentPortalRoutes(app, getStudentPortal, authenticate)
   registerLearningMaterialRoutes(app, getMaterials, authenticate)
   registerAnnouncementRoutes(app, getAnnouncements, authenticate)
+  registerDocumentManagementRoutes(
+    app,
+    () => options.documents ?? prismaDocumentManagementService(getDatabase()),
+    authenticate,
+  )
   registerDocumentVerificationRoutes(
     app,
     () =>
@@ -170,6 +185,25 @@ export function buildApp(
   )
 
   app.setErrorHandler((error, _request, reply) => {
+    if (
+      error instanceof DocumentPermissionError ||
+      error instanceof DocumentStudentNotFoundError
+    ) {
+      return reply.code(404).send({
+        error: {
+          code: 'DOCUMENT_NOT_FOUND',
+          message: 'Document record not found',
+        },
+      })
+    }
+    if (
+      error instanceof DocumentSourceError ||
+      error instanceof DocumentStateError
+    ) {
+      return reply.code(409).send({
+        error: { code: 'DOCUMENT_CONFLICT', message: error.message },
+      })
+    }
     if (error instanceof ZodError) {
       return reply.code(400).send(
         ErrorResponseSchema.parse({

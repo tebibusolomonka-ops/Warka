@@ -296,3 +296,19 @@ export const DocumentVerificationSchema = z.discriminatedUnion('status', [
   }),
 ])
 export type DocumentVerification = z.infer<typeof DocumentVerificationSchema>
+
+export const IssuedDocumentSummarySchema = z.strictObject({
+  id: z.uuid(),
+  documentType: z.enum(['reportCard', 'transcript']),
+  verificationReference: z.string(),
+  status: z.enum(['active', 'corrected', 'withdrawn']),
+  issuedAt: z.iso.datetime(),
+  supersedesId: z.uuid().nullable(),
+})
+export type IssuedDocumentSummary = z.infer<typeof IssuedDocumentSummarySchema>
+
+export const StudentDocumentsSchema = z.strictObject({
+  documents: z.array(IssuedDocumentSummarySchema),
+  eligibleYears: z.array(z.strictObject({ id: z.uuid(), name: z.string() })),
+})
+export type StudentDocuments = z.infer<typeof StudentDocumentsSchema>
