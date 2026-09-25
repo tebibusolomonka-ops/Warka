@@ -10,6 +10,8 @@ import {
   StudentDetailResponseSchema,
   StudentListResponseSchema,
   StudentOptionsSchema,
+  StudentPortalIdentitySchema,
+  StudentResultsSchema,
   UserIdentitySchema,
   type AccessibleSchool,
   type OrganizationAccess,
@@ -19,6 +21,8 @@ import {
   type StudentDetailResponse,
   type StudentListResponse,
   type StudentOptions,
+  type StudentPortalIdentity,
+  type StudentResult,
   type UserIdentity,
 } from '@warka/shared'
 
@@ -258,5 +262,41 @@ export async function actOnEnrollment(
       { method: 'POST' },
       request,
     ),
+  )
+}
+
+export async function changePassword(
+  baseUrl: string,
+  currentPassword: string,
+  newPassword: string,
+  request: typeof fetch = fetch,
+): Promise<void> {
+  await requestJson(
+    baseUrl,
+    '/auth/change-password',
+    {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ currentPassword, newPassword }),
+    },
+    request,
+  )
+}
+
+export async function getStudentIdentity(
+  baseUrl: string,
+  request: typeof fetch = fetch,
+): Promise<StudentPortalIdentity> {
+  return StudentPortalIdentitySchema.parse(
+    await requestJson(baseUrl, '/student/me', {}, request),
+  )
+}
+
+export async function getStudentResults(
+  baseUrl: string,
+  request: typeof fetch = fetch,
+): Promise<StudentResult[]> {
+  return StudentResultsSchema.parse(
+    await requestJson(baseUrl, '/student/results', {}, request),
   )
 }

@@ -26,6 +26,16 @@ export function authenticateRequest(
         }),
       )
     }
+    if (await getAuth().passwordState?.(token!)) {
+      return reply.code(403).send(
+        ErrorResponseSchema.parse({
+          error: {
+            code: 'PASSWORD_CHANGE_REQUIRED',
+            message: 'Change your password to continue',
+          },
+        }),
+      )
+    }
     request.currentUser = user
   }
 }

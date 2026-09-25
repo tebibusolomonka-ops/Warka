@@ -66,6 +66,33 @@ export const UserIdentitySchema = z.object({
 
 export type UserIdentity = z.infer<typeof UserIdentitySchema>
 
+export const StudentPortalIdentitySchema = z.object({
+  studentReference: z.string(),
+  givenName: z.string(),
+  familyName: z.string().nullable(),
+  currentEnrollment: z
+    .object({
+      school: z.string(),
+      academicYear: z.string(),
+      gradeLevel: z.string(),
+      schoolClass: z.string().nullable(),
+    })
+    .nullable(),
+})
+export type StudentPortalIdentity = z.infer<typeof StudentPortalIdentitySchema>
+
+export const StudentResultSchema = z.object({
+  academicYear: z.string(),
+  gradingPeriod: z.string(),
+  subject: z.string(),
+  percentage: z.number(),
+  gradeLabel: z.string(),
+  publishedAt: z.iso.datetime(),
+  corrected: z.boolean(),
+})
+export const StudentResultsSchema = z.array(StudentResultSchema)
+export type StudentResult = z.infer<typeof StudentResultSchema>
+
 export const OrganizationAccessSchema = z.object({
   organization: OrganizationSchema,
   role: z.enum(['owner', 'administrator']),

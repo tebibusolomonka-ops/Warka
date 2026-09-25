@@ -114,6 +114,43 @@ describe('authentication routes', () => {
       await app.close()
     }
   })
+  it('blocks protected routes until a required password change completes', async () => {
+    const { auth } = testAuth()
+    auth.passwordState = async () => true
+    const app = buildApp({ auth })
+    try {
+      const login = await app.inject({
+        method: 'POST',
+        url: '/auth/login',
+        payload: { email: user.email, password: 'correct password' },
+      })
+      const cookie = String(login.headers['set-cookie']).split(';')[0]!
+      const me = await app.inject({
+        method: 'GET',
+        url: '/auth/me',
+        headers: { cookie },
+      })
+      expect(me.json().mustChangePassword).toBe(true)
+      for (const url of [
+        '/schools',
+        '/student/me',
+        '/student/results',
+        '/student/materials',
+        '/student/announcements',
+      ]) {
+        const response = await app.inject({
+          method: 'GET',
+          url,
+          headers: { cookie },
+        })
+        expect(response.statusCode).toBe(403)
+        expect(response.json().error.code).toBe('PASSWORD_CHANGE_REQUIRED')
+      }
+    } finally {
+      await app.close()
+    }
+  })
+
   it('logs in, reads the current user, and logs out through an HttpOnly cookie', async () => {
     const { auth } = testAuth()
     const app = buildApp({ auth, production: false })

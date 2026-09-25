@@ -12,6 +12,9 @@ import {
   ApiError,
   getAccessibleSchools,
   getCurrentUser,
+  getStudentIdentity,
+  getStudentResults,
+  changePassword,
   getOrganizations,
   getSchools,
   getStudents,
@@ -27,6 +30,9 @@ vi.mock('./api', async (importOriginal) => {
     ...actual,
     getAccessibleSchools: vi.fn(),
     getCurrentUser: vi.fn(),
+    getStudentIdentity: vi.fn(),
+    getStudentResults: vi.fn(),
+    changePassword: vi.fn(),
     getOrganizations: vi.fn(),
     getSchools: vi.fn(),
     getStudents: vi.fn(),
@@ -71,6 +77,15 @@ beforeEach(() => {
   vi.mocked(getAccessibleSchools).mockResolvedValue([])
   vi.mocked(getStudents).mockResolvedValue({ items: [], limit: 50, offset: 0 })
   vi.mocked(logout).mockResolvedValue(undefined)
+  vi.mocked(getStudentIdentity).mockRejectedValue(
+    new ApiError(
+      'Student portal access required',
+      403,
+      'STUDENT_ACCESS_REQUIRED',
+    ),
+  )
+  vi.mocked(getStudentResults).mockResolvedValue([])
+  vi.mocked(changePassword).mockResolvedValue(undefined)
 })
 afterEach(() => {
   cleanup()
@@ -88,6 +103,86 @@ function signIn() {
 }
 
 describe('authenticated web shell', () => {
+  it('requires password change before any workspace and refreshes identity after success', async () => {
+    vi.mocked(getCurrentUser)
+      .mockResolvedValueOnce({ ...user, mustChangePassword: true })
+      .mockResolvedValue(user)
+    vi.mocked(getOrganizations).mockResolvedValue([firstOrganization])
+    render(<App />)
+    await screen.findByRole('heading', { name: 'Change your password' })
+    expect(screen.queryByText('School directory')).toBeNull()
+    fireEvent.change(screen.getByLabelText('Current password'), {
+      target: { value: 'initial password' },
+    })
+    fireEvent.change(screen.getByLabelText('New password'), {
+      target: { value: 'new long password' },
+    })
+    fireEvent.change(screen.getByLabelText('Confirm new password'), {
+      target: { value: 'new long password' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Change password' }))
+    await screen.findByText('School directory')
+    expect(changePassword).toHaveBeenCalledWith(
+      baseUrl,
+      'initial password',
+      'new long password',
+    )
+    expect(getCurrentUser).toHaveBeenCalledTimes(2)
+  })
+
+  it('shows a student-only portal without staff navigation and signs out', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(user)
+    vi.mocked(getOrganizations).mockResolvedValue([])
+    vi.mocked(getStudentIdentity).mockResolvedValue({
+      studentReference: 'WKA-TEST',
+      givenName: 'Hana',
+      familyName: 'Bekele',
+      currentEnrollment: {
+        school: 'First school',
+        academicYear: '2026',
+        gradeLevel: 'Grade 2',
+        schoolClass: 'A',
+      },
+    })
+    vi.mocked(getStudentResults).mockResolvedValue([
+      {
+        academicYear: '2026',
+        gradingPeriod: 'Term 1',
+        subject: 'Math',
+        percentage: 91,
+        gradeLabel: 'A',
+        publishedAt: '2026-09-24T00:00:00.000Z',
+        corrected: true,
+      },
+    ])
+    render(<App />)
+    await screen.findByRole('heading', { name: 'Student portal' })
+    expect(screen.getByText(/WKA-TEST/)).toBeTruthy()
+    expect(screen.queryByText('My schools')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Results' }))
+    await screen.findByText(/Math: 91%/)
+    expect(screen.getByText(/Corrected/)).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Sign out' }))
+    await screen.findByRole('button', { name: 'Sign in' })
+    expect(screen.queryByRole('heading', { name: 'Student portal' })).toBeNull()
+  })
+
+  it('shows an empty published-results state to a linked student', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(user)
+    vi.mocked(getOrganizations).mockResolvedValue([])
+    vi.mocked(getStudentIdentity).mockResolvedValue({
+      studentReference: 'WKA-EMPTY',
+      givenName: 'Hana',
+      familyName: null,
+      currentEnrollment: null,
+    })
+    vi.mocked(getStudentResults).mockResolvedValue([])
+    render(<App />)
+    await screen.findByRole('heading', { name: 'Student portal' })
+    fireEvent.click(screen.getByRole('button', { name: 'Results' }))
+    await screen.findByText('No published results yet.')
+  })
+
   it('checks the session before showing sign in', async () => {
     vi.mocked(getCurrentUser).mockReturnValue(
       new Promise<UserIdentity>(() => {}),
@@ -100,7 +195,9 @@ describe('authenticated web shell', () => {
   })
 
   it('shows sign in for an unauthenticated visitor and clears protected data on logout', async () => {
-    vi.mocked(getCurrentUser).mockRejectedValue(unauthenticated)
+    vi.mocked(getCurrentUser)
+      .mockRejectedValueOnce(unauthenticated)
+      .mockResolvedValue(user)
     vi.mocked(login).mockResolvedValue(user)
     vi.mocked(getOrganizations).mockResolvedValue([firstOrganization])
     render(<App />)

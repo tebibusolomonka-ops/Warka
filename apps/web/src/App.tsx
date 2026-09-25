@@ -4,12 +4,14 @@ import {
   type AccessibleSchool,
   type OrganizationAccess,
   type UserIdentity,
+  type StudentPortalIdentity,
 } from '@warka/shared'
 import {
   ApiError,
   apiBaseUrl,
   getAccessibleSchools,
   getCurrentUser,
+  getStudentIdentity,
   getOrganizations,
   login,
   logout,
@@ -17,6 +19,8 @@ import {
 import { SchoolDirectory } from './SchoolDirectory'
 import { StudentWorkspace } from './StudentWorkspace'
 import { AcademicWorkspace } from './AcademicWorkspace'
+import { PasswordChange } from './PasswordChange'
+import { StudentPortal } from './StudentPortal'
 
 type Authentication =
   | { status: 'checking' }
@@ -27,6 +31,12 @@ type Organizations =
   | { status: 'loading' }
   | { status: 'error' }
   | { status: 'loaded'; access: OrganizationAccess[] }
+
+type Portal =
+  | { status: 'loading' }
+  | { status: 'none' }
+  | { status: 'error' }
+  | { status: 'loaded'; identity: StudentPortalIdentity }
 
 type Schools =
   | { status: 'loading' }
@@ -55,6 +65,27 @@ function SignedInShell({
   const [schools, setSchools] = useState<Schools>({ status: 'loading' })
   const [selectedSchoolId, setSelectedSchoolId] = useState('')
   const [refresh, setRefresh] = useState(0)
+  const [portal, setPortal] = useState<Portal>({ status: 'loading' })
+
+  useEffect(() => {
+    let active = true
+    setPortal({ status: 'loading' })
+    getStudentIdentity(baseUrl)
+      .then((identity) => {
+        if (active) setPortal({ status: 'loaded', identity })
+      })
+      .catch((error: unknown) => {
+        if (!active) return
+        if (isExpired(error))
+          onSignedOut('Your session expired. Sign in again.')
+        else if (error instanceof ApiError && [403, 404].includes(error.status))
+          setPortal({ status: 'none' })
+        else setPortal({ status: 'error' })
+      })
+    return () => {
+      active = false
+    }
+  }, [baseUrl, refresh, onSignedOut])
 
   useEffect(() => {
     let active = true
@@ -118,6 +149,40 @@ function SignedInShell({
       : undefined
   const canManage =
     selected?.role === 'owner' || selected?.role === 'administrator'
+
+  if (portal.status === 'loading')
+    return <p role="status">Loading workspaces</p>
+  if (
+    portal.status === 'loaded' &&
+    schools.status === 'loaded' &&
+    organizations.status === 'loaded' &&
+    schools.access.length === 0 &&
+    organizations.access.length === 0
+  ) {
+    return (
+      <StudentPortal
+        baseUrl={baseUrl}
+        identity={portal.identity}
+        onSessionExpired={sessionExpired}
+        onSignOut={onSignOut}
+      />
+    )
+  }
+  if (
+    portal.status === 'error' &&
+    schools.status === 'loaded' &&
+    schools.access.length === 0 &&
+    organizations.status === 'loaded' &&
+    organizations.access.length === 0
+  )
+    return (
+      <div role="alert">
+        <p>Could not load student access.</p>
+        <button type="button" onClick={() => setRefresh((value) => value + 1)}>
+          Retry
+        </button>
+      </div>
+    )
 
   return (
     <>
@@ -301,7 +366,8 @@ export function App() {
     setBusy(true)
     setFormError('')
     try {
-      const user = await login(baseUrl, parsed.data.email, parsed.data.password)
+      await login(baseUrl, parsed.data.email, parsed.data.password)
+      const user = await getCurrentUser(baseUrl)
       setPassword('')
       setAuthentication({ status: 'signedIn', user })
     } catch (error) {
@@ -403,14 +469,28 @@ export function App() {
           {formError && <p role="alert">{formError}</p>}
         </section>
       )}
-      {authentication.status === 'signedIn' && baseUrl && (
-        <SignedInShell
-          baseUrl={baseUrl}
-          user={authentication.user}
-          onSignedOut={signedOut}
-          onSignOut={() => void signOut()}
-        />
-      )}
+      {authentication.status === 'signedIn' &&
+        baseUrl &&
+        authentication.user.mustChangePassword && (
+          <PasswordChange
+            baseUrl={baseUrl}
+            onSignOut={() => void signOut()}
+            onChanged={async () => {
+              const user = await getCurrentUser(baseUrl)
+              setAuthentication({ status: 'signedIn', user })
+            }}
+          />
+        )}
+      {authentication.status === 'signedIn' &&
+        baseUrl &&
+        !authentication.user.mustChangePassword && (
+          <SignedInShell
+            baseUrl={baseUrl}
+            user={authentication.user}
+            onSignedOut={signedOut}
+            onSignOut={() => void signOut()}
+          />
+        )}
     </main>
   )
 }
