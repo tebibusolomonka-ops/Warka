@@ -21,6 +21,7 @@ import { StudentWorkspace } from './StudentWorkspace'
 import { AcademicWorkspace } from './AcademicWorkspace'
 import { PasswordChange } from './PasswordChange'
 import { StudentPortal } from './StudentPortal'
+import { ResourceWorkspace } from './ResourceWorkspace'
 
 type Authentication =
   | { status: 'checking' }
@@ -228,13 +229,20 @@ function SignedInShell({
             {selectedSchool &&
               (selectedSchool.capabilities.canApprove ||
                 !selectedSchool.capabilities.canRegister) && (
-                <AcademicWorkspace
-                  key={selectedSchool.school.id}
-                  baseUrl={baseUrl}
-                  schoolId={selectedSchool.school.id}
-                  schoolName={selectedSchool.school.name}
-                  onSessionExpired={sessionExpired}
-                />
+                <>
+                  <AcademicWorkspace
+                    key={selectedSchool.school.id}
+                    baseUrl={baseUrl}
+                    schoolId={selectedSchool.school.id}
+                    schoolName={selectedSchool.school.name}
+                    onSessionExpired={sessionExpired}
+                  />
+                  <ResourceWorkspace
+                    baseUrl={baseUrl}
+                    schoolId={selectedSchool.school.id}
+                    onSessionExpired={sessionExpired}
+                  />
+                </>
               )}
             {selectedSchool &&
               (selectedSchool.capabilities.canRegister ||

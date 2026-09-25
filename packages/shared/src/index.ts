@@ -93,6 +93,32 @@ export const StudentResultSchema = z.object({
 export const StudentResultsSchema = z.array(StudentResultSchema)
 export type StudentResult = z.infer<typeof StudentResultSchema>
 
+export const StudentMaterialSchema = z.object({
+  id: z.uuid(),
+  title: z.string(),
+  description: z.string().nullable(),
+  resourceType: z.literal('link'),
+  resourceLocation: z.url(),
+  subject: z.string(),
+  academicYear: z.string(),
+  publishedAt: z.iso.datetime(),
+})
+export const StudentMaterialsSchema = z.array(StudentMaterialSchema)
+export type StudentMaterial = z.infer<typeof StudentMaterialSchema>
+
+export const StudentAnnouncementSchema = z.object({
+  id: z.uuid(),
+  title: z.string(),
+  body: z.string(),
+  publishedAt: z.iso.datetime(),
+  scope: z.discriminatedUnion('type', [
+    z.object({ type: z.literal('school') }),
+    z.object({ type: z.literal('class'), name: z.string() }),
+  ]),
+})
+export const StudentAnnouncementsSchema = z.array(StudentAnnouncementSchema)
+export type StudentAnnouncement = z.infer<typeof StudentAnnouncementSchema>
+
 export const OrganizationAccessSchema = z.object({
   organization: OrganizationSchema,
   role: z.enum(['owner', 'administrator']),

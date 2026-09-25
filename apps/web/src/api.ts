@@ -12,6 +12,8 @@ import {
   StudentOptionsSchema,
   StudentPortalIdentitySchema,
   StudentResultsSchema,
+  StudentMaterialsSchema,
+  StudentAnnouncementsSchema,
   UserIdentitySchema,
   type AccessibleSchool,
   type OrganizationAccess,
@@ -23,6 +25,8 @@ import {
   type StudentOptions,
   type StudentPortalIdentity,
   type StudentResult,
+  type StudentMaterial,
+  type StudentAnnouncement,
   type UserIdentity,
 } from '@warka/shared'
 
@@ -298,5 +302,23 @@ export async function getStudentResults(
 ): Promise<StudentResult[]> {
   return StudentResultsSchema.parse(
     await requestJson(baseUrl, '/student/results', {}, request),
+  )
+}
+
+export async function getStudentMaterials(
+  baseUrl: string,
+  request: typeof fetch = fetch,
+): Promise<StudentMaterial[]> {
+  return StudentMaterialsSchema.parse(
+    await requestJson(baseUrl, '/student/materials', {}, request),
+  )
+}
+
+export async function getStudentAnnouncements(
+  baseUrl: string,
+  request: typeof fetch = fetch,
+): Promise<StudentAnnouncement[]> {
+  return StudentAnnouncementsSchema.parse(
+    await requestJson(baseUrl, '/student/announcements', {}, request),
   )
 }

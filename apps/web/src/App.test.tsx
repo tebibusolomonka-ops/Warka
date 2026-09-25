@@ -23,6 +23,7 @@ import {
 } from './api'
 
 vi.mock('./AcademicWorkspace', () => ({ AcademicWorkspace: () => null }))
+vi.mock('./ResourceWorkspace', () => ({ ResourceWorkspace: () => null }))
 
 vi.mock('./api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('./api')>()
