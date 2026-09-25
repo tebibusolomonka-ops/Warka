@@ -300,3 +300,21 @@ export type {
   DocumentStatus,
   IssuedDocument,
 } from './issuedDocuments.js'
+
+export {
+  TransferPackageSchema,
+  RequestTransferSchema,
+  TransferPermissionError,
+  TransferSourceError,
+  DuplicateActiveTransferError,
+  requireTransferSchoolRole,
+  requestTransfer,
+  listSchoolTransfers,
+  findTransferForSchool,
+} from './transfers.js'
+export type {
+  TransferPackage,
+  RequestTransfer,
+  TransferRequest,
+  TransferStatus,
+} from './transfers.js'

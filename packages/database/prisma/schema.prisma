@@ -25,6 +25,14 @@ enum ResultSetStatus {
   published
 }
 
+enum TransferStatus {
+  requested
+  approvedBySendingSchool
+  acceptedByReceivingSchool
+  rejected
+  cancelled
+}
+
 enum DocumentType {
   reportCard
   transcript
@@ -75,6 +83,8 @@ model School {
   marks               Mark[]
   gradingScheme       GradingScheme?
   issuedDocuments     IssuedDocument[]
+  outgoingTransfers   TransferRequest[] @relation("SendingTransfers")
+  incomingTransfers   TransferRequest[] @relation("ReceivingTransfers")
 
   @@index([organizationId])
 }
@@ -82,6 +92,7 @@ model School {
 model User {
   submittedResultSets     ResultSet[]              @relation("ResultSetSubmittedBy")
   issuedDocuments         IssuedDocument[]
+  requestedTransfers      TransferRequest[]
   correctedDocuments      IssuedDocument[]         @relation("DocumentCorrectedBy")
   withdrawnDocuments      IssuedDocument[]         @relation("DocumentWithdrawnBy")
   publishedResultSets     ResultSet[]              @relation("ResultSetPublishedBy")
@@ -213,6 +224,7 @@ model SchoolClass {
 }
 
 model Student {
+  transferRequests TransferRequest[]
   issuedDocuments  IssuedDocument[]
   publishedResults PublishedResult[]
   id               String            @id @default(uuid())
@@ -262,6 +274,7 @@ model StudentGuardian {
 }
 
 model Enrollment {
+  sourceTransfers TransferRequest[] @relation("TransferSource")
   publishedResults PublishedResult[]
   id               String            @id @default(uuid())
   studentId        String
@@ -560,4 +573,28 @@ model IssuedDocument {
 
   @@index([schoolId, studentId, issuedAt])
   @@index([schoolId, issuedAt])
+}
+
+
+model TransferRequest {
+  id                 String         @id @default(uuid())
+  studentId          String
+  sendingSchoolId    String
+  receivingSchoolId  String
+  sourceEnrollmentId String
+  status             TransferStatus @default(requested)
+  transferPackage    Json
+  requestedById      String
+  requestedAt        DateTime       @default(now())
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+  student            Student        @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  sendingSchool      School         @relation("SendingTransfers", fields: [sendingSchoolId], references: [id], onDelete: Restrict)
+  receivingSchool    School         @relation("ReceivingTransfers", fields: [receivingSchoolId], references: [id], onDelete: Restrict)
+  sourceEnrollment   Enrollment     @relation("TransferSource", fields: [sourceEnrollmentId, sendingSchoolId, studentId], references: [id, schoolId, studentId], onDelete: Restrict)
+  requestedBy        User           @relation(fields: [requestedById], references: [id], onDelete: Restrict)
+
+  @@index([sendingSchoolId, status, requestedAt])
+  @@index([receivingSchoolId, status, requestedAt])
+  @@index([studentId, requestedAt])
 }
