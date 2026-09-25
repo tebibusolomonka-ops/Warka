@@ -417,3 +417,12 @@ export type {
   VerificationEvent,
   VerificationResultStatus,
 } from '@prisma/client'
+
+export {
+  calculateCoverage,
+  calculateFreshness,
+  getReportingCoverage,
+  listMissingSchools,
+  listReturnedSubmissions,
+} from './reportingCoverage.js'
+export type { ReportingCoverage, FreshnessStatus } from './reportingCoverage.js'
