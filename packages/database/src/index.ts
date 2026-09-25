@@ -401,3 +401,9 @@ export {
   summarizeEnrollmentRows,
 } from './enrollmentReporting.js'
 export type { EnrollmentAggregate } from './enrollmentReporting.js'
+
+export {
+  buildAcademicAggregate,
+  summarizeAcademicOutcomes,
+} from './academicReporting.js'
+export type { AcademicOutcomeAggregate } from './academicReporting.js'
