@@ -84,6 +84,13 @@ import {
 } from './transferManagementService.js'
 import { registerTransferRoutes } from './transferRoutes.js'
 import { registerParentServiceRoutes } from './parentServiceRoutes.js'
+import { registerGuardianAccountRoutes } from './guardianAccountRoutes.js'
+import {
+  prismaGuardianAccountService,
+  GuardianAccountConflictError,
+  GuardianAccountUnavailableError,
+  type GuardianAccountService,
+} from './guardianAccountService.js'
 import {
   prismaStudentAccountService,
   StudentAccountConflictError,
@@ -113,6 +120,7 @@ export function buildApp(
     access?: SchoolAccess
     students?: StudentService
     studentAccounts?: StudentAccountService
+    guardianAccounts?: GuardianAccountService
     studentPortal?: StudentPortalService
     materials?: LearningMaterialService
     announcements?: AnnouncementService
@@ -172,6 +180,12 @@ export function buildApp(
   registerLearningMaterialRoutes(app, getMaterials, authenticate)
   registerAnnouncementRoutes(app, getAnnouncements, authenticate)
   registerParentServiceRoutes(app, getDatabase, authenticate)
+  registerGuardianAccountRoutes(
+    app,
+    () =>
+      options.guardianAccounts ?? prismaGuardianAccountService(getDatabase()),
+    authenticate,
+  )
   registerTransferRoutes(
     app,
     () => options.transfers ?? prismaTransferManagementService(getDatabase()),
@@ -205,6 +219,16 @@ export function buildApp(
   )
 
   app.setErrorHandler((error, _request, reply) => {
+    if (error instanceof GuardianAccountUnavailableError) {
+      return reply
+        .code(404)
+        .send({ error: { code: 'GUARDIAN_NOT_FOUND', message: error.message } })
+    }
+    if (error instanceof GuardianAccountConflictError) {
+      return reply.code(409).send({
+        error: { code: 'GUARDIAN_ACCOUNT_CONFLICT', message: error.message },
+      })
+    }
     if (error instanceof ParentServicePermissionError) {
       return reply.code(404).send({
         error: { code: 'PARENT_SERVICE_NOT_FOUND', message: error.message },
