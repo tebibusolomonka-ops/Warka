@@ -335,3 +335,12 @@ export type {
   TransferRequest,
   TransferStatus,
 } from './transfers.js'
+
+export {
+  verifyGuardianRelationship,
+  revokeGuardianRelationship,
+  hasActiveVerifiedGuardianRelationship,
+  GuardianRelationshipPermissionError,
+  GuardianRelationshipStateError,
+} from './guardianRelationships.js'
+export type { GuardianVerificationStatus } from '@prisma/client'

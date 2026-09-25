@@ -44,6 +44,12 @@ enum DocumentStatus {
   withdrawn
 }
 
+enum GuardianVerificationStatus {
+  pending
+  verified
+  revoked
+}
+
 enum EnrollmentStatus {
   draft
   pending
@@ -85,6 +91,7 @@ model School {
   issuedDocuments     IssuedDocument[]
   outgoingTransfers   TransferRequest[] @relation("SendingTransfers")
   incomingTransfers   TransferRequest[] @relation("ReceivingTransfers")
+  verifiedGuardianRelationships StudentGuardian[]
 
   @@index([organizationId])
 }
@@ -112,6 +119,8 @@ model User {
   schoolMemberships       SchoolMembership[]
   passwordCredential      PasswordCredential?
   studentAccess           StudentAccess?
+  guardianVerifications   StudentGuardian[] @relation("GuardianVerifiedBy")
+  guardianRevocations     StudentGuardian[] @relation("GuardianRevokedBy")
   guardianAccess          GuardianAccess?
   sessions                Session[]
   approvedEnrollments     Enrollment[]             @relation("EnrollmentApprovedBy")
@@ -277,16 +286,27 @@ model GuardianAccess {
 }
 
 model StudentGuardian {
-  studentId    String
-  guardianId   String
-  relationship String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  student      Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  guardian     Guardian @relation(fields: [guardianId], references: [id], onDelete: Cascade)
+  studentId            String
+  guardianId           String
+  relationship         String
+  verificationStatus   GuardianVerificationStatus @default(pending)
+  verificationSchoolId String?
+  verifiedAt           DateTime?
+  verifiedById         String?
+  revokedAt            DateTime?
+  revokedById          String?
+  revocationReason     String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  student              Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  guardian             Guardian @relation(fields: [guardianId], references: [id], onDelete: Cascade)
+  verificationSchool   School? @relation(fields: [verificationSchoolId], references: [id], onDelete: Restrict)
+  verifiedBy           User? @relation("GuardianVerifiedBy", fields: [verifiedById], references: [id], onDelete: Restrict)
+  revokedBy            User? @relation("GuardianRevokedBy", fields: [revokedById], references: [id], onDelete: Restrict)
 
   @@id([studentId, guardianId])
   @@index([guardianId])
+  @@index([verificationSchoolId, verificationStatus])
 }
 
 model Enrollment {
