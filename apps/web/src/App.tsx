@@ -5,6 +5,7 @@ import {
   type OrganizationAccess,
   type UserIdentity,
   type StudentPortalIdentity,
+  type ParentIdentity,
 } from '@warka/shared'
 import {
   ApiError,
@@ -24,6 +25,9 @@ import { StudentPortal } from './StudentPortal'
 import { ResourceWorkspace } from './ResourceWorkspace'
 import { DocumentVerificationPage } from './DocumentVerificationPage'
 import { TransferWorkspace } from './TransferWorkspace'
+import { ParentPortal } from './ParentPortal'
+import { StaffFamilyWorkspace } from './StaffFamilyWorkspace'
+import { getParentIdentity } from './parentApi'
 
 type Authentication =
   | { status: 'checking' }
@@ -40,6 +44,12 @@ type Portal =
   | { status: 'none' }
   | { status: 'error' }
   | { status: 'loaded'; identity: StudentPortalIdentity }
+
+type Parent =
+  | { status: 'loading' }
+  | { status: 'none' }
+  | { status: 'error' }
+  | { status: 'loaded'; identity: ParentIdentity }
 
 type Schools =
   | { status: 'loading' }
@@ -69,7 +79,10 @@ function SignedInShell({
   const [selectedSchoolId, setSelectedSchoolId] = useState('')
   const [refresh, setRefresh] = useState(0)
   const [portal, setPortal] = useState<Portal>({ status: 'loading' })
-  const [workspace, setWorkspace] = useState<'staff' | 'student'>('staff')
+  const [parent, setParent] = useState<Parent>({ status: 'loading' })
+  const [workspace, setWorkspace] = useState<'staff' | 'student' | 'parent'>(
+    'staff',
+  )
 
   useEffect(() => {
     let active = true
@@ -85,6 +98,26 @@ function SignedInShell({
         else if (error instanceof ApiError && [403, 404].includes(error.status))
           setPortal({ status: 'none' })
         else setPortal({ status: 'error' })
+      })
+    return () => {
+      active = false
+    }
+  }, [baseUrl, refresh, onSignedOut])
+
+  useEffect(() => {
+    let active = true
+    setParent({ status: 'loading' })
+    getParentIdentity(baseUrl)
+      .then((identity) => {
+        if (active) setParent({ status: 'loaded', identity })
+      })
+      .catch((error: unknown) => {
+        if (!active) return
+        if (isExpired(error))
+          onSignedOut('Your session expired. Sign in again.')
+        else if (error instanceof ApiError && [403, 404].includes(error.status))
+          setParent({ status: 'none' })
+        else setParent({ status: 'error' })
       })
     return () => {
       active = false
@@ -158,35 +191,77 @@ function SignedInShell({
     (schools.status === 'loaded' && schools.access.length > 0) ||
     (organizations.status === 'loaded' && organizations.access.length > 0)
 
-  if (portal.status === 'loading')
-    return <p role="status">Loading workspaces</p>
   if (
-    portal.status === 'loaded' &&
-    schools.status === 'loaded' &&
-    organizations.status === 'loaded' &&
-    schools.access.length === 0 &&
-    organizations.access.length === 0
-  ) {
-    return (
-      <StudentPortal
-        baseUrl={baseUrl}
-        identity={portal.identity}
-        onSessionExpired={sessionExpired}
-        onSignOut={onSignOut}
-      />
-    )
-  }
-  if (portal.status === 'loaded' && hasStaffAccess && workspace === 'student')
-    return (
-      <>
-        <nav aria-label="Workspace choice" className="workspace-nav">
-          <button type="button" onClick={() => setWorkspace('staff')}>
+    portal.status === 'loading' ||
+    parent.status === 'loading' ||
+    schools.status === 'loading' ||
+    organizations.status === 'loading'
+  )
+    return <p role="status">Loading workspaces</p>
+  const hasStudentAccess = portal.status === 'loaded'
+  const hasParentAccess = parent.status === 'loaded'
+  const workspaceCount =
+    Number(hasStaffAccess) + Number(hasStudentAccess) + Number(hasParentAccess)
+  const activeWorkspace =
+    workspace === 'staff' && hasStaffAccess
+      ? 'staff'
+      : workspace === 'student' && hasStudentAccess
+        ? 'student'
+        : workspace === 'parent' && hasParentAccess
+          ? 'parent'
+          : hasStaffAccess
+            ? 'staff'
+            : hasParentAccess
+              ? 'parent'
+              : 'student'
+  const workspaceChoices =
+    workspaceCount > 1 ? (
+      <nav aria-label="Workspace choice" className="workspace-nav">
+        {hasStaffAccess && (
+          <button
+            type="button"
+            aria-current={activeWorkspace === 'staff' ? 'page' : undefined}
+            onClick={() => setWorkspace('staff')}
+          >
             Staff workspace
           </button>
-          <button type="button" aria-current="page">
+        )}
+        {hasStudentAccess && (
+          <button
+            type="button"
+            aria-current={activeWorkspace === 'student' ? 'page' : undefined}
+            onClick={() => setWorkspace('student')}
+          >
             Student portal
           </button>
-        </nav>
+        )}
+        {hasParentAccess && (
+          <button
+            type="button"
+            aria-current={activeWorkspace === 'parent' ? 'page' : undefined}
+            onClick={() => setWorkspace('parent')}
+          >
+            Parent workspace
+          </button>
+        )}
+      </nav>
+    ) : null
+  if (activeWorkspace === 'parent' && parent.status === 'loaded')
+    return (
+      <>
+        {workspaceChoices}
+        <ParentPortal
+          baseUrl={baseUrl}
+          identity={parent.identity}
+          onSessionExpired={sessionExpired}
+          onSignOut={onSignOut}
+        />
+      </>
+    )
+  if (activeWorkspace === 'student' && portal.status === 'loaded')
+    return (
+      <>
+        {workspaceChoices}
         <StudentPortal
           baseUrl={baseUrl}
           identity={portal.identity}
@@ -196,15 +271,12 @@ function SignedInShell({
       </>
     )
   if (
-    portal.status === 'error' &&
-    schools.status === 'loaded' &&
-    schools.access.length === 0 &&
-    organizations.status === 'loaded' &&
-    organizations.access.length === 0
+    !hasStaffAccess &&
+    (portal.status === 'error' || parent.status === 'error')
   )
     return (
       <div role="alert">
-        <p>Could not load student access.</p>
+        <p>Could not load workspace access.</p>
         <button type="button" onClick={() => setRefresh((value) => value + 1)}>
           Retry
         </button>
@@ -213,16 +285,7 @@ function SignedInShell({
 
   return (
     <>
-      {portal.status === 'loaded' && hasStaffAccess && (
-        <nav aria-label="Workspace choice" className="workspace-nav">
-          <button type="button" aria-current="page">
-            Staff workspace
-          </button>
-          <button type="button" onClick={() => setWorkspace('student')}>
-            Student portal
-          </button>
-        </nav>
-      )}
+      {workspaceChoices}
       <div className="account">
         <p>Signed in as {user.displayName}</p>
         <button type="button" onClick={onSignOut}>
@@ -231,7 +294,6 @@ function SignedInShell({
       </div>
       <section aria-labelledby="accessible-schools-heading">
         <h2 id="accessible-schools-heading">My schools</h2>
-        {schools.status === 'loading' && <p role="status">Loading schools</p>}
         {schools.status === 'error' && (
           <div role="alert">
             <p>Could not load accessible schools.</p>
@@ -282,6 +344,19 @@ function SignedInShell({
               )}
             {selectedSchool &&
               (selectedSchool.capabilities.canRegister ||
+                !selectedSchool.capabilities.canApprove) && (
+                <StaffFamilyWorkspace
+                  baseUrl={baseUrl}
+                  schoolId={selectedSchool.school.id}
+                  canManageSetting={
+                    selectedSchool.capabilities.canRegister &&
+                    selectedSchool.capabilities.canApprove
+                  }
+                  onSessionExpired={sessionExpired}
+                />
+              )}
+            {selectedSchool &&
+              (selectedSchool.capabilities.canRegister ||
                 selectedSchool.capabilities.canApprove) && (
                 <TransferWorkspace
                   key={'transfers-' + selectedSchool.school.id}
@@ -304,9 +379,6 @@ function SignedInShell({
           </>
         )}
       </section>
-      {organizations.status === 'loading' && (
-        <p role="status">Loading organizations</p>
-      )}
       {organizations.status === 'error' && (
         <div role="alert">
           <p>Could not load organizations.</p>

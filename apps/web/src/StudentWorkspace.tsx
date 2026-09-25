@@ -8,6 +8,7 @@ import {
   type StudentOptions,
 } from '@warka/shared'
 import { StudentAccountPanel } from './StudentAccountPanel'
+import { GuardianManagement } from './GuardianManagement'
 import { DocumentPanel } from './DocumentPanel'
 import {
   actOnEnrollment,
@@ -546,6 +547,17 @@ export function StudentWorkspace({
                   onSessionExpired={onSessionExpired}
                 />
               )}
+              {access.capabilities.canRegister &&
+                detail.data.enrollments.some(
+                  (item) => item.status === 'approved',
+                ) && (
+                  <GuardianManagement
+                    baseUrl={baseUrl}
+                    schoolId={schoolId}
+                    studentId={detail.data.student.id}
+                    onSessionExpired={onSessionExpired}
+                  />
+                )}
               {access.capabilities.canApprove && (
                 <DocumentPanel
                   baseUrl={baseUrl}

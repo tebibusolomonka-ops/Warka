@@ -8,6 +8,7 @@ import {
 } from '@testing-library/react'
 import type { UserIdentity } from '@warka/shared'
 import { App } from './App'
+import { getParentIdentity } from './parentApi'
 import {
   ApiError,
   getAccessibleSchools,
@@ -25,6 +26,14 @@ import {
 vi.mock('./AcademicWorkspace', () => ({ AcademicWorkspace: () => null }))
 vi.mock('./ResourceWorkspace', () => ({ ResourceWorkspace: () => null }))
 vi.mock('./TransferWorkspace', () => ({ TransferWorkspace: () => null }))
+vi.mock('./StaffFamilyWorkspace', () => ({ StaffFamilyWorkspace: () => null }))
+vi.mock('./ParentPortal', () => ({
+  ParentPortal: () => <h2>Parent portal</h2>,
+}))
+vi.mock('./parentApi', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./parentApi')>()),
+  getParentIdentity: vi.fn(),
+}))
 
 vi.mock('./api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('./api')>()
@@ -87,6 +96,13 @@ beforeEach(() => {
     ),
   )
   vi.mocked(getStudentResults).mockResolvedValue([])
+  vi.mocked(getParentIdentity).mockRejectedValue(
+    new ApiError(
+      'Parent portal access required',
+      403,
+      'PARENT_ACCESS_REQUIRED',
+    ),
+  )
   vi.mocked(changePassword).mockResolvedValue(undefined)
 })
 afterEach(() => {
@@ -105,6 +121,27 @@ function signIn() {
 }
 
 describe('authenticated web shell', () => {
+  it('opens a parent-only workspace without staff access', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(user)
+    vi.mocked(getOrganizations).mockResolvedValue([])
+    vi.mocked(getParentIdentity).mockResolvedValue({ displayName: 'Martha' })
+    render(<App />)
+    await screen.findByRole('heading', { name: 'Parent portal' })
+    expect(screen.queryByRole('button', { name: 'Staff workspace' })).toBeNull()
+  })
+
+  it('requires a deliberate choice for a staff and parent account', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(user)
+    vi.mocked(getOrganizations).mockResolvedValue([firstOrganization])
+    vi.mocked(getParentIdentity).mockResolvedValue({ displayName: 'Martha' })
+    render(<App />)
+    await screen.findByText('School directory')
+    fireEvent.click(screen.getByRole('button', { name: 'Parent workspace' }))
+    await screen.findByRole('heading', { name: 'Parent portal' })
+    expect(screen.queryByText('School directory')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Staff workspace' }))
+    await screen.findByText('School directory')
+  })
   it('requires password change before any workspace and refreshes identity after success', async () => {
     vi.mocked(getCurrentUser)
       .mockResolvedValueOnce({ ...user, mustChangePassword: true })
@@ -179,6 +216,13 @@ describe('authenticated web shell', () => {
       currentEnrollment: null,
     })
     vi.mocked(getStudentResults).mockResolvedValue([])
+    vi.mocked(getParentIdentity).mockRejectedValue(
+      new ApiError(
+        'Parent portal access required',
+        403,
+        'PARENT_ACCESS_REQUIRED',
+      ),
+    )
     render(<App />)
     await screen.findByRole('heading', { name: 'Student portal' })
     fireEvent.click(screen.getByRole('button', { name: 'Results' }))

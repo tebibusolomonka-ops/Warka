@@ -220,3 +220,43 @@ li {
   outline: 2px solid #18543d;
   outline-offset: 2px;
 }
+.workspace-nav {
+  flex-wrap: wrap;
+}
+
+.parent-portal,
+.guardian-list {
+  max-width: 100%;
+}
+
+.guardian-list {
+  padding-left: 1.25rem;
+}
+
+.guardian-list li {
+  border-bottom: 1px solid #cbd8ce;
+  padding: 1rem 0;
+}
+
+.conversation-layout {
+  display: grid;
+  grid-template-columns: minmax(12rem, 1fr) minmax(0, 2fr);
+  gap: 1.25rem;
+}
+
+.conversation-layout ul,
+.conversation-layout ol {
+  max-height: 25rem;
+  overflow-y: auto;
+}
+
+.conversation-layout p,
+.conversation-layout li {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 40rem) {
+  .conversation-layout {
+    grid-template-columns: 1fr;
+  }
+}

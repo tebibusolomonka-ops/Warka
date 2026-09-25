@@ -23,10 +23,16 @@ async function requireRelationshipAuthority(
   studentId: string,
   guardianId: string,
 ) {
+  const day = new Date(new Date().toISOString().slice(0, 10) + 'T00:00:00.000Z')
   const [school, enrollment, relationship] = await Promise.all([
     database.school.findUnique({ where: { id: schoolId } }),
     database.enrollment.findFirst({
-      where: { schoolId, studentId, status: 'approved' },
+      where: {
+        schoolId,
+        studentId,
+        status: 'approved',
+        academicYear: { startsOn: { lte: day }, endsOn: { gte: day } },
+      },
     }),
     database.studentGuardian.findUnique({
       where: { studentId_guardianId: { studentId, guardianId } },
@@ -125,12 +131,18 @@ export async function hasActiveVerifiedGuardianRelationship(
   studentId: string,
   guardianId: string,
 ): Promise<boolean> {
+  const day = new Date(new Date().toISOString().slice(0, 10) + 'T00:00:00.000Z')
   const [relationship, enrollment] = await Promise.all([
     database.studentGuardian.findUnique({
       where: { studentId_guardianId: { studentId, guardianId } },
     }),
     database.enrollment.findFirst({
-      where: { schoolId, studentId, status: 'approved' },
+      where: {
+        schoolId,
+        studentId,
+        status: 'approved',
+        academicYear: { startsOn: { lte: day }, endsOn: { gte: day } },
+      },
     }),
   ])
   return !!(

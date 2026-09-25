@@ -374,3 +374,83 @@ export const TransferOptionsSchema = z.strictObject({
   ),
 })
 export type TransferOptions = z.infer<typeof TransferOptionsSchema>
+
+export const ParentIdentitySchema = z.object({ displayName: z.string() })
+export type ParentIdentity = z.infer<typeof ParentIdentitySchema>
+
+export const ParentChildSchema = z.object({
+  studentReference: z.string(),
+  displayName: z.string(),
+  schoolId: z.uuid(),
+  school: z.string(),
+  academicYear: z.string(),
+  gradeLevel: z.string(),
+  schoolClass: z.string().nullable(),
+  relationship: z.string(),
+})
+export const ParentChildrenSchema = z.array(ParentChildSchema)
+export type ParentChild = z.infer<typeof ParentChildSchema>
+
+export const SchoolParentPortalSettingSchema = z.object({
+  parentPortalEnabled: z.boolean(),
+  enabledAt: z.iso.datetime().nullable(),
+})
+export type SchoolParentPortalSetting = z.infer<
+  typeof SchoolParentPortalSettingSchema
+>
+
+export const GuardianRelationshipViewSchema = z.object({
+  guardianId: z.uuid(),
+  name: z.string(),
+  relationship: z.string(),
+  verificationStatus: z.enum(['pending', 'verified', 'revoked']),
+  verifiedAt: z.iso.datetime().nullable(),
+  revokedAt: z.iso.datetime().nullable(),
+  account: z.object({ email: z.email(), displayName: z.string() }).nullable(),
+})
+export type GuardianRelationshipView = z.infer<
+  typeof GuardianRelationshipViewSchema
+>
+
+export const FamilyConversationSummarySchema = z.object({
+  id: z.uuid(),
+  studentReference: z.string(),
+  studentName: z.string(),
+  school: z.string().nullable(),
+  route: z.enum(['teacher', 'schoolOffice']),
+  status: z.enum(['open', 'closed']),
+  escalatedAt: z.iso.datetime().nullable(),
+  createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
+  lastMessage: z
+    .object({ body: z.string(), createdAt: z.iso.datetime() })
+    .nullable(),
+})
+export type FamilyConversationSummary = z.infer<
+  typeof FamilyConversationSummarySchema
+>
+
+export const FamilyMessageViewSchema = z.object({
+  id: z.uuid(),
+  body: z.string(),
+  sender: z.enum(['guardian', 'school']),
+  createdAt: z.iso.datetime(),
+})
+export const FamilyConversationDetailSchema = z.object({
+  id: z.uuid(),
+  route: z.enum(['teacher', 'schoolOffice']),
+  status: z.enum(['open', 'closed']),
+  escalatedAt: z.iso.datetime().nullable(),
+  createdAt: z.iso.datetime(),
+  messages: z.array(FamilyMessageViewSchema),
+})
+export type FamilyConversationDetail = z.infer<
+  typeof FamilyConversationDetailSchema
+>
+
+export const TeacherContactSchema = z.object({
+  id: z.uuid(),
+  displayName: z.string(),
+  subject: z.string(),
+})
+export type TeacherContact = z.infer<typeof TeacherContactSchema>

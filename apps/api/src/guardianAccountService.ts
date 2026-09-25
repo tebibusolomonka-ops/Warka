@@ -67,6 +67,9 @@ export function prismaGuardianAccountService(
     guardianId: string,
     requirePortal: boolean,
   ) {
+    const day = new Date(
+      new Date().toISOString().slice(0, 10) + 'T00:00:00.000Z',
+    )
     const school = await database.school.findUnique({ where: { id: schoolId } })
     if (!school) throw new GuardianAccountUnavailableError()
     const [organizationAdmin, schoolMember, relationship, setting] =
@@ -82,7 +85,14 @@ export function prismaGuardianAccountService(
             verificationSchoolId: schoolId,
             student: {
               enrollments: {
-                some: { schoolId, status: 'approved' },
+                some: {
+                  schoolId,
+                  status: 'approved',
+                  academicYear: {
+                    startsOn: { lte: day },
+                    endsOn: { gte: day },
+                  },
+                },
               },
             },
           },
@@ -127,6 +137,9 @@ export function prismaGuardianAccountService(
       const parsed = ProvisionGuardianAccountSchema.parse(input)
       await requireAuthority(actorId, schoolId, parsed.guardianId, true)
       const passwordHash = await hashPassword(parsed.initialPassword)
+      const day = new Date(
+        new Date().toISOString().slice(0, 10) + 'T00:00:00.000Z',
+      )
       try {
         return await database.$transaction(async (transaction) => {
           const [relationship, setting, existing] = await Promise.all([
@@ -137,7 +150,14 @@ export function prismaGuardianAccountService(
                 verificationSchoolId: schoolId,
                 student: {
                   enrollments: {
-                    some: { schoolId, status: 'approved' },
+                    some: {
+                      schoolId,
+                      status: 'approved',
+                      academicYear: {
+                        startsOn: { lte: day },
+                        endsOn: { gte: day },
+                      },
+                    },
                   },
                 },
               },

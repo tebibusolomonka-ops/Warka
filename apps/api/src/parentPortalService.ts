@@ -113,11 +113,14 @@ export function prismaParentPortalService(
 ): ParentPortalService {
   return {
     async identity(userId) {
+      const children = await eligibleParentChildren(database, userId)
+      if (children.length === 0) throw new ParentPortalAccessError()
       const guardian = await resolveParentGuardian(database, userId)
       return { displayName: guardian.name }
     },
     async children(userId) {
       const children = await eligibleParentChildren(database, userId)
+      if (children.length === 0) throw new ParentPortalAccessError()
       return children.map((child) => ({
         studentReference: child.studentReference,
         displayName: child.displayName,

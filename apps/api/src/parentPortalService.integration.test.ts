@@ -167,7 +167,12 @@ describe.skipIf(!database)('parent portal identity in PostgreSQL', () => {
         guardian.id,
         'Review',
       )
-      expect(await service.children(guardianUser.id)).toEqual([])
+      await expect(service.children(guardianUser.id)).rejects.toBeInstanceOf(
+        ParentPortalAccessError,
+      )
+      await expect(service.identity(guardianUser.id)).rejects.toBeInstanceOf(
+        ParentPortalAccessError,
+      )
     } finally {
       await database!.schoolServiceAccess.deleteMany({
         where: { schoolId: { in: [firstSchool.id, secondSchool.id] } },

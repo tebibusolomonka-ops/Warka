@@ -32,6 +32,8 @@ import {
   TransferSourceError,
   TransferStateError,
   ParentServicePermissionError,
+  GuardianRelationshipPermissionError,
+  GuardianRelationshipStateError,
   type PrismaClient,
 } from '@warka/database'
 import { ErrorResponseSchema, HealthResponseSchema } from '@warka/shared'
@@ -85,6 +87,7 @@ import {
 import { registerTransferRoutes } from './transferRoutes.js'
 import { registerParentServiceRoutes } from './parentServiceRoutes.js'
 import { registerGuardianAccountRoutes } from './guardianAccountRoutes.js'
+import { registerGuardianRelationshipRoutes } from './guardianRelationshipRoutes.js'
 import { registerParentPortalRoutes } from './parentPortalRoutes.js'
 import { registerFamilyConversationRoutes } from './familyConversationRoutes.js'
 import {
@@ -201,6 +204,7 @@ export function buildApp(
   registerLearningMaterialRoutes(app, getMaterials, authenticate)
   registerAnnouncementRoutes(app, getAnnouncements, authenticate)
   registerParentServiceRoutes(app, getDatabase, authenticate)
+  registerGuardianRelationshipRoutes(app, getDatabase, authenticate)
   registerFamilyConversationRoutes(
     app,
     () =>
@@ -253,6 +257,22 @@ export function buildApp(
   )
 
   app.setErrorHandler((error, _request, reply) => {
+    if (error instanceof GuardianRelationshipPermissionError) {
+      return reply.code(404).send({
+        error: {
+          code: 'GUARDIAN_RELATIONSHIP_NOT_FOUND',
+          message: error.message,
+        },
+      })
+    }
+    if (error instanceof GuardianRelationshipStateError) {
+      return reply.code(409).send({
+        error: {
+          code: 'GUARDIAN_RELATIONSHIP_STATE',
+          message: error.message,
+        },
+      })
+    }
     if (error instanceof FamilyConversationAccessError) {
       return reply.code(404).send({
         error: {
