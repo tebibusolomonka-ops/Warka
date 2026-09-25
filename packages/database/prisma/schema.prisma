@@ -533,6 +533,7 @@ model IssuedDocument {
   schoolId              String
   academicYearId        String
   documentType          DocumentType
+  snapshot              Json           @default("{}")
   verificationReference String         @unique
   status                DocumentStatus @default(active)
   issuedAt              DateTime       @default(now())

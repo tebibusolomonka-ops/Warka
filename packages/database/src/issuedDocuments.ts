@@ -1,5 +1,5 @@
 import { randomBytes } from 'node:crypto'
-import { type PrismaClient } from '@prisma/client'
+import { Prisma, type PrismaClient } from '@prisma/client'
 import { z } from 'zod'
 import { hasOrganizationAdminRole } from './organizationMemberships.js'
 import { findSchoolMembership } from './schoolMemberships.js'
@@ -12,6 +12,29 @@ export const IssueDocumentSchema = z.strictObject({
 })
 
 export type IssueDocument = z.infer<typeof IssueDocumentSchema>
+
+export const DocumentSnapshotSchema = z.strictObject({
+  student: z.strictObject({
+    displayName: z.string().min(1),
+    studentReference: z.string().min(1),
+  }),
+  issuingSchool: z.string().min(1),
+  documentType: z.enum(['reportCard', 'transcript']),
+  issuedAt: z.iso.datetime(),
+  academicYear: z.string().min(1),
+  subjects: z
+    .array(
+      z.strictObject({
+        subject: z.string().min(1),
+        gradingPeriod: z.string().min(1),
+        percentage: z.number().min(0).max(100),
+        gradeLabel: z.string().min(1),
+      }),
+    )
+    .min(1),
+})
+
+export type DocumentSnapshot = z.infer<typeof DocumentSnapshotSchema>
 
 export class DocumentPermissionError extends Error {
   constructor() {
@@ -56,27 +79,65 @@ export async function issueDocument(
   const data = IssueDocumentSchema.parse(input)
   z.uuid().parse(actorId)
   await requireDocumentAuthority(database, actorId, data.schoolId)
-  const official = await database.publishedResult.findFirst({
-    where: {
-      studentId: data.studentId,
-      schoolId: data.schoolId,
-      resultSet: {
-        academicYearId: data.academicYearId,
-        status: 'published',
+  return database.$transaction(async (transaction) => {
+    const [student, school, year, official] = await Promise.all([
+      transaction.student.findUnique({ where: { id: data.studentId } }),
+      transaction.school.findUnique({ where: { id: data.schoolId } }),
+      transaction.academicYear.findFirst({
+        where: { id: data.academicYearId, schoolId: data.schoolId },
+      }),
+      transaction.publishedResult.findMany({
+        where: {
+          studentId: data.studentId,
+          schoolId: data.schoolId,
+          resultSet: {
+            academicYearId: data.academicYearId,
+            status: 'published',
+            publishedAt: { not: null },
+          },
+          enrollment: { status: { in: ['approved', 'withdrawn'] } },
+        },
+        include: {
+          resultSet: {
+            include: { subject: true, gradingPeriod: true },
+          },
+        },
+        orderBy: [
+          { resultSet: { gradingPeriod: { startsOn: 'asc' } } },
+          { resultSet: { subject: { name: 'asc' } } },
+        ],
+      }),
+    ])
+    if (!student || !school || !year || official.length === 0)
+      throw new DocumentSourceError()
+    const issuedAt = new Date()
+    const snapshot = DocumentSnapshotSchema.parse({
+      student: {
+        displayName: [student.givenName, student.familyName]
+          .filter(Boolean)
+          .join(' '),
+        studentReference: student.studentReference,
       },
-      enrollment: {
-        status: { in: ['approved', 'withdrawn'] },
+      issuingSchool: school.name,
+      documentType: data.documentType,
+      issuedAt: issuedAt.toISOString(),
+      academicYear: year.name,
+      subjects: official.map((result) => ({
+        subject: result.resultSet.subject.name,
+        gradingPeriod: result.resultSet.gradingPeriod.name,
+        percentage: result.currentPercentage.toNumber(),
+        gradeLabel: result.currentGradeLabel,
+      })),
+    })
+    return transaction.issuedDocument.create({
+      data: {
+        ...data,
+        issuedAt,
+        issuedById: actorId,
+        verificationReference: generateVerificationReference(),
+        snapshot: snapshot as Prisma.InputJsonValue,
       },
-    },
-    select: { id: true },
-  })
-  if (!official) throw new DocumentSourceError()
-  return database.issuedDocument.create({
-    data: {
-      ...data,
-      issuedById: actorId,
-      verificationReference: generateVerificationReference(),
-    },
+    })
   })
 }
 

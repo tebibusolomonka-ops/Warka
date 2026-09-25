@@ -3,6 +3,7 @@ import { afterAll, describe, expect, it } from 'vitest'
 import { createDatabaseClient } from './index.js'
 import {
   DocumentPermissionError,
+  DocumentSnapshotSchema,
   DocumentSourceError,
   findDocumentByReference,
   findIssuedDocument,
@@ -137,6 +138,66 @@ describe.skipIf(!database)('issued documents in PostgreSQL', () => {
         documentType: 'reportCard',
       })
       expect(first.status).toBe('active')
+      const originalSnapshot = DocumentSnapshotSchema.parse(first.snapshot)
+      expect(originalSnapshot).toEqual({
+        student: {
+          displayName: 'Mira',
+          studentReference: student.studentReference,
+        },
+        issuingSchool: 'Issuing school',
+        documentType: 'transcript',
+        issuedAt: first.issuedAt.toISOString(),
+        academicYear: 'Document year',
+        subjects: [
+          {
+            subject: 'Document subject',
+            gradingPeriod: 'Document period',
+            percentage: 85,
+            gradeLabel: 'B',
+          },
+        ],
+      })
+      const scheme = await database!.gradingScheme.create({
+        data: {
+          schoolId: school.id,
+          bands: {
+            create: { label: 'B', minimumPercentage: 80 },
+          },
+        },
+        include: { bands: true },
+      })
+      await database!.gradeBand.update({
+        where: { id: scheme.bands[0]!.id },
+        data: { minimumPercentage: 90 },
+      })
+      await database!.school.update({
+        where: { id: school.id },
+        data: { name: 'Renamed issuing school' },
+      })
+      await database!.academicYear.update({
+        where: { id: year.id },
+        data: { name: 'Renamed academic year' },
+      })
+      await database!.student.update({
+        where: { id: student.id },
+        data: { familyName: 'Changed' },
+      })
+      await database!.publishedResult.updateMany({
+        where: { schoolId: school.id, studentId: student.id },
+        data: { currentPercentage: 91, currentGradeLabel: 'A' },
+      })
+      await database!.enrollment.update({
+        where: { id: enrollment.id },
+        data: {
+          status: 'withdrawn',
+          withdrawnAt: new Date(),
+          withdrawnById: actor.id,
+        },
+      })
+      const persisted = await findIssuedDocument(database!, school.id, first.id)
+      expect(DocumentSnapshotSchema.parse(persisted?.snapshot)).toEqual(
+        originalSnapshot,
+      )
       expect(first.verificationReference).toMatch(/^WRK-[A-F0-9]{32}$/)
       expect(second.verificationReference).not.toBe(first.verificationReference)
       expect(

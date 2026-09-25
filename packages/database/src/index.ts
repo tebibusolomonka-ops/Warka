@@ -278,6 +278,7 @@ export type {
 
 export {
   IssueDocumentSchema,
+  DocumentSnapshotSchema,
   DocumentPermissionError,
   DocumentSourceError,
   requireDocumentAuthority,
@@ -290,6 +291,7 @@ export {
 } from './issuedDocuments.js'
 export type {
   IssueDocument,
+  DocumentSnapshot,
   DocumentType,
   DocumentStatus,
   IssuedDocument,
