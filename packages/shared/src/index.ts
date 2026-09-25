@@ -270,3 +270,29 @@ export type RegisterStudent = z.input<typeof RegisterStudentSchema>
 export type RegistrationResponse = z.infer<typeof RegistrationResponseSchema>
 export type StudentListResponse = z.infer<typeof StudentListResponseSchema>
 export type StudentDetailResponse = z.infer<typeof StudentDetailResponseSchema>
+
+export const DocumentVerificationSchema = z.discriminatedUnion('status', [
+  z.strictObject({ status: z.literal('unavailable') }),
+  z.strictObject({ status: z.literal('corrected') }),
+  z.strictObject({ status: z.literal('withdrawn') }),
+  z.strictObject({
+    status: z.literal('active'),
+    documentType: z.enum(['reportCard', 'transcript']),
+    issuingSchool: z.string(),
+    student: z.strictObject({
+      displayName: z.string(),
+      studentReference: z.string(),
+    }),
+    issuedAt: z.iso.datetime(),
+    academicYear: z.string(),
+    subjects: z.array(
+      z.strictObject({
+        subject: z.string(),
+        gradingPeriod: z.string(),
+        percentage: z.number(),
+        gradeLabel: z.string(),
+      }),
+    ),
+  }),
+])
+export type DocumentVerification = z.infer<typeof DocumentVerificationSchema>

@@ -58,6 +58,11 @@ import {
 } from './announcementService.js'
 import { registerAnnouncementRoutes } from './announcementRoutes.js'
 import {
+  prismaDocumentVerificationService,
+  type DocumentVerificationService,
+} from './documentVerificationService.js'
+import { registerDocumentVerificationRoutes } from './documentVerificationRoutes.js'
+import {
   prismaStudentAccountService,
   StudentAccountConflictError,
   StudentEnrollmentNotFoundError,
@@ -89,6 +94,7 @@ export function buildApp(
     studentPortal?: StudentPortalService
     materials?: LearningMaterialService
     announcements?: AnnouncementService
+    verification?: DocumentVerificationService
     studentOptions?: StudentOptionsService
     enrollments?: EnrollmentService
     academic?: AcademicService
@@ -141,6 +147,11 @@ export function buildApp(
   registerStudentPortalRoutes(app, getStudentPortal, authenticate)
   registerLearningMaterialRoutes(app, getMaterials, authenticate)
   registerAnnouncementRoutes(app, getAnnouncements, authenticate)
+  registerDocumentVerificationRoutes(
+    app,
+    () =>
+      options.verification ?? prismaDocumentVerificationService(getDatabase()),
+  )
   registerAcademicRoutes(app, getAcademic, authenticate)
   registerEnrollmentRoutes(
     app,
