@@ -184,6 +184,27 @@ describe('authenticated web shell', () => {
     await screen.findByText('No published results yet.')
   })
 
+  it('lets a user with staff and student relationships choose each workspace', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(user)
+    vi.mocked(getOrganizations).mockResolvedValue([firstOrganization])
+    vi.mocked(getStudentIdentity).mockResolvedValue({
+      studentReference: 'WKA-DUAL',
+      givenName: 'Hana',
+      familyName: null,
+      currentEnrollment: null,
+    })
+    render(<App />)
+    await screen.findByText('School directory')
+    expect(
+      screen.getByRole('navigation', { name: 'Workspace choice' }),
+    ).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Student portal' }))
+    await screen.findByText(/WKA-DUAL/)
+    expect(screen.queryByText('School directory')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Staff workspace' }))
+    await screen.findByText('School directory')
+  })
+
   it('checks the session before showing sign in', async () => {
     vi.mocked(getCurrentUser).mockReturnValue(
       new Promise<UserIdentity>(() => {}),

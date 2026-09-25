@@ -66,6 +66,14 @@ describe.skipIf(!database)('student account provisioning in PostgreSQL', () => {
         displayName: 'First',
         initialPassword: 'initial password',
       })
+      expect(await service.status(school.id, first.id)).toMatchObject({
+        status: 'active',
+        email,
+        mustChangePassword: true,
+      })
+      expect(await service.status(school.id, second.id)).toEqual({
+        status: 'none',
+      })
       expect(created).toEqual({
         id: expect.any(String),
         email,

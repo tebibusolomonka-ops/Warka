@@ -166,6 +166,7 @@ function testApp() {
     }),
   }
   const studentAccounts: StudentAccountService = {
+    status: vi.fn().mockResolvedValue({ status: 'none' }),
     create: vi.fn().mockResolvedValue({
       id: randomUUID(),
       email: 'student@example.test',
@@ -216,6 +217,18 @@ describe('student routes', () => {
         payload,
       })
       expect(other.statusCode).toBe(404)
+      const status = await app.inject({
+        method: 'GET',
+        url,
+        headers: cookie('registrar'),
+      })
+      expect(status.json()).toEqual({ status: 'none' })
+      const teacherStatus = await app.inject({
+        method: 'GET',
+        url,
+        headers: cookie('teacher'),
+      })
+      expect(teacherStatus.statusCode).toBe(404)
       const allowed = await app.inject({
         method: 'POST',
         url,

@@ -67,6 +67,7 @@ function SignedInShell({
   const [selectedSchoolId, setSelectedSchoolId] = useState('')
   const [refresh, setRefresh] = useState(0)
   const [portal, setPortal] = useState<Portal>({ status: 'loading' })
+  const [workspace, setWorkspace] = useState<'staff' | 'student'>('staff')
 
   useEffect(() => {
     let active = true
@@ -151,6 +152,10 @@ function SignedInShell({
   const canManage =
     selected?.role === 'owner' || selected?.role === 'administrator'
 
+  const hasStaffAccess =
+    (schools.status === 'loaded' && schools.access.length > 0) ||
+    (organizations.status === 'loaded' && organizations.access.length > 0)
+
   if (portal.status === 'loading')
     return <p role="status">Loading workspaces</p>
   if (
@@ -169,6 +174,25 @@ function SignedInShell({
       />
     )
   }
+  if (portal.status === 'loaded' && hasStaffAccess && workspace === 'student')
+    return (
+      <>
+        <nav aria-label="Workspace choice" className="workspace-nav">
+          <button type="button" onClick={() => setWorkspace('staff')}>
+            Staff workspace
+          </button>
+          <button type="button" aria-current="page">
+            Student portal
+          </button>
+        </nav>
+        <StudentPortal
+          baseUrl={baseUrl}
+          identity={portal.identity}
+          onSessionExpired={sessionExpired}
+          onSignOut={onSignOut}
+        />
+      </>
+    )
   if (
     portal.status === 'error' &&
     schools.status === 'loaded' &&
@@ -187,6 +211,16 @@ function SignedInShell({
 
   return (
     <>
+      {portal.status === 'loaded' && hasStaffAccess && (
+        <nav aria-label="Workspace choice" className="workspace-nav">
+          <button type="button" aria-current="page">
+            Staff workspace
+          </button>
+          <button type="button" onClick={() => setWorkspace('student')}>
+            Student portal
+          </button>
+        </nav>
+      )}
       <div className="account">
         <p>Signed in as {user.displayName}</p>
         <button type="button" onClick={onSignOut}>

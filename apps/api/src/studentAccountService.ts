@@ -30,7 +30,17 @@ export class StudentEnrollmentNotFoundError extends Error {
   }
 }
 
+export type StudentAccountStatus =
+  | { status: 'none' }
+  | {
+      status: 'active'
+      email: string
+      displayName: string
+      mustChangePassword: boolean
+    }
+
 export type StudentAccountService = {
+  status(schoolId: string, studentId: string): Promise<StudentAccountStatus>
   create(
     schoolId: string,
     studentId: string,
@@ -47,6 +57,33 @@ export function prismaStudentAccountService(
   database: PrismaClient,
 ): StudentAccountService {
   return {
+    async status(schoolId, studentId) {
+      const enrollment = await database.enrollment.findFirst({
+        where: { schoolId, studentId },
+        select: { id: true },
+      })
+      if (!enrollment) throw new StudentEnrollmentNotFoundError()
+      const access = await database.studentAccess.findUnique({
+        where: { studentId },
+        include: {
+          user: {
+            select: {
+              email: true,
+              displayName: true,
+              passwordCredential: { select: { mustChangePassword: true } },
+            },
+          },
+        },
+      })
+      if (!access) return { status: 'none' }
+      return {
+        status: 'active',
+        email: access.user.email,
+        displayName: access.user.displayName,
+        mustChangePassword:
+          access.user.passwordCredential?.mustChangePassword ?? false,
+      }
+    },
     async create(schoolId, studentId, input) {
       const parsed = ProvisionStudentAccountSchema.parse(input)
       const passwordHash = await hashPassword(parsed.initialPassword)

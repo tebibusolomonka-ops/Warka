@@ -145,6 +145,17 @@ export function registerStudentRoutes(
     },
   )
 
+  app.get(
+    '/schools/:schoolId/students/:studentId/access',
+    { preHandler: authenticate },
+    async (request) => {
+      const user = authenticatedUser(request)
+      const { schoolId, studentId } = studentParams.parse(request.params)
+      await requireSchool(user.id, schoolId)
+      return getStudentAccounts().status(schoolId, studentId)
+    },
+  )
+
   app.post(
     '/schools/:schoolId/students/:studentId/access',
     { preHandler: authenticate },

@@ -7,6 +7,7 @@ import {
   type StudentListResponse,
   type StudentOptions,
 } from '@warka/shared'
+import { StudentAccountPanel } from './StudentAccountPanel'
 import {
   actOnEnrollment,
   ApiError,
@@ -535,6 +536,14 @@ export function StudentWorkspace({
               <p>Warka reference: {detail.data.student.studentReference}</p>
               {detail.data.student.dateOfBirth && (
                 <p>Date of birth: {detail.data.student.dateOfBirth}</p>
+              )}
+              {access.capabilities.canRegister && (
+                <StudentAccountPanel
+                  baseUrl={baseUrl}
+                  schoolId={schoolId}
+                  studentId={detail.data.student.id}
+                  onSessionExpired={onSessionExpired}
+                />
               )}
               <h4>Enrollments</h4>
               {detail.data.enrollments.map((enrollment) => (

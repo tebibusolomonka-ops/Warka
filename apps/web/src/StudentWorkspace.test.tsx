@@ -15,6 +15,9 @@ import type {
 import { StudentWorkspace } from './StudentWorkspace'
 import {
   actOnEnrollment,
+  ApiError,
+  getStudentAccountStatus,
+  provisionStudentAccount,
   getStudentDetail,
   getStudentOptions,
   getStudents,
@@ -26,6 +29,8 @@ vi.mock('./api', async (importOriginal) => {
   return {
     ...actual,
     actOnEnrollment: vi.fn(),
+    getStudentAccountStatus: vi.fn(),
+    provisionStudentAccount: vi.fn(),
     getStudentDetail: vi.fn(),
     getStudentOptions: vi.fn(),
     getStudents: vi.fn(),
@@ -111,11 +116,133 @@ beforeEach(() => {
   vi.resetAllMocks()
   vi.mocked(getStudents).mockResolvedValue({ items: [], limit: 50, offset: 0 })
   vi.mocked(getStudentOptions).mockResolvedValue(options)
+  vi.mocked(getStudentAccountStatus).mockResolvedValue({ status: 'none' })
+  vi.mocked(provisionStudentAccount).mockResolvedValue(undefined)
 })
 
 afterEach(cleanup)
 
 describe('student workspace', () => {
+  it('shows portal status and provisions a student account without retaining the initial password', async () => {
+    vi.mocked(getStudents).mockResolvedValue({
+      items: [{ student, enrollment }],
+      limit: 50,
+      offset: 0,
+    })
+    vi.mocked(getStudentDetail).mockResolvedValue({
+      student,
+      enrollments: [enrollment],
+      guardians: [],
+    })
+    vi.mocked(getStudentAccountStatus)
+      .mockResolvedValueOnce({ status: 'none' })
+      .mockResolvedValue({
+        status: 'active',
+        email: 'hana@example.test',
+        displayName: 'Hana',
+        mustChangePassword: true,
+      })
+    render(
+      <StudentWorkspace
+        baseUrl={baseUrl}
+        access={access({
+          canRegister: true,
+          canSubmit: true,
+          canApprove: false,
+        })}
+        onSessionExpired={vi.fn()}
+      />,
+    )
+    fireEvent.click(await screen.findByRole('button', { name: /Hana Bekele/ }))
+    await screen.findByText('No account')
+    fireEvent.change(screen.getByLabelText('Account email'), {
+      target: { value: 'hana@example.test' },
+    })
+    fireEvent.change(screen.getByLabelText('Display name'), {
+      target: { value: 'Hana' },
+    })
+    fireEvent.change(screen.getByLabelText('Initial password'), {
+      target: { value: 'initial password' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Create account' }))
+    await waitFor(() =>
+      expect(provisionStudentAccount).toHaveBeenCalledWith(
+        baseUrl,
+        schoolId,
+        studentId,
+        {
+          email: 'hana@example.test',
+          displayName: 'Hana',
+          initialPassword: 'initial password',
+        },
+      ),
+    )
+    await screen.findByText('Password change required')
+    expect(screen.queryByDisplayValue('initial password')).toBeNull()
+    expect(screen.getByText('Student account created.')).toBeTruthy()
+  })
+
+  it('shows a duplicate account error and hides provisioning from approvers', async () => {
+    vi.mocked(getStudents).mockResolvedValue({
+      items: [{ student, enrollment }],
+      limit: 50,
+      offset: 0,
+    })
+    vi.mocked(getStudentDetail).mockResolvedValue({
+      student,
+      enrollments: [enrollment],
+      guardians: [],
+    })
+    vi.mocked(provisionStudentAccount).mockRejectedValue(
+      new ApiError(
+        'Student already has an account',
+        409,
+        'STUDENT_ACCOUNT_CONFLICT',
+      ),
+    )
+    const first = render(
+      <StudentWorkspace
+        baseUrl={baseUrl}
+        access={access({
+          canRegister: true,
+          canSubmit: true,
+          canApprove: false,
+        })}
+        onSessionExpired={vi.fn()}
+      />,
+    )
+    fireEvent.click(await screen.findByRole('button', { name: /Hana Bekele/ }))
+    await screen.findByText('No account')
+    fireEvent.change(screen.getByLabelText('Account email'), {
+      target: { value: 'hana@example.test' },
+    })
+    fireEvent.change(screen.getByLabelText('Display name'), {
+      target: { value: 'Hana' },
+    })
+    fireEvent.change(screen.getByLabelText('Initial password'), {
+      target: { value: 'initial password' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Create account' }))
+    await screen.findByText('Student already has an account')
+    first.unmount()
+    vi.mocked(getStudentAccountStatus).mockClear()
+    render(
+      <StudentWorkspace
+        baseUrl={baseUrl}
+        access={access({
+          canRegister: false,
+          canSubmit: false,
+          canApprove: true,
+        })}
+        onSessionExpired={vi.fn()}
+      />,
+    )
+    fireEvent.click(await screen.findByRole('button', { name: /Hana Bekele/ }))
+    await screen.findByText('Warka reference: WKA-123456789')
+    expect(screen.queryByRole('heading', { name: 'Portal access' })).toBeNull()
+    expect(getStudentAccountStatus).not.toHaveBeenCalled()
+  })
+
   it('registers a student, shows the generated reference and possible duplicates, then submits the draft', async () => {
     vi.mocked(registerStudent).mockResolvedValue(registration)
     vi.mocked(actOnEnrollment).mockResolvedValue({

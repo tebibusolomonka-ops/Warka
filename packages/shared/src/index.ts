@@ -119,6 +119,17 @@ export const StudentAnnouncementSchema = z.object({
 export const StudentAnnouncementsSchema = z.array(StudentAnnouncementSchema)
 export type StudentAnnouncement = z.infer<typeof StudentAnnouncementSchema>
 
+export const StudentAccountStatusSchema = z.discriminatedUnion('status', [
+  z.object({ status: z.literal('none') }),
+  z.object({
+    status: z.literal('active'),
+    email: z.email(),
+    displayName: z.string(),
+    mustChangePassword: z.boolean(),
+  }),
+])
+export type StudentAccountStatus = z.infer<typeof StudentAccountStatusSchema>
+
 export const OrganizationAccessSchema = z.object({
   organization: OrganizationSchema,
   role: z.enum(['owner', 'administrator']),

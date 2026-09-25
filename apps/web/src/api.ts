@@ -14,6 +14,7 @@ import {
   StudentResultsSchema,
   StudentMaterialsSchema,
   StudentAnnouncementsSchema,
+  StudentAccountStatusSchema,
   UserIdentitySchema,
   type AccessibleSchool,
   type OrganizationAccess,
@@ -27,6 +28,7 @@ import {
   type StudentResult,
   type StudentMaterial,
   type StudentAnnouncement,
+  type StudentAccountStatus,
   type UserIdentity,
 } from '@warka/shared'
 
@@ -320,5 +322,40 @@ export async function getStudentAnnouncements(
 ): Promise<StudentAnnouncement[]> {
   return StudentAnnouncementsSchema.parse(
     await requestJson(baseUrl, '/student/announcements', {}, request),
+  )
+}
+
+export async function getStudentAccountStatus(
+  baseUrl: string,
+  schoolId: string,
+  studentId: string,
+  request: typeof fetch = fetch,
+): Promise<StudentAccountStatus> {
+  return StudentAccountStatusSchema.parse(
+    await requestJson(
+      baseUrl,
+      studentPath(schoolId) + '/' + encodeURIComponent(studentId) + '/access',
+      {},
+      request,
+    ),
+  )
+}
+
+export async function provisionStudentAccount(
+  baseUrl: string,
+  schoolId: string,
+  studentId: string,
+  input: { email: string; displayName: string; initialPassword: string },
+  request: typeof fetch = fetch,
+): Promise<void> {
+  await requestJson(
+    baseUrl,
+    studentPath(schoolId) + '/' + encodeURIComponent(studentId) + '/access',
+    {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(input),
+    },
+    request,
   )
 }
