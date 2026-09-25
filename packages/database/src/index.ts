@@ -352,3 +352,10 @@ export {
   ParentServicePermissionError,
 } from './parentService.js'
 export type { SchoolServiceAccess } from '@prisma/client'
+
+export type {
+  FamilyConversation,
+  FamilyMessage,
+  FamilyConversationRoute,
+  FamilyConversationStatus,
+} from '@prisma/client'

@@ -44,6 +44,16 @@ enum DocumentStatus {
   withdrawn
 }
 
+enum FamilyConversationRoute {
+  teacher
+  schoolOffice
+}
+
+enum FamilyConversationStatus {
+  open
+  closed
+}
+
 enum GuardianVerificationStatus {
   pending
   verified
@@ -93,6 +103,7 @@ model School {
   incomingTransfers   TransferRequest[] @relation("ReceivingTransfers")
   verifiedGuardianRelationships StudentGuardian[]
   serviceAccess       SchoolServiceAccess?
+  familyConversations FamilyConversation[]
 
   @@index([organizationId])
 }
@@ -123,6 +134,9 @@ model User {
   guardianVerifications   StudentGuardian[] @relation("GuardianVerifiedBy")
   guardianRevocations     StudentGuardian[] @relation("GuardianRevokedBy")
   schoolServiceUpdates    SchoolServiceAccess[]
+  familyMessages          FamilyMessage[]
+  teacherConversations    FamilyConversation[] @relation("FamilyConversationTeacher")
+  closedFamilyConversations FamilyConversation[] @relation("FamilyConversationClosedBy")
   guardianAccess          GuardianAccess?
   sessions                Session[]
   approvedEnrollments     Enrollment[]             @relation("EnrollmentApprovedBy")
@@ -251,6 +265,7 @@ model Student {
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
   guardians        StudentGuardian[]
+  familyConversations FamilyConversation[]
   studentAccess    StudentAccess?
   enrollments      Enrollment[]
   marks            Mark[]
@@ -275,6 +290,7 @@ model Guardian {
   updatedAt DateTime          @updatedAt
   students  StudentGuardian[]
   access    GuardianAccess?
+  familyConversations FamilyConversation[]
 }
 
 model GuardianAccess {
@@ -667,4 +683,41 @@ model SchoolServiceAccess {
   updatedAt           DateTime @updatedAt
   school              School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   updatedBy           User?    @relation(fields: [updatedById], references: [id], onDelete: Restrict)
+}
+
+model FamilyConversation {
+  id            String                   @id @default(uuid())
+  schoolId      String
+  studentId     String
+  guardianId    String
+  route         FamilyConversationRoute
+  teacherUserId String?
+  status        FamilyConversationStatus @default(open)
+  closedAt      DateTime?
+  closedById    String?
+  createdAt     DateTime                 @default(now())
+  updatedAt     DateTime                 @updatedAt
+  school        School                   @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  student       Student                  @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  guardian      Guardian                 @relation(fields: [guardianId], references: [id], onDelete: Restrict)
+  teacher       User?                    @relation("FamilyConversationTeacher", fields: [teacherUserId], references: [id], onDelete: Restrict)
+  closedBy      User?                    @relation("FamilyConversationClosedBy", fields: [closedById], references: [id], onDelete: Restrict)
+  messages      FamilyMessage[]
+
+  @@index([guardianId, createdAt])
+  @@index([schoolId, route, status, createdAt])
+  @@index([teacherUserId, status, createdAt])
+}
+
+model FamilyMessage {
+  id             String             @id @default(uuid())
+  conversationId String
+  senderUserId   String
+  body           String
+  createdAt      DateTime           @default(now())
+  readAt         DateTime?
+  conversation   FamilyConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         User               @relation(fields: [senderUserId], references: [id], onDelete: Restrict)
+
+  @@index([conversationId, createdAt, id])
 }
