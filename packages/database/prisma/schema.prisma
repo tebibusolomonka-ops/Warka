@@ -93,6 +93,10 @@ model User {
   submittedResultSets     ResultSet[]              @relation("ResultSetSubmittedBy")
   issuedDocuments         IssuedDocument[]
   requestedTransfers      TransferRequest[]
+  approvedTransfers       TransferRequest[] @relation("TransferApprovedBy")
+  acceptedTransfers       TransferRequest[] @relation("TransferAcceptedBy")
+  rejectedTransfers       TransferRequest[] @relation("TransferRejectedBy")
+  cancelledTransfers      TransferRequest[] @relation("TransferCancelledBy")
   correctedDocuments      IssuedDocument[]         @relation("DocumentCorrectedBy")
   withdrawnDocuments      IssuedDocument[]         @relation("DocumentWithdrawnBy")
   publishedResultSets     ResultSet[]              @relation("ResultSetPublishedBy")
@@ -274,6 +278,7 @@ model StudentGuardian {
 }
 
 model Enrollment {
+  receivingTransfer TransferRequest? @relation("TransferDestination")
   sourceTransfers TransferRequest[] @relation("TransferSource")
   publishedResults PublishedResult[]
   id               String            @id @default(uuid())
@@ -287,6 +292,7 @@ model Enrollment {
   approvedById     String?
   withdrawnAt      DateTime?
   withdrawnById    String?
+  withdrawalReason String?
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
   student          Student           @relation(fields: [studentId], references: [id], onDelete: Restrict)
@@ -586,6 +592,18 @@ model TransferRequest {
   transferPackage    Json
   requestedById      String
   requestedAt        DateTime       @default(now())
+  sendingApprovedById String?
+  sendingApprovedAt   DateTime?
+  acceptedById        String?
+  acceptedAt          DateTime?
+  rejectedById        String?
+  rejectedAt          DateTime?
+  rejectionReason     String?
+  cancelledById       String?
+  cancelledAt         DateTime?
+  cancellationReason  String?
+  completedAt         DateTime?
+  receivingEnrollmentId String?     @unique
   createdAt          DateTime       @default(now())
   updatedAt          DateTime       @updatedAt
   student            Student        @relation(fields: [studentId], references: [id], onDelete: Restrict)
@@ -593,7 +611,13 @@ model TransferRequest {
   receivingSchool    School         @relation("ReceivingTransfers", fields: [receivingSchoolId], references: [id], onDelete: Restrict)
   sourceEnrollment   Enrollment     @relation("TransferSource", fields: [sourceEnrollmentId, sendingSchoolId, studentId], references: [id, schoolId, studentId], onDelete: Restrict)
   requestedBy        User           @relation(fields: [requestedById], references: [id], onDelete: Restrict)
+  sendingApprovedBy  User?          @relation("TransferApprovedBy", fields: [sendingApprovedById], references: [id], onDelete: Restrict)
+  acceptedBy         User?          @relation("TransferAcceptedBy", fields: [acceptedById], references: [id], onDelete: Restrict)
+  rejectedBy         User?          @relation("TransferRejectedBy", fields: [rejectedById], references: [id], onDelete: Restrict)
+  cancelledBy        User?          @relation("TransferCancelledBy", fields: [cancelledById], references: [id], onDelete: Restrict)
+  receivingEnrollment Enrollment?   @relation("TransferDestination", fields: [receivingEnrollmentId, receivingSchoolId, studentId], references: [id, schoolId, studentId], onDelete: Restrict)
 
+  @@unique([receivingEnrollmentId, receivingSchoolId, studentId])
   @@index([sendingSchoolId, status, requestedAt])
   @@index([receivingSchoolId, status, requestedAt])
   @@index([studentId, requestedAt])

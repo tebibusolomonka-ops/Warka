@@ -307,6 +307,13 @@ export {
   TransferPermissionError,
   TransferSourceError,
   DuplicateActiveTransferError,
+  TransferStateError,
+  TransferDestinationError,
+  AcceptTransferSchema,
+  approveTransfer,
+  acceptTransfer,
+  rejectTransfer,
+  cancelTransfer,
   requireTransferSchoolRole,
   requestTransfer,
   listSchoolTransfers,
@@ -315,6 +322,7 @@ export {
 export type {
   TransferPackage,
   RequestTransfer,
+  AcceptTransfer,
   TransferRequest,
   TransferStatus,
 } from './transfers.js'

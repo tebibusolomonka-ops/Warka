@@ -40,6 +40,25 @@ export class DuplicateActiveTransferError extends Error {
   }
 }
 
+export class TransferStateError extends Error {
+  constructor() {
+    super('Transfer is not in the required state')
+  }
+}
+export class TransferDestinationError extends Error {
+  constructor() {
+    super('Receiving enrollment structure is invalid')
+  }
+}
+
+export const AcceptTransferSchema = z.strictObject({
+  academicYearId: z.uuid(),
+  gradeLevelId: z.uuid(),
+  schoolClassId: z.uuid().nullable().optional(),
+})
+export type AcceptTransfer = z.infer<typeof AcceptTransferSchema>
+const TransferReasonSchema = z.string().trim().min(3).max(1000)
+
 export async function requireTransferSchoolRole(
   database: PrismaClient,
   actorId: string,
@@ -159,6 +178,181 @@ export async function findTransferForSchool(
       id: transferId,
       OR: [{ sendingSchoolId: schoolId }, { receivingSchoolId: schoolId }],
     },
+  })
+}
+
+export async function approveTransfer(
+  database: PrismaClient,
+  actorId: string,
+  sendingSchoolId: string,
+  transferId: string,
+) {
+  await requireTransferSchoolRole(database, actorId, sendingSchoolId)
+  return database.$transaction(async (transaction) => {
+    const transfer = await transaction.transferRequest.findFirst({
+      where: { id: transferId, sendingSchoolId, status: 'requested' },
+      include: { sourceEnrollment: { select: { status: true } } },
+    })
+    if (!transfer || transfer.sourceEnrollment.status !== 'approved')
+      throw new TransferStateError()
+    const changed = await transaction.transferRequest.updateMany({
+      where: { id: transferId, sendingSchoolId, status: 'requested' },
+      data: {
+        status: 'approvedBySendingSchool',
+        sendingApprovedById: actorId,
+        sendingApprovedAt: new Date(),
+      },
+    })
+    if (changed.count !== 1) throw new TransferStateError()
+    return transaction.transferRequest.findUniqueOrThrow({
+      where: { id: transferId },
+    })
+  })
+}
+
+export async function acceptTransfer(
+  database: PrismaClient,
+  actorId: string,
+  receivingSchoolId: string,
+  transferId: string,
+  input: AcceptTransfer,
+) {
+  const destination = AcceptTransferSchema.parse(input)
+  await requireTransferSchoolRole(database, actorId, receivingSchoolId)
+  try {
+    return await database.$transaction(async (transaction) => {
+      const transfer = await transaction.transferRequest.findFirst({
+        where: {
+          id: transferId,
+          receivingSchoolId,
+          status: 'approvedBySendingSchool',
+        },
+        include: { sourceEnrollment: { select: { status: true } } },
+      })
+      if (!transfer || transfer.sourceEnrollment.status !== 'approved')
+        throw new TransferStateError()
+      const [year, grade, schoolClass] = await Promise.all([
+        transaction.academicYear.findFirst({
+          where: {
+            id: destination.academicYearId,
+            schoolId: receivingSchoolId,
+          },
+        }),
+        transaction.gradeLevel.findFirst({
+          where: { id: destination.gradeLevelId, schoolId: receivingSchoolId },
+        }),
+        destination.schoolClassId
+          ? transaction.schoolClass.findFirst({
+              where: {
+                id: destination.schoolClassId,
+                schoolId: receivingSchoolId,
+                academicYearId: destination.academicYearId,
+                gradeLevelId: destination.gradeLevelId,
+              },
+            })
+          : Promise.resolve(null),
+      ])
+      if (!year || !grade || (destination.schoolClassId && !schoolClass))
+        throw new TransferDestinationError()
+      const receivingEnrollment = await transaction.enrollment.create({
+        data: {
+          studentId: transfer.studentId,
+          schoolId: receivingSchoolId,
+          academicYearId: destination.academicYearId,
+          gradeLevelId: destination.gradeLevelId,
+          schoolClassId: destination.schoolClassId ?? null,
+          status: 'pending',
+        },
+      })
+      const sourceChanged = await transaction.enrollment.updateMany({
+        where: { id: transfer.sourceEnrollmentId, status: 'approved' },
+        data: {
+          status: 'withdrawn',
+          withdrawnAt: new Date(),
+          withdrawnById: actorId,
+          withdrawalReason: 'transfer',
+        },
+      })
+      if (sourceChanged.count !== 1) throw new TransferStateError()
+      const now = new Date()
+      const changed = await transaction.transferRequest.updateMany({
+        where: { id: transferId, status: 'approvedBySendingSchool' },
+        data: {
+          status: 'acceptedByReceivingSchool',
+          receivingEnrollmentId: receivingEnrollment.id,
+          acceptedById: actorId,
+          acceptedAt: now,
+          completedAt: now,
+        },
+      })
+      if (changed.count !== 1) throw new TransferStateError()
+      return transaction.transferRequest.findUniqueOrThrow({
+        where: { id: transferId },
+      })
+    })
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      ['P2002', 'P2003'].includes(error.code)
+    )
+      throw new TransferDestinationError()
+    throw error
+  }
+}
+
+export async function rejectTransfer(
+  database: PrismaClient,
+  actorId: string,
+  receivingSchoolId: string,
+  transferId: string,
+  reason: string,
+) {
+  const rejectionReason = TransferReasonSchema.parse(reason)
+  await requireTransferSchoolRole(database, actorId, receivingSchoolId)
+  const changed = await database.transferRequest.updateMany({
+    where: {
+      id: transferId,
+      receivingSchoolId,
+      status: 'approvedBySendingSchool',
+    },
+    data: {
+      status: 'rejected',
+      rejectionReason,
+      rejectedById: actorId,
+      rejectedAt: new Date(),
+    },
+  })
+  if (changed.count !== 1) throw new TransferStateError()
+  return database.transferRequest.findUniqueOrThrow({
+    where: { id: transferId },
+  })
+}
+
+export async function cancelTransfer(
+  database: PrismaClient,
+  actorId: string,
+  sendingSchoolId: string,
+  transferId: string,
+  reason: string,
+) {
+  const cancellationReason = TransferReasonSchema.parse(reason)
+  await requireTransferSchoolRole(database, actorId, sendingSchoolId)
+  const changed = await database.transferRequest.updateMany({
+    where: {
+      id: transferId,
+      sendingSchoolId,
+      status: { in: ['requested', 'approvedBySendingSchool'] },
+    },
+    data: {
+      status: 'cancelled',
+      cancellationReason,
+      cancelledById: actorId,
+      cancelledAt: new Date(),
+    },
+  })
+  if (changed.count !== 1) throw new TransferStateError()
+  return database.transferRequest.findUniqueOrThrow({
+    where: { id: transferId },
   })
 }
 

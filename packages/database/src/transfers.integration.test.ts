@@ -3,6 +3,12 @@ import { afterAll, describe, expect, it } from 'vitest'
 import { createDatabaseClient } from './index.js'
 import {
   DuplicateActiveTransferError,
+  TransferDestinationError,
+  TransferStateError,
+  approveTransfer,
+  acceptTransfer,
+  rejectTransfer,
+  cancelTransfer,
   findTransferForSchool,
   listSchoolTransfers,
   requestTransfer,
@@ -71,6 +77,26 @@ describe.skipIf(!database)('transfer requests in PostgreSQL', () => {
     })
     const grade = await database!.gradeLevel.create({
       data: { schoolId: sending.id, name: 'Grade 2' },
+    })
+    const receivingYear = await database!.academicYear.create({
+      data: {
+        schoolId: receiving.id,
+        name: 'Receiving year',
+        startsOn: new Date('2026-01-01'),
+        endsOn: new Date('2026-12-31'),
+      },
+    })
+    const receivingGrade = await database!.gradeLevel.create({
+      data: { schoolId: receiving.id, name: 'Grade 2' },
+    })
+    const teacher = await database!.user.create({
+      data: {
+        email: 'transfer-teacher-' + randomUUID() + '@example.test',
+        displayName: 'Sending Teacher',
+        schoolMemberships: {
+          create: { schoolId: sending.id, role: 'teacher' },
+        },
+      },
     })
     const student = await database!.student.create({
       data: { studentReference: 'TRANSFER-' + randomUUID(), givenName: 'Mina' },
@@ -168,14 +194,158 @@ describe.skipIf(!database)('transfer requests in PostgreSQL', () => {
       await expect(
         listSchoolTransfers(database!, actor.id, receiving.id),
       ).rejects.toBeInstanceOf(TransferPermissionError)
+      await expect(
+        approveTransfer(database!, teacher.id, sending.id, transfer.id),
+      ).rejects.toBeInstanceOf(TransferPermissionError)
+      const cancelled = await cancelTransfer(
+        database!,
+        actor.id,
+        sending.id,
+        transfer.id,
+        'Family changed plans',
+      )
+      expect(cancelled.status).toBe('cancelled')
+      expect(cancelled.cancellationReason).toBe('Family changed plans')
+      expect(
+        (await database!.enrollment.findUnique({ where: { id: source.id } }))
+          ?.status,
+      ).toBe('approved')
+      const rejectedRequest = await requestTransfer(database!, actor.id, input)
+      const approvedForRejection = await approveTransfer(
+        database!,
+        actor.id,
+        sending.id,
+        rejectedRequest.id,
+      )
+      expect(approvedForRejection.status).toBe('approvedBySendingSchool')
+      expect(approvedForRejection.sendingApprovedById).toBe(actor.id)
+      expect(
+        (await database!.enrollment.findUnique({ where: { id: source.id } }))
+          ?.status,
+      ).toBe('approved')
+      const rejected = await rejectTransfer(
+        database!,
+        reviewer.id,
+        receiving.id,
+        rejectedRequest.id,
+        'No available seat',
+      )
+      expect(rejected.status).toBe('rejected')
+      expect(rejected.rejectionReason).toBe('No available seat')
+      expect(
+        (await database!.enrollment.findUnique({ where: { id: source.id } }))
+          ?.status,
+      ).toBe('approved')
+      expect(
+        await database!.enrollment.count({ where: { schoolId: receiving.id } }),
+      ).toBe(0)
+      const acceptedRequest = await requestTransfer(database!, actor.id, input)
+      await approveTransfer(database!, actor.id, sending.id, acceptedRequest.id)
+      await expect(
+        acceptTransfer(database!, actor.id, receiving.id, acceptedRequest.id, {
+          academicYearId: receivingYear.id,
+          gradeLevelId: receivingGrade.id,
+        }),
+      ).rejects.toBeInstanceOf(TransferPermissionError)
+      await expect(
+        acceptTransfer(
+          database!,
+          reviewer.id,
+          receiving.id,
+          acceptedRequest.id,
+          {
+            academicYearId: randomUUID(),
+            gradeLevelId: receivingGrade.id,
+          },
+        ),
+      ).rejects.toBeInstanceOf(TransferDestinationError)
+      const conflicting = await database!.enrollment.create({
+        data: {
+          studentId: student.id,
+          schoolId: receiving.id,
+          academicYearId: receivingYear.id,
+          gradeLevelId: receivingGrade.id,
+          status: 'pending',
+        },
+      })
+      await expect(
+        acceptTransfer(
+          database!,
+          reviewer.id,
+          receiving.id,
+          acceptedRequest.id,
+          {
+            academicYearId: receivingYear.id,
+            gradeLevelId: receivingGrade.id,
+          },
+        ),
+      ).rejects.toBeInstanceOf(TransferDestinationError)
+      expect(
+        (
+          await database!.transferRequest.findUnique({
+            where: { id: acceptedRequest.id },
+          })
+        )?.status,
+      ).toBe('approvedBySendingSchool')
+      expect(
+        (await database!.enrollment.findUnique({ where: { id: source.id } }))
+          ?.status,
+      ).toBe('approved')
+      await database!.enrollment.delete({ where: { id: conflicting.id } })
+      const accepted = await acceptTransfer(
+        database!,
+        reviewer.id,
+        receiving.id,
+        acceptedRequest.id,
+        {
+          academicYearId: receivingYear.id,
+          gradeLevelId: receivingGrade.id,
+        },
+      )
+      expect(accepted.status).toBe('acceptedByReceivingSchool')
+      expect(accepted.acceptedById).toBe(reviewer.id)
+      expect(accepted.completedAt).not.toBeNull()
+      const destination = await database!.enrollment.findUnique({
+        where: { id: accepted.receivingEnrollmentId! },
+      })
+      expect(destination?.status).toBe('pending')
+      expect(destination?.schoolId).toBe(receiving.id)
+      expect(destination?.studentId).toBe(student.id)
+      const withdrawnSource = await database!.enrollment.findUnique({
+        where: { id: source.id },
+      })
+      expect(withdrawnSource?.status).toBe('withdrawn')
+      expect(withdrawnSource?.withdrawalReason).toBe('transfer')
+      await expect(
+        rejectTransfer(
+          database!,
+          reviewer.id,
+          receiving.id,
+          accepted.id,
+          'Too late',
+        ),
+      ).rejects.toBeInstanceOf(TransferStateError)
+      await expect(
+        cancelTransfer(
+          database!,
+          actor.id,
+          sending.id,
+          accepted.id,
+          'Too late',
+        ),
+      ).rejects.toBeInstanceOf(TransferStateError)
     } finally {
       await database!.transferRequest.deleteMany({
         where: { sendingSchoolId: sending.id },
       })
-      await database!.enrollment.deleteMany({ where: { schoolId: sending.id } })
-      await database!.gradeLevel.deleteMany({ where: { schoolId: sending.id } })
+      await database!.enrollment.deleteMany({
+        where: { schoolId: { in: [sending.id, receiving.id] } },
+      })
+      await database!.gradeLevel.deleteMany({
+        where: { schoolId: { in: [sending.id, receiving.id] } },
+      })
       await database!.academicYear.deleteMany({
-        where: { schoolId: sending.id },
+        where: { schoolId: { in: [sending.id, receiving.id] } },
       })
       await database!.student.delete({ where: { id: student.id } })
       await database!.student.delete({ where: { id: otherStudent.id } })
@@ -183,7 +353,7 @@ describe.skipIf(!database)('transfer requests in PostgreSQL', () => {
         where: { schoolId: { in: [sending.id, receiving.id, unrelated.id] } },
       })
       await database!.user.deleteMany({
-        where: { id: { in: [actor.id, reviewer.id, outsider.id] } },
+        where: { id: { in: [actor.id, reviewer.id, outsider.id, teacher.id] } },
       })
       await database!.school.deleteMany({
         where: { id: { in: [sending.id, receiving.id, unrelated.id] } },
