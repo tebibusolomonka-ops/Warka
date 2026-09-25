@@ -85,7 +85,11 @@ export function prismaFamilyConversationService(database: PrismaClient) {
   ) {
     const role = await staffRole(actorId, conversation.schoolId)
     if (conversation.route === 'teacher') {
-      return role === 'teacher' && conversation.teacherUserId === actorId
+      return (
+        (role === 'teacher' && conversation.teacherUserId === actorId) ||
+        (!!conversation.escalatedAt &&
+          (role === 'administrator' || role === 'leadership'))
+      )
     }
     return (
       role === 'administrator' || role === 'registrar' || role === 'leadership'
@@ -181,6 +185,7 @@ export function prismaFamilyConversationService(database: PrismaClient) {
           data: {
             conversationId: conversation.id,
             senderUserId: actorId,
+            senderKind: 'guardian',
             body: data.body,
           },
         })
@@ -232,7 +237,14 @@ export function prismaFamilyConversationService(database: PrismaClient) {
       const routeFilter =
         role === 'teacher'
           ? { route: 'teacher' as const, teacherUserId: actorId }
-          : { route: 'schoolOffice' as const }
+          : role === 'registrar'
+            ? { route: 'schoolOffice' as const }
+            : {
+                OR: [
+                  { route: 'schoolOffice' as const },
+                  { route: 'teacher' as const, escalatedAt: { not: null } },
+                ],
+              }
       return database.familyConversation.findMany({
         where: { schoolId, ...routeFilter },
         include: {
@@ -269,7 +281,7 @@ export function prismaFamilyConversationService(database: PrismaClient) {
         orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
         take: limit,
         skip: offset,
-        select: { id: true, body: true, senderUserId: true, createdAt: true },
+        select: { id: true, body: true, senderKind: true, createdAt: true },
       })
       return { conversation, messages }
     },
@@ -283,13 +295,44 @@ export function prismaFamilyConversationService(database: PrismaClient) {
         throw new FamilyConversationStateError()
       if (!guardian && !staff) throw new FamilyConversationAccessError()
       if (
-        staff &&
         conversation.route === 'teacher' &&
+        (guardian || conversation.teacherUserId === actorId) &&
         !(await currentTeacher(conversation))
       )
         throw new FamilyConversationAccessError()
-      return database.familyMessage.create({
-        data: { conversationId, senderUserId: actorId, body: text },
+      return database.$transaction(async (transaction) => {
+        const message = await transaction.familyMessage.create({
+          data: {
+            conversationId,
+            senderUserId: actorId,
+            senderKind: guardian ? 'guardian' : 'school',
+            body: text,
+          },
+        })
+        await transaction.familyConversation.update({
+          where: { id: conversationId },
+          data: { updatedAt: new Date() },
+        })
+        return message
+      })
+    },
+    async escalate(actorId: string, conversationId: string) {
+      const { conversation, staff } = await requireConversation(
+        actorId,
+        conversationId,
+      )
+      if (!staff) throw new FamilyConversationAccessError()
+      if (conversation.status !== 'open' || conversation.escalatedAt)
+        throw new FamilyConversationStateError()
+      if (
+        conversation.route === 'teacher' &&
+        conversation.teacherUserId === actorId &&
+        !(await currentTeacher(conversation))
+      )
+        throw new FamilyConversationAccessError()
+      return database.familyConversation.update({
+        where: { id: conversationId },
+        data: { escalatedAt: new Date(), escalatedById: actorId },
       })
     },
     async close(actorId: string, conversationId: string) {

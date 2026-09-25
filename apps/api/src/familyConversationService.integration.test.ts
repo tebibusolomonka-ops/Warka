@@ -191,10 +191,44 @@ describe.skipIf(!database)('family conversations in PostgreSQL', () => {
       await expect(
         service.listSchool(otherAdmin.id, school.id),
       ).rejects.toBeInstanceOf(FamilyConversationAccessError)
+      await expect(
+        service.escalate(parent.id, office.id),
+      ).rejects.toBeInstanceOf(FamilyConversationAccessError)
+      const escalated = await service.escalate(teacher.id, teacherThread.id)
+      expect(escalated.escalatedById).toBe(teacher.id)
+      expect(escalated.escalatedAt).toBeInstanceOf(Date)
+      expect(
+        (await service.listSchool(admin.id, school.id)).map((item) => item.id),
+      ).toContain(teacherThread.id)
+      await service.send(
+        admin.id,
+        teacherThread.id,
+        'Leadership will review this.',
+      )
       await service.send(admin.id, office.id, 'We will review it.')
       expect((await service.read(parent.id, office.id)).messages).toHaveLength(
         2,
       )
+      expect(
+        (await service.read(parent.id, office.id, 1, 1)).messages,
+      ).toHaveLength(1)
+      await database!.teachingAssignment.deleteMany({
+        where: { userId: teacher.id, schoolId: school.id },
+      })
+      await expect(
+        service.create(parent.id, {
+          studentReference: student.studentReference,
+          route: 'teacher',
+          teacherUserId: teacher.id,
+          body: 'New question',
+        }),
+      ).rejects.toBeInstanceOf(FamilyConversationAccessError)
+      await expect(
+        service.send(parent.id, teacherThread.id, 'After assignment'),
+      ).rejects.toBeInstanceOf(FamilyConversationAccessError)
+      expect(
+        (await service.read(teacher.id, teacherThread.id)).messages.length,
+      ).toBeGreaterThan(0)
       await service.close(admin.id, office.id)
       await expect(
         service.send(parent.id, office.id, 'Another message'),

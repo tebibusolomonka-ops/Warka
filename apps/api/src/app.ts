@@ -86,6 +86,13 @@ import { registerTransferRoutes } from './transferRoutes.js'
 import { registerParentServiceRoutes } from './parentServiceRoutes.js'
 import { registerGuardianAccountRoutes } from './guardianAccountRoutes.js'
 import { registerParentPortalRoutes } from './parentPortalRoutes.js'
+import { registerFamilyConversationRoutes } from './familyConversationRoutes.js'
+import {
+  prismaFamilyConversationService,
+  FamilyConversationAccessError,
+  FamilyConversationStateError,
+  type FamilyConversationService,
+} from './familyConversationService.js'
 import {
   prismaParentAcademicService,
   ParentChildNotFoundError,
@@ -134,6 +141,7 @@ export function buildApp(
     guardianAccounts?: GuardianAccountService
     parentPortal?: ParentPortalService
     parentAcademic?: ParentAcademicService
+    familyConversations?: FamilyConversationService
     studentPortal?: StudentPortalService
     materials?: LearningMaterialService
     announcements?: AnnouncementService
@@ -193,6 +201,13 @@ export function buildApp(
   registerLearningMaterialRoutes(app, getMaterials, authenticate)
   registerAnnouncementRoutes(app, getAnnouncements, authenticate)
   registerParentServiceRoutes(app, getDatabase, authenticate)
+  registerFamilyConversationRoutes(
+    app,
+    () =>
+      options.familyConversations ??
+      prismaFamilyConversationService(getDatabase()),
+    authenticate,
+  )
   registerParentPortalRoutes(
     app,
     () => options.parentPortal ?? prismaParentPortalService(getDatabase()),
@@ -238,6 +253,19 @@ export function buildApp(
   )
 
   app.setErrorHandler((error, _request, reply) => {
+    if (error instanceof FamilyConversationAccessError) {
+      return reply.code(404).send({
+        error: {
+          code: 'FAMILY_CONVERSATION_NOT_FOUND',
+          message: error.message,
+        },
+      })
+    }
+    if (error instanceof FamilyConversationStateError) {
+      return reply.code(409).send({
+        error: { code: 'FAMILY_CONVERSATION_CLOSED', message: error.message },
+      })
+    }
     if (error instanceof ParentChildNotFoundError) {
       return reply.code(404).send({
         error: { code: 'PARENT_CHILD_NOT_FOUND', message: error.message },

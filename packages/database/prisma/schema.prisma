@@ -44,6 +44,11 @@ enum DocumentStatus {
   withdrawn
 }
 
+enum FamilySenderKind {
+  guardian
+  school
+}
+
 enum FamilyConversationRoute {
   teacher
   schoolOffice
@@ -137,6 +142,7 @@ model User {
   familyMessages          FamilyMessage[]
   teacherConversations    FamilyConversation[] @relation("FamilyConversationTeacher")
   closedFamilyConversations FamilyConversation[] @relation("FamilyConversationClosedBy")
+  escalatedFamilyConversations FamilyConversation[] @relation("FamilyConversationEscalatedBy")
   guardianAccess          GuardianAccess?
   sessions                Session[]
   approvedEnrollments     Enrollment[]             @relation("EnrollmentApprovedBy")
@@ -695,6 +701,8 @@ model FamilyConversation {
   status        FamilyConversationStatus @default(open)
   closedAt      DateTime?
   closedById    String?
+  escalatedAt   DateTime?
+  escalatedById String?
   createdAt     DateTime                 @default(now())
   updatedAt     DateTime                 @updatedAt
   school        School                   @relation(fields: [schoolId], references: [id], onDelete: Restrict)
@@ -702,6 +710,7 @@ model FamilyConversation {
   guardian      Guardian                 @relation(fields: [guardianId], references: [id], onDelete: Restrict)
   teacher       User?                    @relation("FamilyConversationTeacher", fields: [teacherUserId], references: [id], onDelete: Restrict)
   closedBy      User?                    @relation("FamilyConversationClosedBy", fields: [closedById], references: [id], onDelete: Restrict)
+  escalatedBy   User?                    @relation("FamilyConversationEscalatedBy", fields: [escalatedById], references: [id], onDelete: Restrict)
   messages      FamilyMessage[]
 
   @@index([guardianId, createdAt])
@@ -713,6 +722,7 @@ model FamilyMessage {
   id             String             @id @default(uuid())
   conversationId String
   senderUserId   String
+  senderKind     FamilySenderKind @default(guardian)
   body           String
   createdAt      DateTime           @default(now())
   readAt         DateTime?
