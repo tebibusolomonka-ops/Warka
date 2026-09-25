@@ -2,6 +2,7 @@ import Fastify from 'fastify'
 import type { User } from '@warka/database'
 import { describe, expect, it, vi } from 'vitest'
 import { registerParentPortalRoutes } from './parentPortalRoutes.js'
+import type { ParentAcademicService } from './parentAcademicService.js'
 import type { ParentPortalService } from './parentPortalService.js'
 
 const user = { id: '91c9a88f-1546-4ac6-9c9c-a9410f2f32bd' } as User
@@ -27,6 +28,12 @@ describe('parent portal identity routes', () => {
     registerParentPortalRoutes(
       app,
       () => portal,
+      () =>
+        ({
+          results: vi.fn(),
+          announcements: vi.fn(),
+          materials: vi.fn(),
+        }) as unknown as ParentAcademicService,
       async (request) => {
         request.currentUser = user
       },

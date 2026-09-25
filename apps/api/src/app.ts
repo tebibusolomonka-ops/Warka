@@ -87,6 +87,11 @@ import { registerParentServiceRoutes } from './parentServiceRoutes.js'
 import { registerGuardianAccountRoutes } from './guardianAccountRoutes.js'
 import { registerParentPortalRoutes } from './parentPortalRoutes.js'
 import {
+  prismaParentAcademicService,
+  ParentChildNotFoundError,
+  type ParentAcademicService,
+} from './parentAcademicService.js'
+import {
   prismaParentPortalService,
   ParentPortalAccessError,
   type ParentPortalService,
@@ -128,6 +133,7 @@ export function buildApp(
     studentAccounts?: StudentAccountService
     guardianAccounts?: GuardianAccountService
     parentPortal?: ParentPortalService
+    parentAcademic?: ParentAcademicService
     studentPortal?: StudentPortalService
     materials?: LearningMaterialService
     announcements?: AnnouncementService
@@ -190,6 +196,7 @@ export function buildApp(
   registerParentPortalRoutes(
     app,
     () => options.parentPortal ?? prismaParentPortalService(getDatabase()),
+    () => options.parentAcademic ?? prismaParentAcademicService(getDatabase()),
     authenticate,
   )
   registerGuardianAccountRoutes(
@@ -231,6 +238,11 @@ export function buildApp(
   )
 
   app.setErrorHandler((error, _request, reply) => {
+    if (error instanceof ParentChildNotFoundError) {
+      return reply.code(404).send({
+        error: { code: 'PARENT_CHILD_NOT_FOUND', message: error.message },
+      })
+    }
     if (error instanceof ParentPortalAccessError) {
       return reply.code(403).send({
         error: { code: 'PARENT_ACCESS_REQUIRED', message: error.message },
