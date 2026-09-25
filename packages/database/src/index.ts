@@ -369,3 +369,17 @@ export {
   BureauAccessDeniedError,
 } from './bureauAccess.js'
 export type { BureauAccess, BureauRole } from '@prisma/client'
+
+export {
+  CreateReportingPeriodSchema,
+  createReportingPeriod,
+  openReportingPeriod,
+  closeReportingPeriod,
+  assignRequiredSchools,
+  listReportingPeriods,
+} from './reportingPeriods.js'
+export type {
+  ReportingPeriod,
+  ReportingPeriodStatus,
+  ReportingRequirement,
+} from '@prisma/client'

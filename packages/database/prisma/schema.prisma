@@ -24,6 +24,12 @@ enum BureauRole {
   reportManager
 }
 
+enum ReportingPeriodStatus {
+  draft
+  open
+  closed
+}
+
 enum ResultSetStatus {
   draft
   pending
@@ -85,6 +91,7 @@ model Organization {
   schools     School[]
   memberships OrganizationMembership[]
   bureauAccesses BureauAccess[]
+  reportingPeriods ReportingPeriod[]
 }
 
 model School {
@@ -115,6 +122,7 @@ model School {
   verifiedGuardianRelationships StudentGuardian[]
   serviceAccess       SchoolServiceAccess?
   familyConversations FamilyConversation[]
+  reportingRequirements ReportingRequirement[]
 
   @@index([organizationId])
 }
@@ -197,6 +205,34 @@ model BureauAccess {
 
   @@unique([userId, organizationId])
   @@index([organizationId, role, revokedAt])
+}
+model ReportingPeriod {
+  id              String                @id @default(uuid())
+  organizationId  String
+  name            String
+  startsOn        DateTime              @db.Date
+  endsOn          DateTime              @db.Date
+  submissionDueOn DateTime              @db.Date
+  status          ReportingPeriodStatus @default(draft)
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+  organization    Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  requirements    ReportingRequirement[]
+
+  @@unique([organizationId, name])
+  @@index([organizationId, status, startsOn])
+}
+
+model ReportingRequirement {
+  id                String          @id @default(uuid())
+  reportingPeriodId String
+  schoolId          String
+  createdAt         DateTime        @default(now())
+  reportingPeriod   ReportingPeriod @relation(fields: [reportingPeriodId], references: [id], onDelete: Cascade)
+  school            School          @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+
+  @@unique([reportingPeriodId, schoolId])
+  @@index([schoolId])
 }
 model PasswordCredential {
   userId       String   @id
