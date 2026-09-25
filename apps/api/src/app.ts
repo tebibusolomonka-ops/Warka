@@ -90,6 +90,7 @@ import { registerGuardianAccountRoutes } from './guardianAccountRoutes.js'
 import { registerGuardianRelationshipRoutes } from './guardianRelationshipRoutes.js'
 import { registerParentPortalRoutes } from './parentPortalRoutes.js'
 import { registerFamilyConversationRoutes } from './familyConversationRoutes.js'
+import { registerBureauRoutes } from './bureauRoutes.js'
 import {
   prismaFamilyConversationService,
   FamilyConversationAccessError,
@@ -204,6 +205,7 @@ export function buildApp(
   registerLearningMaterialRoutes(app, getMaterials, authenticate)
   registerAnnouncementRoutes(app, getAnnouncements, authenticate)
   registerParentServiceRoutes(app, getDatabase, authenticate)
+  registerBureauRoutes(app, getDatabase, authenticate)
   registerGuardianRelationshipRoutes(app, getDatabase, authenticate)
   registerFamilyConversationRoutes(
     app,
