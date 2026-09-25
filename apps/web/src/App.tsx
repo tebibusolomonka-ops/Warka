@@ -28,6 +28,8 @@ import { TransferWorkspace } from './TransferWorkspace'
 import { ParentPortal } from './ParentPortal'
 import { StaffFamilyWorkspace } from './StaffFamilyWorkspace'
 import { getParentIdentity } from './parentApi'
+import { BureauWorkspace } from './BureauWorkspace'
+import { getBureauAccess, type BureauAccess } from './bureauApi'
 
 type Authentication =
   | { status: 'checking' }
@@ -50,6 +52,12 @@ type Parent =
   | { status: 'none' }
   | { status: 'error' }
   | { status: 'loaded'; identity: ParentIdentity }
+
+type Bureau =
+  | { status: 'loading' }
+  | { status: 'none' }
+  | { status: 'error' }
+  | { status: 'loaded'; access: BureauAccess[] }
 
 type Schools =
   | { status: 'loading' }
@@ -80,9 +88,10 @@ function SignedInShell({
   const [refresh, setRefresh] = useState(0)
   const [portal, setPortal] = useState<Portal>({ status: 'loading' })
   const [parent, setParent] = useState<Parent>({ status: 'loading' })
-  const [workspace, setWorkspace] = useState<'staff' | 'student' | 'parent'>(
-    'staff',
-  )
+  const [bureau, setBureau] = useState<Bureau>({ status: 'loading' })
+  const [workspace, setWorkspace] = useState<
+    'staff' | 'student' | 'parent' | 'bureau'
+  >('staff')
 
   useEffect(() => {
     let active = true
@@ -124,6 +133,26 @@ function SignedInShell({
     }
   }, [baseUrl, refresh, onSignedOut])
 
+  useEffect(() => {
+    let active = true
+    setBureau({ status: 'loading' })
+    getBureauAccess(baseUrl)
+      .then((access) => {
+        if (active)
+          setBureau(
+            access.length ? { status: 'loaded', access } : { status: 'none' },
+          )
+      })
+      .catch((error: unknown) => {
+        if (!active) return
+        if (isExpired(error))
+          onSignedOut('Your session expired. Sign in again.')
+        else setBureau({ status: 'none' })
+      })
+    return () => {
+      active = false
+    }
+  }, [baseUrl, refresh, onSignedOut])
   useEffect(() => {
     let active = true
     setOrganizations({ status: 'loading' })
@@ -194,14 +223,19 @@ function SignedInShell({
   if (
     portal.status === 'loading' ||
     parent.status === 'loading' ||
+    bureau.status === 'loading' ||
     schools.status === 'loading' ||
     organizations.status === 'loading'
   )
     return <p role="status">Loading workspaces</p>
   const hasStudentAccess = portal.status === 'loaded'
   const hasParentAccess = parent.status === 'loaded'
+  const hasBureauAccess = bureau.status === 'loaded' && bureau.access.length > 0
   const workspaceCount =
-    Number(hasStaffAccess) + Number(hasStudentAccess) + Number(hasParentAccess)
+    Number(hasStaffAccess) +
+    Number(hasStudentAccess) +
+    Number(hasParentAccess) +
+    Number(hasBureauAccess)
   const activeWorkspace =
     workspace === 'staff' && hasStaffAccess
       ? 'staff'
@@ -209,11 +243,15 @@ function SignedInShell({
         ? 'student'
         : workspace === 'parent' && hasParentAccess
           ? 'parent'
-          : hasStaffAccess
-            ? 'staff'
-            : hasParentAccess
-              ? 'parent'
-              : 'student'
+          : workspace === 'bureau' && hasBureauAccess
+            ? 'bureau'
+            : hasStaffAccess
+              ? 'staff'
+              : hasBureauAccess
+                ? 'bureau'
+                : hasParentAccess
+                  ? 'parent'
+                  : 'student'
   const workspaceChoices =
     workspaceCount > 1 ? (
       <nav aria-label="Workspace choice" className="workspace-nav">
@@ -235,6 +273,15 @@ function SignedInShell({
             Student portal
           </button>
         )}
+        {hasBureauAccess && (
+          <button
+            type="button"
+            aria-current={activeWorkspace === 'bureau' ? 'page' : undefined}
+            onClick={() => setWorkspace('bureau')}
+          >
+            Bureau workspace
+          </button>
+        )}
         {hasParentAccess && (
           <button
             type="button"
@@ -246,6 +293,13 @@ function SignedInShell({
         )}
       </nav>
     ) : null
+  if (activeWorkspace === 'bureau' && bureau.status === 'loaded')
+    return (
+      <>
+        {workspaceChoices}
+        <BureauWorkspace baseUrl={baseUrl} access={bureau.access[0]!} />
+      </>
+    )
   if (activeWorkspace === 'parent' && parent.status === 'loaded')
     return (
       <>
