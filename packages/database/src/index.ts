@@ -383,3 +383,15 @@ export type {
   ReportingPeriodStatus,
   ReportingRequirement,
 } from '@prisma/client'
+
+export {
+  ReportingSubmissionError,
+  prepareSchoolReport,
+  submitSchoolReport,
+  approveSchoolReport,
+  returnSchoolReport,
+} from './reportingSubmissions.js'
+export type {
+  ReportingSubmission,
+  ReportingSubmissionStatus,
+} from '@prisma/client'

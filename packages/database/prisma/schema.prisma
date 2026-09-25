@@ -30,6 +30,13 @@ enum ReportingPeriodStatus {
   closed
 }
 
+enum ReportingSubmissionStatus {
+  draft
+  submitted
+  approved
+  returned
+}
+
 enum ResultSetStatus {
   draft
   pending
@@ -123,6 +130,7 @@ model School {
   serviceAccess       SchoolServiceAccess?
   familyConversations FamilyConversation[]
   reportingRequirements ReportingRequirement[]
+  reportingSubmissions ReportingSubmission[]
 
   @@index([organizationId])
 }
@@ -218,6 +226,7 @@ model ReportingPeriod {
   updatedAt       DateTime              @updatedAt
   organization    Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   requirements    ReportingRequirement[]
+  submissions     ReportingSubmission[]
 
   @@unique([organizationId, name])
   @@index([organizationId, status, startsOn])
@@ -233,6 +242,28 @@ model ReportingRequirement {
 
   @@unique([reportingPeriodId, schoolId])
   @@index([schoolId])
+}
+model ReportingSubmission {
+  id                String                    @id @default(uuid())
+  reportingPeriodId String
+  schoolId          String
+  status            ReportingSubmissionStatus @default(draft)
+  snapshot          Json
+  submittedAt       DateTime?
+  submittedById     String?
+  approvedAt        DateTime?
+  approvedById      String?
+  returnedAt        DateTime?
+  returnedById      String?
+  returnReason      String?
+  createdAt         DateTime                  @default(now())
+  updatedAt         DateTime                  @updatedAt
+  reportingPeriod   ReportingPeriod           @relation(fields: [reportingPeriodId], references: [id], onDelete: Cascade)
+  school            School                    @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+
+  @@unique([reportingPeriodId, schoolId])
+  @@index([schoolId, status])
+  @@index([reportingPeriodId, status])
 }
 model PasswordCredential {
   userId       String   @id
