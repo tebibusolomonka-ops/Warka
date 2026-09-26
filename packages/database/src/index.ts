@@ -623,3 +623,11 @@ export type {
   ProgressionExceptionKind,
   ProgressionExceptionStatus,
 } from '@prisma/client'
+
+export {
+  createRecoveryRequest,
+  findActiveRecoveryRequest,
+  expireRecoveryRequests,
+  cancelRecoveryRequest,
+  completeRecoveryRequest,
+} from './accountRecoveryRequests.js'

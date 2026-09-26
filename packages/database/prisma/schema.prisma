@@ -133,6 +133,13 @@ enum ProgressionAction {
   manualReview
 }
 
+enum AccountRecoveryStatus {
+  pending
+  completed
+  expired
+  cancelled
+}
+
 enum AcademicYearStatus {
   active
   closing
@@ -232,6 +239,7 @@ model User {
   closedFamilyConversations    FamilyConversation[]     @relation("FamilyConversationClosedBy")
   escalatedFamilyConversations FamilyConversation[]     @relation("FamilyConversationEscalatedBy")
   guardianAccess               GuardianAccess?
+  recoveryRequests             AccountRecoveryRequest[]
   sessions                     Session[]
   supportIdentity              SupportIdentity?
   approvedEnrollments          Enrollment[]             @relation("EnrollmentApprovedBy")
@@ -485,6 +493,20 @@ model Session {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([expiresAt])
+}
+
+model AccountRecoveryRequest {
+  id          String                @id @default(uuid())
+  userId      String
+  status      AccountRecoveryStatus @default(pending)
+  createdAt   DateTime              @default(now())
+  expiresAt   DateTime
+  completedAt DateTime?
+  cancelledAt DateTime?
+  user        User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
   @@index([expiresAt])
 }
 
