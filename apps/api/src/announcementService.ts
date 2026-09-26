@@ -1,4 +1,5 @@
 import {
+  createNotifications,
   findSchoolMembership,
   findStudentAccessForUser,
   hasOrganizationAdminRole,
@@ -97,11 +98,58 @@ export function prismaAnnouncementService(
     if (!assignment) throw new AnnouncementAccessError()
   }
 
+  async function notifyPublished(
+    announcementId: string,
+    schoolId: string,
+    schoolClassId: string | null,
+  ) {
+    try {
+      const enrollmentWhere = {
+        schoolId,
+        status: 'approved' as const,
+        ...(schoolClassId ? { schoolClassId } : {}),
+      }
+      const [students, guardians] = await Promise.all([
+        database.studentAccess.findMany({
+          where: { student: { enrollments: { some: enrollmentWhere } } },
+          select: { userId: true },
+        }),
+        database.guardianAccess.findMany({
+          where: {
+            guardian: {
+              students: {
+                some: {
+                  verificationStatus: 'verified',
+                  revokedAt: null,
+                  student: { enrollments: { some: enrollmentWhere } },
+                },
+              },
+            },
+          },
+          select: { userId: true },
+        }),
+      ])
+      await createNotifications(
+        database,
+        [...students, ...guardians].map((account) => account.userId),
+        {
+          type: 'announcement.published',
+          title: 'School announcement',
+          message: 'A school announcement is available.',
+          resourceType: 'announcement',
+          resourceId: announcementId,
+        },
+      )
+    } catch {
+      return
+    }
+  }
+
   return {
     async create(actorId, schoolId, input) {
       const data = AnnouncementInputSchema.parse(input)
       await canManage(actorId, schoolId, data.schoolClassId ?? null)
-      return database.announcement.create({
+      const announcement = await database.announcement.create({
         data: {
           schoolId,
           schoolClassId: data.schoolClassId ?? null,
@@ -112,6 +160,13 @@ export function prismaAnnouncementService(
           createdById: actorId,
         },
       })
+      if (data.publish)
+        await notifyPublished(
+          announcement.id,
+          schoolId,
+          announcement.schoolClassId,
+        )
+      return announcement
     },
     async publish(actorId, schoolId, announcementId) {
       const item = await database.announcement.findFirst({
@@ -119,10 +174,13 @@ export function prismaAnnouncementService(
       })
       if (!item) throw new AnnouncementAccessError()
       await canManage(actorId, schoolId, item.schoolClassId)
-      return database.announcement.update({
+      const announcement = await database.announcement.update({
         where: { id: item.id },
         data: { publishedAt: item.publishedAt ?? new Date() },
       })
+      if (!item.publishedAt)
+        await notifyPublished(item.id, schoolId, item.schoolClassId)
+      return announcement
     },
     async staffList(actorId, schoolId) {
       const currentRole = await role(actorId, schoolId)

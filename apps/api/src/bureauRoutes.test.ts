@@ -12,6 +12,10 @@ const schoolId = '660daf71-3652-4a57-abaa-306c651bf44b'
 
 function testApp(database: Record<string, unknown>) {
   database.auditEvent ??= { create: vi.fn().mockResolvedValue({}) }
+  database.schoolMembership ??= { findMany: vi.fn().mockResolvedValue([]) }
+  database.notification ??= {
+    createMany: vi.fn().mockResolvedValue({ count: 0 }),
+  }
   database.$transaction ??= vi.fn(async (work) =>
     (work as (transaction: Record<string, unknown>) => Promise<unknown>)(
       database,

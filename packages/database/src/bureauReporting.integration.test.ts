@@ -135,6 +135,16 @@ describe.skipIf(!database)('bureau reporting in PostgreSQL', () => {
         'Correct the official source records',
       )
       expect(
+        await database!.notification.count({
+          where: { userId: schoolAdministrator.id, type: 'report.returned' },
+        }),
+      ).toBe(1)
+      expect(
+        await database!.notification.count({
+          where: { userId: manager.id, type: 'report.returned' },
+        }),
+      ).toBe(0)
+      expect(
         (
           await database!.reportingSubmission.findUniqueOrThrow({
             where: { id: draft.id },
@@ -155,6 +165,11 @@ describe.skipIf(!database)('bureau reporting in PostgreSQL', () => {
         school.id,
       )
       await approveSchoolReport(database!, manager.id, draft.id)
+      expect(
+        await database!.notification.count({
+          where: { userId: schoolAdministrator.id, type: 'report.approved' },
+        }),
+      ).toBe(1)
       const coverage = await getReportingCoverage(database!, period.id)
       expect(coverage.coverage).toMatchObject({
         expected: 1,

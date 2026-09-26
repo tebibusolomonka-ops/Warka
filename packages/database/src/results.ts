@@ -1,6 +1,7 @@
 import { Prisma, type PrismaClient, type ResultSet } from '@prisma/client'
 import { z } from 'zod'
 import { recordAuditEvent } from './auditEvents.js'
+import { createNotifications } from './notifications.js'
 import { listAssessments } from './assessments.js'
 import {
   calculateResult,
@@ -346,6 +347,21 @@ export async function publishResults(
           publishedById: actorId,
         },
       })
+      const linkedAccounts = await transaction.studentAccess.findMany({
+        where: { studentId: { in: preview.rows.map((row) => row.studentId) } },
+        select: { userId: true },
+      })
+      await createNotifications(
+        transaction,
+        linkedAccounts.map((account) => account.userId),
+        {
+          type: 'result.published',
+          title: 'Results published',
+          message: 'Your academic results are available.',
+          resourceType: 'resultSet',
+          resourceId: resultSetId,
+        },
+      )
       await recordAuditEvent(transaction, {
         schoolId,
         actorUserId: actorId,

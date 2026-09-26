@@ -34,7 +34,12 @@ function store(role: string | null, assigned = true) {
       create: vi.fn().mockImplementation(async ({ data }) => data),
       findMany: vi.fn().mockResolvedValue([]),
     },
-    studentAccess: { findUnique: vi.fn().mockResolvedValue(null) },
+    studentAccess: {
+      findUnique: vi.fn().mockResolvedValue(null),
+      findMany: vi.fn().mockResolvedValue([]),
+    },
+    guardianAccess: { findMany: vi.fn().mockResolvedValue([]) },
+    notification: { createMany: vi.fn().mockResolvedValue({ count: 0 }) },
     enrollment: { findFirst: vi.fn() },
   }
 }
@@ -168,6 +173,76 @@ describe('announcements', () => {
     )
     expect(database.announcement.create).toHaveBeenCalledWith({
       data: expect.objectContaining({ publishedAt: null }),
+    })
+  })
+})
+
+describe('announcement notifications', () => {
+  it('targets linked students and verified guardians in the school once on publication', async () => {
+    const database = store('administrator')
+    const studentUserId = randomUUID()
+    const guardianUserId = randomUUID()
+    database.studentAccess.findMany.mockResolvedValue([
+      { userId: studentUserId },
+    ])
+    database.guardianAccess.findMany.mockResolvedValue([
+      { userId: guardianUserId },
+    ])
+    database.announcement.create.mockResolvedValue({
+      id: randomUUID(),
+      schoolClassId: classId,
+    })
+    const announcement = (await prismaAnnouncementService(
+      database as unknown as PrismaClient,
+    ).create(actorId, schoolId, {
+      title: 'Class notice',
+      body: 'Read the lesson',
+      schoolClassId: classId,
+      publish: true,
+    })) as { id: string }
+    expect(database.studentAccess.findMany).toHaveBeenCalledWith({
+      where: {
+        student: {
+          enrollments: {
+            some: { schoolId, status: 'approved', schoolClassId: classId },
+          },
+        },
+      },
+      select: { userId: true },
+    })
+    expect(database.guardianAccess.findMany).toHaveBeenCalledWith({
+      where: {
+        guardian: {
+          students: {
+            some: {
+              verificationStatus: 'verified',
+              revokedAt: null,
+              student: {
+                enrollments: {
+                  some: {
+                    schoolId,
+                    status: 'approved',
+                    schoolClassId: classId,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      select: { userId: true },
+    })
+    expect(database.notification.createMany).toHaveBeenCalledWith({
+      data: [
+        expect.objectContaining({
+          userId: studentUserId,
+          resourceId: announcement.id,
+        }),
+        expect.objectContaining({
+          userId: guardianUserId,
+          resourceId: announcement.id,
+        }),
+      ],
     })
   })
 })

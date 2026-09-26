@@ -1,6 +1,7 @@
 import { Prisma, type PrismaClient } from '@prisma/client'
 import { z } from 'zod'
 import { recordAuditEvent } from './auditEvents.js'
+import { createNotifications } from './notifications.js'
 import { requireBureauPermission } from './bureauAccess.js'
 
 export class ReportingSubmissionError extends Error {}
@@ -14,6 +15,7 @@ type SubmissionStore = Pick<
   | 'reportingRequirement'
   | 'reportingSubmission'
   | 'schoolMembership'
+  | 'notification'
 >
 
 async function requireSchoolSubmitter(
@@ -117,6 +119,29 @@ export async function approveSchoolReport(
       resourceType: 'reportingSubmission',
       resourceId: submissionId,
     })
+    const recipients = await transaction.schoolMembership.findMany({
+      where: {
+        schoolId: submission.schoolId,
+        role: { in: ['administrator', 'registrar'] },
+      },
+      select: { userId: true },
+    })
+    await createNotifications(
+      transaction,
+      recipients.map((member) => member.userId),
+      {
+        type:
+          updated.status === 'returned' ? 'report.returned' : 'report.approved',
+        title:
+          updated.status === 'returned' ? 'Report returned' : 'Report approved',
+        message:
+          updated.status === 'returned'
+            ? 'A school report needs revision.'
+            : 'A school report was approved.',
+        resourceType: 'reportingSubmission',
+        resourceId: submissionId,
+      },
+    )
     return updated
   })
 }
@@ -158,6 +183,29 @@ export async function returnSchoolReport(
       resourceType: 'reportingSubmission',
       resourceId: submissionId,
     })
+    const recipients = await transaction.schoolMembership.findMany({
+      where: {
+        schoolId: submission.schoolId,
+        role: { in: ['administrator', 'registrar'] },
+      },
+      select: { userId: true },
+    })
+    await createNotifications(
+      transaction,
+      recipients.map((member) => member.userId),
+      {
+        type:
+          updated.status === 'returned' ? 'report.returned' : 'report.approved',
+        title:
+          updated.status === 'returned' ? 'Report returned' : 'Report approved',
+        message:
+          updated.status === 'returned'
+            ? 'A school report needs revision.'
+            : 'A school report was approved.',
+        resourceType: 'reportingSubmission',
+        resourceId: submissionId,
+      },
+    )
     return updated
   })
 }

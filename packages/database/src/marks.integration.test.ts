@@ -100,6 +100,14 @@ describe.skipIf(!database)('student marks in PostgreSQL', () => {
       givenName: 'Synthetic B',
     })
     const students = [student.id, secondStudent.id]
+    const studentAccount = await createUser(database!, {
+      email: randomUUID() + '@example.test',
+      displayName: 'Linked student',
+    })
+    users.push(studentAccount.id)
+    await database!.studentAccess.create({
+      data: { userId: studentAccount.id, studentId: student.id },
+    })
     try {
       const year = await createAcademicYear(database!, {
         schoolId: school.id,
@@ -428,6 +436,18 @@ describe.skipIf(!database)('student marks in PostgreSQL', () => {
       )
       expect(published.status).toBe('published')
       expect(published.publishedById).toBe(approver.id)
+      expect(
+        (
+          await database!.notification.findMany({
+            where: { userId: studentAccount.id, type: 'result.published' },
+          })
+        ).length,
+      ).toBe(1)
+      expect(
+        await database!.notification.count({
+          where: { userId: approver.id, type: 'result.published' },
+        }),
+      ).toBe(0)
       await expect(
         publishResults(database!, approver.id, school.id, pending.id),
       ).rejects.toBeInstanceOf(ResultStateError)
@@ -537,6 +557,9 @@ describe.skipIf(!database)('student marks in PostgreSQL', () => {
       })
       await database!.schoolMembership.deleteMany({
         where: { schoolId: { in: schools } },
+      })
+      await database!.studentAccess.deleteMany({
+        where: { studentId: { in: students } },
       })
       await database!.student.deleteMany({ where: { id: { in: students } } })
       await database!.user.deleteMany({ where: { id: { in: users } } })

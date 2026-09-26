@@ -1,5 +1,5 @@
 import type { FamilyConversation, PrismaClient } from '@warka/database'
-import { hasOrganizationAdminRole } from '@warka/database'
+import { createNotifications, hasOrganizationAdminRole } from '@warka/database'
 import { z } from 'zod'
 import {
   eligibleParentChildren,
@@ -313,6 +313,40 @@ export function prismaFamilyConversationService(database: PrismaClient) {
           where: { id: conversationId },
           data: { updatedAt: new Date() },
         })
+        if (guardian) {
+          const recipients =
+            conversation.route === 'teacher' && conversation.teacherUserId
+              ? [conversation.teacherUserId]
+              : (
+                  await transaction.schoolMembership.findMany({
+                    where: {
+                      schoolId: conversation.schoolId,
+                      role: { in: ['administrator', 'registrar'] },
+                    },
+                    select: { userId: true },
+                  })
+                ).map((member) => member.userId)
+          await createNotifications(transaction, recipients, {
+            type: 'familyMessage.reply',
+            title: 'Family conversation reply',
+            message: 'A family conversation has a new message.',
+            resourceType: 'familyConversation',
+            resourceId: conversationId,
+          })
+        } else {
+          const recipient = await transaction.guardianAccess.findUnique({
+            where: { guardianId: conversation.guardianId },
+            select: { userId: true },
+          })
+          if (recipient)
+            await createNotifications(transaction, [recipient.userId], {
+              type: 'familyMessage.reply',
+              title: 'Family conversation reply',
+              message: 'Your family conversation has a new reply.',
+              resourceType: 'familyConversation',
+              resourceId: conversationId,
+            })
+        }
         return message
       })
     },
