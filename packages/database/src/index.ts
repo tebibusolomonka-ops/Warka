@@ -467,3 +467,13 @@ export {
   listSupportAccessGrants,
 } from './supportAccess.js'
 export type { SupportAccessGrant, SupportIdentity } from './supportAccess.js'
+export {
+  RetentionCategorySchema,
+  SaveRetentionPolicySchema,
+  RetentionPermissionError,
+  RetentionPolicyNotFoundError,
+  createRetentionPolicy,
+  listRetentionPolicies,
+  evaluateRetention,
+} from './retentionPolicies.js'
+export type { RetentionPolicy } from './retentionPolicies.js'

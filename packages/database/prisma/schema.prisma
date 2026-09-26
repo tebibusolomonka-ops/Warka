@@ -380,6 +380,27 @@ model SupportAccessGrant {
   @@index([schoolId, status, requestedAt])
 }
 
+enum RetentionCategory {
+  messages
+  auditEvents
+  issuedDocuments
+  academicRecords
+  enrollmentRecords
+}
+
+model RetentionPolicy {
+  id             String            @id @default(uuid())
+  organizationId String
+  category       RetentionCategory
+  retentionDays  Int
+  updatedById    String
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@unique([organizationId, category])
+  @@index([organizationId, updatedAt])
+}
+
 model PasswordCredential {
   userId             String   @id
   passwordHash       String
