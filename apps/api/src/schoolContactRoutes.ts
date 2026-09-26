@@ -61,11 +61,9 @@ export function registerSchoolContactRoutes(
         request.body,
       )
       if (!result)
-        return reply
-          .code(404)
-          .send({
-            error: { code: 'CONTACT_NOT_FOUND', message: 'Contact not found' },
-          })
+        return reply.code(404).send({
+          error: { code: 'CONTACT_NOT_FOUND', message: 'Contact not found' },
+        })
       return result
     },
   )
@@ -82,11 +80,9 @@ export function registerSchoolContactRoutes(
           contactId,
         ))
       )
-        return reply
-          .code(404)
-          .send({
-            error: { code: 'CONTACT_NOT_FOUND', message: 'Contact not found' },
-          })
+        return reply.code(404).send({
+          error: { code: 'CONTACT_NOT_FOUND', message: 'Contact not found' },
+        })
       return reply.code(204).send()
     },
   )

@@ -69,7 +69,7 @@ test('school administrator imports synthetic registrations and downloads an audi
       `Synthetic,Import${suffix.slice(0, 6)},${year.id},${grade.id},${schoolClass.id}`,
     ].join('\n')
     await page.goto('/')
-    await page.getByLabel('Email').fill(administratorEmail)
+    await page.getByLabel('Email', { exact: true }).fill(administratorEmail)
     await page.getByLabel('Password', { exact: true }).fill(password)
     await page.getByRole('button', { name: 'Sign in' }).click()
     await expect(
@@ -100,7 +100,7 @@ test('school administrator imports synthetic registrations and downloads an audi
       page.getByRole('heading', { name: 'Notifications' }),
     ).toBeVisible()
     await page.getByRole('button', { name: 'Sign out' }).click()
-    await page.getByLabel('Email').fill(teacherEmail)
+    await page.getByLabel('Email', { exact: true }).fill(teacherEmail)
     await page.getByLabel('Password', { exact: true }).fill(password)
     await page.getByRole('button', { name: 'Sign in' }).click()
     await expect(

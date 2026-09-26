@@ -26,6 +26,11 @@ describe('authentication service', () => {
       passwordCredential: {
         findUnique: vi.fn().mockResolvedValue({ passwordHash }),
       },
+      loginAttemptBucket: {
+        findUnique: vi.fn().mockResolvedValue(null),
+        upsert: vi.fn().mockResolvedValue({}),
+        deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+      },
       session: {
         create: vi.fn().mockImplementation(async ({ data }) => {
           sessions.set(data.tokenHash, { user, expiresAt: data.expiresAt })

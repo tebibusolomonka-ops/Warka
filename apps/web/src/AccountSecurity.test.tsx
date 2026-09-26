@@ -53,7 +53,7 @@ describe('account security workspace', () => {
   it('keeps recovery requests neutral and exposes assistance only when mounted for an admin', async () => {
     vi.mocked(requestRecovery).mockResolvedValue()
     vi.mocked(resetRecovery).mockResolvedValue()
-    vi.mocked(assistRecovery).mockResolvedValue()
+    vi.mocked(assistRecovery).mockResolvedValue({ status: 'requested' })
     const { rerender } = render(<PublicRecovery baseUrl="/api" />)
     fireEvent.change(screen.getByLabelText('Recovery email'), {
       target: { value: 'any@example.test' },

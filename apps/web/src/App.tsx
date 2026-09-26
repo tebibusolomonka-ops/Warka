@@ -36,6 +36,7 @@ import { SchoolOperationsWorkspace } from './SchoolOperationsWorkspace'
 import { SchoolDocuments } from './SchoolDocuments'
 import { YearRolloverWorkspace } from './YearRolloverWorkspace'
 import { SchoolOnboardingWorkspace } from './SchoolOnboardingWorkspace'
+import { SupportWorkspace } from './SupportWorkspace'
 import { AccountSecurity, AdminRecovery } from './AccountSecurity'
 import { PublicRecovery } from './PublicRecovery'
 
@@ -451,6 +452,12 @@ function SignedInShell({
                   />
                 </>
               )}
+            {selectedSchool && (
+              <SupportWorkspace
+                baseUrl={baseUrl}
+                schoolId={selectedSchool.school.id}
+              />
+            )}
             {selectedSchool && selectedSchool.capabilities.canRegister && (
               <SchoolOperationsWorkspace
                 baseUrl={baseUrl}
@@ -736,6 +743,7 @@ function AuthenticatedApp() {
         !authentication.user.mustChangePassword && (
           <>
             <AccountSecurity baseUrl={baseUrl} />
+            <SupportWorkspace baseUrl={baseUrl} />
             <NotificationCenter baseUrl={baseUrl} />
             <SignedInShell
               baseUrl={baseUrl}

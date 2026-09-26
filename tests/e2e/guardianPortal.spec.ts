@@ -147,7 +147,7 @@ test('guardian portal and school office conversation', async ({ page }) => {
     })
 
     await page.goto('/')
-    await page.getByLabel('Email').fill(staffEmail)
+    await page.getByLabel('Email', { exact: true }).fill(staffEmail)
     await page.getByLabel('Password', { exact: true }).fill(staffPassword)
     await page.getByRole('button', { name: 'Sign in' }).click()
     await expect(
@@ -188,7 +188,7 @@ test('guardian portal and school office conversation', async ({ page }) => {
     await expect
       .poll(async () => (await page.request.get('/api/auth/me')).status())
       .toBe(401)
-    await page.getByLabel('Email').fill(parentEmail)
+    await page.getByLabel('Email', { exact: true }).fill(parentEmail)
     await page.getByLabel('Password', { exact: true }).fill(initialPassword)
     await page.getByRole('button', { name: 'Sign in' }).click()
     await expect(
@@ -229,7 +229,7 @@ test('guardian portal and school office conversation', async ({ page }) => {
       .poll(async () => (await page.request.get('/api/auth/me')).status())
       .toBe(401)
 
-    await page.getByLabel('Email').fill(staffEmail)
+    await page.getByLabel('Email', { exact: true }).fill(staffEmail)
     await page.getByLabel('Password', { exact: true }).fill(staffPassword)
     await page.getByRole('button', { name: 'Sign in' }).click()
     await page.getByLabel('School', { exact: true }).selectOption(schoolId)
@@ -244,7 +244,7 @@ test('guardian portal and school office conversation', async ({ page }) => {
       .poll(async () => (await page.request.get('/api/auth/me')).status())
       .toBe(401)
 
-    await page.getByLabel('Email').fill(parentEmail)
+    await page.getByLabel('Email', { exact: true }).fill(parentEmail)
     await page.getByLabel('Password', { exact: true }).fill(newPassword)
     await page.getByRole('button', { name: 'Sign in' }).click()
     await page.getByRole('button', { name: 'Messages' }).click()

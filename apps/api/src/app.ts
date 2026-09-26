@@ -542,6 +542,19 @@ export function buildApp(
         error: { code: 'DOCUMENT_CONFLICT', message: error.message },
       })
     }
+    if (error instanceof SupportRequestPermissionError) {
+      return reply.code(404).send({
+        error: {
+          code: 'SUPPORT_REQUEST_NOT_FOUND',
+          message: 'Support request not found',
+        },
+      })
+    }
+    if (error instanceof SupportRequestStateError) {
+      return reply.code(409).send({
+        error: { code: 'SUPPORT_REQUEST_CONFLICT', message: error.message },
+      })
+    }
     if (
       error instanceof SchoolOnboardingStateError ||
       error instanceof OnboardingChecklistStateError ||

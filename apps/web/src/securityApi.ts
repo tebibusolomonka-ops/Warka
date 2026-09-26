@@ -49,9 +49,16 @@ export async function assistRecovery(
   schoolId: string,
   userId: string,
 ) {
-  await requestJson(
-    baseUrl,
-    `/schools/${encodeURIComponent(schoolId)}/users/${encodeURIComponent(userId)}/assist-recovery`,
-    { method: 'POST' },
-  )
+  return z
+    .object({
+      status: z.enum(['requested', 'temporarySetup']),
+      recoveryToken: z.string().optional(),
+    })
+    .parse(
+      await requestJson(
+        baseUrl,
+        `/schools/${encodeURIComponent(schoolId)}/users/${encodeURIComponent(userId)}/assist-recovery`,
+        { method: 'POST' },
+      ),
+    )
 }

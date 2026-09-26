@@ -168,7 +168,7 @@ test('staff provisions student portal access with official records', async ({
     })
 
     await page.goto('/')
-    await page.getByLabel('Email').fill(staffEmail)
+    await page.getByLabel('Email', { exact: true }).fill(staffEmail)
     await page.getByLabel('Password', { exact: true }).fill(staffPassword)
     await page.getByRole('button', { name: 'Sign in' }).click()
     await expect(
@@ -194,7 +194,7 @@ test('staff provisions student portal access with official records', async ({
       .poll(async () => (await page.request.get('/api/auth/me')).status())
       .toBe(401)
     await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible()
-    await page.getByLabel('Email').fill(studentEmail)
+    await page.getByLabel('Email', { exact: true }).fill(studentEmail)
     await page.getByLabel('Password', { exact: true }).fill(initialPassword)
     await page.getByRole('button', { name: 'Sign in' }).click()
     await expect(
@@ -227,7 +227,7 @@ test('staff provisions student portal access with official records', async ({
       .toBe(401)
     await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible()
 
-    await page.getByLabel('Email').fill(staffEmail)
+    await page.getByLabel('Email', { exact: true }).fill(staffEmail)
     await page.getByLabel('Password', { exact: true }).fill(staffPassword)
     await page.getByRole('button', { name: 'Sign in' }).click()
     await page.getByLabel('School', { exact: true }).selectOption(schoolId)
@@ -258,7 +258,7 @@ test('staff provisions student portal access with official records', async ({
     await expect(page.getByText(schoolName)).toBeVisible()
     await expect(page.getByText('Browser Learner')).toBeVisible()
     await page.goto('/')
-    await page.getByLabel('Email').fill(staffEmail)
+    await page.getByLabel('Email', { exact: true }).fill(staffEmail)
     await page.getByLabel('Password', { exact: true }).fill(staffPassword)
     await page.getByRole('button', { name: 'Sign in' }).click()
     await page.getByLabel('School', { exact: true }).selectOption(schoolId)
@@ -274,7 +274,7 @@ test('staff provisions student portal access with official records', async ({
     await expect(page.getByText(/document was withdrawn/i)).toBeVisible()
 
     await page.goto('/')
-    await page.getByLabel('Email').fill(staffEmail)
+    await page.getByLabel('Email', { exact: true }).fill(staffEmail)
     await page.getByLabel('Password', { exact: true }).fill(staffPassword)
     await page.getByRole('button', { name: 'Sign in' }).click()
     await page.getByLabel('School', { exact: true }).selectOption(schoolId)

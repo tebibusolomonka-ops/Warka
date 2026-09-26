@@ -194,3 +194,28 @@ export async function closeSupportRequest(
     })
   })
 }
+
+export async function listSupportCaseSchools(
+  database: PrismaClient,
+  actorId: string,
+) {
+  const identity = await database.supportIdentity.findUnique({
+    where: { userId: z.uuid().parse(actorId) },
+  })
+  if (!identity) return []
+  const grants = await database.supportAccessGrant.findMany({
+    where: {
+      supportUserId: actorId,
+      status: 'approved',
+      revokedAt: null,
+      expiresAt: { gt: new Date() },
+    },
+    select: { schoolId: true },
+  })
+  const ids = [...new Set(grants.map((item) => item.schoolId))]
+  return database.school.findMany({
+    where: { id: { in: ids } },
+    select: { id: true, name: true },
+    orderBy: { name: 'asc' },
+  })
+}

@@ -19,21 +19,20 @@ export function registerAdministratorRecoveryRoutes(
       const { schoolId, userId } = z
         .strictObject({ schoolId: z.uuid(), userId: z.uuid() })
         .parse(request.params)
-      if (!delivery)
-        return reply.code(503).send({
-          error: {
-            code: 'RECOVERY_DELIVERY_UNAVAILABLE',
-            message: 'Recovery delivery is unavailable',
-          },
-        })
       const result = await assistedRecovery(
         getDatabase(),
         authenticatedUser(request).id,
         schoolId,
         userId,
       )
-      await delivery(result.email, result.token)
-      return reply.code(202).send({ status: 'requested' })
+      reply.header('Cache-Control', 'private, no-store')
+      if (delivery) {
+        await delivery(result.email, result.token)
+        return reply.code(202).send({ status: 'requested' })
+      }
+      return reply
+        .code(202)
+        .send({ status: 'temporarySetup', recoveryToken: result.token })
     },
   )
 }

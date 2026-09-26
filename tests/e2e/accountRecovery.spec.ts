@@ -1,7 +1,11 @@
 import { randomUUID } from 'node:crypto'
 import { expect, test } from '@playwright/test'
 import { createDatabaseClient } from '../../packages/database/dist/index.js'
-import { hashPassword, createSession } from '../../packages/auth/dist/index.js'
+import {
+  hashPassword,
+  createSession,
+  hashSessionToken,
+} from '../../packages/auth/dist/index.js'
 
 test('account security, recovery, and administrator scope', async ({
   page,
@@ -74,7 +78,7 @@ test('account security, recovery, and administrator scope', async ({
     outsiderId = outsider.id
     const signIn = async (password: string) => {
       await page.goto('/')
-      await page.getByLabel('Email').fill(email)
+      await page.getByLabel('Email', { exact: true }).fill(email)
       await page.getByLabel('Password', { exact: true }).fill(password)
       await page.getByRole('button', { name: 'Sign in' }).click()
     }
@@ -131,9 +135,7 @@ test('account security, recovery, and administrator scope', async ({
       await database.session.findFirst({
         where: {
           userId: adminId,
-          tokenHash: (
-            await import('../../packages/auth/dist/index.js')
-          ).hashSessionToken(oldSession.token),
+          tokenHash: hashSessionToken(oldSession.token),
         },
       }),
     ).toBeNull()

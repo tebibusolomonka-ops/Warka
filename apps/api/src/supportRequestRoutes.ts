@@ -5,6 +5,7 @@ import {
   createSupportRequest,
   getRoutedSupportRequest,
   listRoutedSupportRequests,
+  listSupportCaseSchools,
   replyToSupportRequest,
   resolveSupportRequest,
   type PrismaClient,
@@ -18,6 +19,9 @@ export function registerSupportRequestRoutes(
   getDatabase: () => PrismaClient,
   authenticate: preHandlerHookHandler,
 ) {
+  app.get('/support/me/schools', { preHandler: authenticate }, (request) =>
+    listSupportCaseSchools(getDatabase(), authenticatedUser(request).id),
+  )
   app.get(
     '/schools/:schoolId/support-requests',
     { preHandler: authenticate },

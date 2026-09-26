@@ -91,7 +91,7 @@ test('administrator promotes a student while retaining the source enrollment', a
       },
     })
     await page.goto('/')
-    await page.getByLabel('Email').fill(email)
+    await page.getByLabel('Email', { exact: true }).fill(email)
     await page.getByLabel('Password', { exact: true }).fill(password)
     await page.getByRole('button', { name: 'Sign in' }).click()
     await expect(

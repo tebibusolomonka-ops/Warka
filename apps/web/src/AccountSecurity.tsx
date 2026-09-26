@@ -132,12 +132,21 @@ export function AdminRecovery({
 }) {
   const [targetUserId, setTargetUserId] = useState('')
   const [message, setMessage] = useState('')
+  const [temporaryToken, setTemporaryToken] = useState('')
   return (
     <form
       onSubmit={(event) => {
         event.preventDefault()
+        setTemporaryToken('')
         void assistRecovery(baseUrl, schoolId, targetUserId)
-          .then(() => setMessage('Recovery initiated'))
+          .then((result) => {
+            setTemporaryToken(result.recoveryToken ?? '')
+            setMessage(
+              result.status === 'temporarySetup'
+                ? 'Temporary recovery setup issued. Share it securely with the account owner.'
+                : 'Recovery initiated',
+            )
+          })
           .catch(() => setMessage('Could not initiate recovery'))
       }}
     >
@@ -152,6 +161,12 @@ export function AdminRecovery({
       </label>
       <button type="submit">Initiate recovery</button>
       {message && <p role="status">{message}</p>}
+      {temporaryToken && (
+        <label>
+          Temporary recovery token
+          <input readOnly value={temporaryToken} />
+        </label>
+      )}
     </form>
   )
 }

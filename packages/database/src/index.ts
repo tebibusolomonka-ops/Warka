@@ -711,3 +711,5 @@ export {
   resolveSupportRequest,
   closeSupportRequest,
 } from './supportRouting.js'
+
+export { listSupportCaseSchools } from './supportRouting.js'
