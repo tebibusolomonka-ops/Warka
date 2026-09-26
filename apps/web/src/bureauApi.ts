@@ -8,7 +8,11 @@ async function request<T>(
   const response = await fetch(baseUrl + path, {
     ...init,
     credentials: 'include',
-    headers: { 'content-type': 'application/json', ...init?.headers },
+    ...(init?.body === undefined
+      ? init?.headers
+        ? { headers: init.headers }
+        : {}
+      : { headers: { 'content-type': 'application/json', ...init?.headers } }),
   })
   const body = (await response.json()) as T & {
     error?: { code: string; message: string }

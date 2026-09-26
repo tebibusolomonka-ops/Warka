@@ -26,12 +26,37 @@ export const ImportIssueSchema = z.strictObject({
   message: z.string().min(1).max(160),
 })
 
+export const NormalizedStudentImportRowSchema = z.strictObject({
+  rowNumber: z.number().int().positive(),
+  givenName: z.string().trim().min(1).max(100),
+  familyName: z.string().trim().min(1).max(100).optional(),
+  dateOfBirth: z.iso.date().optional(),
+  academicYearId: z.uuid(),
+  gradeLevelId: z.uuid(),
+  schoolClassId: z.uuid().optional(),
+  guardianName: z.string().trim().min(1).max(200).optional(),
+  guardianPhone: z
+    .string()
+    .trim()
+    .regex(/^\+?[0-9][0-9() .-]{5,38}$/)
+    .optional(),
+  guardianEmail: z.email().optional(),
+  guardianRelationship: z.string().trim().min(1).max(100).optional(),
+})
+
+export type NormalizedStudentImportRow = z.infer<
+  typeof NormalizedStudentImportRowSchema
+>
 const ImportValidationSchema = z
   .strictObject({
     totalRows: z.number().int().min(0).max(500),
     validRows: z.number().int().min(0).max(500),
     invalidRows: z.number().int().min(0).max(500),
     issues: z.array(ImportIssueSchema).max(1000),
+    normalizedRows: z
+      .array(NormalizedStudentImportRowSchema)
+      .max(500)
+      .default([]),
   })
   .refine(
     (value) => value.validRows + value.invalidRows === value.totalRows,
@@ -126,10 +151,13 @@ export async function recordImportValidation(
         status: { in: ['uploaded', 'validated', 'invalid'] },
       },
       data: {
-        status: result.invalidRows > 0 ? 'invalid' : 'validated',
+        status: result.issues.some((issue) => issue.severity === 'error')
+          ? 'invalid'
+          : 'validated',
         totalRows: result.totalRows,
         validRows: result.validRows,
         invalidRows: result.invalidRows,
+        normalizedRows: result.normalizedRows,
         validatedAt: new Date(),
       },
     })

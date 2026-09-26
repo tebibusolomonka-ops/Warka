@@ -1,5 +1,6 @@
 import { Prisma, type PrismaClient } from '@prisma/client'
 import { z } from 'zod'
+import { CsvFormatError, parseCsv, type CsvRow } from './csv.js'
 import { findAssessmentById } from './assessments.js'
 import { assertResultSetDraft } from './results.js'
 import {
@@ -47,67 +48,6 @@ export class InvalidMarkImportError extends Error {
   }
 }
 
-type CsvRow = { line: number; cells: string[] }
-
-function parseCsv(csv: string): CsvRow[] {
-  const rows: CsvRow[] = []
-  let cells: string[] = []
-  let cell = ''
-  let quoted = false
-  let closedQuote = false
-  let line = 1
-  let rowLine = 1
-  for (let index = 0; index < csv.length; index += 1) {
-    const char = csv[index]
-    if (char === '"') {
-      if (quoted && csv[index + 1] === '"') {
-        cell += '"'
-        index += 1
-      } else if (quoted) {
-        quoted = false
-        closedQuote = true
-      } else if (cell.length === 0) {
-        quoted = true
-      } else {
-        throw new InvalidMarkImportError([
-          { line: rowLine, code: 'MALFORMED_CSV' },
-        ])
-      }
-    } else if (char === ',' && !quoted) {
-      cells.push(cell)
-      cell = ''
-      closedQuote = false
-    } else if ((char === '\n' || char === '\r') && !quoted) {
-      cells.push(cell)
-      if (cells.some((value) => value.trim() !== '')) {
-        rows.push({ line: rowLine, cells })
-      }
-      cells = []
-      cell = ''
-      closedQuote = false
-      if (char === '\r' && csv[index + 1] === '\n') index += 1
-      line += 1
-      rowLine = line
-    } else {
-      if (closedQuote) {
-        throw new InvalidMarkImportError([
-          { line: rowLine, code: 'MALFORMED_CSV' },
-        ])
-      }
-      cell += char
-      if (char === '\n') line += 1
-    }
-  }
-  if (quoted) {
-    throw new InvalidMarkImportError([{ line: rowLine, code: 'MALFORMED_CSV' }])
-  }
-  cells.push(cell)
-  if (cells.some((value) => value.trim() !== '')) {
-    rows.push({ line: rowLine, cells })
-  }
-  return rows
-}
-
 export async function validateMarkImport(
   database: PrismaClient,
   actorId: string,
@@ -135,8 +75,12 @@ export async function validateMarkImport(
   try {
     csvRows = parseCsv(csv.replace(/^\uFEFF/, ''))
   } catch (error) {
-    if (error instanceof InvalidMarkImportError) {
-      return { valid: false, rows: [], problems: error.problems }
+    if (error instanceof CsvFormatError) {
+      return {
+        valid: false,
+        rows: [],
+        problems: [{ line: error.line, code: 'MALFORMED_CSV' }],
+      }
     }
     throw error
   }
