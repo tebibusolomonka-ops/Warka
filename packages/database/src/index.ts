@@ -657,3 +657,11 @@ export {
   pauseSchoolOnboarding,
   SchoolOnboardingStateError,
 } from './schoolOnboarding.js'
+
+export {
+  derivedChecklist,
+  listOnboardingChecklist,
+  updateManualChecklistItem,
+  ManualChecklistKeySchema,
+  ManualChecklistStatusSchema,
+} from './onboardingChecklist.js'
