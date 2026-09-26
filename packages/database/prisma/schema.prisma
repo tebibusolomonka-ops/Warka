@@ -133,6 +133,13 @@ enum ProgressionAction {
   manualReview
 }
 
+enum SchoolContactRole {
+  primary
+  technical
+  records
+  emergency
+}
+
 enum OnboardingChecklistStatus {
   pending
   complete
@@ -218,6 +225,7 @@ model School {
   progressionPlans             ProgressionPlan[]
   documentRequests             DocumentRequest[]
   onboarding                   SchoolOnboarding?
+  contacts                     SchoolContact[]
 
   @@index([organizationId])
 }
@@ -513,6 +521,20 @@ model Session {
 
   @@index([userId])
   @@index([expiresAt])
+}
+
+model SchoolContact {
+  id        String            @id @default(uuid())
+  schoolId  String
+  name      String
+  role      SchoolContactRole
+  email     String?
+  phone     String?
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  school    School            @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@index([schoolId, role])
 }
 
 model SchoolOnboarding {

@@ -61,6 +61,7 @@ import { ErrorResponseSchema, HealthResponseSchema } from '@warka/shared'
 import { ZodError } from 'zod'
 import { createAuthService, type AuthService } from './authService.js'
 import { registerAuthRoutes } from './authRoutes.js'
+import { registerSchoolContactRoutes } from './schoolContactRoutes.js'
 import {
   registerAdministratorRecoveryRoutes,
   type AssistedRecovery,
@@ -282,6 +283,7 @@ export function buildApp(
       : undefined,
     options.assistedRecovery,
   )
+  registerSchoolContactRoutes(app, getDatabase, authenticate)
   registerSchoolRoutes(app, getStore, getAccess, authenticate)
   registerStudentRoutes(
     app,

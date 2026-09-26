@@ -665,3 +665,11 @@ export {
   ManualChecklistKeySchema,
   ManualChecklistStatusSchema,
 } from './onboardingChecklist.js'
+
+export {
+  SchoolContactSchema,
+  listSchoolContacts,
+  createSchoolContact,
+  updateSchoolContact,
+  deleteSchoolContact,
+} from './schoolContacts.js'
