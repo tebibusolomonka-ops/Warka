@@ -93,7 +93,7 @@ export async function issueDocument(
   )
 }
 
-async function createDocumentInTransaction(
+export async function createDocumentInTransaction(
   transaction: Prisma.TransactionClient,
   actorId: string,
   data: IssueDocument,

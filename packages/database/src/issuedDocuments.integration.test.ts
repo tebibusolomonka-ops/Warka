@@ -1,6 +1,12 @@
 import { randomUUID } from 'node:crypto'
 import { afterAll, describe, expect, it } from 'vitest'
-import { createDatabaseClient } from './index.js'
+import {
+  createDatabaseClient,
+  createDocumentRequest,
+  startDocumentRequest,
+  issueRequestedDocument,
+  rejectDocumentRequest,
+} from './index.js'
 import {
   DocumentPermissionError,
   DocumentStateError,
@@ -325,7 +331,51 @@ describe.skipIf(!database)('issued documents in PostgreSQL', () => {
           data: { verificationReference: first.verificationReference },
         }),
       ).rejects.toThrow()
+      const request = await createDocumentRequest(database!, actor.id, {
+        schoolId: school.id,
+        studentId: student.id,
+        academicYearId: year.id,
+        documentType: 'transcript',
+      })
+      await expect(
+        startDocumentRequest(database!, teacher.id, school.id, request.id),
+      ).rejects.toThrow()
+      await startDocumentRequest(database!, actor.id, school.id, request.id)
+      await expect(
+        issueRequestedDocument(database!, teacher.id, school.id, request.id),
+      ).rejects.toThrow()
+      const ready = await issueRequestedDocument(
+        database!,
+        actor.id,
+        school.id,
+        request.id,
+      )
+      expect(ready.status).toBe('ready')
+      expect(ready.issuedDocumentId).toBeTruthy()
+      await expect(
+        issueRequestedDocument(database!, actor.id, school.id, request.id),
+      ).rejects.toThrow('current state')
+      const rejected = await createDocumentRequest(database!, actor.id, {
+        schoolId: school.id,
+        studentId: student.id,
+        academicYearId: year.id,
+        documentType: 'reportCard',
+      })
+      expect(
+        (
+          await rejectDocumentRequest(
+            database!,
+            actor.id,
+            school.id,
+            rejected.id,
+            'Official record unavailable',
+          )
+        ).status,
+      ).toBe('rejected')
     } finally {
+      await database!.documentRequest.deleteMany({
+        where: { schoolId: school.id },
+      })
       await database!.issuedDocument.deleteMany({
         where: { schoolId: school.id, supersedesId: { not: null } },
       })

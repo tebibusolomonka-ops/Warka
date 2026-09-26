@@ -539,3 +539,9 @@ export {
   cancelDocumentRequest,
 } from './documentRequests.js'
 export type { DocumentRequest, DocumentRequestStatus } from '@prisma/client'
+
+export {
+  startDocumentRequest,
+  issueRequestedDocument,
+  rejectDocumentRequest,
+} from './documentRequestWorkflow.js'

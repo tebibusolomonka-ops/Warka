@@ -22,14 +22,12 @@ function store() {
     documentRequest: {
       create: vi.fn().mockResolvedValue({ id: 'request', status: 'requested' }),
       findMany: vi.fn().mockResolvedValue([]),
-      findUnique: vi
-        .fn()
-        .mockResolvedValue({
-          id: 'request',
-          studentId,
-          schoolId,
-          status: 'requested',
-        }),
+      findUnique: vi.fn().mockResolvedValue({
+        id: 'request',
+        studentId,
+        schoolId,
+        status: 'requested',
+      }),
       updateMany: vi.fn().mockResolvedValue({ count: 1 }),
       findUniqueOrThrow: vi
         .fn()

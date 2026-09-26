@@ -34,6 +34,9 @@ export const AuditActionSchema = z.enum([
   'studentImport.applied',
   'schoolData.exported',
   'schoolDocumentProfile.updated',
+  'documentRequest.processing',
+  'documentRequest.issued',
+  'documentRequest.rejected',
 ])
 
 export const AuditResourceTypeSchema = z.enum([
@@ -54,6 +57,7 @@ export const AuditResourceTypeSchema = z.enum([
   'importJob',
   'school',
   'schoolDocumentProfile',
+  'documentRequest',
 ])
 
 const metadataValue = z.union([
