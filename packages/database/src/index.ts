@@ -438,3 +438,19 @@ export {
   listAuditEvents,
 } from './auditEvents.js'
 export type { AuditEvent } from '@prisma/client'
+export {
+  AccessReviewScopeSchema,
+  AccessReviewDecisionSchema,
+  AccessReviewPermissionError,
+  AccessReviewStateError,
+  startAccessReview,
+  setAccessReviewDecision,
+  completeAccessReview,
+  listAccessReviews,
+  getAccessReview,
+} from './accessReviews.js'
+export type {
+  AccessReview,
+  AccessReviewEntry,
+  ReviewDecision,
+} from './accessReviews.js'

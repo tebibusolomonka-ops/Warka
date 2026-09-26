@@ -293,6 +293,57 @@ model AuditEvent {
   @@index([action, resourceType, occurredAt])
 }
 
+enum AccessReviewStatus {
+  open
+  completed
+}
+
+enum AccessReviewDecision {
+  pending
+  confirmed
+  revoke
+}
+
+enum AccessReviewType {
+  organizationMembership
+  schoolMembership
+  bureauAccess
+}
+
+model AccessReview {
+  id             String              @id @default(uuid())
+  organizationId String
+  schoolId       String?
+  startedById    String
+  startedAt      DateTime            @default(now())
+  completedAt    DateTime?
+  completedById  String?
+  status         AccessReviewStatus  @default(open)
+  entries        AccessReviewEntry[]
+
+  @@index([organizationId, status, startedAt])
+  @@index([schoolId, status, startedAt])
+}
+
+model AccessReviewEntry {
+  id             String               @id @default(uuid())
+  accessReviewId String
+  userId         String
+  accessType     AccessReviewType
+  organizationId String
+  schoolId       String?
+  currentRole    String
+  sourceId       String?
+  decision       AccessReviewDecision @default(pending)
+  decidedById    String?
+  decidedAt      DateTime?
+  accessReview   AccessReview         @relation(fields: [accessReviewId], references: [id], onDelete: Cascade)
+
+  @@unique([accessReviewId, accessType, userId, organizationId, schoolId])
+  @@index([accessReviewId, decision])
+  @@index([userId])
+}
+
 model PasswordCredential {
   userId             String   @id
   passwordHash       String
