@@ -488,6 +488,7 @@ model Session {
   id        String   @id @default(uuid())
   userId    String
   tokenHash String   @unique
+  managementId String @unique @default(uuid())
   expiresAt DateTime
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)

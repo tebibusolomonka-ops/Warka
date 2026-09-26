@@ -19,3 +19,9 @@ export {
   resetPasswordWithRecoveryToken,
   InvalidRecoveryTokenError,
 } from './passwordRecovery.js'
+
+export {
+  listOwnSessions,
+  revokeOwnSession,
+  revokeOtherSessions,
+} from './sessionManagement.js'

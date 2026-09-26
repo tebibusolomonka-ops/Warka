@@ -2,6 +2,9 @@ import {
   createSession,
   InvalidRecoveryTokenError,
   resetPasswordWithRecoveryToken,
+  listOwnSessions,
+  revokeOwnSession,
+  revokeOtherSessions,
   hashPassword,
   PasswordSchema,
   hashSessionToken,
@@ -20,6 +23,16 @@ import {
 } from '@warka/database'
 
 export type AuthService = {
+  listSessions?(
+    token: string,
+  ): Promise<Array<{
+    managementId: string
+    createdAt: Date
+    expiresAt: Date
+    current: boolean
+  }> | null>
+  revokeSession?(token: string, managementId: string): Promise<boolean>
+  revokeOthers?(token: string): Promise<boolean>
   requestRecovery?(email: string): Promise<void>
   resetRecovery?(token: string, newPassword: string): Promise<boolean>
   passwordState?(token: string): Promise<boolean>
@@ -41,6 +54,20 @@ export function createAuthService(
   deliverRecoveryToken?: (email: string, token: string) => Promise<void>,
 ): AuthService {
   return {
+    async listSessions(token) {
+      const user = await resolveSession(database, token)
+      return user ? listOwnSessions(database, user.id, token) : null
+    },
+    async revokeSession(token, managementId) {
+      const user = await resolveSession(database, token)
+      return user ? revokeOwnSession(database, user.id, managementId) : false
+    },
+    async revokeOthers(token) {
+      const user = await resolveSession(database, token)
+      if (!user) return false
+      await revokeOtherSessions(database, user.id, token)
+      return true
+    },
     async requestRecovery(email) {
       const user = await findUserByEmail(database, email)
       if (!user) return

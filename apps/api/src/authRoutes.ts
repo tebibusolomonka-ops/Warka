@@ -46,6 +46,37 @@ export function registerAuthRoutes(
     secure: production,
   }
 
+  app.get('/auth/sessions', async (request, reply) => {
+    const token = request.cookies[sessionCookieName]
+    if (!token) return reply.code(401).send(unauthorized())
+    const sessions = await getAuth().listSessions?.(token)
+    if (!sessions) return reply.code(401).send(unauthorized())
+    return { sessions }
+  })
+
+  app.delete('/auth/sessions/others', async (request, reply) => {
+    const token = request.cookies[sessionCookieName]
+    if (!token || !(await getAuth().revokeOthers?.(token)))
+      return reply.code(401).send(unauthorized())
+    return reply.code(204).send()
+  })
+
+  app.delete('/auth/sessions/:managementId', async (request, reply) => {
+    const token = request.cookies[sessionCookieName]
+    if (!token || !(await getAuth().currentUser(token)))
+      return reply.code(401).send(unauthorized())
+    const { managementId } = z
+      .strictObject({ managementId: z.uuid() })
+      .parse(request.params)
+    if (!(await getAuth().revokeSession?.(token, managementId)))
+      return reply
+        .code(404)
+        .send({
+          error: { code: 'SESSION_NOT_FOUND', message: 'Session not found' },
+        })
+    return reply.code(204).send()
+  })
+
   app.post('/auth/recovery/request', async (request, reply) => {
     const { email } = z.strictObject({ email: z.email() }).parse(request.body)
     if (limited(`request:${request.ip}`))
@@ -53,11 +84,9 @@ export function registerAuthRoutes(
         .code(429)
         .send({ error: { code: 'RATE_LIMITED', message: 'Try again later' } })
     await getAuth().requestRecovery?.(email)
-    return reply
-      .code(202)
-      .send({
-        message: 'If the account exists, recovery instructions will be sent.',
-      })
+    return reply.code(202).send({
+      message: 'If the account exists, recovery instructions will be sent.',
+    })
   })
 
   app.post('/auth/recovery/reset', async (request, reply) => {
@@ -73,14 +102,12 @@ export function registerAuthRoutes(
         .send({ error: { code: 'RATE_LIMITED', message: 'Try again later' } })
     const ok = await getAuth().resetRecovery?.(recoveryToken, newPassword)
     if (!ok)
-      return reply
-        .code(400)
-        .send({
-          error: {
-            code: 'INVALID_RECOVERY_TOKEN',
-            message: 'Invalid or expired recovery token',
-          },
-        })
+      return reply.code(400).send({
+        error: {
+          code: 'INVALID_RECOVERY_TOKEN',
+          message: 'Invalid or expired recovery token',
+        },
+      })
     reply.clearCookie(sessionCookieName, cookieOptions)
     return reply.code(204).send()
   })
