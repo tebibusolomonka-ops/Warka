@@ -2,6 +2,8 @@ import type { PrismaClient } from '@prisma/client'
 import { z } from 'zod'
 import { requireAcademicYearAdmin } from './academicYearClosing.js'
 import { recordAuditEvent } from './auditEvents.js'
+import { evaluateSchoolReadiness } from './onboardingReadiness.js'
+import { listOnboardingChecklist } from './onboardingChecklist.js'
 
 export class SchoolOnboardingStateError extends Error {
   constructor() {
@@ -67,10 +69,85 @@ export async function pauseSchoolOnboarding(
   schoolId: string,
 ) {
   await requireAcademicYearAdmin(database, actorId, schoolId)
-  const changed = await database.schoolOnboarding.updateMany({
-    where: { schoolId, status: 'inProgress' },
-    data: { status: 'paused' },
+  return database.$transaction(async (transaction) => {
+    const changed = await transaction.schoolOnboarding.updateMany({
+      where: { schoolId, status: 'inProgress' },
+      data: { status: 'paused' },
+    })
+    if (changed.count !== 1) throw new SchoolOnboardingStateError()
+    await recordAuditEvent(transaction, {
+      schoolId,
+      actorUserId: actorId,
+      action: 'schoolOnboarding.paused',
+      resourceType: 'school',
+      resourceId: schoolId,
+    })
+    return transaction.schoolOnboarding.findUniqueOrThrow({
+      where: { schoolId },
+    })
   })
-  if (changed.count !== 1) throw new SchoolOnboardingStateError()
-  return database.schoolOnboarding.findUniqueOrThrow({ where: { schoolId } })
+}
+
+export async function submitSchoolOnboarding(
+  database: PrismaClient,
+  actorId: string,
+  schoolId: string,
+) {
+  await requireAcademicYearAdmin(database, actorId, schoolId)
+  const [readiness, checklist] = await Promise.all([
+    evaluateSchoolReadiness(database, actorId, schoolId),
+    listOnboardingChecklist(database, actorId, schoolId),
+  ])
+  if (
+    readiness.status === 'blocked' ||
+    checklist.some(
+      (item) => item.source === 'manual' && item.status === 'pending',
+    )
+  )
+    throw new SchoolOnboardingStateError()
+  return database.$transaction(async (transaction) => {
+    const changed = await transaction.schoolOnboarding.updateMany({
+      where: { schoolId, status: 'inProgress' },
+      data: { status: 'readyForReview' },
+    })
+    if (changed.count !== 1) throw new SchoolOnboardingStateError()
+    await recordAuditEvent(transaction, {
+      schoolId,
+      actorUserId: actorId,
+      action: 'schoolOnboarding.submitted',
+      resourceType: 'school',
+      resourceId: schoolId,
+    })
+    return transaction.schoolOnboarding.findUniqueOrThrow({
+      where: { schoolId },
+    })
+  })
+}
+
+export async function completeSchoolOnboarding(
+  database: PrismaClient,
+  actorId: string,
+  schoolId: string,
+  now = new Date(),
+) {
+  await requireAcademicYearAdmin(database, actorId, schoolId)
+  const readiness = await evaluateSchoolReadiness(database, actorId, schoolId)
+  if (readiness.status === 'blocked') throw new SchoolOnboardingStateError()
+  return database.$transaction(async (transaction) => {
+    const changed = await transaction.schoolOnboarding.updateMany({
+      where: { schoolId, status: 'readyForReview' },
+      data: { status: 'completed', completedAt: now, completedById: actorId },
+    })
+    if (changed.count !== 1) throw new SchoolOnboardingStateError()
+    await recordAuditEvent(transaction, {
+      schoolId,
+      actorUserId: actorId,
+      action: 'schoolOnboarding.completed',
+      resourceType: 'school',
+      resourceId: schoolId,
+    })
+    return transaction.schoolOnboarding.findUniqueOrThrow({
+      where: { schoolId },
+    })
+  })
 }

@@ -1,6 +1,13 @@
 import type { PrismaClient } from '@prisma/client'
 import { z } from 'zod'
 import { requireAcademicYearAdmin } from './academicYearClosing.js'
+import { recordAuditEvent } from './auditEvents.js'
+
+export class OnboardingChecklistStateError extends Error {
+  constructor() {
+    super('Onboarding checklist cannot change in its current state')
+  }
+}
 
 export const ManualChecklistKeySchema = z.enum([
   'backupContactConfirmed',
@@ -104,22 +111,33 @@ export async function updateManualChecklistItem(
     where: { schoolId },
   })
   if (!onboarding || onboarding.status !== 'inProgress')
-    throw new Error('Onboarding must be in progress')
-  return database.onboardingChecklistItem.upsert({
-    where: {
-      onboardingId_key: { onboardingId: onboarding.id, key: parsedKey },
-    },
-    create: {
-      onboardingId: onboarding.id,
-      key: parsedKey,
-      status: parsedStatus,
-      completedAt: parsedStatus === 'complete' ? now : null,
-      completedById: parsedStatus === 'complete' ? actorId : null,
-    },
-    update: {
-      status: parsedStatus,
-      completedAt: parsedStatus === 'complete' ? now : null,
-      completedById: parsedStatus === 'complete' ? actorId : null,
-    },
+    throw new OnboardingChecklistStateError()
+  return database.$transaction(async (transaction) => {
+    const item = await transaction.onboardingChecklistItem.upsert({
+      where: {
+        onboardingId_key: { onboardingId: onboarding.id, key: parsedKey },
+      },
+      create: {
+        onboardingId: onboarding.id,
+        key: parsedKey,
+        status: parsedStatus,
+        completedAt: parsedStatus === 'complete' ? now : null,
+        completedById: parsedStatus === 'complete' ? actorId : null,
+      },
+      update: {
+        status: parsedStatus,
+        completedAt: parsedStatus === 'complete' ? now : null,
+        completedById: parsedStatus === 'complete' ? actorId : null,
+      },
+    })
+    await recordAuditEvent(transaction, {
+      schoolId,
+      actorUserId: actorId,
+      action: 'schoolOnboarding.checklistUpdated',
+      resourceType: 'school',
+      resourceId: schoolId,
+      metadata: { key: parsedKey, status: parsedStatus },
+    })
+    return item
   })
 }

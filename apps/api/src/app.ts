@@ -4,6 +4,9 @@ import cookie from '@fastify/cookie'
 import {
   createDatabaseClient,
   AdministratorRecoveryPermissionError,
+  SchoolOnboardingStateError,
+  OnboardingChecklistStateError,
+  TrainingRecordStateError,
   DuplicateEnrollmentError,
   EnrollmentNotFoundError,
   InvalidEnrollmentStructureError,
@@ -62,6 +65,11 @@ import { ZodError } from 'zod'
 import { createAuthService, type AuthService } from './authService.js'
 import { registerAuthRoutes } from './authRoutes.js'
 import { registerSchoolContactRoutes } from './schoolContactRoutes.js'
+import { registerOnboardingRoutes } from './onboardingRoutes.js'
+import {
+  prismaOnboardingService,
+  type OnboardingService,
+} from './onboardingService.js'
 import {
   registerAdministratorRecoveryRoutes,
   type AssistedRecovery,
@@ -204,6 +212,7 @@ export function buildApp(
     studentOptions?: StudentOptionsService
     enrollments?: EnrollmentService
     academic?: AcademicService
+    onboarding?: OnboardingService
     assistedRecovery?: AssistedRecovery
     recoveryDelivery?: (email: string, token: string) => Promise<void>
     production?: boolean
@@ -282,6 +291,11 @@ export function buildApp(
       ? recoveryDelivery
       : undefined,
     options.assistedRecovery,
+  )
+  registerOnboardingRoutes(
+    app,
+    () => options.onboarding ?? prismaOnboardingService(getDatabase()),
+    authenticate,
   )
   registerSchoolContactRoutes(app, getDatabase, authenticate)
   registerSchoolRoutes(app, getStore, getAccess, authenticate)
@@ -523,6 +537,17 @@ export function buildApp(
       return reply.code(409).send({
         error: { code: 'DOCUMENT_CONFLICT', message: error.message },
       })
+    }
+    if (
+      error instanceof SchoolOnboardingStateError ||
+      error instanceof OnboardingChecklistStateError ||
+      error instanceof TrainingRecordStateError
+    ) {
+      return reply
+        .code(409)
+        .send({
+          error: { code: 'ONBOARDING_STATE_CONFLICT', message: error.message },
+        })
     }
     if (error instanceof AcademicYearClosingPermissionError) {
       return reply.code(404).send({

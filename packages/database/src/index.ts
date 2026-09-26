@@ -687,3 +687,10 @@ export {
   assignTrainingRecord,
   finishTrainingRecord,
 } from './trainingRecords.js'
+
+export {
+  submitSchoolOnboarding,
+  completeSchoolOnboarding,
+} from './schoolOnboarding.js'
+
+export { OnboardingChecklistStateError } from './onboardingChecklist.js'
