@@ -631,3 +631,10 @@ export {
   cancelRecoveryRequest,
   completeRecoveryRequest,
 } from './accountRecoveryRequests.js'
+
+export {
+  createRecoveryToken,
+  resolveRecoveryToken,
+  consumeRecoveryToken,
+  hashRecoveryToken,
+} from './recoveryTokens.js'

@@ -504,6 +504,7 @@ model AccountRecoveryRequest {
   expiresAt   DateTime
   completedAt DateTime?
   cancelledAt DateTime?
+  tokenHash   String?               @unique
   user        User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, status])
