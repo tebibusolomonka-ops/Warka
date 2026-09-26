@@ -35,6 +35,7 @@ import { NotificationCenter } from './NotificationCenter'
 import { SchoolOperationsWorkspace } from './SchoolOperationsWorkspace'
 import { SchoolDocuments } from './SchoolDocuments'
 import { YearRolloverWorkspace } from './YearRolloverWorkspace'
+import { SchoolOnboardingWorkspace } from './SchoolOnboardingWorkspace'
 import { AccountSecurity, AdminRecovery } from './AccountSecurity'
 import { PublicRecovery } from './PublicRecovery'
 
@@ -438,11 +439,17 @@ function SignedInShell({
             {selectedSchool &&
               selectedSchool.capabilities.canRegister &&
               selectedSchool.capabilities.canApprove && (
-                <YearRolloverWorkspace
-                  baseUrl={baseUrl}
-                  schoolId={selectedSchool.school.id}
-                  onSessionExpired={sessionExpired}
-                />
+                <>
+                  <SchoolOnboardingWorkspace
+                    baseUrl={baseUrl}
+                    schoolId={selectedSchool.school.id}
+                  />
+                  <YearRolloverWorkspace
+                    baseUrl={baseUrl}
+                    schoolId={selectedSchool.school.id}
+                    onSessionExpired={sessionExpired}
+                  />
+                </>
               )}
             {selectedSchool && selectedSchool.capabilities.canRegister && (
               <SchoolOperationsWorkspace
