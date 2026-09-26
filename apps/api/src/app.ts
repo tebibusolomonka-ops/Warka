@@ -2,6 +2,7 @@ import Fastify from 'fastify'
 import cookie from '@fastify/cookie'
 import {
   createDatabaseClient,
+  AdministratorRecoveryPermissionError,
   DuplicateEnrollmentError,
   EnrollmentNotFoundError,
   InvalidEnrollmentStructureError,
@@ -59,6 +60,10 @@ import { ErrorResponseSchema, HealthResponseSchema } from '@warka/shared'
 import { ZodError } from 'zod'
 import { createAuthService, type AuthService } from './authService.js'
 import { registerAuthRoutes } from './authRoutes.js'
+import {
+  registerAdministratorRecoveryRoutes,
+  type AssistedRecovery,
+} from './administratorRecoveryRoutes.js'
 import { authenticateRequest } from './authenticateRequest.js'
 import { createSchoolAccess, type SchoolAccess } from './schoolAccess.js'
 import {
@@ -197,6 +202,7 @@ export function buildApp(
     studentOptions?: StudentOptionsService
     enrollments?: EnrollmentService
     academic?: AcademicService
+    assistedRecovery?: AssistedRecovery
     recoveryDelivery?: (email: string, token: string) => Promise<void>
     production?: boolean
   } = {},
@@ -238,6 +244,13 @@ export function buildApp(
     app,
     getAuth,
     options.production ?? process.env.NODE_ENV === 'production',
+  )
+  registerAdministratorRecoveryRoutes(
+    app,
+    getDatabase,
+    authenticate,
+    options.production === false ? options.recoveryDelivery : undefined,
+    options.assistedRecovery,
   )
   registerSchoolRoutes(app, getStore, getAccess, authenticate)
   registerStudentRoutes(
@@ -359,6 +372,7 @@ export function buildApp(
       error instanceof GovernancePermissionError ||
       error instanceof AccessReviewPermissionError ||
       error instanceof SupportAccessPermissionError ||
+      error instanceof AdministratorRecoveryPermissionError ||
       error instanceof RetentionPermissionError
     ) {
       return reply.code(403).send({

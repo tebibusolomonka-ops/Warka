@@ -638,3 +638,8 @@ export {
   consumeRecoveryToken,
   hashRecoveryToken,
 } from './recoveryTokens.js'
+
+export {
+  assistAccountRecovery,
+  AdministratorRecoveryPermissionError,
+} from './administratorRecovery.js'
