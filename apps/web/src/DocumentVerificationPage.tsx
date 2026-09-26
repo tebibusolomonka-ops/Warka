@@ -126,6 +126,7 @@ export function DocumentVerificationPage({
             <ul>
               {result.data.subjects.map((subject) => (
                 <li key={subject.gradingPeriod + subject.subject}>
+                  {subject.academicYear && <>{subject.academicYear} · </>}
                   {subject.gradingPeriod} · {subject.subject}:{' '}
                   {subject.percentage}% · {subject.gradeLabel}
                 </li>

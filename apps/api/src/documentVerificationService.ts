@@ -33,7 +33,18 @@ export function prismaDocumentVerificationService(
         if (!snapshot.success) return { status: 'unavailable' }
         return DocumentVerificationSchema.parse({
           status: 'active',
-          ...snapshot.data,
+          documentType: snapshot.data.documentType,
+          issuingSchool: snapshot.data.issuingSchool,
+          student: snapshot.data.student,
+          issuedAt: snapshot.data.issuedAt,
+          academicYear: snapshot.data.academicYear,
+          subjects: snapshot.data.subjects.map((item) => ({
+            subject: item.subject,
+            gradingPeriod: item.gradingPeriod,
+            ...(item.academicYear ? { academicYear: item.academicYear } : {}),
+            percentage: item.percentage,
+            gradeLabel: item.gradeLabel,
+          })),
         })
       }
       await database.verificationEvent.create({

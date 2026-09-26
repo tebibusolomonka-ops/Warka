@@ -289,6 +289,7 @@ export const DocumentVerificationSchema = z.discriminatedUnion('status', [
       z.strictObject({
         subject: z.string(),
         gradingPeriod: z.string(),
+        academicYear: z.string().optional(),
         percentage: z.number(),
         gradeLabel: z.string(),
       }),
