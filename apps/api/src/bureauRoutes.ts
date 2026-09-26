@@ -44,6 +44,24 @@ export function registerBureauRoutes(
     resolveBureauScope(getDatabase(), authenticatedUser(request).id),
   )
   app.get(
+    '/bureau/:organizationId/schools',
+    { preHandler: authenticate },
+    async (request) => {
+      const { organizationId } = ScopeSchema.parse(request.params)
+      await requireBureauPermission(
+        getDatabase(),
+        authenticatedUser(request).id,
+        organizationId,
+        'view',
+      )
+      return getDatabase().school.findMany({
+        where: { organizationId },
+        select: { id: true, name: true },
+        orderBy: [{ name: 'asc' }, { id: 'asc' }],
+      })
+    },
+  )
+  app.get(
     '/bureau/:organizationId/periods',
     { preHandler: authenticate },
     (request) => {

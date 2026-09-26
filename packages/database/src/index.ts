@@ -477,3 +477,17 @@ export {
   evaluateRetention,
 } from './retentionPolicies.js'
 export type { RetentionPolicy } from './retentionPolicies.js'
+
+export {
+  CreateImportJobSchema,
+  ImportIssueSchema,
+  ImportPermissionError,
+  ImportStateError,
+  requireSchoolImportPermission,
+  createImportJob,
+  listSchoolImportJobs,
+  getImportJob,
+  recordImportValidation,
+  cancelImportJob,
+} from './importJobs.js'
+export type { ImportJob, ImportRowIssue, ImportJobStatus } from '@prisma/client'

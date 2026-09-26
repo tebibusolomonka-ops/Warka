@@ -139,6 +139,7 @@ model School {
   reportingRequirements         ReportingRequirement[]
   reportingSubmissions          ReportingSubmission[]
   verificationEvents            VerificationEvent[]
+  importJobs                    ImportJob[]
 
   @@index([organizationId])
 }
@@ -179,6 +180,7 @@ model User {
   supportIdentity              SupportIdentity?
   approvedEnrollments          Enrollment[]             @relation("EnrollmentApprovedBy")
   withdrawnEnrollments         Enrollment[]             @relation("EnrollmentWithdrawnBy")
+  createdImportJobs            ImportJob[]
   teachingAssignments          TeachingAssignment[]
   marks                        Mark[]
 }
@@ -966,4 +968,54 @@ model FamilyMessage {
   sender         User               @relation(fields: [senderUserId], references: [id], onDelete: Restrict)
 
   @@index([conversationId, createdAt, id])
+}
+
+enum ImportJobType {
+  studentRegistration
+}
+
+enum ImportJobStatus {
+  uploaded
+  validated
+  invalid
+  applied
+  cancelled
+}
+
+enum ImportIssueSeverity {
+  error
+  warning
+}
+
+model ImportJob {
+  id               String          @id @default(uuid())
+  schoolId         String
+  createdById      String
+  type             ImportJobType   @default(studentRegistration)
+  status           ImportJobStatus @default(uploaded)
+  originalFileName String?
+  totalRows        Int             @default(0)
+  validRows        Int             @default(0)
+  invalidRows      Int             @default(0)
+  normalizedRows   Json            @default("[]")
+  createdAt        DateTime        @default(now())
+  validatedAt      DateTime?
+  appliedAt        DateTime?
+  school           School          @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  createdBy        User            @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  issues           ImportRowIssue[]
+
+  @@index([schoolId, createdAt])
+}
+
+model ImportRowIssue {
+  id        String              @id @default(uuid())
+  jobId     String
+  rowNumber Int
+  severity  ImportIssueSeverity
+  code      String
+  message   String
+  job       ImportJob           @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([jobId, rowNumber])
 }

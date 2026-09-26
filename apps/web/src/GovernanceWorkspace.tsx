@@ -87,8 +87,8 @@ export function GovernanceWorkspace({
     setMessage('')
     try {
       await operation()
-      await refresh()
       setMessage(success)
+      await refresh()
     } catch (caught) {
       setError(
         caught instanceof Error ? caught.message : 'Governance action failed.',

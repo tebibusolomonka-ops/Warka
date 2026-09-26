@@ -193,3 +193,41 @@ describe('bureau reporting authorization routes', () => {
     await app.close()
   })
 })
+
+it('lists only scoped Bureau schools for a viewer', async () => {
+  const database = {
+    bureauAccess: {
+      findUnique: vi
+        .fn()
+        .mockImplementation(({ where }) =>
+          Promise.resolve(
+            where.userId_organizationId.organizationId === organizationId
+              ? { role: 'viewer', revokedAt: null }
+              : null,
+          ),
+        ),
+    },
+    school: {
+      findMany: vi.fn().mockResolvedValue([{ id: schoolId, name: 'School' }]),
+    },
+  }
+  const app = testApp(database)
+  const response = await app.inject({
+    method: 'GET',
+    url: `/bureau/${organizationId}/schools`,
+  })
+  expect(response.statusCode).toBe(200)
+  expect(response.json()).toEqual([{ id: schoolId, name: 'School' }])
+  expect(database.school.findMany).toHaveBeenCalledWith(
+    expect.objectContaining({ where: { organizationId } }),
+  )
+  expect(
+    (
+      await app.inject({
+        method: 'GET',
+        url: '/bureau/87df37ad-e3f9-4d2d-9395-eb5675048cfd/schools',
+      })
+    ).statusCode,
+  ).toBe(403)
+  await app.close()
+})
