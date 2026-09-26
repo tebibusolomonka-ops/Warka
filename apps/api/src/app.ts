@@ -7,6 +7,8 @@ import {
   SchoolOnboardingStateError,
   OnboardingChecklistStateError,
   TrainingRecordStateError,
+  SupportRequestPermissionError,
+  SupportRequestStateError,
   DuplicateEnrollmentError,
   EnrollmentNotFoundError,
   InvalidEnrollmentStructureError,
@@ -65,6 +67,7 @@ import { ZodError } from 'zod'
 import { createAuthService, type AuthService } from './authService.js'
 import { registerAuthRoutes } from './authRoutes.js'
 import { registerSchoolContactRoutes } from './schoolContactRoutes.js'
+import { registerSupportRequestRoutes } from './supportRequestRoutes.js'
 import { registerOnboardingRoutes } from './onboardingRoutes.js'
 import {
   prismaOnboardingService,
@@ -297,6 +300,7 @@ export function buildApp(
     () => options.onboarding ?? prismaOnboardingService(getDatabase()),
     authenticate,
   )
+  registerSupportRequestRoutes(app, getDatabase, authenticate)
   registerSchoolContactRoutes(app, getDatabase, authenticate)
   registerSchoolRoutes(app, getStore, getAccess, authenticate)
   registerStudentRoutes(
@@ -543,11 +547,9 @@ export function buildApp(
       error instanceof OnboardingChecklistStateError ||
       error instanceof TrainingRecordStateError
     ) {
-      return reply
-        .code(409)
-        .send({
-          error: { code: 'ONBOARDING_STATE_CONFLICT', message: error.message },
-        })
+      return reply.code(409).send({
+        error: { code: 'ONBOARDING_STATE_CONFLICT', message: error.message },
+      })
     }
     if (error instanceof AcademicYearClosingPermissionError) {
       return reply.code(404).send({

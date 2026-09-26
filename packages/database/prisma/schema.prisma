@@ -307,7 +307,9 @@ model User {
   completedChecklistItems       OnboardingChecklistItem[]
   trainingRecords               TrainingRecord[] @relation("TrainingUser")
   recordedTraining              TrainingRecord[] @relation("TrainingRecordedBy")
-  createdSupportRequests        SupportRequest[]
+  createdSupportRequests        SupportRequest[] @relation("SupportRequestCreatedBy")
+  assignedSupportRequests       SupportRequest[] @relation("SupportRequestAssignedTo")
+  supportRequestMessages        SupportRequestMessage[]
   sessions                     Session[]
   supportIdentity              SupportIdentity?
   approvedEnrollments          Enrollment[]             @relation("EnrollmentApprovedBy")
@@ -578,10 +580,26 @@ model SupportRequest {
   updatedAt   DateTime               @updatedAt
   closedAt    DateTime?
   school      School                 @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  createdBy   User                   @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  createdBy   User                   @relation("SupportRequestCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  assignedSupportUserId String?
+  assignedSupportUser User? @relation("SupportRequestAssignedTo", fields: [assignedSupportUserId], references: [id], onDelete: SetNull)
+  resolutionSummary String?
+  messages SupportRequestMessage[]
 
   @@index([schoolId, status, createdAt])
   @@index([createdById, createdAt])
+}
+
+model SupportRequestMessage {
+  id        String         @id @default(uuid())
+  requestId String
+  senderId  String
+  body      String
+  createdAt DateTime       @default(now())
+  request   SupportRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  sender    User           @relation(fields: [senderId], references: [id], onDelete: Restrict)
+
+  @@index([requestId, createdAt])
 }
 
 model TrainingRecord {

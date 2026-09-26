@@ -703,3 +703,11 @@ export {
   createSupportRequest,
   listSchoolSupportRequests,
 } from './supportRequests.js'
+
+export {
+  listRoutedSupportRequests,
+  getRoutedSupportRequest,
+  replyToSupportRequest,
+  resolveSupportRequest,
+  closeSupportRequest,
+} from './supportRouting.js'
