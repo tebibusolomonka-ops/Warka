@@ -1,5 +1,7 @@
 import {
   createSession,
+  InvalidRecoveryTokenError,
+  resetPasswordWithRecoveryToken,
   hashPassword,
   PasswordSchema,
   hashSessionToken,
@@ -8,6 +10,8 @@ import {
   verifyPassword,
 } from '@warka/auth'
 import {
+  createRecoveryRequest,
+  createRecoveryToken,
   findPasswordHashForUser,
   mustChangePassword,
   findUserByEmail,
@@ -16,6 +20,8 @@ import {
 } from '@warka/database'
 
 export type AuthService = {
+  requestRecovery?(email: string): Promise<void>
+  resetRecovery?(token: string, newPassword: string): Promise<boolean>
   passwordState?(token: string): Promise<boolean>
   changePassword?(
     token: string,
@@ -30,8 +36,28 @@ export type AuthService = {
   logout(token: string): Promise<void>
 }
 
-export function createAuthService(database: PrismaClient): AuthService {
+export function createAuthService(
+  database: PrismaClient,
+  deliverRecoveryToken?: (email: string, token: string) => Promise<void>,
+): AuthService {
   return {
+    async requestRecovery(email) {
+      const user = await findUserByEmail(database, email)
+      if (!user) return
+      const request = await createRecoveryRequest(database, user.id)
+      if (!deliverRecoveryToken) return
+      const token = await createRecoveryToken(database, request.id)
+      if (token) await deliverRecoveryToken(user.email, token)
+    },
+    async resetRecovery(token, newPassword) {
+      try {
+        await resetPasswordWithRecoveryToken(database, token, newPassword)
+        return true
+      } catch (error) {
+        if (error instanceof InvalidRecoveryTokenError) return false
+        throw error
+      }
+    },
     async login(email, password) {
       const user = await findUserByEmail(database, email)
       const passwordHash = user

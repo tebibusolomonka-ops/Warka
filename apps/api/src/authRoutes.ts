@@ -29,12 +29,61 @@ export function registerAuthRoutes(
   getAuth: () => AuthService,
   production: boolean,
 ) {
+  const recoveryAttempts = new Map<string, { count: number; until: number }>()
+  function limited(key: string, now = Date.now()) {
+    const current = recoveryAttempts.get(key)
+    if (!current || current.until <= now) {
+      recoveryAttempts.set(key, { count: 1, until: now + 15 * 60_000 })
+      return false
+    }
+    current.count += 1
+    return current.count > 10
+  }
   const cookieOptions = {
     path: '/',
     httpOnly: true,
     sameSite: 'strict' as const,
     secure: production,
   }
+
+  app.post('/auth/recovery/request', async (request, reply) => {
+    const { email } = z.strictObject({ email: z.email() }).parse(request.body)
+    if (limited(`request:${request.ip}`))
+      return reply
+        .code(429)
+        .send({ error: { code: 'RATE_LIMITED', message: 'Try again later' } })
+    await getAuth().requestRecovery?.(email)
+    return reply
+      .code(202)
+      .send({
+        message: 'If the account exists, recovery instructions will be sent.',
+      })
+  })
+
+  app.post('/auth/recovery/reset', async (request, reply) => {
+    const { recoveryToken, newPassword } = z
+      .strictObject({
+        recoveryToken: z.string(),
+        newPassword: PasswordSchema,
+      })
+      .parse(request.body)
+    if (limited(`reset:${request.ip}`))
+      return reply
+        .code(429)
+        .send({ error: { code: 'RATE_LIMITED', message: 'Try again later' } })
+    const ok = await getAuth().resetRecovery?.(recoveryToken, newPassword)
+    if (!ok)
+      return reply
+        .code(400)
+        .send({
+          error: {
+            code: 'INVALID_RECOVERY_TOKEN',
+            message: 'Invalid or expired recovery token',
+          },
+        })
+    reply.clearCookie(sessionCookieName, cookieOptions)
+    return reply.code(204).send()
+  })
 
   app.post('/auth/login', async (request, reply) => {
     const { email, password } = LoginCredentialsSchema.parse(request.body)

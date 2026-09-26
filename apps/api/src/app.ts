@@ -197,6 +197,7 @@ export function buildApp(
     studentOptions?: StudentOptionsService
     enrollments?: EnrollmentService
     academic?: AcademicService
+    recoveryDelivery?: (email: string, token: string) => Promise<void>
     production?: boolean
   } = {},
 ) {
@@ -205,7 +206,12 @@ export function buildApp(
 
   const getDatabase = () => (database ??= createDatabaseClient())
   const getStore = () => options.store ?? prismaSchoolStore(getDatabase())
-  const getAuth = () => options.auth ?? createAuthService(getDatabase())
+  const getAuth = () =>
+    options.auth ??
+    createAuthService(
+      getDatabase(),
+      options.production === false ? options.recoveryDelivery : undefined,
+    )
   const getAccess = () => options.access ?? createSchoolAccess(getDatabase())
   const getStudents = () =>
     options.students ?? prismaStudentService(getDatabase())
