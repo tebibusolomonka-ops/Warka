@@ -598,3 +598,11 @@ export type {
   UpdateProgressionEntry,
   ProgressionProblem,
 } from './progressionValidation.js'
+
+export {
+  BulkPromotionSchema,
+  BulkDecisionSchema,
+  bulkPreparePromotions,
+  bulkSetProgressionDecision,
+} from './progressionBulk.js'
+export type { BulkPromotion, BulkDecision } from './progressionBulk.js'
