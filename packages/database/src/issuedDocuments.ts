@@ -20,6 +20,17 @@ export const DocumentSnapshotSchema = z.strictObject({
     studentReference: z.string().min(1),
   }),
   issuingSchool: z.string().min(1),
+  schoolContact: z
+    .strictObject({
+      addressLine: z.string().optional(),
+      city: z.string().optional(),
+      region: z.string().optional(),
+      phone: z.string().optional(),
+      email: z.string().optional(),
+      website: z.string().optional(),
+      documentFooter: z.string().optional(),
+    })
+    .optional(),
   documentType: z.enum(['reportCard', 'transcript']),
   issuedAt: z.iso.datetime(),
   academicYear: z.string().min(1),
@@ -99,9 +110,12 @@ export async function createDocumentInTransaction(
   data: IssueDocument,
   supersedesId?: string,
 ) {
-  const [student, school, year, official] = await Promise.all([
+  const [student, school, profile, year, official] = await Promise.all([
     transaction.student.findUnique({ where: { id: data.studentId } }),
     transaction.school.findUnique({ where: { id: data.schoolId } }),
+    transaction.schoolDocumentProfile.findUnique({
+      where: { schoolId: data.schoolId },
+    }),
     transaction.academicYear.findFirst({
       where: { id: data.academicYearId, schoolId: data.schoolId },
     }),
@@ -137,7 +151,26 @@ export async function createDocumentInTransaction(
         .join(' '),
       studentReference: student.studentReference,
     },
-    issuingSchool: school.name,
+    issuingSchool: profile?.officialName || school.name,
+    ...(profile
+      ? {
+          schoolContact: Object.fromEntries(
+            (
+              [
+                'addressLine',
+                'city',
+                'region',
+                'phone',
+                'email',
+                'website',
+                'documentFooter',
+              ] as const
+            )
+              .filter((key) => !!profile[key])
+              .map((key) => [key, profile[key]]),
+          ),
+        }
+      : {}),
     documentType: data.documentType,
     issuedAt: issuedAt.toISOString(),
     academicYear: year.name,
