@@ -16,6 +16,9 @@ import {
   resolveBureauScope,
   returnSchoolReport,
   submitSchoolReport,
+  ReportingSubmissionError,
+  findSchoolMembership,
+  hasOrganizationAdminRole,
   type PrismaClient,
 } from '@warka/database'
 import { authenticatedUser } from './authenticateRequest.js'
@@ -166,6 +169,53 @@ export function registerBureauRoutes(
         authenticatedUser(request).id,
         id,
         reason,
+      )
+    },
+  )
+  app.get(
+    '/schools/:schoolId/reporting',
+    { preHandler: authenticate },
+    async (request) => {
+      const { schoolId } = z
+        .strictObject({ schoolId: z.uuid() })
+        .parse(request.params)
+      const userId = authenticatedUser(request).id
+      const school = await getDatabase().school.findUniqueOrThrow({
+        where: { id: schoolId },
+      })
+      const membership = await findSchoolMembership(
+        getDatabase(),
+        userId,
+        schoolId,
+      )
+      const organizationAdmin = await hasOrganizationAdminRole(
+        getDatabase(),
+        userId,
+        school.organizationId,
+      )
+      if (
+        !organizationAdmin &&
+        (!membership ||
+          !['administrator', 'registrar'].includes(membership.role))
+      )
+        throw new ReportingSubmissionError('School reporting permission denied')
+      const requirements = await getDatabase().reportingRequirement.findMany({
+        where: { schoolId },
+        include: { reportingPeriod: true, school: true },
+        orderBy: { reportingPeriod: { startsOn: 'desc' } },
+      })
+      return Promise.all(
+        requirements.map(async (requirement) => ({
+          ...requirement,
+          submission: await getDatabase().reportingSubmission.findUnique({
+            where: {
+              reportingPeriodId_schoolId: {
+                reportingPeriodId: requirement.reportingPeriodId,
+                schoolId,
+              },
+            },
+          }),
+        })),
       )
     },
   )

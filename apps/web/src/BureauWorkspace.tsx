@@ -6,11 +6,13 @@ import {
   getCoverage,
   listPeriods,
   listSubmissions,
+  listSchoolReports,
   prepareReport,
   submitReport,
   type BureauAccess,
   type ReportingPeriod,
   type Submission,
+  type SchoolReport,
 } from './bureauApi'
 
 export function BureauWorkspace({
@@ -219,51 +221,123 @@ export function BureauWorkspace({
 export function SchoolReportingWorkspace({
   baseUrl,
   schoolId,
-  periods,
 }: {
   baseUrl: string
   schoolId: string
-  periods: ReportingPeriod[]
 }) {
-  const open = periods.find(
-    (item) =>
-      item.status === 'open' &&
-      item.requirements.some(
-        (requirement) => requirement.school.id === schoolId,
-      ),
-  )
+  const [reports, setReports] = useState<SchoolReport[]>([])
+  const [selectedId, setSelectedId] = useState('')
+  const [error, setError] = useState('')
   const [message, setMessage] = useState('')
-  if (!open)
-    return (
-      <section>
-        <h3>Reporting</h3>
-        <p>No open required report.</p>
-      </section>
+  const refresh = async () => {
+    const next = await listSchoolReports(baseUrl, schoolId)
+    setReports(next)
+    setSelectedId((current) =>
+      next.some((item) => item.reportingPeriodId === current)
+        ? current
+        : (next[0]?.reportingPeriodId ?? ''),
     )
+  }
+  useEffect(() => {
+    void refresh().catch(() => setError('Could not load school reporting.'))
+  }, [baseUrl, schoolId])
+  const report = reports.find((item) => item.reportingPeriodId === selectedId)
+  const run = async (operation: () => Promise<unknown>, success: string) => {
+    setError('')
+    setMessage('')
+    try {
+      await operation()
+      setMessage(success)
+      await refresh()
+    } catch {
+      setError('Reporting action failed.')
+    }
+  }
   return (
-    <section>
-      <h3>Reporting</h3>
-      <p>{open.name}</p>
-      <button
-        type="button"
-        onClick={() =>
-          void prepareReport(baseUrl, schoolId, open.id).then(() =>
-            setMessage('Preview prepared from official records.'),
-          )
-        }
-      >
-        Preview report
-      </button>
-      <button
-        type="button"
-        onClick={() =>
-          void submitReport(baseUrl, schoolId, open.id).then(() =>
-            setMessage('Report submitted.'),
-          )
-        }
-      >
-        Submit report
-      </button>
+    <section aria-labelledby="school-reporting-heading">
+      <h3 id="school-reporting-heading">Reporting</h3>
+      {error && <p role="alert">{error}</p>}
+      {reports.length === 0 && !error && (
+        <p>This school is not currently required to report.</p>
+      )}
+      {reports.length > 0 && (
+        <>
+          <label>
+            Reporting period
+            <select
+              value={selectedId}
+              onChange={(event) => setSelectedId(event.target.value)}
+            >
+              {reports.map((item) => (
+                <option
+                  key={item.reportingPeriodId}
+                  value={item.reportingPeriodId}
+                >
+                  {item.reportingPeriod.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          {report && (
+            <>
+              <p>Period status: {report.reportingPeriod.status}</p>
+              <p>Submission status: {report.submission?.status ?? 'missing'}</p>
+              {report.submission?.returnReason && (
+                <p>Return reason: {report.submission.returnReason}</p>
+              )}
+              {report.submission?.snapshot && (
+                <section aria-label="Report aggregates">
+                  <h4>Aggregate preview</h4>
+                  <pre>
+                    {JSON.stringify(report.submission.snapshot, null, 2)}
+                  </pre>
+                </section>
+              )}
+              <button
+                type="button"
+                disabled={
+                  report.reportingPeriod.status !== 'open' ||
+                  ['submitted', 'approved'].includes(
+                    report.submission?.status ?? '',
+                  )
+                }
+                onClick={() =>
+                  void run(
+                    () =>
+                      prepareReport(
+                        baseUrl,
+                        schoolId,
+                        report.reportingPeriodId,
+                      ),
+                    'Preview prepared from official records.',
+                  )
+                }
+              >
+                Preview report
+              </button>
+              <button
+                type="button"
+                disabled={
+                  report.reportingPeriod.status !== 'open' ||
+                  !report.submission ||
+                  ['submitted', 'approved'].includes(report.submission.status)
+                }
+                onClick={() =>
+                  void run(
+                    () =>
+                      submitReport(baseUrl, schoolId, report.reportingPeriodId),
+                    'Report submitted.',
+                  )
+                }
+              >
+                {report.submission?.status === 'returned'
+                  ? 'Resubmit report'
+                  : 'Submit report'}
+              </button>
+            </>
+          )}
+        </>
+      )}
       {message && <p role="status">{message}</p>}
     </section>
   )

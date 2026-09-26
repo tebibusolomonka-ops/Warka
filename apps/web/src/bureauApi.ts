@@ -124,3 +124,13 @@ export const submitReport = (
     `/schools/${schoolId}/reporting/${periodId}/submit`,
     { method: 'POST' },
   )
+
+export type SchoolReport = {
+  reportingPeriodId: string
+  reportingPeriod: ReportingPeriod
+  school: { id: string; name: string }
+  submission: Submission | null
+}
+
+export const listSchoolReports = (baseUrl: string, schoolId: string) =>
+  request<SchoolReport[]>(baseUrl, `/schools/${schoolId}/reporting`)

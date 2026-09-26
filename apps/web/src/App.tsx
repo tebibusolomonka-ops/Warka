@@ -28,7 +28,7 @@ import { TransferWorkspace } from './TransferWorkspace'
 import { ParentPortal } from './ParentPortal'
 import { StaffFamilyWorkspace } from './StaffFamilyWorkspace'
 import { getParentIdentity } from './parentApi'
-import { BureauWorkspace } from './BureauWorkspace'
+import { BureauWorkspace, SchoolReportingWorkspace } from './BureauWorkspace'
 import { getBureauAccess, type BureauAccess } from './bureauApi'
 
 type Authentication =
@@ -409,6 +409,12 @@ function SignedInShell({
                   onSessionExpired={sessionExpired}
                 />
               )}
+            {selectedSchool && selectedSchool.capabilities.canRegister && (
+              <SchoolReportingWorkspace
+                baseUrl={baseUrl}
+                schoolId={selectedSchool.school.id}
+              />
+            )}{' '}
             {selectedSchool &&
               (selectedSchool.capabilities.canRegister ||
                 selectedSchool.capabilities.canApprove) && (
