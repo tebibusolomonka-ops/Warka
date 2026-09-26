@@ -34,6 +34,12 @@ import {
   ParentServicePermissionError,
   GuardianRelationshipPermissionError,
   GuardianRelationshipStateError,
+  AccessReviewPermissionError,
+  AccessReviewStateError,
+  SupportAccessPermissionError,
+  SupportAccessStateError,
+  RetentionPermissionError,
+  RetentionPolicyNotFoundError,
   type PrismaClient,
 } from '@warka/database'
 import { ErrorResponseSchema, HealthResponseSchema } from '@warka/shared'
@@ -91,6 +97,10 @@ import { registerGuardianRelationshipRoutes } from './guardianRelationshipRoutes
 import { registerParentPortalRoutes } from './parentPortalRoutes.js'
 import { registerFamilyConversationRoutes } from './familyConversationRoutes.js'
 import { registerBureauRoutes } from './bureauRoutes.js'
+import {
+  GovernancePermissionError,
+  registerGovernanceRoutes,
+} from './governanceRoutes.js'
 import {
   prismaFamilyConversationService,
   FamilyConversationAccessError,
@@ -206,6 +216,7 @@ export function buildApp(
   registerAnnouncementRoutes(app, getAnnouncements, authenticate)
   registerParentServiceRoutes(app, getDatabase, authenticate)
   registerBureauRoutes(app, getDatabase, authenticate)
+  registerGovernanceRoutes(app, getDatabase, authenticate)
   registerGuardianRelationshipRoutes(app, getDatabase, authenticate)
   registerFamilyConversationRoutes(
     app,
@@ -259,6 +270,29 @@ export function buildApp(
   )
 
   app.setErrorHandler((error, _request, reply) => {
+    if (
+      error instanceof GovernancePermissionError ||
+      error instanceof AccessReviewPermissionError ||
+      error instanceof SupportAccessPermissionError ||
+      error instanceof RetentionPermissionError
+    ) {
+      return reply.code(403).send({
+        error: { code: 'GOVERNANCE_ACCESS_DENIED', message: error.message },
+      })
+    }
+    if (
+      error instanceof AccessReviewStateError ||
+      error instanceof SupportAccessStateError
+    ) {
+      return reply.code(409).send({
+        error: { code: 'GOVERNANCE_STATE_CONFLICT', message: error.message },
+      })
+    }
+    if (error instanceof RetentionPolicyNotFoundError) {
+      return reply.code(404).send({
+        error: { code: 'RETENTION_POLICY_NOT_FOUND', message: error.message },
+      })
+    }
     if (error instanceof GuardianRelationshipPermissionError) {
       return reply.code(404).send({
         error: {

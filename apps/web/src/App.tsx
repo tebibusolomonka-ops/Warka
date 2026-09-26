@@ -30,6 +30,7 @@ import { StaffFamilyWorkspace } from './StaffFamilyWorkspace'
 import { getParentIdentity } from './parentApi'
 import { BureauWorkspace, SchoolReportingWorkspace } from './BureauWorkspace'
 import { getBureauAccess, type BureauAccess } from './bureauApi'
+import { GovernanceWorkspace } from './GovernanceWorkspace'
 
 type Authentication =
   | { status: 'checking' }
@@ -480,14 +481,26 @@ function SignedInShell({
             <h2>{selected?.organization.name}</h2>
           )}
           {selected && canManage && (
-            <SchoolDirectory
-              key={selected.organization.id}
-              baseUrl={baseUrl}
-              organizationId={selected.organization.id}
-              canCreate={canManage}
-              onSessionExpired={sessionExpired}
-              onCreated={() => setRefresh((value) => value + 1)}
-            />
+            <>
+              <nav aria-label="Staff administration">
+                <a href="#governance-heading">Governance</a>
+              </nav>
+              <SchoolDirectory
+                key={selected.organization.id}
+                baseUrl={baseUrl}
+                organizationId={selected.organization.id}
+                canCreate={canManage}
+                onSessionExpired={sessionExpired}
+                onCreated={() => setRefresh((value) => value + 1)}
+              />
+              <GovernanceWorkspace
+                baseUrl={baseUrl}
+                organizationId={selected.organization.id}
+                {...(selectedSchool
+                  ? { schoolId: selectedSchool.school.id }
+                  : {})}
+              />
+            </>
           )}
         </>
       )}

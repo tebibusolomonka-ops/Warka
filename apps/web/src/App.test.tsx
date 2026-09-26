@@ -27,6 +27,7 @@ vi.mock('./AcademicWorkspace', () => ({ AcademicWorkspace: () => null }))
 vi.mock('./ResourceWorkspace', () => ({ ResourceWorkspace: () => null }))
 vi.mock('./TransferWorkspace', () => ({ TransferWorkspace: () => null }))
 vi.mock('./StaffFamilyWorkspace', () => ({ StaffFamilyWorkspace: () => null }))
+vi.mock('./GovernanceWorkspace', () => ({ GovernanceWorkspace: () => null }))
 vi.mock('./ParentPortal', () => ({
   ParentPortal: () => <h2>Parent portal</h2>,
 }))
