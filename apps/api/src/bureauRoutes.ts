@@ -24,7 +24,7 @@ import {
 } from '@warka/database'
 import { authenticatedUser } from './authenticateRequest.js'
 
-const IdSchema = z.strictObject({ id: z.uuid() })
+const IdSchema = z.strictObject({ organizationId: z.uuid(), id: z.uuid() })
 const ScopeSchema = z.strictObject({ organizationId: z.uuid() })
 const PeriodSchema = z.strictObject({
   organizationId: z.uuid(),
