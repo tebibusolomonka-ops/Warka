@@ -3,7 +3,7 @@ import { buildApp } from './app.js'
 import type { AuthService } from './authService.js'
 
 function testApp() {
-  const requestRecovery = vi.fn(async (_email: string) => {})
+  const requestRecovery = vi.fn(async () => {})
   const resetRecovery = vi.fn(async (token: string) => token === 'valid')
   const auth: AuthService = {
     login: async () => null,

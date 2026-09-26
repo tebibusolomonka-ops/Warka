@@ -69,11 +69,9 @@ export function registerAuthRoutes(
       .strictObject({ managementId: z.uuid() })
       .parse(request.params)
     if (!(await getAuth().revokeSession?.(token, managementId)))
-      return reply
-        .code(404)
-        .send({
-          error: { code: 'SESSION_NOT_FOUND', message: 'Session not found' },
-        })
+      return reply.code(404).send({
+        error: { code: 'SESSION_NOT_FOUND', message: 'Session not found' },
+      })
     return reply.code(204).send()
   })
 

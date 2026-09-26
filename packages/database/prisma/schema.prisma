@@ -133,6 +133,14 @@ enum ProgressionAction {
   manualReview
 }
 
+enum SchoolOnboardingStatus {
+  notStarted
+  inProgress
+  readyForReview
+  completed
+  paused
+}
+
 enum AccountRecoveryStatus {
   pending
   completed
@@ -203,6 +211,7 @@ model School {
   documentProfile              SchoolDocumentProfile?
   progressionPlans             ProgressionPlan[]
   documentRequests             DocumentRequest[]
+  onboarding                   SchoolOnboarding?
 
   @@index([organizationId])
 }
@@ -240,6 +249,8 @@ model User {
   escalatedFamilyConversations FamilyConversation[]     @relation("FamilyConversationEscalatedBy")
   guardianAccess               GuardianAccess?
   recoveryRequests             AccountRecoveryRequest[]
+  startedOnboardings            SchoolOnboarding[] @relation("OnboardingStartedBy")
+  completedOnboardings          SchoolOnboarding[] @relation("OnboardingCompletedBy")
   sessions                     Session[]
   supportIdentity              SupportIdentity?
   approvedEnrollments          Enrollment[]             @relation("EnrollmentApprovedBy")
@@ -495,6 +506,19 @@ model Session {
 
   @@index([userId])
   @@index([expiresAt])
+}
+
+model SchoolOnboarding {
+  id            String                 @id @default(uuid())
+  schoolId      String                 @unique
+  status        SchoolOnboardingStatus @default(notStarted)
+  startedAt     DateTime?
+  startedById   String?
+  completedAt   DateTime?
+  completedById String?
+  school        School                 @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  startedBy     User?                  @relation("OnboardingStartedBy", fields: [startedById], references: [id], onDelete: SetNull)
+  completedBy   User?                  @relation("OnboardingCompletedBy", fields: [completedById], references: [id], onDelete: SetNull)
 }
 
 model LoginAttemptBucket {

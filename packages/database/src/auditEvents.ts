@@ -5,6 +5,7 @@ export const AuditActionSchema = z.enum([
   'account.provisioned',
   'account.recovered',
   'account.recoveryAssisted',
+  'schoolOnboarding.started',
   'studentAccount.provisioned',
   'guardianAccount.provisioned',
   'membership.changed',

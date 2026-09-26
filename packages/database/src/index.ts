@@ -650,3 +650,10 @@ export {
   recordFailedLogin,
   clearFailedLogins,
 } from './loginAttempts.js'
+
+export {
+  getSchoolOnboarding,
+  startSchoolOnboarding,
+  pauseSchoolOnboarding,
+  SchoolOnboardingStateError,
+} from './schoolOnboarding.js'
