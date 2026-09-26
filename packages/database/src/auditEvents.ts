@@ -33,6 +33,7 @@ export const AuditActionSchema = z.enum([
   'retentionPolicy.updated',
   'studentImport.applied',
   'schoolData.exported',
+  'schoolDocumentProfile.updated',
 ])
 
 export const AuditResourceTypeSchema = z.enum([
@@ -52,6 +53,7 @@ export const AuditResourceTypeSchema = z.enum([
   'retentionPolicy',
   'importJob',
   'school',
+  'schoolDocumentProfile',
 ])
 
 const metadataValue = z.union([

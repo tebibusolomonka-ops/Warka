@@ -518,3 +518,11 @@ export {
 } from './notifications.js'
 export type { CreateNotification } from './notifications.js'
 export type { Notification } from '@prisma/client'
+
+export {
+  SchoolDocumentProfileInputSchema,
+  SchoolDocumentProfilePermissionError,
+  getSchoolDocumentProfile,
+  saveSchoolDocumentProfile,
+} from './schoolDocumentProfiles.js'
+export type { SchoolDocumentProfile } from '@prisma/client'

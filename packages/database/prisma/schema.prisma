@@ -140,6 +140,7 @@ model School {
   reportingSubmissions          ReportingSubmission[]
   verificationEvents            VerificationEvent[]
   importJobs                    ImportJob[]
+  documentProfile              SchoolDocumentProfile?
 
   @@index([organizationId])
 }
@@ -1034,4 +1035,17 @@ model Notification {
 
   @@index([userId, createdAt, id])
   @@index([userId, readAt])
+}
+model SchoolDocumentProfile {
+  schoolId       String   @id
+  officialName   String?
+  addressLine    String?
+  city           String?
+  region         String?
+  phone          String?
+  email          String?
+  website        String?
+  documentFooter String?
+  updatedAt      DateTime @updatedAt
+  school         School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
 }

@@ -41,6 +41,7 @@ import {
   RetentionPermissionError,
   RetentionPolicyNotFoundError,
   ImportPermissionError,
+  SchoolDocumentProfilePermissionError,
   ImportStateError,
   type PrismaClient,
 } from '@warka/database'
@@ -102,6 +103,7 @@ import { registerBureauRoutes } from './bureauRoutes.js'
 import { ImportPayloadError, registerImportRoutes } from './importRoutes.js'
 import { registerSchoolExportRoutes } from './schoolExportRoutes.js'
 import { registerNotificationRoutes } from './notificationRoutes.js'
+import { registerSchoolDocumentProfileRoutes } from './schoolDocumentProfileRoutes.js'
 import {
   GovernancePermissionError,
   registerGovernanceRoutes,
@@ -224,6 +226,7 @@ export function buildApp(
   registerImportRoutes(app, getDatabase, authenticate)
   registerSchoolExportRoutes(app, getDatabase, authenticate)
   registerNotificationRoutes(app, getDatabase, authenticate)
+  registerSchoolDocumentProfileRoutes(app, getDatabase, authenticate)
   registerGovernanceRoutes(app, getDatabase, authenticate)
   registerGuardianRelationshipRoutes(app, getDatabase, authenticate)
   registerFamilyConversationRoutes(
@@ -288,6 +291,13 @@ export function buildApp(
         error: {
           code: 'REQUEST_TOO_LARGE',
           message: 'Request body exceeds the size limit',
+        },
+      })
+    if (error instanceof SchoolDocumentProfilePermissionError)
+      return reply.code(403).send({
+        error: {
+          code: 'DOCUMENT_PROFILE_ACCESS_DENIED',
+          message: error.message,
         },
       })
     if (error instanceof ImportPermissionError)
