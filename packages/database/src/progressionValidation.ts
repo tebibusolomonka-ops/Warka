@@ -27,6 +27,10 @@ export type ProgressionProblem = {
     | 'targetEnrollment'
     | 'manualReview'
     | 'missingTargetGrade'
+    | 'missingTargetClass'
+    | 'withdrawnSource'
+    | 'incompleteSource'
+    | 'unresolvedTransfer'
   entryId?: string
 }
 export class ProgressionValidationError extends Error {
@@ -106,7 +110,7 @@ export async function previewProgressionPlanInTransaction(
     },
   })
   if (!plan) throw new ProgressionPlanStateError()
-  const [source, target, grades, classes, targetEnrollments] =
+  const [source, target, grades, classes, targetEnrollments, transfers] =
     await Promise.all([
       database.academicYear.findFirst({
         where: { id: plan.sourceAcademicYearId, schoolId },
@@ -126,6 +130,13 @@ export async function previewProgressionPlanInTransaction(
         where: { schoolId, academicYearId: plan.targetAcademicYearId },
         select: { studentId: true },
       }),
+      database.transferRequest.findMany({
+        where: {
+          sendingSchoolId: schoolId,
+          status: { in: ['requested', 'approvedBySendingSchool'] },
+        },
+        select: { studentId: true },
+      }),
     ])
   const problems: ProgressionProblem[] = []
   if (!source || !target) problems.push({ code: 'yearScope' })
@@ -135,6 +146,7 @@ export async function previewProgressionPlanInTransaction(
     classes.map((item) => [item.id, item.gradeLevelId]),
   )
   const existing = new Set(targetEnrollments.map((item) => item.studentId))
+  const transferring = new Set(transfers.map((item) => item.studentId))
   const students = new Set<string>()
   const counts: Record<ProgressionAction, number> = {
     promote: 0,
@@ -155,6 +167,12 @@ export async function previewProgressionPlanInTransaction(
       enrollment.status !== 'approved'
     )
       problems.push({ code: 'sourceEnrollment', entryId: entry.id })
+    if (enrollment.status === 'withdrawn')
+      problems.push({ code: 'withdrawnSource', entryId: entry.id })
+    else if (enrollment.status !== 'approved')
+      problems.push({ code: 'incompleteSource', entryId: entry.id })
+    if (transferring.has(entry.studentId))
+      problems.push({ code: 'unresolvedTransfer', entryId: entry.id })
     if (entry.action === 'manualReview')
       problems.push({ code: 'manualReview', entryId: entry.id })
     if (entry.action === 'promote' || entry.action === 'repeat') {
@@ -167,6 +185,11 @@ export async function previewProgressionPlanInTransaction(
         classGrades.get(entry.targetSchoolClassId) !== entry.targetGradeLevelId
       )
         problems.push({ code: 'targetClass', entryId: entry.id })
+      if (
+        !entry.targetSchoolClassId &&
+        classes.some((item) => item.gradeLevelId === entry.targetGradeLevelId)
+      )
+        problems.push({ code: 'missingTargetClass', entryId: entry.id })
       if (existing.has(entry.studentId))
         problems.push({ code: 'targetEnrollment', entryId: entry.id })
     }

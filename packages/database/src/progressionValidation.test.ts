@@ -35,9 +35,22 @@ function database(
     targetSchoolId?: string
     targetEnrollment?: boolean
     action?: string
+    sourceStatus?: string
+    transfer?: boolean
+    missingClass?: boolean
   } = {},
 ) {
-  const selectedEntry = { ...entry, action: overrides.action ?? entry.action }
+  const selectedEntry = {
+    ...entry,
+    action: overrides.action ?? entry.action,
+    targetSchoolClassId: overrides.missingClass
+      ? null
+      : entry.targetSchoolClassId,
+    sourceEnrollment: {
+      ...entry.sourceEnrollment,
+      status: overrides.sourceStatus ?? 'approved',
+    },
+  }
   return {
     school: {
       findUnique: vi.fn(async () => ({ organizationId: randomUUID() })),
@@ -82,6 +95,9 @@ function database(
       findFirst: vi.fn(async () => ({ id: classId })),
       findMany: vi.fn(async () => [{ id: classId, gradeLevelId: gradeId }]),
     },
+    transferRequest: {
+      findMany: vi.fn(async () => (overrides.transfer ? [{ studentId }] : [])),
+    },
     enrollment: {
       findMany: vi.fn(async () =>
         overrides.targetEnrollment ? [{ studentId }] : [],
@@ -119,6 +135,30 @@ describe('progression validation', () => {
         )
       ).problems,
     ).toContainEqual({ code: 'manualReview', entryId })
+  })
+  it('identifies withdrawn sources, transfers, and missing target classes', async () => {
+    const preview = await previewProgressionPlan(
+      database({
+        sourceStatus: 'withdrawn',
+        transfer: true,
+        missingClass: true,
+      }),
+      actorId,
+      schoolId,
+      planId,
+    )
+    expect(preview.problems).toContainEqual({
+      code: 'withdrawnSource',
+      entryId,
+    })
+    expect(preview.problems).toContainEqual({
+      code: 'unresolvedTransfer',
+      entryId,
+    })
+    expect(preview.problems).toContainEqual({
+      code: 'missingTargetClass',
+      entryId,
+    })
   })
   it('rejects cross-school target grades during an entry edit', async () => {
     await expect(

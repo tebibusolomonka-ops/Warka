@@ -609,3 +609,16 @@ export type { BulkPromotion, BulkDecision } from './progressionBulk.js'
 
 export { applyProgressionPlan } from './progressionApply.js'
 export type { ProgressionApplyResult } from './progressionApply.js'
+
+export {
+  ProgressionExceptionStateError,
+  exceptionKind,
+  refreshProgressionExceptions,
+  listProgressionExceptions,
+  resolveProgressionException,
+} from './progressionExceptions.js'
+export type {
+  ProgressionException,
+  ProgressionExceptionKind,
+  ProgressionExceptionStatus,
+} from '@prisma/client'

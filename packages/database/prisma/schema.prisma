@@ -112,6 +112,20 @@ enum ProgressionPlanStatus {
   cancelled
 }
 
+enum ProgressionExceptionKind {
+  missingTargetClass
+  existingTargetEnrollment
+  withdrawnSource
+  unresolvedTransfer
+  incompleteSource
+  manualReview
+}
+
+enum ProgressionExceptionStatus {
+  open
+  resolved
+}
+
 enum ProgressionAction {
   promote
   repeat
@@ -229,6 +243,7 @@ model User {
   createdProgressionPlans      ProgressionPlan[] @relation("ProgressionPlanCreatedBy")
   reviewedProgressionPlans     ProgressionPlan[] @relation("ProgressionPlanReviewedBy")
   appliedProgressionPlans      ProgressionPlan[] @relation("ProgressionPlanAppliedBy")
+  resolvedProgressionExceptions ProgressionException[] @relation("ProgressionExceptionResolvedBy")
   notifications                Notification[]
   teachingAssignments          TeachingAssignment[]
   marks                        Mark[]
@@ -1177,6 +1192,7 @@ model ProgressionPlan {
   reviewedBy           User?                 @relation("ProgressionPlanReviewedBy", fields: [reviewedById], references: [id], onDelete: Restrict)
   appliedBy            User?                 @relation("ProgressionPlanAppliedBy", fields: [appliedById], references: [id], onDelete: Restrict)
   entries              ProgressionEntry[]
+  exceptions           ProgressionException[]
 
   @@index([schoolId, sourceAcademicYearId, status])
   @@index([schoolId, targetAcademicYearId])
@@ -1195,7 +1211,26 @@ model ProgressionEntry {
   plan                 ProgressionPlan   @relation(fields: [planId], references: [id], onDelete: Cascade)
   student              Student           @relation(fields: [studentId], references: [id], onDelete: Restrict)
   sourceEnrollment     Enrollment        @relation(fields: [sourceEnrollmentId], references: [id], onDelete: Restrict)
+  exceptions           ProgressionException[]
 
   @@unique([planId, studentId])
   @@index([sourceEnrollmentId])
+}
+
+model ProgressionException {
+  id              String                     @id @default(uuid())
+  planId          String
+  entryId         String
+  kind            ProgressionExceptionKind
+  status          ProgressionExceptionStatus @default(open)
+  detectedAt      DateTime                   @default(now())
+  resolvedAt      DateTime?
+  resolvedById    String?
+  resolutionNote  String?
+  plan            ProgressionPlan            @relation(fields: [planId], references: [id], onDelete: Cascade)
+  entry           ProgressionEntry           @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  resolvedBy      User?                      @relation("ProgressionExceptionResolvedBy", fields: [resolvedById], references: [id], onDelete: SetNull)
+
+  @@index([planId, status])
+  @@index([entryId, kind])
 }

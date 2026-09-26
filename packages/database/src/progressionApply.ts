@@ -9,6 +9,7 @@ import {
 import { createEnrollment, withdrawEnrollment } from './enrollments.js'
 import { recordEnrollmentHistory } from './enrollmentHistory.js'
 import { recordAuditEvent } from './auditEvents.js'
+import { ProgressionExceptionStateError } from './progressionExceptions.js'
 
 export type ProgressionApplyResult = {
   planId: string
@@ -38,6 +39,12 @@ export async function applyProgressionPlan(
         throw new ProgressionPlanStateError()
       if (preview.problems.length)
         throw new ProgressionValidationError(preview.problems)
+      if (
+        await transaction.progressionException.count({
+          where: { planId, status: 'open' },
+        })
+      )
+        throw new ProgressionExceptionStateError()
       let newEnrollments = 0
       for (const entry of preview.plan.entries) {
         const source = entry.sourceEnrollment
