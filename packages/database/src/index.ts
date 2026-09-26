@@ -499,3 +499,10 @@ export {
 } from './studentImports.js'
 export { NormalizedStudentImportRowSchema } from './importJobs.js'
 export type { NormalizedStudentImportRow } from './importJobs.js'
+
+export {
+  SchoolExportTypeSchema,
+  serializeCsv,
+  createSchoolExport,
+} from './schoolExports.js'
+export type { SchoolExportType } from './schoolExports.js'
