@@ -14,3 +14,8 @@ export {
   revokeAllSessionsForUser,
   hashSessionToken,
 } from './sessions.js'
+
+export {
+  resetPasswordWithRecoveryToken,
+  InvalidRecoveryTokenError,
+} from './passwordRecovery.js'

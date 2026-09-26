@@ -3,6 +3,7 @@ import { z } from 'zod'
 
 export const AuditActionSchema = z.enum([
   'account.provisioned',
+  'account.recovered',
   'studentAccount.provisioned',
   'guardianAccount.provisioned',
   'membership.changed',
