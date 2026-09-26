@@ -31,6 +31,7 @@ import { getParentIdentity } from './parentApi'
 import { BureauWorkspace, SchoolReportingWorkspace } from './BureauWorkspace'
 import { getBureauAccess, type BureauAccess } from './bureauApi'
 import { GovernanceWorkspace } from './GovernanceWorkspace'
+import { NotificationCenter } from './NotificationCenter'
 
 type Authentication =
   | { status: 'checking' }
@@ -684,12 +685,15 @@ function AuthenticatedApp() {
       {authentication.status === 'signedIn' &&
         baseUrl &&
         !authentication.user.mustChangePassword && (
-          <SignedInShell
-            baseUrl={baseUrl}
-            user={authentication.user}
-            onSignedOut={signedOut}
-            onSignOut={() => void signOut()}
-          />
+          <>
+            <NotificationCenter baseUrl={baseUrl} />
+            <SignedInShell
+              baseUrl={baseUrl}
+              user={authentication.user}
+              onSignedOut={signedOut}
+              onSignOut={() => void signOut()}
+            />
+          </>
         )}
     </main>
   )

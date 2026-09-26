@@ -101,6 +101,7 @@ import { registerFamilyConversationRoutes } from './familyConversationRoutes.js'
 import { registerBureauRoutes } from './bureauRoutes.js'
 import { ImportPayloadError, registerImportRoutes } from './importRoutes.js'
 import { registerSchoolExportRoutes } from './schoolExportRoutes.js'
+import { registerNotificationRoutes } from './notificationRoutes.js'
 import {
   GovernancePermissionError,
   registerGovernanceRoutes,
@@ -222,6 +223,7 @@ export function buildApp(
   registerBureauRoutes(app, getDatabase, authenticate)
   registerImportRoutes(app, getDatabase, authenticate)
   registerSchoolExportRoutes(app, getDatabase, authenticate)
+  registerNotificationRoutes(app, getDatabase, authenticate)
   registerGovernanceRoutes(app, getDatabase, authenticate)
   registerGuardianRelationshipRoutes(app, getDatabase, authenticate)
   registerFamilyConversationRoutes(
