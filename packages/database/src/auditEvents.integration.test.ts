@@ -86,14 +86,14 @@ describe.skipIf(!database)('audit events in PostgreSQL', () => {
       expect(() => listAuditEvents(database!, {})).toThrow(
         'Audit query requires an organization or school scope',
       )
-      await expect(
+      expect(() =>
         recordAuditEvent(database!, {
           organizationId: organization.id,
           action: 'account.provisioned',
           resourceType: 'user',
           metadata: { accessToken: 'must-never-be-stored' },
         }),
-      ).rejects.toThrow('Sensitive audit metadata is forbidden')
+      ).toThrow('Sensitive audit metadata is forbidden')
       expect(
         await database!.auditEvent.findUniqueOrThrow({
           where: { id: first.id },
