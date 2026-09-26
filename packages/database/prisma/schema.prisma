@@ -133,6 +133,30 @@ enum ProgressionAction {
   manualReview
 }
 
+enum SupportRequestCategory {
+  account
+  studentRecords
+  academicResults
+  documents
+  reporting
+  technical
+}
+
+enum SupportRequestSeverity {
+  low
+  normal
+  high
+  critical
+}
+
+enum SupportRequestStatus {
+  open
+  inProgress
+  waitingForSchool
+  resolved
+  closed
+}
+
 enum TrainingType {
   schoolAdministration
   studentRegistration
@@ -240,6 +264,7 @@ model School {
   onboarding                   SchoolOnboarding?
   contacts                     SchoolContact[]
   trainingRecords              TrainingRecord[]
+  supportRequests              SupportRequest[]
 
   @@index([organizationId])
 }
@@ -282,6 +307,7 @@ model User {
   completedChecklistItems       OnboardingChecklistItem[]
   trainingRecords               TrainingRecord[] @relation("TrainingUser")
   recordedTraining              TrainingRecord[] @relation("TrainingRecordedBy")
+  createdSupportRequests        SupportRequest[]
   sessions                     Session[]
   supportIdentity              SupportIdentity?
   approvedEnrollments          Enrollment[]             @relation("EnrollmentApprovedBy")
@@ -537,6 +563,25 @@ model Session {
 
   @@index([userId])
   @@index([expiresAt])
+}
+
+model SupportRequest {
+  id          String                 @id @default(uuid())
+  schoolId    String
+  createdById String
+  category    SupportRequestCategory
+  severity    SupportRequestSeverity @default(normal)
+  title       String
+  description String
+  status      SupportRequestStatus   @default(open)
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+  closedAt    DateTime?
+  school      School                 @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  createdBy   User                   @relation(fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@index([schoolId, status, createdAt])
+  @@index([createdById, createdAt])
 }
 
 model TrainingRecord {

@@ -694,3 +694,12 @@ export {
 } from './schoolOnboarding.js'
 
 export { OnboardingChecklistStateError } from './onboardingChecklist.js'
+
+export {
+  CreateSupportRequestSchema,
+  SupportRequestPermissionError,
+  SupportRequestStateError,
+  requireSchoolSupportUser,
+  createSupportRequest,
+  listSchoolSupportRequests,
+} from './supportRequests.js'
