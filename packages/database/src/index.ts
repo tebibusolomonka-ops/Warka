@@ -526,3 +526,16 @@ export {
   saveSchoolDocumentProfile,
 } from './schoolDocumentProfiles.js'
 export type { SchoolDocumentProfile } from '@prisma/client'
+
+export {
+  CreateDocumentRequestSchema,
+  DocumentRequestPermissionError,
+  DocumentRequestStateError,
+  requireDocumentRequestStaff,
+  createDocumentRequest,
+  listStudentDocumentRequests,
+  listSchoolDocumentRequests,
+  getDocumentRequest,
+  cancelDocumentRequest,
+} from './documentRequests.js'
+export type { DocumentRequest, DocumentRequestStatus } from '@prisma/client'

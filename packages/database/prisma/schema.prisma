@@ -63,6 +63,14 @@ enum DocumentType {
   transcript
 }
 
+enum DocumentRequestStatus {
+  requested
+  processing
+  ready
+  rejected
+  cancelled
+}
+
 enum DocumentStatus {
   active
   corrected
@@ -141,6 +149,7 @@ model School {
   verificationEvents            VerificationEvent[]
   importJobs                    ImportJob[]
   documentProfile              SchoolDocumentProfile?
+  documentRequests             DocumentRequest[]
 
   @@index([organizationId])
 }
@@ -182,6 +191,7 @@ model User {
   approvedEnrollments          Enrollment[]             @relation("EnrollmentApprovedBy")
   withdrawnEnrollments         Enrollment[]             @relation("EnrollmentWithdrawnBy")
   createdImportJobs            ImportJob[]
+  requestedDocuments           DocumentRequest[]
   notifications                Notification[]
   teachingAssignments          TeachingAssignment[]
   marks                        Mark[]
@@ -429,6 +439,7 @@ model Session {
 model AcademicYear {
   resultSets          ResultSet[]
   issuedDocuments     IssuedDocument[]
+  documentRequests    DocumentRequest[]
   learningMaterials   LearningMaterial[]
   id                  String               @id @default(uuid())
   schoolId            String
@@ -490,6 +501,7 @@ model SchoolClass {
 model Student {
   transferRequests    TransferRequest[]
   issuedDocuments     IssuedDocument[]
+  documentRequests    DocumentRequest[]
   publishedResults    PublishedResult[]
   id                  String               @id @default(uuid())
   studentReference    String               @unique
@@ -861,6 +873,7 @@ model IssuedDocument {
   supersedes            IssuedDocument?     @relation("DocumentVersion", fields: [supersedesId], references: [id], onDelete: Restrict)
   replacedBy            IssuedDocument?     @relation("DocumentVersion")
   verificationEvents    VerificationEvent[]
+  documentRequest       DocumentRequest?
 
   @@index([schoolId, studentId, issuedAt])
   @@index([schoolId, issuedAt])
@@ -1048,4 +1061,28 @@ model SchoolDocumentProfile {
   documentFooter String?
   updatedAt      DateTime @updatedAt
   school         School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+}
+model DocumentRequest {
+  id               String                @id @default(uuid())
+  studentId        String
+  schoolId         String
+  academicYearId   String
+  documentType     DocumentType
+  status           DocumentRequestStatus @default(requested)
+  requestedById    String
+  requestedAt      DateTime              @default(now())
+  processingAt     DateTime?
+  readyAt          DateTime?
+  rejectedAt       DateTime?
+  rejectionReason  String?
+  cancelledAt      DateTime?
+  issuedDocumentId String?               @unique
+  student          Student               @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  school           School                @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  academicYear     AcademicYear          @relation(fields: [academicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  requestedBy      User                  @relation(fields: [requestedById], references: [id], onDelete: Restrict)
+  issuedDocument   IssuedDocument?       @relation(fields: [issuedDocumentId], references: [id], onDelete: Restrict)
+
+  @@index([studentId, requestedAt])
+  @@index([schoolId, status, requestedAt])
 }
