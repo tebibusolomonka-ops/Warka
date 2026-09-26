@@ -586,3 +586,15 @@ export type {
   ProgressionPlanStatus,
   ProgressionAction,
 } from '@prisma/client'
+
+export {
+  UpdateProgressionEntrySchema,
+  ProgressionValidationError,
+  updateProgressionEntry,
+  previewProgressionPlan,
+  markProgressionPlanReviewed,
+} from './progressionValidation.js'
+export type {
+  UpdateProgressionEntry,
+  ProgressionProblem,
+} from './progressionValidation.js'

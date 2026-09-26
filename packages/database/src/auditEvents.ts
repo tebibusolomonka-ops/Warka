@@ -18,6 +18,7 @@ export const AuditActionSchema = z.enum([
   'academicYear.closingStarted',
   'academicYear.closed',
   'progressionPlan.created',
+  'progressionPlan.reviewed',
   'transfer.approved',
   'transfer.accepted',
   'transfer.rejected',
