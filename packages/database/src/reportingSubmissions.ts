@@ -1,11 +1,14 @@
 import { Prisma, type PrismaClient } from '@prisma/client'
 import { z } from 'zod'
+import { recordAuditEvent } from './auditEvents.js'
 import { requireBureauPermission } from './bureauAccess.js'
 
 export class ReportingSubmissionError extends Error {}
 
 type SubmissionStore = Pick<
   PrismaClient,
+  | '$transaction'
+  | 'auditEvent'
   | 'bureauAccess'
   | 'reportingPeriod'
   | 'reportingRequirement'
@@ -53,18 +56,30 @@ export async function submitSchoolReport(
   schoolId: string,
 ) {
   await requireSchoolSubmitter(database, actorUserId, schoolId)
-  const period = await database.reportingPeriod.findUniqueOrThrow({
-    where: { id: reportingPeriodId },
-  })
-  if (period.status !== 'open')
-    throw new ReportingSubmissionError('Reporting period is not open')
-  return database.reportingSubmission.update({
-    where: { reportingPeriodId_schoolId: { reportingPeriodId, schoolId } },
-    data: {
-      status: 'submitted',
-      submittedAt: new Date(),
-      submittedById: actorUserId,
-    },
+  return database.$transaction(async (transaction) => {
+    const period = await transaction.reportingPeriod.findUniqueOrThrow({
+      where: { id: reportingPeriodId },
+    })
+    if (period.status !== 'open')
+      throw new ReportingSubmissionError('Reporting period is not open')
+    const submission = await transaction.reportingSubmission.update({
+      where: { reportingPeriodId_schoolId: { reportingPeriodId, schoolId } },
+      data: {
+        status: 'submitted',
+        submittedAt: new Date(),
+        submittedById: actorUserId,
+      },
+    })
+    await recordAuditEvent(transaction, {
+      organizationId: period.organizationId,
+      schoolId,
+      actorUserId,
+      action: 'report.submitted',
+      resourceType: 'reportingSubmission',
+      resourceId: submission.id,
+      metadata: { reportingPeriodId },
+    })
+    return submission
   })
 }
 
@@ -85,13 +100,24 @@ export async function approveSchoolReport(
   )
   if (submission.status !== 'submitted')
     throw new ReportingSubmissionError('Only submitted reports may be approved')
-  return database.reportingSubmission.update({
-    where: { id: submissionId },
-    data: {
-      status: 'approved',
-      approvedAt: new Date(),
-      approvedById: actorUserId,
-    },
+  return database.$transaction(async (transaction) => {
+    const updated = await transaction.reportingSubmission.update({
+      where: { id: submissionId },
+      data: {
+        status: 'approved',
+        approvedAt: new Date(),
+        approvedById: actorUserId,
+      },
+    })
+    await recordAuditEvent(transaction, {
+      organizationId: submission.reportingPeriod.organizationId,
+      schoolId: submission.schoolId,
+      actorUserId,
+      action: 'report.approved',
+      resourceType: 'reportingSubmission',
+      resourceId: submissionId,
+    })
+    return updated
   })
 }
 
@@ -114,13 +140,24 @@ export async function returnSchoolReport(
   )
   if (submission.status !== 'submitted')
     throw new ReportingSubmissionError('Only submitted reports may be returned')
-  return database.reportingSubmission.update({
-    where: { id: submissionId },
-    data: {
-      status: 'returned',
-      returnedAt: new Date(),
-      returnedById: actorUserId,
-      returnReason,
-    },
+  return database.$transaction(async (transaction) => {
+    const updated = await transaction.reportingSubmission.update({
+      where: { id: submissionId },
+      data: {
+        status: 'returned',
+        returnedAt: new Date(),
+        returnedById: actorUserId,
+        returnReason,
+      },
+    })
+    await recordAuditEvent(transaction, {
+      organizationId: submission.reportingPeriod.organizationId,
+      schoolId: submission.schoolId,
+      actorUserId,
+      action: 'report.returned',
+      resourceType: 'reportingSubmission',
+      resourceId: submissionId,
+    })
+    return updated
   })
 }

@@ -1,6 +1,7 @@
 import { randomBytes } from 'node:crypto'
 import { Prisma, type PrismaClient } from '@prisma/client'
 import { z } from 'zod'
+import { recordAuditEvent } from './auditEvents.js'
 import { hasOrganizationAdminRole } from './organizationMemberships.js'
 import { findSchoolMembership } from './schoolMemberships.js'
 
@@ -147,7 +148,7 @@ async function createDocumentInTransaction(
       gradeLabel: result.currentGradeLabel,
     })),
   })
-  return transaction.issuedDocument.create({
+  const document = await transaction.issuedDocument.create({
     data: {
       ...data,
       issuedAt,
@@ -157,6 +158,18 @@ async function createDocumentInTransaction(
       snapshot: snapshot as Prisma.InputJsonValue,
     },
   })
+  await recordAuditEvent(transaction, {
+    schoolId: data.schoolId,
+    actorUserId: actorId,
+    action: supersedesId ? 'document.corrected' : 'document.issued',
+    resourceType: 'issuedDocument',
+    resourceId: document.id,
+    metadata: {
+      documentType: data.documentType,
+      ...(supersedesId ? { supersedesId } : {}),
+    },
+  })
+  return document
 }
 
 export async function correctDocument(
@@ -209,18 +222,29 @@ export async function withdrawDocument(
   z.uuid().parse(documentId)
   const withdrawalReason = DocumentReasonSchema.parse(reason)
   await requireDocumentAuthority(database, actorId, schoolId)
-  const changed = await database.issuedDocument.updateMany({
-    where: { id: documentId, schoolId, status: 'active' },
-    data: {
-      status: 'withdrawn',
-      withdrawalReason,
-      withdrawnById: actorId,
-      withdrawnAt: new Date(),
-    },
-  })
-  if (changed.count !== 1) throw new DocumentStateError()
-  return database.issuedDocument.findUniqueOrThrow({
-    where: { id: documentId },
+  return database.$transaction(async (transaction) => {
+    const changed = await transaction.issuedDocument.updateMany({
+      where: { id: documentId, schoolId, status: 'active' },
+      data: {
+        status: 'withdrawn',
+        withdrawalReason,
+        withdrawnById: actorId,
+        withdrawnAt: new Date(),
+      },
+    })
+    if (changed.count !== 1) throw new DocumentStateError()
+    const document = await transaction.issuedDocument.findUniqueOrThrow({
+      where: { id: documentId },
+    })
+    await recordAuditEvent(transaction, {
+      schoolId,
+      actorUserId: actorId,
+      action: 'document.withdrawn',
+      resourceType: 'issuedDocument',
+      resourceId: documentId,
+      metadata: { documentType: document.documentType },
+    })
+    return document
   })
 }
 

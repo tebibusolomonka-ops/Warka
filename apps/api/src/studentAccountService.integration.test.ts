@@ -26,6 +26,12 @@ describe.skipIf(!database)('student account provisioning in PostgreSQL', () => {
     const otherSchool = await database!.school.create({
       data: { organizationId: organization.id, name: 'Other school' },
     })
+    const actor = await database!.user.create({
+      data: {
+        email: `student-account-actor-${randomUUID()}@example.test`,
+        displayName: 'Account administrator',
+      },
+    })
     const year = await database!.academicYear.create({
       data: {
         schoolId: school.id,
@@ -55,17 +61,27 @@ describe.skipIf(!database)('student account provisioning in PostgreSQL', () => {
     const email = `student-${randomUUID()}@example.test`
     try {
       await expect(
-        service.create(otherSchool.id, first.id, {
+        service.create(
+          otherSchool.id,
+          first.id,
+          {
+            email,
+            displayName: 'First',
+            initialPassword: 'initial password',
+          },
+          actor.id,
+        ),
+      ).rejects.toBeInstanceOf(StudentEnrollmentNotFoundError)
+      const created = await service.create(
+        school.id,
+        first.id,
+        {
           email,
           displayName: 'First',
           initialPassword: 'initial password',
-        }),
-      ).rejects.toBeInstanceOf(StudentEnrollmentNotFoundError)
-      const created = await service.create(school.id, first.id, {
-        email,
-        displayName: 'First',
-        initialPassword: 'initial password',
-      })
+        },
+        actor.id,
+      )
       expect(await service.status(school.id, first.id)).toMatchObject({
         status: 'active',
         email,
@@ -86,19 +102,36 @@ describe.skipIf(!database)('student account provisioning in PostgreSQL', () => {
       })
       expect(credential?.mustChangePassword).toBe(true)
       expect(credential?.passwordHash).not.toContain('initial password')
+      const audit = await database!.auditEvent.findFirstOrThrow({
+        where: { action: 'studentAccount.provisioned', resourceId: first.id },
+      })
+      expect(audit.actorUserId).toBe(actor.id)
+      expect(audit.schoolId).toBe(school.id)
+      expect(JSON.stringify(audit)).not.toContain('initial password')
+      expect(JSON.stringify(audit)).not.toContain('passwordHash')
       await expect(
-        service.create(school.id, first.id, {
-          email: `another-${randomUUID()}@example.test`,
-          displayName: 'Duplicate',
-          initialPassword: 'another password',
-        }),
+        service.create(
+          school.id,
+          first.id,
+          {
+            email: `another-${randomUUID()}@example.test`,
+            displayName: 'Duplicate',
+            initialPassword: 'another password',
+          },
+          actor.id,
+        ),
       ).rejects.toBeInstanceOf(StudentAccountConflictError)
       await expect(
-        service.create(school.id, second.id, {
-          email,
-          displayName: 'Duplicate email',
-          initialPassword: 'another password',
-        }),
+        service.create(
+          school.id,
+          second.id,
+          {
+            email,
+            displayName: 'Duplicate email',
+            initialPassword: 'another password',
+          },
+          actor.id,
+        ),
       ).rejects.toBeInstanceOf(StudentAccountConflictError)
       expect(
         await database!.studentAccess.findUnique({
@@ -110,7 +143,18 @@ describe.skipIf(!database)('student account provisioning in PostgreSQL', () => {
           where: { displayName: 'Duplicate email' },
         }),
       ).toBe(0)
+      expect(
+        await database!.auditEvent.count({
+          where: {
+            action: 'studentAccount.provisioned',
+            actorUserId: actor.id,
+          },
+        }),
+      ).toBe(1)
     } finally {
+      await database!.auditEvent.deleteMany({
+        where: { actorUserId: actor.id },
+      })
       await database!.user.deleteMany({ where: { email } })
       await database!.enrollment.deleteMany({ where: { schoolId: school.id } })
       await database!.student.deleteMany({
@@ -121,6 +165,7 @@ describe.skipIf(!database)('student account provisioning in PostgreSQL', () => {
       await database!.school.deleteMany({
         where: { organizationId: organization.id },
       })
+      await database!.user.delete({ where: { id: actor.id } })
       await database!.organization.delete({ where: { id: organization.id } })
     }
   })

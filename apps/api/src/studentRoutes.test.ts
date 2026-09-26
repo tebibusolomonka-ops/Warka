@@ -245,6 +245,7 @@ describe('student routes', () => {
         school.id,
         student.id,
         payload,
+        'registrar',
       )
     } finally {
       await app.close()

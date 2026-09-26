@@ -166,7 +166,14 @@ export function registerStudentRoutes(
       const input = ProvisionStudentAccountSchema.parse(request.body)
       return reply
         .code(201)
-        .send(await getStudentAccounts().create(schoolId, studentId, input))
+        .send(
+          await getStudentAccounts().create(
+            schoolId,
+            studentId,
+            input,
+            user.id,
+          ),
+        )
     },
   )
 

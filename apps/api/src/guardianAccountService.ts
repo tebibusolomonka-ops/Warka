@@ -5,6 +5,7 @@ import {
   DuplicateGuardianAccessError,
   hasOrganizationAdminRole,
   linkGuardianUser,
+  recordAuditEvent,
   type PrismaClient,
 } from '@warka/database'
 import { z } from 'zod'
@@ -183,6 +184,14 @@ export function prismaGuardianAccountService(
             data: { userId: user.id, passwordHash, mustChangePassword: true },
           })
           await linkGuardianUser(transaction, user.id, parsed.guardianId)
+          await recordAuditEvent(transaction, {
+            schoolId,
+            actorUserId: actorId,
+            action: 'guardianAccount.provisioned',
+            resourceType: 'guardian',
+            resourceId: parsed.guardianId,
+            metadata: { userId: user.id },
+          })
           return {
             id: user.id,
             email: user.email,

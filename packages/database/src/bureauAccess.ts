@@ -1,4 +1,5 @@
 import { Prisma, type BureauRole, type PrismaClient } from '@prisma/client'
+import { recordAuditEvent } from './auditEvents.js'
 
 export class DuplicateBureauAccessError extends Error {
   constructor() {
@@ -12,14 +13,48 @@ export class BureauAccessDeniedError extends Error {
   }
 }
 
-type BureauStore = Pick<PrismaClient, 'bureauAccess'>
+type BureauPermissionStore = Pick<PrismaClient, 'bureauAccess'>
+type BureauStore = Pick<
+  PrismaClient,
+  '$transaction' | 'auditEvent' | 'bureauAccess'
+>
 
 export async function grantBureauAccess(
   database: BureauStore,
-  input: { userId: string; organizationId: string; role: BureauRole },
+  input: {
+    userId: string
+    organizationId: string
+    role: BureauRole
+    actorUserId?: string
+  },
 ) {
   try {
-    return await database.bureauAccess.create({ data: input })
+    if (!input.actorUserId)
+      return await database.bureauAccess.create({
+        data: {
+          userId: input.userId,
+          organizationId: input.organizationId,
+          role: input.role,
+        },
+      })
+    return await database.$transaction(async (transaction) => {
+      const access = await transaction.bureauAccess.create({
+        data: {
+          userId: input.userId,
+          organizationId: input.organizationId,
+          role: input.role,
+        },
+      })
+      await recordAuditEvent(transaction, {
+        organizationId: input.organizationId,
+        actorUserId: input.actorUserId,
+        action: 'bureauAccess.granted',
+        resourceType: 'bureauAccess',
+        resourceId: access.id,
+        metadata: { role: input.role, userId: input.userId },
+      })
+      return access
+    })
   } catch (error) {
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -34,14 +69,34 @@ export async function revokeBureauAccess(
   database: BureauStore,
   userId: string,
   organizationId: string,
+  actorUserId?: string,
 ) {
-  return database.bureauAccess.update({
-    where: { userId_organizationId: { userId, organizationId } },
-    data: { revokedAt: new Date() },
+  if (!actorUserId)
+    return database.bureauAccess.update({
+      where: { userId_organizationId: { userId, organizationId } },
+      data: { revokedAt: new Date() },
+    })
+  return database.$transaction(async (transaction) => {
+    const access = await transaction.bureauAccess.update({
+      where: { userId_organizationId: { userId, organizationId } },
+      data: { revokedAt: new Date() },
+    })
+    await recordAuditEvent(transaction, {
+      organizationId,
+      actorUserId,
+      action: 'bureauAccess.revoked',
+      resourceType: 'bureauAccess',
+      resourceId: access.id,
+      metadata: { userId },
+    })
+    return access
   })
 }
 
-export function resolveBureauScope(database: BureauStore, userId: string) {
+export function resolveBureauScope(
+  database: BureauPermissionStore,
+  userId: string,
+) {
   return database.bureauAccess.findMany({
     where: { userId, revokedAt: null },
     include: { organization: true },
@@ -50,7 +105,7 @@ export function resolveBureauScope(database: BureauStore, userId: string) {
 }
 
 export async function requireBureauPermission(
-  database: BureauStore,
+  database: BureauPermissionStore,
   userId: string,
   organizationId: string,
   permission: 'view' | 'manage',

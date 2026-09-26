@@ -1,5 +1,6 @@
 import { Prisma, type PrismaClient } from '@prisma/client'
 import { z } from 'zod'
+import { recordAuditEvent } from './auditEvents.js'
 import { hasOrganizationAdminRole } from './organizationMemberships.js'
 import { findSchoolMembership } from './schoolMemberships.js'
 
@@ -204,9 +205,18 @@ export async function approveTransfer(
       },
     })
     if (changed.count !== 1) throw new TransferStateError()
-    return transaction.transferRequest.findUniqueOrThrow({
+    const approved = await transaction.transferRequest.findUniqueOrThrow({
       where: { id: transferId },
     })
+    await recordAuditEvent(transaction, {
+      schoolId: sendingSchoolId,
+      actorUserId: actorId,
+      action: 'transfer.approved',
+      resourceType: 'transferRequest',
+      resourceId: transferId,
+      metadata: { receivingSchoolId: approved.receivingSchoolId },
+    })
+    return approved
   })
 }
 
@@ -286,9 +296,18 @@ export async function acceptTransfer(
         },
       })
       if (changed.count !== 1) throw new TransferStateError()
-      return transaction.transferRequest.findUniqueOrThrow({
+      const accepted = await transaction.transferRequest.findUniqueOrThrow({
         where: { id: transferId },
       })
+      await recordAuditEvent(transaction, {
+        schoolId: receivingSchoolId,
+        actorUserId: actorId,
+        action: 'transfer.accepted',
+        resourceType: 'transferRequest',
+        resourceId: transferId,
+        metadata: { sendingSchoolId: accepted.sendingSchoolId },
+      })
+      return accepted
     })
   } catch (error) {
     if (
@@ -309,22 +328,33 @@ export async function rejectTransfer(
 ) {
   const rejectionReason = TransferReasonSchema.parse(reason)
   await requireTransferSchoolRole(database, actorId, receivingSchoolId)
-  const changed = await database.transferRequest.updateMany({
-    where: {
-      id: transferId,
-      receivingSchoolId,
-      status: 'approvedBySendingSchool',
-    },
-    data: {
-      status: 'rejected',
-      rejectionReason,
-      rejectedById: actorId,
-      rejectedAt: new Date(),
-    },
-  })
-  if (changed.count !== 1) throw new TransferStateError()
-  return database.transferRequest.findUniqueOrThrow({
-    where: { id: transferId },
+  return database.$transaction(async (transaction) => {
+    const changed = await transaction.transferRequest.updateMany({
+      where: {
+        id: transferId,
+        receivingSchoolId,
+        status: 'approvedBySendingSchool',
+      },
+      data: {
+        status: 'rejected',
+        rejectionReason,
+        rejectedById: actorId,
+        rejectedAt: new Date(),
+      },
+    })
+    if (changed.count !== 1) throw new TransferStateError()
+    const rejected = await transaction.transferRequest.findUniqueOrThrow({
+      where: { id: transferId },
+    })
+    await recordAuditEvent(transaction, {
+      schoolId: receivingSchoolId,
+      actorUserId: actorId,
+      action: 'transfer.rejected',
+      resourceType: 'transferRequest',
+      resourceId: transferId,
+      metadata: { sendingSchoolId: rejected.sendingSchoolId },
+    })
+    return rejected
   })
 }
 

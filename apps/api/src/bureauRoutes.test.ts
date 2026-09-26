@@ -11,6 +11,12 @@ const periodId = 'a9bb4d8f-d490-48a3-90d0-35571b94fb3e'
 const schoolId = '660daf71-3652-4a57-abaa-306c651bf44b'
 
 function testApp(database: Record<string, unknown>) {
+  database.auditEvent ??= { create: vi.fn().mockResolvedValue({}) }
+  database.$transaction ??= vi.fn(async (work) =>
+    (work as (transaction: Record<string, unknown>) => Promise<unknown>)(
+      database,
+    ),
+  )
   const app = Fastify()
   registerBureauRoutes(
     app,

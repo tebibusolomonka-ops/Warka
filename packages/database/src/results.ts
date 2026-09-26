@@ -1,5 +1,6 @@
 import { Prisma, type PrismaClient, type ResultSet } from '@prisma/client'
 import { z } from 'zod'
+import { recordAuditEvent } from './auditEvents.js'
 import { listAssessments } from './assessments.js'
 import {
   calculateResult,
@@ -337,7 +338,7 @@ export async function publishResults(
           currentGradeLabel: row.calculation.gradeLabel!,
         })),
       })
-      return transaction.resultSet.update({
+      const published = await transaction.resultSet.update({
         where: { id: resultSetId },
         data: {
           status: 'published',
@@ -345,6 +346,15 @@ export async function publishResults(
           publishedById: actorId,
         },
       })
+      await recordAuditEvent(transaction, {
+        schoolId,
+        actorUserId: actorId,
+        action: 'result.published',
+        resourceType: 'resultSet',
+        resourceId: resultSetId,
+        metadata: { resultCount: preview.rows.length },
+      })
+      return published
     },
     { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
   )
@@ -403,6 +413,14 @@ export async function correctPublishedResult(
       await transaction.publishedResult.update({
         where: { id: result.id },
         data: { currentPercentage: decimal, currentGradeLabel: band.label },
+      })
+      await recordAuditEvent(transaction, {
+        schoolId,
+        actorUserId: actorId,
+        action: 'result.corrected',
+        resourceType: 'publishedResult',
+        resourceId: publishedResultId,
+        metadata: { correctionId: correction.id },
       })
       return correction
     },

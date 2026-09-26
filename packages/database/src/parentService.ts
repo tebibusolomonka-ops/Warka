@@ -1,4 +1,5 @@
 import type { PrismaClient, SchoolServiceAccess } from '@prisma/client'
+import { recordAuditEvent } from './auditEvents.js'
 import { hasOrganizationAdminRole } from './organizationMemberships.js'
 import { hasActiveVerifiedGuardianRelationship } from './guardianRelationships.js'
 
@@ -50,19 +51,30 @@ export async function setParentPortalEnabled(
   enabled: boolean,
 ): Promise<SchoolServiceAccess> {
   await requireSchoolAdministrator(database, actorId, schoolId)
-  return database.schoolServiceAccess.upsert({
-    where: { schoolId },
-    create: {
+  return database.$transaction(async (transaction) => {
+    const setting = await transaction.schoolServiceAccess.upsert({
+      where: { schoolId },
+      create: {
+        schoolId,
+        parentPortalEnabled: enabled,
+        enabledAt: enabled ? new Date() : null,
+        updatedById: actorId,
+      },
+      update: {
+        parentPortalEnabled: enabled,
+        enabledAt: enabled ? new Date() : null,
+        updatedById: actorId,
+      },
+    })
+    await recordAuditEvent(transaction, {
       schoolId,
-      parentPortalEnabled: enabled,
-      enabledAt: enabled ? new Date() : null,
-      updatedById: actorId,
-    },
-    update: {
-      parentPortalEnabled: enabled,
-      enabledAt: enabled ? new Date() : null,
-      updatedById: actorId,
-    },
+      actorUserId: actorId,
+      action: 'parentPortal.updated',
+      resourceType: 'schoolServiceAccess',
+      resourceId: schoolId,
+      metadata: { enabled },
+    })
+    return setting
   })
 }
 

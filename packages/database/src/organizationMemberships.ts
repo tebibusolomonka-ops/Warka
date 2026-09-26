@@ -6,6 +6,7 @@ import {
   type PrismaClient,
 } from '@prisma/client'
 import { z } from 'zod'
+import { recordAuditEvent } from './auditEvents.js'
 
 export const OrganizationRoleSchema = z.enum(['owner', 'administrator'])
 
@@ -29,11 +30,27 @@ export class DuplicateOrganizationMembershipError extends Error {
 export async function createOrganizationMembership(
   database: PrismaClient,
   data: CreateOrganizationMembership,
+  actorUserId?: string,
 ): Promise<OrganizationMembership> {
   const role = OrganizationRoleSchema.parse(data.role)
   try {
-    return await database.organizationMembership.create({
-      data: { ...data, role },
+    if (!actorUserId)
+      return await database.organizationMembership.create({
+        data: { ...data, role },
+      })
+    return await database.$transaction(async (transaction) => {
+      const membership = await transaction.organizationMembership.create({
+        data: { ...data, role },
+      })
+      await recordAuditEvent(transaction, {
+        organizationId: data.organizationId,
+        actorUserId,
+        action: 'membership.changed',
+        resourceType: 'membership',
+        resourceId: data.userId,
+        metadata: { role, userId: data.userId },
+      })
+      return membership
     })
   } catch (error) {
     if (

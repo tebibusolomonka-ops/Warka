@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import type { PrismaClient, StudentGuardian } from '@prisma/client'
+import { recordAuditEvent } from './auditEvents.js'
 import { hasOrganizationAdminRole } from './organizationMemberships.js'
 
 export class GuardianRelationshipPermissionError extends Error {
@@ -79,17 +80,28 @@ export async function verifyGuardianRelationship(
   ) {
     throw new GuardianRelationshipStateError()
   }
-  return database.studentGuardian.update({
-    where: { studentId_guardianId: { studentId, guardianId } },
-    data: {
-      verificationStatus: 'verified',
-      verificationSchoolId: schoolId,
-      verifiedAt: new Date(),
-      verifiedById: actorId,
-      revokedAt: null,
-      revokedById: null,
-      revocationReason: null,
-    },
+  return database.$transaction(async (transaction) => {
+    const updated = await transaction.studentGuardian.update({
+      where: { studentId_guardianId: { studentId, guardianId } },
+      data: {
+        verificationStatus: 'verified',
+        verificationSchoolId: schoolId,
+        verifiedAt: new Date(),
+        verifiedById: actorId,
+        revokedAt: null,
+        revokedById: null,
+        revocationReason: null,
+      },
+    })
+    await recordAuditEvent(transaction, {
+      schoolId,
+      actorUserId: actorId,
+      action: 'guardianRelationship.verified',
+      resourceType: 'guardian',
+      resourceId: guardianId,
+      metadata: { studentId },
+    })
+    return updated
   })
 }
 
@@ -114,14 +126,26 @@ export async function revokeGuardianRelationship(
   ) {
     throw new GuardianRelationshipStateError()
   }
-  return database.studentGuardian.update({
-    where: { studentId_guardianId: { studentId, guardianId } },
-    data: {
-      verificationStatus: 'revoked',
-      revokedAt: new Date(),
-      revokedById: actorId,
-      revocationReason: RevocationReasonSchema.parse(reason),
-    },
+  const revocationReason = RevocationReasonSchema.parse(reason)
+  return database.$transaction(async (transaction) => {
+    const updated = await transaction.studentGuardian.update({
+      where: { studentId_guardianId: { studentId, guardianId } },
+      data: {
+        verificationStatus: 'revoked',
+        revokedAt: new Date(),
+        revokedById: actorId,
+        revocationReason,
+      },
+    })
+    await recordAuditEvent(transaction, {
+      schoolId,
+      actorUserId: actorId,
+      action: 'guardianRelationship.revoked',
+      resourceType: 'guardian',
+      resourceId: guardianId,
+      metadata: { studentId },
+    })
+    return updated
   })
 }
 

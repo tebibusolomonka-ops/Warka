@@ -4,6 +4,7 @@ import {
   DuplicateEmailError,
   DuplicateStudentAccessError,
   linkStudentUser,
+  recordAuditEvent,
   type PrismaClient,
 } from '@warka/database'
 import { z } from 'zod'
@@ -45,6 +46,7 @@ export type StudentAccountService = {
     schoolId: string,
     studentId: string,
     input: ProvisionStudentAccount,
+    actorId: string,
   ): Promise<{
     id: string
     email: string
@@ -84,7 +86,7 @@ export function prismaStudentAccountService(
           access.user.passwordCredential?.mustChangePassword ?? false,
       }
     },
-    async create(schoolId, studentId, input) {
+    async create(schoolId, studentId, input, actorId) {
       const parsed = ProvisionStudentAccountSchema.parse(input)
       const passwordHash = await hashPassword(parsed.initialPassword)
       try {
@@ -109,6 +111,14 @@ export function prismaStudentAccountService(
             data: { userId: user.id, passwordHash, mustChangePassword: true },
           })
           await linkStudentUser(transaction, user.id, studentId)
+          await recordAuditEvent(transaction, {
+            schoolId,
+            actorUserId: actorId,
+            action: 'studentAccount.provisioned',
+            resourceType: 'student',
+            resourceId: studentId,
+            metadata: { userId: user.id },
+          })
           return {
             id: user.id,
             email: user.email,
