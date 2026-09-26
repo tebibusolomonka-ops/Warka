@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises'
 import { DocumentSnapshotSchema, type IssuedDocument } from '@warka/database'
 import fontkit from '@pdf-lib/fontkit'
 import { PDFDocument, rgb } from 'pdf-lib'
+import { documentVerificationQr } from './documentQr.js'
 
 const fontFile = new URL('../assets/NotoSansEthiopic.ttf', import.meta.url)
 
@@ -18,6 +19,7 @@ export function reportCardContent(document: IssuedDocument) {
 
 export async function renderReportCard(
   document: IssuedDocument,
+  env: NodeJS.ProcessEnv = process.env,
 ): Promise<Uint8Array> {
   const { snapshot, verificationReference } = reportCardContent(document)
   const pdf = await PDFDocument.create()
@@ -95,6 +97,10 @@ export async function renderReportCard(
     y -= 22
     write(contact.documentFooter, left, 8)
   }
+  const qr = await pdf.embedPng(
+    await documentVerificationQr(verificationReference, env),
+  )
+  page.drawImage(qr, { x: 465, y: 35, width: 75, height: 75 })
   return pdf.save({ useObjectStreams: false })
 }
 
@@ -111,6 +117,7 @@ export function transcriptContent(document: IssuedDocument) {
 
 export async function renderTranscript(
   document: IssuedDocument,
+  env: NodeJS.ProcessEnv = process.env,
 ): Promise<Uint8Array> {
   const { snapshot, verificationReference } = transcriptContent(document)
   const pdf = await PDFDocument.create()
@@ -172,5 +179,9 @@ export async function renderTranscript(
     y -= 20
     write(snapshot.schoolContact.documentFooter, left, 8)
   }
+  const qr = await pdf.embedPng(
+    await documentVerificationQr(verificationReference, env),
+  )
+  page.drawImage(qr, { x: 465, y: 35, width: 75, height: 75 })
   return pdf.save({ useObjectStreams: false })
 }

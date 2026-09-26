@@ -26,14 +26,16 @@ const snapshot = {
 const document = (overrides: Record<string, unknown> = {}) =>
   ({
     documentType: 'reportCard',
-    verificationReference: 'WRK-VERIFY-1',
+    verificationReference: 'WRK-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
     snapshot,
     ...overrides,
   }) as IssuedDocument
 
 describe('report card PDFs', () => {
   it('generates a valid one-page PDF from an issued snapshot', async () => {
-    const bytes = await renderReportCard(document())
+    const bytes = await renderReportCard(document(), {
+      PUBLIC_BASE_URL: 'https://example.test/',
+    })
     expect(Buffer.from(bytes).subarray(0, 5).toString()).toBe('%PDF-')
     const pdf = await PDFDocument.load(bytes)
     expect(pdf.getPageCount()).toBe(1)
@@ -66,10 +68,22 @@ describe('report card PDFs', () => {
       'Updated Student',
     )
     expect(
-      (await PDFDocument.load(await renderReportCard(old))).getPageCount(),
+      (
+        await PDFDocument.load(
+          await renderReportCard(old, {
+            PUBLIC_BASE_URL: 'https://example.test/',
+          }),
+        )
+      ).getPageCount(),
     ).toBe(1)
     expect(
-      (await PDFDocument.load(await renderReportCard(current))).getPageCount(),
+      (
+        await PDFDocument.load(
+          await renderReportCard(current, {
+            PUBLIC_BASE_URL: 'https://example.test/',
+          }),
+        )
+      ).getPageCount(),
     ).toBe(1)
   })
 })

@@ -25,13 +25,15 @@ const snapshot = {
 const document = (subjects = snapshot.subjects) =>
   ({
     documentType: 'transcript',
-    verificationReference: 'WRK-VERIFY-2',
+    verificationReference: 'WRK-BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
     snapshot: { ...snapshot, subjects },
   }) as IssuedDocument
 
 describe('transcript PDFs', () => {
   it('renders a single period', async () => {
-    const bytes = await renderTranscript(document())
+    const bytes = await renderTranscript(document(), {
+      PUBLIC_BASE_URL: 'https://example.test/',
+    })
     expect(Buffer.from(bytes).subarray(0, 5).toString()).toBe('%PDF-')
     expect((await PDFDocument.load(bytes)).getPageCount()).toBe(1)
   })
@@ -46,7 +48,13 @@ describe('transcript PDFs', () => {
       ),
     ).toEqual(['2024/25', '2025/26'])
     expect(
-      (await PDFDocument.load(await renderTranscript(issued))).getPageCount(),
+      (
+        await PDFDocument.load(
+          await renderTranscript(issued, {
+            PUBLIC_BASE_URL: 'https://example.test/',
+          }),
+        )
+      ).getPageCount(),
     ).toBe(1)
   })
   it('continues long transcripts across pages without dropping subjects', async () => {
@@ -58,7 +66,11 @@ describe('transcript PDFs', () => {
     ).toHaveLength(90)
     expect(
       (
-        await PDFDocument.load(await renderTranscript(document(subjects)))
+        await PDFDocument.load(
+          await renderTranscript(document(subjects), {
+            PUBLIC_BASE_URL: 'https://example.test/',
+          }),
+        )
       ).getPageCount(),
     ).toBeGreaterThan(1)
   })
