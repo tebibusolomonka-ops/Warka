@@ -9,6 +9,9 @@ export const AuditActionSchema = z.enum([
   'schoolContact.created',
   'schoolContact.updated',
   'schoolContact.deleted',
+  'training.assigned',
+  'training.completed',
+  'training.waived',
   'studentAccount.provisioned',
   'guardianAccount.provisioned',
   'membership.changed',
@@ -75,6 +78,7 @@ export const AuditResourceTypeSchema = z.enum([
   'progressionPlan',
   'progressionException',
   'schoolContact',
+  'trainingRecord',
 ])
 
 const metadataValue = z.union([

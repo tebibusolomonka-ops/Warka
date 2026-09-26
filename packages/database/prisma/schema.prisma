@@ -133,6 +133,19 @@ enum ProgressionAction {
   manualReview
 }
 
+enum TrainingType {
+  schoolAdministration
+  studentRegistration
+  academicResults
+  documentProcessing
+}
+
+enum TrainingStatus {
+  assigned
+  completed
+  waived
+}
+
 enum SchoolContactRole {
   primary
   technical
@@ -226,6 +239,7 @@ model School {
   documentRequests             DocumentRequest[]
   onboarding                   SchoolOnboarding?
   contacts                     SchoolContact[]
+  trainingRecords              TrainingRecord[]
 
   @@index([organizationId])
 }
@@ -266,6 +280,8 @@ model User {
   startedOnboardings            SchoolOnboarding[] @relation("OnboardingStartedBy")
   completedOnboardings          SchoolOnboarding[] @relation("OnboardingCompletedBy")
   completedChecklistItems       OnboardingChecklistItem[]
+  trainingRecords               TrainingRecord[] @relation("TrainingUser")
+  recordedTraining              TrainingRecord[] @relation("TrainingRecordedBy")
   sessions                     Session[]
   supportIdentity              SupportIdentity?
   approvedEnrollments          Enrollment[]             @relation("EnrollmentApprovedBy")
@@ -521,6 +537,25 @@ model Session {
 
   @@index([userId])
   @@index([expiresAt])
+}
+
+model TrainingRecord {
+  id           String         @id @default(uuid())
+  schoolId     String
+  userId       String
+  trainingType TrainingType
+  status       TrainingStatus @default(assigned)
+  completedAt  DateTime?
+  recordedById String
+  waiverReason String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  school       School         @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  user         User           @relation("TrainingUser", fields: [userId], references: [id], onDelete: Cascade)
+  recordedBy   User           @relation("TrainingRecordedBy", fields: [recordedById], references: [id], onDelete: Restrict)
+
+  @@unique([schoolId, userId, trainingType])
+  @@index([schoolId, status])
 }
 
 model SchoolContact {

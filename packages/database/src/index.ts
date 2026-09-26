@@ -679,3 +679,11 @@ export {
   summarizeReadiness,
 } from './onboardingReadiness.js'
 export type { ReadinessCheck } from './onboardingReadiness.js'
+
+export {
+  TrainingTypeSchema,
+  TrainingRecordStateError,
+  listTrainingRecords,
+  assignTrainingRecord,
+  finishTrainingRecord,
+} from './trainingRecords.js'
