@@ -3,10 +3,15 @@ import { requestRecovery, resetRecovery } from './securityApi'
 
 export function PublicRecovery({ baseUrl }: { baseUrl: string }) {
   const [email, setEmail] = useState('')
-  const [token, setToken] = useState(
-    () =>
-      new URLSearchParams(window.location.search).get('recoveryToken') ?? '',
-  )
+  const [token, setToken] = useState(() => {
+    const url = new URL(window.location.href)
+    const supplied = url.searchParams.get('recoveryToken') ?? ''
+    if (supplied) {
+      url.searchParams.delete('recoveryToken')
+      window.history.replaceState({}, '', url.pathname + url.search + url.hash)
+    }
+    return supplied
+  })
   const [password, setPassword] = useState('')
   const [message, setMessage] = useState('')
   async function request(event: FormEvent) {

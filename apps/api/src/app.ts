@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import Fastify from 'fastify'
 import cookie from '@fastify/cookie'
 import {
@@ -208,6 +209,20 @@ export function buildApp(
   } = {},
 ) {
   const app = Fastify()
+  const testRecoveryTokens = new Map<string, string>()
+  const testRecoveryEnabled =
+    process.env.NODE_ENV === 'test' &&
+    process.env.RECOVERY_TEST_DELIVERY === 'enabled'
+  const testRecoveryDelivery = testRecoveryEnabled
+    ? async (email: string, token: string) => {
+        testRecoveryTokens.set(
+          createHash('sha256').update(email.toLowerCase()).digest('hex'),
+          token,
+        )
+      }
+    : undefined
+  const recoveryDelivery = options.recoveryDelivery ?? testRecoveryDelivery
+
   let database: PrismaClient | undefined
 
   const getDatabase = () => (database ??= createDatabaseClient())
@@ -216,7 +231,9 @@ export function buildApp(
     options.auth ??
     createAuthService(
       getDatabase(),
-      options.production === false ? options.recoveryDelivery : undefined,
+      options.production === false || testRecoveryEnabled
+        ? recoveryDelivery
+        : undefined,
     )
   const getAccess = () => options.access ?? createSchoolAccess(getDatabase())
   const getStudents = () =>
@@ -240,6 +257,17 @@ export function buildApp(
   app.register(cookie)
   app.decorateRequest('currentUser', null)
   app.get('/health', async () => HealthResponseSchema.parse({ status: 'ok' }))
+  if (testRecoveryEnabled)
+    app.get('/__test/recovery-token/:email', async (request, reply) => {
+      const email = String(
+        (request.params as { email: string }).email,
+      ).toLowerCase()
+      const key = createHash('sha256').update(email).digest('hex')
+      const token = testRecoveryTokens.get(key)
+      testRecoveryTokens.delete(key)
+      if (!token) return reply.code(404).send({ error: 'Not found' })
+      return { token }
+    })
   registerAuthRoutes(
     app,
     getAuth,
@@ -249,7 +277,9 @@ export function buildApp(
     app,
     getDatabase,
     authenticate,
-    options.production === false ? options.recoveryDelivery : undefined,
+    options.production === false || testRecoveryEnabled
+      ? recoveryDelivery
+      : undefined,
     options.assistedRecovery,
   )
   registerSchoolRoutes(app, getStore, getAccess, authenticate)

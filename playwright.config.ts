@@ -25,6 +25,7 @@ export default defineConfig({
       env: {
         DATABASE_URL: process.env.TEST_DATABASE_URL,
         NODE_ENV: 'test',
+        RECOVERY_TEST_DELIVERY: 'enabled',
         PUBLIC_BASE_URL: 'http://127.0.0.1:4173/api',
       },
     },
