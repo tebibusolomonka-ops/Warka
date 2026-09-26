@@ -94,7 +94,7 @@ export async function updateProgressionEntry(
   })
 }
 
-async function previewInTransaction(
+export async function previewProgressionPlanInTransaction(
   database: Prisma.TransactionClient,
   schoolId: string,
   planId: string,
@@ -180,7 +180,7 @@ export async function previewProgressionPlan(
   planId: string,
 ) {
   await requireAcademicYearAdmin(database, actorId, schoolId)
-  const preview = await previewInTransaction(
+  const preview = await previewProgressionPlanInTransaction(
     database,
     schoolId,
     z.uuid().parse(planId),
@@ -203,7 +203,11 @@ export async function markProgressionPlanReviewed(
   z.uuid().parse(planId)
   return database.$transaction(
     async (transaction) => {
-      const preview = await previewInTransaction(transaction, schoolId, planId)
+      const preview = await previewProgressionPlanInTransaction(
+        transaction,
+        schoolId,
+        planId,
+      )
       if (preview.plan.status !== 'draft') throw new ProgressionPlanStateError()
       if (preview.problems.length)
         throw new ProgressionValidationError(preview.problems)

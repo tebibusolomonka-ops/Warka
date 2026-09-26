@@ -606,3 +606,6 @@ export {
   bulkSetProgressionDecision,
 } from './progressionBulk.js'
 export type { BulkPromotion, BulkDecision } from './progressionBulk.js'
+
+export { applyProgressionPlan } from './progressionApply.js'
+export type { ProgressionApplyResult } from './progressionApply.js'
