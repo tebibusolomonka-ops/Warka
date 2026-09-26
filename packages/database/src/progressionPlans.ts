@@ -145,3 +145,16 @@ export async function cancelProgressionPlan(
   if (changed.count !== 1) throw new ProgressionPlanStateError()
   return database.progressionPlan.findUniqueOrThrow({ where: { id: planId } })
 }
+
+export async function listProgressionPlans(
+  database: PrismaClient,
+  actorId: string,
+  schoolId: string,
+) {
+  await requireAcademicYearAdmin(database, actorId, schoolId)
+  return database.progressionPlan.findMany({
+    where: { schoolId },
+    orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    take: 50,
+  })
+}

@@ -80,8 +80,8 @@ function database(action: 'manualReview' | 'withdraw') {
     schoolMembership: {
       findUnique: vi.fn(async () => ({ role: 'administrator' })),
     },
-    $transaction: vi.fn(async (run: (tx: typeof tx) => Promise<unknown>) =>
-      run(tx),
+    $transaction: vi.fn(
+      async (run: (transaction: unknown) => Promise<unknown>) => run(tx),
     ),
   } as unknown as PrismaClient
 }

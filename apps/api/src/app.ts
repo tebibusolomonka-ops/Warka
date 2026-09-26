@@ -45,6 +45,14 @@ import {
   ImportPermissionError,
   SchoolDocumentProfilePermissionError,
   ImportStateError,
+  AcademicYearClosingPermissionError,
+  AcademicYearClosingStateError,
+  AcademicYearClosingBlockedError,
+  ProgressionPlanSourceError,
+  DuplicateActiveProgressionPlanError,
+  ProgressionPlanStateError,
+  ProgressionValidationError,
+  ProgressionExceptionStateError,
   type PrismaClient,
 } from '@warka/database'
 import { ErrorResponseSchema, HealthResponseSchema } from '@warka/shared'
@@ -98,6 +106,11 @@ import {
 import { registerDocumentDownloadRoutes } from './documentDownloadRoutes.js'
 import { registerStudentDocumentRoutes } from './studentDocumentRoutes.js'
 import { registerSchoolDocumentRoutes } from './schoolDocumentRoutes.js'
+import { registerAcademicRolloverRoutes } from './academicRolloverRoutes.js'
+import {
+  prismaAcademicRolloverService,
+  type AcademicRolloverService,
+} from './academicRolloverService.js'
 import {
   TransferNotFoundError,
   prismaTransferManagementService,
@@ -179,6 +192,7 @@ export function buildApp(
     verification?: DocumentVerificationService
     documents?: DocumentManagementService
     downloads?: DocumentDownloadService
+    rollover?: AcademicRolloverService
     transfers?: TransferManagementService
     studentOptions?: StudentOptionsService
     enrollments?: EnrollmentService
@@ -271,6 +285,11 @@ export function buildApp(
   )
   registerStudentDocumentRoutes(app, getDatabase, authenticate)
   registerSchoolDocumentRoutes(app, getDatabase, authenticate)
+  registerAcademicRolloverRoutes(
+    app,
+    () => options.rollover ?? prismaAcademicRolloverService(getDatabase()),
+    authenticate,
+  )
   registerDocumentDownloadRoutes(
     app,
     () => options.downloads ?? prismaDocumentDownloadService(getDatabase()),
@@ -452,6 +471,41 @@ export function buildApp(
       return reply.code(409).send({
         error: { code: 'DOCUMENT_CONFLICT', message: error.message },
       })
+    }
+    if (error instanceof AcademicYearClosingPermissionError) {
+      return reply.code(404).send({
+        error: {
+          code: 'ROLLOVER_NOT_FOUND',
+          message: 'Academic rollover not found',
+        },
+      })
+    }
+    if (error instanceof ProgressionPlanSourceError) {
+      return reply.code(400).send({
+        error: { code: 'INVALID_PROGRESSION_PLAN', message: error.message },
+      })
+    }
+    if (
+      error instanceof AcademicYearClosingBlockedError ||
+      error instanceof ProgressionValidationError
+    ) {
+      return reply.code(409).send({
+        error: { code: 'ROLLOVER_BLOCKED', message: error.message },
+        blockers:
+          error instanceof AcademicYearClosingBlockedError
+            ? error.blockers
+            : error.problems,
+      })
+    }
+    if (
+      error instanceof AcademicYearClosingStateError ||
+      error instanceof DuplicateActiveProgressionPlanError ||
+      error instanceof ProgressionPlanStateError ||
+      error instanceof ProgressionExceptionStateError
+    ) {
+      return reply
+        .code(409)
+        .send({ error: { code: 'ROLLOVER_CONFLICT', message: error.message } })
     }
     if (error instanceof ZodError) {
       return reply.code(400).send(

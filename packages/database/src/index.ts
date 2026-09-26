@@ -576,6 +576,7 @@ export {
   DuplicateActiveProgressionPlanError,
   ProgressionPlanStateError,
   createProgressionPlan,
+  listProgressionPlans,
   getProgressionPlan,
   cancelProgressionPlan,
 } from './progressionPlans.js'
