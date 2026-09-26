@@ -673,3 +673,9 @@ export {
   updateSchoolContact,
   deleteSchoolContact,
 } from './schoolContacts.js'
+
+export {
+  evaluateSchoolReadiness,
+  summarizeReadiness,
+} from './onboardingReadiness.js'
+export type { ReadinessCheck } from './onboardingReadiness.js'
