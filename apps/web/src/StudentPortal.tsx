@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { StudentDocuments } from './StudentDocuments'
 import type {
   StudentPortalIdentity,
   StudentResult,
@@ -18,7 +19,8 @@ type ResultState =
   | { status: 'loaded'; data: StudentResult[] }
 type LoadState<T> =
   { status: 'loading' } | { status: 'error' } | { status: 'loaded'; data: T }
-type Section = 'Overview' | 'Results' | 'Materials' | 'Announcements'
+type Section =
+  'Overview' | 'Results' | 'Materials' | 'Announcements' | 'Documents'
 
 export function StudentPortal({
   baseUrl,
@@ -128,19 +130,31 @@ export function StudentPortal({
         </button>
       </div>
       <nav aria-label="Student portal" className="workspace-nav">
-        {(['Overview', 'Results', 'Materials', 'Announcements'] as const).map(
-          (item) => (
-            <button
-              key={item}
-              type="button"
-              aria-current={section === item ? 'page' : undefined}
-              onClick={() => setSection(item)}
-            >
-              {item}
-            </button>
-          ),
-        )}
+        {(
+          [
+            'Overview',
+            'Results',
+            'Materials',
+            'Announcements',
+            'Documents',
+          ] as const
+        ).map((item) => (
+          <button
+            key={item}
+            type="button"
+            aria-current={section === item ? 'page' : undefined}
+            onClick={() => setSection(item)}
+          >
+            {item}
+          </button>
+        ))}
       </nav>
+      {section === 'Documents' && (
+        <StudentDocuments
+          baseUrl={baseUrl}
+          onSessionExpired={onSessionExpired}
+        />
+      )}
       {section === 'Overview' && (
         <div className="academic-panel">
           <h3>{name}</h3>

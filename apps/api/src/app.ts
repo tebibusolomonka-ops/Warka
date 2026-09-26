@@ -26,6 +26,8 @@ import {
   DocumentPermissionError,
   DocumentSourceError,
   DocumentStateError,
+  DocumentRequestPermissionError,
+  DocumentRequestStateError,
   DuplicateActiveTransferError,
   TransferDestinationError,
   TransferPermissionError,
@@ -94,6 +96,7 @@ import {
   type DocumentDownloadService,
 } from './documentDownloadService.js'
 import { registerDocumentDownloadRoutes } from './documentDownloadRoutes.js'
+import { registerStudentDocumentRoutes } from './studentDocumentRoutes.js'
 import {
   TransferNotFoundError,
   prismaTransferManagementService,
@@ -265,6 +268,7 @@ export function buildApp(
     () => options.documents ?? prismaDocumentManagementService(getDatabase()),
     authenticate,
   )
+  registerStudentDocumentRoutes(app, getDatabase, authenticate)
   registerDocumentDownloadRoutes(
     app,
     () => options.downloads ?? prismaDocumentDownloadService(getDatabase()),
@@ -427,6 +431,7 @@ export function buildApp(
     }
     if (
       error instanceof DocumentPermissionError ||
+      error instanceof DocumentRequestPermissionError ||
       error instanceof DocumentDownloadDeniedError ||
       error instanceof DocumentStudentNotFoundError
     ) {
@@ -439,7 +444,8 @@ export function buildApp(
     }
     if (
       error instanceof DocumentSourceError ||
-      error instanceof DocumentStateError
+      error instanceof DocumentStateError ||
+      error instanceof DocumentRequestStateError
     ) {
       return reply.code(409).send({
         error: { code: 'DOCUMENT_CONFLICT', message: error.message },

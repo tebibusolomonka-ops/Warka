@@ -89,7 +89,9 @@ export async function listStudentDocumentRequests(
     orderBy: [{ requestedAt: 'desc' }, { id: 'desc' }],
     take: 50,
     include: {
-      issuedDocument: { select: { verificationReference: true, status: true } },
+      issuedDocument: {
+        select: { id: true, verificationReference: true, status: true },
+      },
     },
   })
 }
@@ -114,7 +116,9 @@ export async function listSchoolDocumentRequests(
         select: { studentReference: true, givenName: true, familyName: true },
       },
       academicYear: { select: { name: true } },
-      issuedDocument: { select: { verificationReference: true, status: true } },
+      issuedDocument: {
+        select: { id: true, verificationReference: true, status: true },
+      },
     },
   })
 }
@@ -131,7 +135,9 @@ export async function getDocumentRequest(
         select: { studentReference: true, givenName: true, familyName: true },
       },
       academicYear: { select: { name: true } },
-      issuedDocument: { select: { verificationReference: true, status: true } },
+      issuedDocument: {
+        select: { id: true, verificationReference: true, status: true },
+      },
     },
   })
   if (!request) throw new DocumentRequestPermissionError()
