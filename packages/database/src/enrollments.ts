@@ -5,6 +5,7 @@ import {
   type PrismaClient,
 } from '@prisma/client'
 import { z } from 'zod'
+import { recordEnrollmentHistory } from './enrollmentHistory.js'
 
 export const CreateEnrollmentSchema = z.strictObject({
   studentId: z.uuid(),
@@ -16,7 +17,11 @@ export const CreateEnrollmentSchema = z.strictObject({
 
 type EnrollmentStore = Pick<
   PrismaClient,
-  'academicYear' | 'gradeLevel' | 'schoolClass' | 'enrollment'
+  | 'academicYear'
+  | 'gradeLevel'
+  | 'schoolClass'
+  | 'enrollment'
+  | 'enrollmentHistoryEvent'
 >
 
 export type CreateEnrollment = z.input<typeof CreateEnrollmentSchema>
@@ -60,10 +65,14 @@ export function canTransition(
 }
 
 export async function createEnrollment(
-  database: EnrollmentStore,
+  database: PrismaClient | Prisma.TransactionClient,
   input: CreateEnrollment,
 ): Promise<Enrollment> {
   const data = CreateEnrollmentSchema.parse(input)
+  if ('$transaction' in database)
+    return database.$transaction((transaction) =>
+      createEnrollment(transaction, data),
+    )
   const [year, grade, schoolClass] = await Promise.all([
     database.academicYear.findFirst({
       where: { id: data.academicYearId, schoolId: data.schoolId },
@@ -90,7 +99,7 @@ export async function createEnrollment(
   }
 
   try {
-    return await database.enrollment.create({
+    const enrollment = await database.enrollment.create({
       data: {
         studentId: data.studentId,
         schoolId: data.schoolId,
@@ -99,6 +108,17 @@ export async function createEnrollment(
         ...(data.schoolClassId ? { schoolClassId: data.schoolClassId } : {}),
       },
     })
+    await recordEnrollmentHistory(database, {
+      enrollmentId: enrollment.id,
+      eventType: 'enrolled',
+      effectiveAt: enrollment.createdAt,
+      next: {
+        academicYearId: enrollment.academicYearId,
+        gradeLevelId: enrollment.gradeLevelId,
+        schoolClassId: enrollment.schoolClassId,
+      },
+    })
+    return enrollment
   } catch (error) {
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -125,13 +145,17 @@ export function findEnrollmentById(
 }
 
 async function applyTransition(
-  database: EnrollmentStore,
+  database: PrismaClient | Prisma.TransactionClient,
   schoolId: string,
   id: string,
   action: EnrollmentAction,
   now: Date,
   actorId?: string,
 ): Promise<Enrollment> {
+  if ('$transaction' in database)
+    return database.$transaction((transaction) =>
+      applyTransition(transaction, schoolId, id, action, now, actorId),
+    )
   const data: Prisma.EnrollmentUncheckedUpdateManyInput =
     action === 'submit'
       ? { status: 'pending' }
@@ -161,11 +185,32 @@ async function applyTransition(
   }
   const enrollment = await findEnrollmentById(database, schoolId, id)
   if (!enrollment) throw new EnrollmentNotFoundError()
+  await recordEnrollmentHistory(database, {
+    enrollmentId: enrollment.id,
+    eventType:
+      action === 'submit'
+        ? 'submitted'
+        : action === 'approve'
+          ? 'approved'
+          : 'withdrawn',
+    effectiveAt: now,
+    ...(actorId ? { performedById: actorId } : {}),
+    previous: {
+      academicYearId: enrollment.academicYearId,
+      gradeLevelId: enrollment.gradeLevelId,
+      schoolClassId: enrollment.schoolClassId,
+    },
+    next: {
+      academicYearId: enrollment.academicYearId,
+      gradeLevelId: enrollment.gradeLevelId,
+      schoolClassId: enrollment.schoolClassId,
+    },
+  })
   return enrollment
 }
 
 export function submitEnrollment(
-  database: EnrollmentStore,
+  database: PrismaClient | Prisma.TransactionClient,
   schoolId: string,
   id: string,
 ): Promise<Enrollment> {
@@ -173,7 +218,7 @@ export function submitEnrollment(
 }
 
 export function approveEnrollment(
-  database: EnrollmentStore,
+  database: PrismaClient | Prisma.TransactionClient,
   schoolId: string,
   id: string,
   userId: string,
@@ -184,7 +229,7 @@ export function approveEnrollment(
 }
 
 export function withdrawEnrollment(
-  database: EnrollmentStore,
+  database: PrismaClient | Prisma.TransactionClient,
   schoolId: string,
   id: string,
   userId: string,

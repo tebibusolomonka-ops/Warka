@@ -8,6 +8,7 @@ import { createGradeLevel } from './gradeLevels.js'
 import { createSchoolClass } from './schoolClasses.js'
 import { createStudent } from './students.js'
 import { createUser } from './users.js'
+import { listEnrollmentHistory } from './enrollmentHistory.js'
 import {
   approveEnrollment,
   createEnrollment,
@@ -163,6 +164,24 @@ describe.skipIf(!database)('enrollment lifecycle in PostgreSQL', () => {
       expect(withdrawn.approvedById).toBe(actor.id)
       expect(withdrawn.withdrawnAt).toEqual(withdrawalTime)
       expect(withdrawn.withdrawnById).toBe(actor.id)
+      const history = await listEnrollmentHistory(database!, draft.id)
+      expect(history.map((event) => event.eventType).sort()).toEqual([
+        'approved',
+        'enrolled',
+        'submitted',
+        'withdrawn',
+      ])
+      expect(
+        history.find((event) => event.eventType === 'enrolled')
+          ?.newAcademicYearId,
+      ).toBe(year.id)
+      expect(
+        history.find((event) => event.eventType === 'approved')?.performedById,
+      ).toBe(actor.id)
+      expect(
+        history.find((event) => event.eventType === 'withdrawn')?.effectiveAt,
+      ).toEqual(withdrawalTime)
+      expect(JSON.stringify(history)).not.toContain('Hana')
       await expect(
         withdrawEnrollment(database!, school.id, draft.id, actor.id),
       ).rejects.toBeInstanceOf(InvalidEnrollmentTransitionError)

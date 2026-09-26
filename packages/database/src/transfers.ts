@@ -1,6 +1,7 @@
 import { Prisma, type PrismaClient } from '@prisma/client'
 import { z } from 'zod'
 import { recordAuditEvent } from './auditEvents.js'
+import { recordEnrollmentHistory } from './enrollmentHistory.js'
 import { hasOrganizationAdminRole } from './organizationMemberships.js'
 import { findSchoolMembership } from './schoolMemberships.js'
 
@@ -284,6 +285,32 @@ export async function acceptTransfer(
         },
       })
       if (sourceChanged.count !== 1) throw new TransferStateError()
+      const sourceEnrollment = await transaction.enrollment.findUniqueOrThrow({
+        where: { id: transfer.sourceEnrollmentId },
+      })
+      await recordEnrollmentHistory(transaction, {
+        enrollmentId: receivingEnrollment.id,
+        eventType: 'enrolled',
+        effectiveAt: receivingEnrollment.createdAt,
+        performedById: actorId,
+        next: {
+          academicYearId: receivingEnrollment.academicYearId,
+          gradeLevelId: receivingEnrollment.gradeLevelId,
+          schoolClassId: receivingEnrollment.schoolClassId,
+        },
+      })
+      await recordEnrollmentHistory(transaction, {
+        enrollmentId: sourceEnrollment.id,
+        eventType: 'withdrawn',
+        effectiveAt: sourceEnrollment.withdrawnAt ?? new Date(),
+        performedById: actorId,
+        reason: 'Transfer accepted',
+        previous: {
+          academicYearId: sourceEnrollment.academicYearId,
+          gradeLevelId: sourceEnrollment.gradeLevelId,
+          schoolClassId: sourceEnrollment.schoolClassId,
+        },
+      })
       const now = new Date()
       const changed = await transaction.transferRequest.updateMany({
         where: { id: transferId, status: 'approvedBySendingSchool' },

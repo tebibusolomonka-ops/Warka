@@ -545,3 +545,14 @@ export {
   issueRequestedDocument,
   rejectDocumentRequest,
 } from './documentRequestWorkflow.js'
+
+export {
+  RecordEnrollmentHistorySchema,
+  recordEnrollmentHistory,
+  listEnrollmentHistory,
+} from './enrollmentHistory.js'
+export type { RecordEnrollmentHistory } from './enrollmentHistory.js'
+export type {
+  EnrollmentHistoryEvent,
+  EnrollmentHistoryType,
+} from '@prisma/client'

@@ -105,6 +105,17 @@ enum EnrollmentStatus {
   withdrawn
 }
 
+enum EnrollmentHistoryType {
+  enrolled
+  submitted
+  approved
+  classChanged
+  gradeChanged
+  promoted
+  withdrawn
+  reEnrolled
+}
+
 model Organization {
   id               String                   @id @default(uuid())
   name             String
@@ -192,6 +203,7 @@ model User {
   withdrawnEnrollments         Enrollment[]             @relation("EnrollmentWithdrawnBy")
   createdImportJobs            ImportJob[]
   requestedDocuments           DocumentRequest[]
+  performedEnrollmentEvents    EnrollmentHistoryEvent[]
   notifications                Notification[]
   teachingAssignments          TeachingAssignment[]
   marks                        Mark[]
@@ -599,6 +611,7 @@ model Enrollment {
   approvedBy        User?             @relation("EnrollmentApprovedBy", fields: [approvedById], references: [id], onDelete: Restrict)
   withdrawnBy       User?             @relation("EnrollmentWithdrawnBy", fields: [withdrawnById], references: [id], onDelete: Restrict)
   marks             Mark[]
+  historyEvents     EnrollmentHistoryEvent[]
 
   @@unique([studentId, schoolId, academicYearId])
   @@unique([id, schoolId, studentId])
@@ -606,6 +619,27 @@ model Enrollment {
   @@index([schoolId, gradeLevelId])
   @@index([approvedById])
   @@index([withdrawnById])
+}
+
+model EnrollmentHistoryEvent {
+  id                       String                @id @default(uuid())
+  enrollmentId             String
+  eventType                EnrollmentHistoryType
+  effectiveAt              DateTime
+  performedById            String?
+  reason                   String?
+  previousAcademicYearId   String?
+  previousGradeLevelId     String?
+  previousSchoolClassId    String?
+  newAcademicYearId        String?
+  newGradeLevelId          String?
+  newSchoolClassId         String?
+  createdAt                DateTime              @default(now())
+  enrollment               Enrollment            @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  performedBy              User?                 @relation(fields: [performedById], references: [id], onDelete: SetNull)
+
+  @@index([enrollmentId, effectiveAt])
+  @@index([performedById])
 }
 
 model Subject {
