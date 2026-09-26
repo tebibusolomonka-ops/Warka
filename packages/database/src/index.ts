@@ -454,3 +454,16 @@ export type {
   AccessReviewEntry,
   ReviewDecision,
 } from './accessReviews.js'
+export {
+  SupportAccessPermissionError,
+  SupportAccessStateError,
+  SupportAccessDeniedError,
+  createSupportIdentity,
+  listSupportIdentities,
+  requestSupportAccess,
+  approveSupportAccess,
+  revokeSupportAccess,
+  checkSupportAccess,
+  listSupportAccessGrants,
+} from './supportAccess.js'
+export type { SupportAccessGrant, SupportIdentity } from './supportAccess.js'

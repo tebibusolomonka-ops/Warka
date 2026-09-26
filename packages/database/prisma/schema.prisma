@@ -176,6 +176,7 @@ model User {
   escalatedFamilyConversations FamilyConversation[]     @relation("FamilyConversationEscalatedBy")
   guardianAccess               GuardianAccess?
   sessions                     Session[]
+  supportIdentity              SupportIdentity?
   approvedEnrollments          Enrollment[]             @relation("EnrollmentApprovedBy")
   withdrawnEnrollments         Enrollment[]             @relation("EnrollmentWithdrawnBy")
   teachingAssignments          TeachingAssignment[]
@@ -342,6 +343,41 @@ model AccessReviewEntry {
   @@unique([accessReviewId, accessType, userId, organizationId, schoolId])
   @@index([accessReviewId, decision])
   @@index([userId])
+}
+
+enum SupportAccessStatus {
+  pending
+  approved
+  revoked
+}
+
+enum SupportAccessScope {
+  schoolAdministrationDiagnostics
+}
+
+model SupportIdentity {
+  userId    String   @id
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model SupportAccessGrant {
+  id            String              @id @default(uuid())
+  supportUserId String
+  schoolId      String
+  scope         SupportAccessScope  @default(schoolAdministrationDiagnostics)
+  reason        String
+  status        SupportAccessStatus @default(pending)
+  requestedAt   DateTime            @default(now())
+  requestedById String
+  approvedAt    DateTime?
+  approvedById  String?
+  expiresAt     DateTime
+  revokedAt     DateTime?
+  revokedById   String?
+
+  @@index([supportUserId, schoolId, status, expiresAt])
+  @@index([schoolId, status, requestedAt])
 }
 
 model PasswordCredential {
