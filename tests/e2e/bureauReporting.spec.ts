@@ -101,7 +101,7 @@ test('bureau manager approves a school report with viewer boundary', async ({
         .getByRole('region', { name: 'Required schools' })
         .getByText('Required Browser School — submitted'),
     ).toBeVisible()
-    await page.getByRole('button', { name: 'Approve' }).click()
+    await page.getByRole('button', { name: 'Approve', exact: true }).click()
     await expect(
       page
         .getByRole('region', { name: 'Required schools' })
@@ -116,7 +116,9 @@ test('bureau manager approves a school report with viewer boundary', async ({
     await expect(
       page.getByRole('button', { name: 'Create reporting period' }),
     ).toHaveCount(0)
-    await expect(page.getByRole('button', { name: 'Approve' })).toHaveCount(0)
+    await expect(
+      page.getByRole('button', { name: 'Approve', exact: true }),
+    ).toHaveCount(0)
   } finally {
     if (periodId)
       await database.reportingPeriod.deleteMany({ where: { id: periodId } })

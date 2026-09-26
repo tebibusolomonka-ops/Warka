@@ -48,6 +48,27 @@ describe.skipIf(!database)('import jobs in PostgreSQL', () => {
         },
       },
     })
+    const studentUser = await database!.user.create({
+      data: {
+        email: 'import-student-' + suffix + '@example.test',
+        displayName: 'Student account',
+      },
+    })
+    const guardianUser = await database!.user.create({
+      data: {
+        email: 'import-guardian-' + suffix + '@example.test',
+        displayName: 'Guardian account',
+      },
+    })
+    const bureauUser = await database!.user.create({
+      data: {
+        email: 'import-bureau-' + suffix + '@example.test',
+        displayName: 'Bureau user',
+        bureauAccesses: {
+          create: { organizationId: organization.id, role: 'reportManager' },
+        },
+      },
+    })
     try {
       const job = await createImportJob(database!, registrar.id, {
         schoolId: firstSchool.id,
@@ -61,6 +82,10 @@ describe.skipIf(!database)('import jobs in PostgreSQL', () => {
       await expect(
         createImportJob(database!, teacher.id, { schoolId: firstSchool.id }),
       ).rejects.toThrow('Import permission denied')
+      for (const user of [studentUser, guardianUser, bureauUser])
+        await expect(
+          createImportJob(database!, user.id, { schoolId: firstSchool.id }),
+        ).rejects.toThrow('Import permission denied')
       await expect(
         getImportJob(database!, registrar.id, secondSchool.id, job.id),
       ).rejects.toThrow('Import permission denied')
@@ -126,11 +151,24 @@ describe.skipIf(!database)('import jobs in PostgreSQL', () => {
       await database!.importJob.deleteMany({
         where: { schoolId: { in: [firstSchool.id, secondSchool.id] } },
       })
+      await database!.bureauAccess.deleteMany({
+        where: { userId: bureauUser.id },
+      })
       await database!.schoolMembership.deleteMany({
         where: { userId: { in: [registrar.id, teacher.id] } },
       })
       await database!.user.deleteMany({
-        where: { id: { in: [registrar.id, teacher.id] } },
+        where: {
+          id: {
+            in: [
+              registrar.id,
+              teacher.id,
+              studentUser.id,
+              guardianUser.id,
+              bureauUser.id,
+            ],
+          },
+        },
       })
       await database!.school.deleteMany({
         where: { id: { in: [firstSchool.id, secondSchool.id] } },

@@ -40,6 +40,8 @@ import {
   SupportAccessStateError,
   RetentionPermissionError,
   RetentionPolicyNotFoundError,
+  ImportPermissionError,
+  ImportStateError,
   type PrismaClient,
 } from '@warka/database'
 import { ErrorResponseSchema, HealthResponseSchema } from '@warka/shared'
@@ -97,6 +99,7 @@ import { registerGuardianRelationshipRoutes } from './guardianRelationshipRoutes
 import { registerParentPortalRoutes } from './parentPortalRoutes.js'
 import { registerFamilyConversationRoutes } from './familyConversationRoutes.js'
 import { registerBureauRoutes } from './bureauRoutes.js'
+import { ImportPayloadError, registerImportRoutes } from './importRoutes.js'
 import {
   GovernancePermissionError,
   registerGovernanceRoutes,
@@ -216,6 +219,7 @@ export function buildApp(
   registerAnnouncementRoutes(app, getAnnouncements, authenticate)
   registerParentServiceRoutes(app, getDatabase, authenticate)
   registerBureauRoutes(app, getDatabase, authenticate)
+  registerImportRoutes(app, getDatabase, authenticate)
   registerGovernanceRoutes(app, getDatabase, authenticate)
   registerGuardianRelationshipRoutes(app, getDatabase, authenticate)
   registerFamilyConversationRoutes(
@@ -270,6 +274,30 @@ export function buildApp(
   )
 
   app.setErrorHandler((error, _request, reply) => {
+    if (
+      typeof error === 'object' &&
+      error !== null &&
+      'statusCode' in error &&
+      error.statusCode === 413
+    )
+      return reply.code(413).send({
+        error: {
+          code: 'REQUEST_TOO_LARGE',
+          message: 'Request body exceeds the size limit',
+        },
+      })
+    if (error instanceof ImportPermissionError)
+      return reply.code(403).send({
+        error: { code: 'IMPORT_ACCESS_DENIED', message: error.message },
+      })
+    if (error instanceof ImportStateError)
+      return reply.code(409).send({
+        error: { code: 'IMPORT_STATE_CONFLICT', message: error.message },
+      })
+    if (error instanceof ImportPayloadError)
+      return reply.code(413).send({
+        error: { code: 'INVALID_IMPORT_FILE', message: error.message },
+      })
     if (
       error instanceof GovernancePermissionError ||
       error instanceof AccessReviewPermissionError ||
