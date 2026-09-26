@@ -15,6 +15,8 @@ export const AuditActionSchema = z.enum([
   'document.corrected',
   'document.withdrawn',
   'document.downloaded',
+  'academicYear.closingStarted',
+  'academicYear.closed',
   'transfer.approved',
   'transfer.accepted',
   'transfer.rejected',
@@ -59,6 +61,7 @@ export const AuditResourceTypeSchema = z.enum([
   'school',
   'schoolDocumentProfile',
   'documentRequest',
+  'academicYear',
 ])
 
 const metadataValue = z.union([

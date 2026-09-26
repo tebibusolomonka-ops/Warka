@@ -105,6 +105,12 @@ enum EnrollmentStatus {
   withdrawn
 }
 
+enum AcademicYearStatus {
+  active
+  closing
+  closed
+}
+
 enum EnrollmentHistoryType {
   enrolled
   submitted
@@ -204,6 +210,7 @@ model User {
   createdImportJobs            ImportJob[]
   requestedDocuments           DocumentRequest[]
   performedEnrollmentEvents    EnrollmentHistoryEvent[]
+  closedAcademicYears          AcademicYear[] @relation("AcademicYearClosedBy")
   notifications                Notification[]
   teachingAssignments          TeachingAssignment[]
   marks                        Mark[]
@@ -449,6 +456,11 @@ model Session {
 }
 
 model AcademicYear {
+  status              AcademicYearStatus @default(active)
+  closingStartedAt    DateTime?
+  closedAt            DateTime?
+  closedById          String?
+  closedBy            User? @relation("AcademicYearClosedBy", fields: [closedById], references: [id], onDelete: SetNull)
   resultSets          ResultSet[]
   issuedDocuments     IssuedDocument[]
   documentRequests    DocumentRequest[]
@@ -470,6 +482,7 @@ model AcademicYear {
   @@unique([schoolId, name])
   @@unique([id, schoolId])
   @@index([schoolId, startsOn])
+  @@index([schoolId, status])
 }
 
 model GradeLevel {

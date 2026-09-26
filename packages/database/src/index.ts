@@ -556,3 +556,16 @@ export type {
   EnrollmentHistoryEvent,
   EnrollmentHistoryType,
 } from '@prisma/client'
+
+export {
+  AcademicYearClosingPermissionError,
+  AcademicYearClosingStateError,
+  AcademicYearClosingBlockedError,
+  closingBlockers,
+  requireAcademicYearAdmin,
+  getYearClosingReadiness,
+  startAcademicYearClosing,
+  completeAcademicYearClosing,
+} from './academicYearClosing.js'
+export type { YearClosingBlocker } from './academicYearClosing.js'
+export type { AcademicYearStatus } from '@prisma/client'
