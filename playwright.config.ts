@@ -22,7 +22,11 @@ export default defineConfig({
       command: 'pnpm --filter @warka/api start',
       url: 'http://127.0.0.1:3000/health',
       reuseExistingServer: false,
-      env: { DATABASE_URL: process.env.TEST_DATABASE_URL, NODE_ENV: 'test' },
+      env: {
+        DATABASE_URL: process.env.TEST_DATABASE_URL,
+        NODE_ENV: 'test',
+        PUBLIC_BASE_URL: 'http://127.0.0.1:4173/api',
+      },
     },
     {
       command:

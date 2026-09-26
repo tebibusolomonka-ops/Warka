@@ -155,9 +155,7 @@ export function StudentDocuments({
                       <p>
                         Verification reference: {item.verificationReference}
                       </p>
-                      <a
-                        href={`/verify/documents/${item.verificationReference}`}
-                      >
+                      <a href={`/verify/${item.verificationReference}`}>
                         Verify document
                       </a>
                     </>

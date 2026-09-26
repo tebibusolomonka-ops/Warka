@@ -33,6 +33,7 @@ import { getBureauAccess, type BureauAccess } from './bureauApi'
 import { GovernanceWorkspace } from './GovernanceWorkspace'
 import { NotificationCenter } from './NotificationCenter'
 import { SchoolOperationsWorkspace } from './SchoolOperationsWorkspace'
+import { SchoolDocuments } from './SchoolDocuments'
 
 type Authentication =
   | { status: 'checking' }
@@ -410,6 +411,17 @@ function SignedInShell({
                     selectedSchool.capabilities.canRegister &&
                     selectedSchool.capabilities.canApprove
                   }
+                  onSessionExpired={sessionExpired}
+                />
+              )}
+            {selectedSchool &&
+              (selectedSchool.capabilities.canRegister ||
+                selectedSchool.capabilities.canApprove) && (
+                <SchoolDocuments
+                  baseUrl={baseUrl}
+                  schoolId={selectedSchool.school.id}
+                  canRegister={selectedSchool.capabilities.canRegister}
+                  canApprove={selectedSchool.capabilities.canApprove}
                   onSessionExpired={sessionExpired}
                 />
               )}

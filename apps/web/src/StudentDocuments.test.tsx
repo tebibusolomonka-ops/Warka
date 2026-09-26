@@ -103,7 +103,7 @@ describe('student documents', () => {
       screen
         .getByRole('link', { name: 'Verify document' })
         .getAttribute('href'),
-    ).toBe(`/verify/documents/${reference}`)
+    ).toBe(`/verify/${reference}`)
   })
   it('shows rejection reason without staff actions', async () => {
     vi.mocked(getStudentDocumentWorkspace).mockResolvedValue({

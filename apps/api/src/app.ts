@@ -97,6 +97,7 @@ import {
 } from './documentDownloadService.js'
 import { registerDocumentDownloadRoutes } from './documentDownloadRoutes.js'
 import { registerStudentDocumentRoutes } from './studentDocumentRoutes.js'
+import { registerSchoolDocumentRoutes } from './schoolDocumentRoutes.js'
 import {
   TransferNotFoundError,
   prismaTransferManagementService,
@@ -269,6 +270,7 @@ export function buildApp(
     authenticate,
   )
   registerStudentDocumentRoutes(app, getDatabase, authenticate)
+  registerSchoolDocumentRoutes(app, getDatabase, authenticate)
   registerDocumentDownloadRoutes(
     app,
     () => options.downloads ?? prismaDocumentDownloadService(getDatabase()),
