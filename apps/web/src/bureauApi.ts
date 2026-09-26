@@ -134,3 +134,30 @@ export type SchoolReport = {
 
 export const listSchoolReports = (baseUrl: string, schoolId: string) =>
   request<SchoolReport[]>(baseUrl, `/schools/${schoolId}/reporting`)
+
+export type BureauSchool = { id: string; name: string }
+export const listBureauSchools = (baseUrl: string, organizationId: string) =>
+  request<BureauSchool[]>(baseUrl, `/bureau/${organizationId}/schools`)
+export const assignRequiredSchools = (
+  baseUrl: string,
+  organizationId: string,
+  periodId: string,
+  schoolIds: string[],
+) =>
+  request(baseUrl, `/bureau/${organizationId}/periods/${periodId}/schools`, {
+    method: 'PUT',
+    body: JSON.stringify({ schoolIds }),
+  })
+export const removeRequiredSchool = (
+  baseUrl: string,
+  organizationId: string,
+  periodId: string,
+  schoolId: string,
+) =>
+  request(
+    baseUrl,
+    `/bureau/${organizationId}/periods/${periodId}/schools/${schoolId}`,
+    {
+      method: 'DELETE',
+    },
+  )

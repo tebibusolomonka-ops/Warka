@@ -1,18 +1,22 @@
 import { useEffect, useState } from 'react'
 import {
+  assignRequiredSchools,
   changePeriod,
   createPeriod,
   decideSubmission,
   getCoverage,
+  listBureauSchools,
   listPeriods,
-  listSubmissions,
   listSchoolReports,
+  listSubmissions,
   prepareReport,
+  removeRequiredSchool,
   submitReport,
   type BureauAccess,
+  type BureauSchool,
   type ReportingPeriod,
-  type Submission,
   type SchoolReport,
+  type Submission,
 } from './bureauApi'
 
 export function BureauWorkspace({
@@ -23,6 +27,7 @@ export function BureauWorkspace({
   access: BureauAccess
 }) {
   const [periods, setPeriods] = useState<ReportingPeriod[]>([])
+  const [schools, setSchools] = useState<BureauSchool[]>([])
   const [submissions, setSubmissions] = useState<Submission[]>([])
   const [coverage, setCoverage] = useState<{
     expected: number
@@ -35,11 +40,13 @@ export function BureauWorkspace({
   const [selected, setSelected] = useState('')
   const [error, setError] = useState('')
   const refresh = async () => {
-    const [nextPeriods, nextSubmissions] = await Promise.all([
+    const [nextPeriods, nextSchools, nextSubmissions] = await Promise.all([
       listPeriods(baseUrl, access.organizationId),
+      listBureauSchools(baseUrl, access.organizationId),
       listSubmissions(baseUrl, access.organizationId),
     ])
     setPeriods(nextPeriods)
+    setSchools(nextSchools)
     setSubmissions(nextSubmissions)
     const periodId = selected || nextPeriods[0]?.id
     if (periodId) {
@@ -57,10 +64,21 @@ export function BureauWorkspace({
     try {
       await operation()
       await refresh()
-    } catch {
-      setError('Reporting action failed.')
+    } catch (caught) {
+      setError(
+        caught instanceof Error ? caught.message : 'Reporting action failed.',
+      )
     }
   }
+  const period = periods.find((item) => item.id === selected)
+  const required = new Set(
+    period?.requirements.map((item) => item.school.id) ?? [],
+  )
+  const submissionBySchool = new Map(
+    submissions
+      .filter((item) => item.reportingPeriod.id === selected)
+      .map((item) => [item.school.id, item]),
+  )
   const exportCsv = () => {
     const rows = submissions
       .filter((item) => item.status === 'approved')
@@ -119,9 +137,9 @@ export function BureauWorkspace({
             ).then((value) => setCoverage(value.coverage))
           }}
         >
-          {periods.map((period) => (
-            <option key={period.id} value={period.id}>
-              {period.name} ({period.status})
+          {periods.map((item) => (
+            <option key={item.id} value={item.id}>
+              {item.name} ({item.status})
             </option>
           ))}
         </select>
@@ -145,7 +163,7 @@ export function BureauWorkspace({
           >
             Create reporting period
           </button>
-          {selected && (
+          {period && (
             <button
               type="button"
               onClick={() =>
@@ -153,11 +171,8 @@ export function BureauWorkspace({
                   changePeriod(
                     baseUrl,
                     access.organizationId,
-                    selected,
-                    periods.find((item) => item.id === selected)?.status ===
-                      'draft'
-                      ? 'open'
-                      : 'close',
+                    period.id,
+                    period.status === 'draft' ? 'open' : 'close',
                   ),
                 )
               }
@@ -166,6 +181,60 @@ export function BureauWorkspace({
             </button>
           )}
         </>
+      )}
+      {period && (
+        <section aria-labelledby="required-schools-heading">
+          <h3 id="required-schools-heading">Required schools</h3>
+          <ul>
+            {schools.map((school) => {
+              const submission = submissionBySchool.get(school.id)
+              const isRequired = required.has(school.id)
+              return (
+                <li key={school.id}>
+                  <strong>{school.name}</strong> —{' '}
+                  {isRequired
+                    ? (submission?.status ?? 'missing')
+                    : 'not required'}
+                  {access.role === 'reportManager' &&
+                    (!isRequired ? (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          void act(() =>
+                            assignRequiredSchools(
+                              baseUrl,
+                              access.organizationId,
+                              period.id,
+                              [school.id],
+                            ),
+                          )
+                        }
+                      >
+                        Require report
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled={Boolean(submission)}
+                        onClick={() =>
+                          void act(() =>
+                            removeRequiredSchool(
+                              baseUrl,
+                              access.organizationId,
+                              period.id,
+                              school.id,
+                            ),
+                          )
+                        }
+                      >
+                        Remove requirement
+                      </button>
+                    ))}
+                </li>
+              )
+            })}
+          </ul>
+        </section>
       )}
       <h3>School submissions</h3>
       <ul>

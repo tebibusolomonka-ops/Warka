@@ -12,6 +12,7 @@ import {
   listReportingPeriods,
   openReportingPeriod,
   prepareSchoolReport,
+  removeRequiredSchool,
   requireBureauPermission,
   resolveBureauScope,
   returnSchoolReport,
@@ -169,6 +170,25 @@ export function registerBureauRoutes(
         authenticatedUser(request).id,
         id,
         reason,
+      )
+    },
+  )
+  app.delete(
+    '/bureau/:organizationId/periods/:periodId/schools/:schoolId',
+    { preHandler: authenticate },
+    (request) => {
+      const { periodId, schoolId } = z
+        .strictObject({
+          organizationId: z.uuid(),
+          periodId: z.uuid(),
+          schoolId: z.uuid(),
+        })
+        .parse(request.params)
+      return removeRequiredSchool(
+        getDatabase(),
+        authenticatedUser(request).id,
+        periodId,
+        schoolId,
       )
     },
   )

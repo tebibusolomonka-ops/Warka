@@ -376,6 +376,8 @@ export {
   openReportingPeriod,
   closeReportingPeriod,
   assignRequiredSchools,
+  removeRequiredSchool,
+  ReportingRequirementStateError,
   listReportingPeriods,
 } from './reportingPeriods.js'
 export type {

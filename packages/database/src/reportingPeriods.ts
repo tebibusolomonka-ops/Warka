@@ -2,6 +2,8 @@ import type { PrismaClient, ReportingPeriodStatus } from '@prisma/client'
 import { z } from 'zod'
 import { requireBureauPermission } from './bureauAccess.js'
 
+export class ReportingRequirementStateError extends Error {}
+
 export const CreateReportingPeriodSchema = z
   .object({
     organizationId: z.uuid(),
@@ -19,7 +21,11 @@ export const CreateReportingPeriodSchema = z
 
 type ReportingPeriodStore = Pick<
   PrismaClient,
-  'bureauAccess' | 'reportingPeriod' | 'reportingRequirement' | 'school'
+  | 'bureauAccess'
+  | 'reportingPeriod'
+  | 'reportingRequirement'
+  | 'reportingSubmission'
+  | 'school'
 >
 
 export async function createReportingPeriod(
@@ -120,6 +126,32 @@ export async function assignRequiredSchools(
   })
 }
 
+export async function removeRequiredSchool(
+  database: ReportingPeriodStore,
+  actorUserId: string,
+  reportingPeriodId: string,
+  schoolId: string,
+) {
+  const period = await database.reportingPeriod.findUniqueOrThrow({
+    where: { id: reportingPeriodId },
+  })
+  await requireBureauPermission(
+    database,
+    actorUserId,
+    period.organizationId,
+    'manage',
+  )
+  const submission = await database.reportingSubmission.findUnique({
+    where: { reportingPeriodId_schoolId: { reportingPeriodId, schoolId } },
+  })
+  if (submission)
+    throw new ReportingRequirementStateError(
+      'A reporting requirement with report history cannot be removed',
+    )
+  return database.reportingRequirement.delete({
+    where: { reportingPeriodId_schoolId: { reportingPeriodId, schoolId } },
+  })
+}
 export async function listReportingPeriods(
   database: ReportingPeriodStore,
   userId: string,
