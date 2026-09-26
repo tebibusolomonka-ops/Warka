@@ -9,6 +9,10 @@ import {
   type NormalizedStudentImportRow,
 } from './importJobs.js'
 import { findPossibleDuplicates } from './studentRegistration.js'
+import { createStudent } from './students.js'
+import { createEnrollment } from './enrollments.js'
+import { createGuardian, linkGuardianToStudent } from './guardians.js'
+import { recordAuditEvent } from './auditEvents.js'
 
 const requiredHeaders = ['givenName', 'academicYearId', 'gradeLevelId'] as const
 const allowedHeaders = [
@@ -268,4 +272,99 @@ export async function validateStudentImport(
 
 export function readValidatedStudentRows(value: unknown) {
   return z.array(NormalizedStudentImportRowSchema).max(500).parse(value)
+}
+
+export async function applyStudentImport(
+  database: PrismaClient,
+  actorUserId: string,
+  schoolId: string,
+  jobId: string,
+  acknowledgeWarnings: boolean,
+) {
+  const job = await getImportJob(database, actorUserId, schoolId, jobId)
+  if (job.status !== 'validated' || job.totalRows < 1 || job.invalidRows > 0)
+    throw new ImportStateError('Only valid imports can be applied')
+  const rows = readValidatedStudentRows(job.normalizedRows)
+  if (rows.length !== job.totalRows)
+    throw new ImportStateError('Validated rows do not match the import job')
+  if (
+    job.issues.some((item) => item.severity === 'warning') &&
+    !acknowledgeWarnings
+  )
+    throw new ImportStateError('Import warnings require acknowledgement')
+
+  return database.$transaction(async (transaction) => {
+    const claimed = await transaction.importJob.updateMany({
+      where: { id: jobId, schoolId, status: 'validated' },
+      data: { status: 'applied', appliedAt: new Date() },
+    })
+    if (claimed.count !== 1) throw new ImportStateError()
+    const created: Array<{
+      studentId: string
+      studentReference: string
+      enrollmentId: string
+    }> = []
+    let possibleDuplicateCount = 0
+    for (const row of rows) {
+      const studentInput = {
+        givenName: row.givenName,
+        ...(row.familyName ? { familyName: row.familyName } : {}),
+        ...(row.dateOfBirth ? { dateOfBirth: row.dateOfBirth } : {}),
+      }
+      const possible = await findPossibleDuplicates(
+        transaction,
+        schoolId,
+        studentInput,
+      )
+      if (possible.length) {
+        if (!acknowledgeWarnings)
+          throw new ImportStateError('Import warnings require acknowledgement')
+        possibleDuplicateCount += 1
+      }
+      const student = await createStudent(transaction, studentInput)
+      const enrollment = await createEnrollment(transaction, {
+        studentId: student.id,
+        schoolId,
+        academicYearId: row.academicYearId,
+        gradeLevelId: row.gradeLevelId,
+        ...(row.schoolClassId ? { schoolClassId: row.schoolClassId } : {}),
+      })
+      if (row.guardianName && row.guardianRelationship) {
+        const guardian = await createGuardian(transaction, {
+          name: row.guardianName,
+          ...(row.guardianPhone ? { phone: row.guardianPhone } : {}),
+          ...(row.guardianEmail ? { email: row.guardianEmail } : {}),
+        })
+        await linkGuardianToStudent(transaction, {
+          studentId: student.id,
+          guardianId: guardian.id,
+          relationship: row.guardianRelationship,
+        })
+      }
+      created.push({
+        studentId: student.id,
+        studentReference: student.studentReference,
+        enrollmentId: enrollment.id,
+      })
+    }
+    const school = await transaction.school.findUniqueOrThrow({
+      where: { id: schoolId },
+      select: { organizationId: true },
+    })
+    await recordAuditEvent(transaction, {
+      organizationId: school.organizationId,
+      schoolId,
+      actorUserId,
+      action: 'studentImport.applied',
+      resourceType: 'importJob',
+      resourceId: jobId,
+      metadata: { rowCount: created.length, possibleDuplicateCount },
+    })
+    return {
+      job: await transaction.importJob.findUniqueOrThrow({
+        where: { id: jobId },
+      }),
+      created,
+    }
+  })
 }

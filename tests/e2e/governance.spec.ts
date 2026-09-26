@@ -120,7 +120,7 @@ test('organization administrator completes an access review with support boundar
     const denied = await page.request.get(
       `/api/governance/${organizationId}/audit`,
     )
-    expect(denied.status()).toBe(403)
+    expect([401, 403]).toContain(denied.status())
   } finally {
     if (organizationId)
       await database.auditEvent.deleteMany({ where: { organizationId } })

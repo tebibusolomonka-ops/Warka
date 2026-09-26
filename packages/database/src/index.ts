@@ -495,6 +495,7 @@ export type { ImportJob, ImportRowIssue, ImportJobStatus } from '@prisma/client'
 export {
   validateStudentImport,
   readValidatedStudentRows,
+  applyStudentImport,
 } from './studentImports.js'
 export { NormalizedStudentImportRowSchema } from './importJobs.js'
 export type { NormalizedStudentImportRow } from './importJobs.js'

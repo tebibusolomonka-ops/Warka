@@ -3,6 +3,7 @@ import { afterAll, describe, expect, it } from 'vitest'
 import {
   createDatabaseClient,
   createImportJob,
+  applyStudentImport,
   validateStudentImport,
 } from './index.js'
 
@@ -92,6 +93,8 @@ describe.skipIf(!database)('student import validation in PostgreSQL', () => {
         schoolClassId: schoolClass.id,
       },
     })
+    const createdStudentIds: string[] = []
+    const guardianName = 'Import guardian ' + suffix
     try {
       const job = await createImportJob(database!, actor.id, {
         schoolId: school.id,
@@ -142,12 +145,127 @@ describe.skipIf(!database)('student import validation in PostgreSQL', () => {
       expect(
         repeated.issues.some((item) => item.code === 'duplicateCsvRow'),
       ).toBe(true)
+      await expect(
+        applyStudentImport(database!, actor.id, school.id, job.id, true),
+      ).rejects.toThrow('Only valid imports can be applied')
+      await expect(
+        applyStudentImport(database!, actor.id, otherSchool.id, job.id, true),
+      ).rejects.toThrow('Import permission denied')
+
+      const guardianHeader = header + ',guardianName,guardianRelationship'
+      const secondName = 'Nina' + suffix.slice(0, 8)
+      const ready = await validateStudentImport(
+        database!,
+        actor.id,
+        school.id,
+        job.id,
+        guardianHeader +
+          '\n' +
+          row +
+          ',' +
+          guardianName +
+          ',mother' +
+          '\n' +
+          `${secondName},Tola,2018-05-02,${year.id},${grade.id},${schoolClass.id},${guardianName},father`,
+      )
+      expect(ready.status).toBe('validated')
+      await expect(
+        applyStudentImport(database!, actor.id, school.id, job.id, false),
+      ).rejects.toThrow('Import warnings require acknowledgement')
+      const applied = await applyStudentImport(
+        database!,
+        actor.id,
+        school.id,
+        job.id,
+        true,
+      )
+      createdStudentIds.push(...applied.created.map((item) => item.studentId))
+      expect(applied.job.status).toBe('applied')
+      expect(applied.created).toHaveLength(2)
+      expect(
+        new Set(applied.created.map((item) => item.studentReference)).size,
+      ).toBe(2)
+      expect(
+        await database!.enrollment.count({
+          where: { studentId: { in: createdStudentIds }, status: 'draft' },
+        }),
+      ).toBe(2)
+      expect(
+        await database!.studentGuardian.count({
+          where: {
+            studentId: { in: createdStudentIds },
+            verificationStatus: 'pending',
+          },
+        }),
+      ).toBe(2)
+      expect(
+        await database!.auditEvent.count({
+          where: { action: 'studentImport.applied', resourceId: job.id },
+        }),
+      ).toBe(1)
+      await expect(
+        applyStudentImport(database!, actor.id, school.id, job.id, true),
+      ).rejects.toThrow('Only valid imports can be applied')
+
+      const staleClass = await database!.schoolClass.create({
+        data: {
+          schoolId: school.id,
+          academicYearId: year.id,
+          gradeLevelId: grade.id,
+          name: 'B',
+        },
+      })
+      const rollbackJob = await createImportJob(database!, actor.id, {
+        schoolId: school.id,
+      })
+      const rollbackName = 'Rollback' + suffix.slice(0, 8)
+      const rollbackCsv =
+        header +
+        '\n' +
+        `${rollbackName},A,2018-06-01,${year.id},${grade.id},${schoolClass.id}` +
+        '\n' +
+        `${rollbackName}Other,B,2018-06-02,${year.id},${grade.id},${staleClass.id}`
+      expect(
+        (
+          await validateStudentImport(
+            database!,
+            actor.id,
+            school.id,
+            rollbackJob.id,
+            rollbackCsv,
+          )
+        ).status,
+      ).toBe('validated')
+      await database!.schoolClass.delete({ where: { id: staleClass.id } })
+      await expect(
+        applyStudentImport(
+          database!,
+          actor.id,
+          school.id,
+          rollbackJob.id,
+          true,
+        ),
+      ).rejects.toThrow()
+      expect(
+        await database!.importJob.findUniqueOrThrow({
+          where: { id: rollbackJob.id },
+        }),
+      ).toMatchObject({ status: 'validated', appliedAt: null })
+      expect(
+        await database!.student.count({ where: { givenName: rollbackName } }),
+      ).toBe(0)
     } finally {
+      await database!.auditEvent.deleteMany({
+        where: { action: 'studentImport.applied', schoolId: school.id },
+      })
       await database!.importJob.deleteMany({ where: { schoolId: school.id } })
       await database!.enrollment.deleteMany({
-        where: { studentId: existing.id },
+        where: { studentId: { in: [existing.id, ...createdStudentIds] } },
       })
-      await database!.student.delete({ where: { id: existing.id } })
+      await database!.student.deleteMany({
+        where: { id: { in: [existing.id, ...createdStudentIds] } },
+      })
+      await database!.guardian.deleteMany({ where: { name: guardianName } })
       await database!.schoolClass.deleteMany({
         where: { id: { in: [schoolClass.id, otherClass.id] } },
       })

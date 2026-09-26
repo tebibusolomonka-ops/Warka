@@ -97,11 +97,15 @@ test('bureau manager approves a school report with viewer boundary', async ({
     await context.clearCookies()
     await signIn(managerEmail)
     await expect(
-      page.getByText('Required Browser School — submitted'),
+      page
+        .getByRole('region', { name: 'Required schools' })
+        .getByText('Required Browser School — submitted'),
     ).toBeVisible()
     await page.getByRole('button', { name: 'Approve' }).click()
     await expect(
-      page.getByText('Required Browser School — approved'),
+      page
+        .getByRole('region', { name: 'Required schools' })
+        .getByText('Required Browser School — approved'),
     ).toBeVisible()
 
     await context.clearCookies()
