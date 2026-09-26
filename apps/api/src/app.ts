@@ -89,6 +89,12 @@ import {
 } from './documentManagementService.js'
 import { registerDocumentManagementRoutes } from './documentManagementRoutes.js'
 import {
+  DocumentDownloadDeniedError,
+  prismaDocumentDownloadService,
+  type DocumentDownloadService,
+} from './documentDownloadService.js'
+import { registerDocumentDownloadRoutes } from './documentDownloadRoutes.js'
+import {
   TransferNotFoundError,
   prismaTransferManagementService,
   type TransferManagementService,
@@ -168,6 +174,7 @@ export function buildApp(
     announcements?: AnnouncementService
     verification?: DocumentVerificationService
     documents?: DocumentManagementService
+    downloads?: DocumentDownloadService
     transfers?: TransferManagementService
     studentOptions?: StudentOptionsService
     enrollments?: EnrollmentService
@@ -256,6 +263,11 @@ export function buildApp(
   registerDocumentManagementRoutes(
     app,
     () => options.documents ?? prismaDocumentManagementService(getDatabase()),
+    authenticate,
+  )
+  registerDocumentDownloadRoutes(
+    app,
+    () => options.downloads ?? prismaDocumentDownloadService(getDatabase()),
     authenticate,
   )
   registerDocumentVerificationRoutes(
@@ -415,6 +427,7 @@ export function buildApp(
     }
     if (
       error instanceof DocumentPermissionError ||
+      error instanceof DocumentDownloadDeniedError ||
       error instanceof DocumentStudentNotFoundError
     ) {
       return reply.code(404).send({

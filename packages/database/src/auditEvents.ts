@@ -14,6 +14,7 @@ export const AuditActionSchema = z.enum([
   'document.issued',
   'document.corrected',
   'document.withdrawn',
+  'document.downloaded',
   'transfer.approved',
   'transfer.accepted',
   'transfer.rejected',
