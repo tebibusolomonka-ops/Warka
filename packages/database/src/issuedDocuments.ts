@@ -39,6 +39,7 @@ export const DocumentSnapshotSchema = z.strictObject({
       z.strictObject({
         subject: z.string().min(1),
         gradingPeriod: z.string().min(1),
+        academicYear: z.string().min(1).optional(),
         percentage: z.number().min(0).max(100),
         gradeLabel: z.string().min(1),
       }),
@@ -124,7 +125,9 @@ export async function createDocumentInTransaction(
         studentId: data.studentId,
         schoolId: data.schoolId,
         resultSet: {
-          academicYearId: data.academicYearId,
+          ...(data.documentType === 'reportCard'
+            ? { academicYearId: data.academicYearId }
+            : {}),
           status: 'published',
           publishedAt: { not: null },
         },
@@ -132,7 +135,7 @@ export async function createDocumentInTransaction(
       },
       include: {
         resultSet: {
-          include: { subject: true, gradingPeriod: true },
+          include: { subject: true, gradingPeriod: true, academicYear: true },
         },
       },
       orderBy: [
@@ -176,6 +179,9 @@ export async function createDocumentInTransaction(
     academicYear: year.name,
     subjects: official.map((result) => ({
       subject: result.resultSet.subject.name,
+      ...(data.documentType === 'transcript'
+        ? { academicYear: result.resultSet.academicYear.name }
+        : {}),
       gradingPeriod: result.resultSet.gradingPeriod.name,
       percentage: result.currentPercentage.toNumber(),
       gradeLabel: result.currentGradeLabel,

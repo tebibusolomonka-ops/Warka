@@ -169,6 +169,7 @@ describe.skipIf(!database)('issued documents in PostgreSQL', () => {
         subjects: [
           {
             subject: 'Document subject',
+            academicYear: 'Document year',
             gradingPeriod: 'Document period',
             percentage: 85,
             gradeLabel: 'B',
