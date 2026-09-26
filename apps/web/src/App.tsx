@@ -32,6 +32,7 @@ import { BureauWorkspace, SchoolReportingWorkspace } from './BureauWorkspace'
 import { getBureauAccess, type BureauAccess } from './bureauApi'
 import { GovernanceWorkspace } from './GovernanceWorkspace'
 import { NotificationCenter } from './NotificationCenter'
+import { SchoolOperationsWorkspace } from './SchoolOperationsWorkspace'
 
 type Authentication =
   | { status: 'checking' }
@@ -88,6 +89,7 @@ function SignedInShell({
   const [schools, setSchools] = useState<Schools>({ status: 'loading' })
   const [selectedSchoolId, setSelectedSchoolId] = useState('')
   const [refresh, setRefresh] = useState(0)
+  const [operationsRefresh, setOperationsRefresh] = useState(0)
   const [portal, setPortal] = useState<Portal>({ status: 'loading' })
   const [parent, setParent] = useState<Parent>({ status: 'loading' })
   const [bureau, setBureau] = useState<Bureau>({ status: 'loading' })
@@ -412,6 +414,14 @@ function SignedInShell({
                 />
               )}
             {selectedSchool && selectedSchool.capabilities.canRegister && (
+              <SchoolOperationsWorkspace
+                baseUrl={baseUrl}
+                schoolId={selectedSchool.school.id}
+                onApplied={() => setOperationsRefresh((value) => value + 1)}
+                onSessionExpired={sessionExpired}
+              />
+            )}
+            {selectedSchool && selectedSchool.capabilities.canRegister && (
               <SchoolReportingWorkspace
                 baseUrl={baseUrl}
                 schoolId={selectedSchool.school.id}
@@ -432,7 +442,7 @@ function SignedInShell({
               (selectedSchool.capabilities.canRegister ||
                 selectedSchool.capabilities.canApprove) && (
                 <StudentWorkspace
-                  key={selectedSchool.school.id}
+                  key={selectedSchool.school.id + '-' + operationsRefresh}
                   baseUrl={baseUrl}
                   access={selectedSchool}
                   onSessionExpired={sessionExpired}
