@@ -506,3 +506,15 @@ export {
   createSchoolExport,
 } from './schoolExports.js'
 export type { SchoolExportType } from './schoolExports.js'
+
+export {
+  CreateNotificationSchema,
+  createNotification,
+  createNotifications,
+  listNotifications,
+  unreadNotificationCount,
+  markNotificationRead,
+  markAllNotificationsRead,
+} from './notifications.js'
+export type { CreateNotification } from './notifications.js'
+export type { Notification } from '@prisma/client'

@@ -181,6 +181,7 @@ model User {
   approvedEnrollments          Enrollment[]             @relation("EnrollmentApprovedBy")
   withdrawnEnrollments         Enrollment[]             @relation("EnrollmentWithdrawnBy")
   createdImportJobs            ImportJob[]
+  notifications                Notification[]
   teachingAssignments          TeachingAssignment[]
   marks                        Mark[]
 }
@@ -1018,4 +1019,19 @@ model ImportRowIssue {
   job       ImportJob           @relation(fields: [jobId], references: [id], onDelete: Cascade)
 
   @@index([jobId, rowNumber])
+}
+model Notification {
+  id           String    @id @default(uuid())
+  userId       String
+  type         String
+  title        String
+  message      String
+  resourceType String?
+  resourceId   String?
+  createdAt    DateTime  @default(now())
+  readAt       DateTime?
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt, id])
+  @@index([userId, readAt])
 }
