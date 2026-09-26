@@ -569,3 +569,20 @@ export {
 } from './academicYearClosing.js'
 export type { YearClosingBlocker } from './academicYearClosing.js'
 export type { AcademicYearStatus } from '@prisma/client'
+
+export {
+  CreateProgressionPlanSchema,
+  ProgressionPlanSourceError,
+  DuplicateActiveProgressionPlanError,
+  ProgressionPlanStateError,
+  createProgressionPlan,
+  getProgressionPlan,
+  cancelProgressionPlan,
+} from './progressionPlans.js'
+export type { CreateProgressionPlan } from './progressionPlans.js'
+export type {
+  ProgressionPlan,
+  ProgressionEntry,
+  ProgressionPlanStatus,
+  ProgressionAction,
+} from '@prisma/client'

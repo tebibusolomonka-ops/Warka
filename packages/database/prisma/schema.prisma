@@ -105,6 +105,20 @@ enum EnrollmentStatus {
   withdrawn
 }
 
+enum ProgressionPlanStatus {
+  draft
+  reviewed
+  applied
+  cancelled
+}
+
+enum ProgressionAction {
+  promote
+  repeat
+  withdraw
+  manualReview
+}
+
 enum AcademicYearStatus {
   active
   closing
@@ -166,6 +180,7 @@ model School {
   verificationEvents            VerificationEvent[]
   importJobs                    ImportJob[]
   documentProfile              SchoolDocumentProfile?
+  progressionPlans             ProgressionPlan[]
   documentRequests             DocumentRequest[]
 
   @@index([organizationId])
@@ -211,6 +226,9 @@ model User {
   requestedDocuments           DocumentRequest[]
   performedEnrollmentEvents    EnrollmentHistoryEvent[]
   closedAcademicYears          AcademicYear[] @relation("AcademicYearClosedBy")
+  createdProgressionPlans      ProgressionPlan[] @relation("ProgressionPlanCreatedBy")
+  reviewedProgressionPlans     ProgressionPlan[] @relation("ProgressionPlanReviewedBy")
+  appliedProgressionPlans      ProgressionPlan[] @relation("ProgressionPlanAppliedBy")
   notifications                Notification[]
   teachingAssignments          TeachingAssignment[]
   marks                        Mark[]
@@ -464,6 +482,8 @@ model AcademicYear {
   resultSets          ResultSet[]
   issuedDocuments     IssuedDocument[]
   documentRequests    DocumentRequest[]
+  sourceProgressionPlans ProgressionPlan[] @relation("ProgressionSourceYear")
+  targetProgressionPlans ProgressionPlan[] @relation("ProgressionTargetYear")
   learningMaterials   LearningMaterial[]
   id                  String               @id @default(uuid())
   schoolId            String
@@ -528,6 +548,7 @@ model Student {
   issuedDocuments     IssuedDocument[]
   documentRequests    DocumentRequest[]
   publishedResults    PublishedResult[]
+  progressionEntries  ProgressionEntry[]
   id                  String               @id @default(uuid())
   studentReference    String               @unique
   givenName           String
@@ -625,6 +646,7 @@ model Enrollment {
   withdrawnBy       User?             @relation("EnrollmentWithdrawnBy", fields: [withdrawnById], references: [id], onDelete: Restrict)
   marks             Mark[]
   historyEvents     EnrollmentHistoryEvent[]
+  progressionEntries ProgressionEntry[]
 
   @@unique([studentId, schoolId, academicYearId])
   @@unique([id, schoolId, studentId])
@@ -1132,4 +1154,48 @@ model DocumentRequest {
 
   @@index([studentId, requestedAt])
   @@index([schoolId, status, requestedAt])
+}
+
+model ProgressionPlan {
+  id                   String                @id @default(uuid())
+  schoolId             String
+  sourceAcademicYearId String
+  targetAcademicYearId String
+  createdById          String
+  status               ProgressionPlanStatus @default(draft)
+  reviewedById         String?
+  reviewedAt           DateTime?
+  appliedById          String?
+  appliedAt            DateTime?
+  cancelledAt          DateTime?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  school               School                @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  sourceAcademicYear   AcademicYear          @relation("ProgressionSourceYear", fields: [sourceAcademicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  targetAcademicYear   AcademicYear          @relation("ProgressionTargetYear", fields: [targetAcademicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  createdBy            User                  @relation("ProgressionPlanCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  reviewedBy           User?                 @relation("ProgressionPlanReviewedBy", fields: [reviewedById], references: [id], onDelete: Restrict)
+  appliedBy            User?                 @relation("ProgressionPlanAppliedBy", fields: [appliedById], references: [id], onDelete: Restrict)
+  entries              ProgressionEntry[]
+
+  @@index([schoolId, sourceAcademicYearId, status])
+  @@index([schoolId, targetAcademicYearId])
+}
+
+model ProgressionEntry {
+  id                   String            @id @default(uuid())
+  planId               String
+  studentId            String
+  sourceEnrollmentId   String
+  action               ProgressionAction @default(manualReview)
+  targetGradeLevelId   String?
+  targetSchoolClassId  String?
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+  plan                 ProgressionPlan   @relation(fields: [planId], references: [id], onDelete: Cascade)
+  student              Student           @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  sourceEnrollment     Enrollment        @relation(fields: [sourceEnrollmentId], references: [id], onDelete: Restrict)
+
+  @@unique([planId, studentId])
+  @@index([sourceEnrollmentId])
 }
