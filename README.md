@@ -2,6 +2,8 @@
 
 Warka is an education platform for school records and services. This repository is a pnpm workspace for its applications and shared packages.
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for engineering and testing conventions.
+
 ## Development
 
 Use Node.js 24.11.1 and pnpm 11.25.0. Run `pnpm install` from the repository root.
