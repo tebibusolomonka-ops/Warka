@@ -147,6 +147,7 @@ test('student requests a transcript, school issues it, and another student canno
       await page.getByLabel('Email').fill(email)
       await page.getByLabel('Password', { exact: true }).fill(password)
       await page.getByRole('button', { name: 'Sign in' }).click()
+      await expect(page.getByRole('button', { name: 'Sign out' })).toBeVisible()
     }
     const signOut = async () => {
       await page.getByRole('button', { name: 'Sign out' }).click()
