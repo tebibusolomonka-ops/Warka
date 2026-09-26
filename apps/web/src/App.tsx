@@ -34,6 +34,7 @@ import { GovernanceWorkspace } from './GovernanceWorkspace'
 import { NotificationCenter } from './NotificationCenter'
 import { SchoolOperationsWorkspace } from './SchoolOperationsWorkspace'
 import { SchoolDocuments } from './SchoolDocuments'
+import { YearRolloverWorkspace } from './YearRolloverWorkspace'
 
 type Authentication =
   | { status: 'checking' }
@@ -422,6 +423,15 @@ function SignedInShell({
                   schoolId={selectedSchool.school.id}
                   canRegister={selectedSchool.capabilities.canRegister}
                   canApprove={selectedSchool.capabilities.canApprove}
+                  onSessionExpired={sessionExpired}
+                />
+              )}
+            {selectedSchool &&
+              selectedSchool.capabilities.canRegister &&
+              selectedSchool.capabilities.canApprove && (
+                <YearRolloverWorkspace
+                  baseUrl={baseUrl}
+                  schoolId={selectedSchool.school.id}
                   onSessionExpired={sessionExpired}
                 />
               )}
