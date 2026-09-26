@@ -643,3 +643,10 @@ export {
   assistAccountRecovery,
   AdministratorRecoveryPermissionError,
 } from './administratorRecovery.js'
+
+export {
+  loginEmailHash,
+  isLoginThrottled,
+  recordFailedLogin,
+  clearFailedLogins,
+} from './loginAttempts.js'

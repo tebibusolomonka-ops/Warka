@@ -14,6 +14,9 @@ import {
 } from '@warka/auth'
 import {
   createRecoveryRequest,
+  isLoginThrottled,
+  recordFailedLogin,
+  clearFailedLogins,
   createRecoveryToken,
   findPasswordHashForUser,
   mustChangePassword,
@@ -23,9 +26,7 @@ import {
 } from '@warka/database'
 
 export type AuthService = {
-  listSessions?(
-    token: string,
-  ): Promise<Array<{
+  listSessions?(token: string): Promise<Array<{
     managementId: string
     createdAt: Date
     expiresAt: Date
@@ -86,13 +87,16 @@ export function createAuthService(
       }
     },
     async login(email, password) {
+      if (await isLoginThrottled(database, email)) return null
       const user = await findUserByEmail(database, email)
       const passwordHash = user
         ? await findPasswordHashForUser(database, user.id)
         : null
       if (!(await verifyPassword(password, passwordHash)) || !user) {
+        await recordFailedLogin(database, email)
         return null
       }
+      await clearFailedLogins(database, email)
       const { token } = await createSession(database, user.id)
       return { user, token }
     },

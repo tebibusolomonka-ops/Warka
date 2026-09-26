@@ -497,6 +497,16 @@ model Session {
   @@index([expiresAt])
 }
 
+model LoginAttemptBucket {
+  emailHash      String   @id
+  failures       Int      @default(0)
+  windowStartsAt DateTime
+  blockedUntil   DateTime?
+  updatedAt      DateTime @updatedAt
+
+  @@index([blockedUntil])
+}
+
 model AccountRecoveryRequest {
   id          String                @id @default(uuid())
   userId      String
