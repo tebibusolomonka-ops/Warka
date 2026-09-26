@@ -428,3 +428,13 @@ export {
   listReturnedSubmissions,
 } from './reportingCoverage.js'
 export type { ReportingCoverage, FreshnessStatus } from './reportingCoverage.js'
+
+export {
+  AuditActionSchema,
+  AuditResourceTypeSchema,
+  AuditMetadataSchema,
+  RecordAuditEventSchema,
+  recordAuditEvent,
+  listAuditEvents,
+} from './auditEvents.js'
+export type { AuditEvent } from '@prisma/client'

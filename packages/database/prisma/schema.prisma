@@ -98,88 +98,88 @@ enum EnrollmentStatus {
 }
 
 model Organization {
-  id          String                   @id @default(uuid())
-  name        String
-  createdAt   DateTime                 @default(now())
-  updatedAt   DateTime                 @updatedAt
-  schools     School[]
-  memberships OrganizationMembership[]
-  bureauAccesses BureauAccess[]
+  id               String                   @id @default(uuid())
+  name             String
+  createdAt        DateTime                 @default(now())
+  updatedAt        DateTime                 @updatedAt
+  schools          School[]
+  memberships      OrganizationMembership[]
+  bureauAccesses   BureauAccess[]
   reportingPeriods ReportingPeriod[]
 }
 
 model School {
-  resultSets          ResultSet[]
-  publishedResults    PublishedResult[]
-  learningMaterials   LearningMaterial[]
-  announcements       Announcement[]
-  id                  String               @id @default(uuid())
-  organizationId      String
-  name                String
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @updatedAt
-  organization        Organization         @relation(fields: [organizationId], references: [id], onDelete: Restrict)
-  staff               SchoolMembership[]
-  academicYears       AcademicYear[]
-  gradeLevels         GradeLevel[]
-  subjects            Subject[]
-  classes             SchoolClass[]
-  enrollments         Enrollment[]
-  teachingAssignments TeachingAssignment[]
-  gradingPeriods      GradingPeriod[]
-  assessments         Assessment[]
-  marks               Mark[]
-  gradingScheme       GradingScheme?
-  issuedDocuments     IssuedDocument[]
-  outgoingTransfers   TransferRequest[] @relation("SendingTransfers")
-  incomingTransfers   TransferRequest[] @relation("ReceivingTransfers")
+  resultSets                    ResultSet[]
+  publishedResults              PublishedResult[]
+  learningMaterials             LearningMaterial[]
+  announcements                 Announcement[]
+  id                            String                 @id @default(uuid())
+  organizationId                String
+  name                          String
+  createdAt                     DateTime               @default(now())
+  updatedAt                     DateTime               @updatedAt
+  organization                  Organization           @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  staff                         SchoolMembership[]
+  academicYears                 AcademicYear[]
+  gradeLevels                   GradeLevel[]
+  subjects                      Subject[]
+  classes                       SchoolClass[]
+  enrollments                   Enrollment[]
+  teachingAssignments           TeachingAssignment[]
+  gradingPeriods                GradingPeriod[]
+  assessments                   Assessment[]
+  marks                         Mark[]
+  gradingScheme                 GradingScheme?
+  issuedDocuments               IssuedDocument[]
+  outgoingTransfers             TransferRequest[]      @relation("SendingTransfers")
+  incomingTransfers             TransferRequest[]      @relation("ReceivingTransfers")
   verifiedGuardianRelationships StudentGuardian[]
-  serviceAccess       SchoolServiceAccess?
-  familyConversations FamilyConversation[]
-  reportingRequirements ReportingRequirement[]
-  reportingSubmissions ReportingSubmission[]
-  verificationEvents VerificationEvent[]
+  serviceAccess                 SchoolServiceAccess?
+  familyConversations           FamilyConversation[]
+  reportingRequirements         ReportingRequirement[]
+  reportingSubmissions          ReportingSubmission[]
+  verificationEvents            VerificationEvent[]
 
   @@index([organizationId])
 }
 
 model User {
-  submittedResultSets     ResultSet[]              @relation("ResultSetSubmittedBy")
-  issuedDocuments         IssuedDocument[]
-  requestedTransfers      TransferRequest[]
-  approvedTransfers       TransferRequest[] @relation("TransferApprovedBy")
-  acceptedTransfers       TransferRequest[] @relation("TransferAcceptedBy")
-  rejectedTransfers       TransferRequest[] @relation("TransferRejectedBy")
-  cancelledTransfers      TransferRequest[] @relation("TransferCancelledBy")
-  correctedDocuments      IssuedDocument[]         @relation("DocumentCorrectedBy")
-  withdrawnDocuments      IssuedDocument[]         @relation("DocumentWithdrawnBy")
-  publishedResultSets     ResultSet[]              @relation("ResultSetPublishedBy")
-  resultCorrections       ResultCorrection[]
-  learningMaterials       LearningMaterial[]
-  announcements           Announcement[]
-  id                      String                   @id @default(uuid())
-  email                   String                   @unique
-  displayName             String
-  createdAt               DateTime                 @default(now())
-  updatedAt               DateTime                 @updatedAt
-  organizationMemberships OrganizationMembership[]
-  schoolMemberships       SchoolMembership[]
-  bureauAccesses           BureauAccess[]
-  passwordCredential      PasswordCredential?
-  studentAccess           StudentAccess?
-  guardianVerifications   StudentGuardian[] @relation("GuardianVerifiedBy")
-  guardianRevocations     StudentGuardian[] @relation("GuardianRevokedBy")
-  schoolServiceUpdates    SchoolServiceAccess[]
-  familyMessages          FamilyMessage[]
-  teacherConversations    FamilyConversation[] @relation("FamilyConversationTeacher")
-  closedFamilyConversations FamilyConversation[] @relation("FamilyConversationClosedBy")
-  escalatedFamilyConversations FamilyConversation[] @relation("FamilyConversationEscalatedBy")
-  guardianAccess          GuardianAccess?
-  sessions                Session[]
-  approvedEnrollments     Enrollment[]             @relation("EnrollmentApprovedBy")
-  withdrawnEnrollments    Enrollment[]             @relation("EnrollmentWithdrawnBy")
-  teachingAssignments     TeachingAssignment[]
-  marks                   Mark[]
+  submittedResultSets          ResultSet[]              @relation("ResultSetSubmittedBy")
+  issuedDocuments              IssuedDocument[]
+  requestedTransfers           TransferRequest[]
+  approvedTransfers            TransferRequest[]        @relation("TransferApprovedBy")
+  acceptedTransfers            TransferRequest[]        @relation("TransferAcceptedBy")
+  rejectedTransfers            TransferRequest[]        @relation("TransferRejectedBy")
+  cancelledTransfers           TransferRequest[]        @relation("TransferCancelledBy")
+  correctedDocuments           IssuedDocument[]         @relation("DocumentCorrectedBy")
+  withdrawnDocuments           IssuedDocument[]         @relation("DocumentWithdrawnBy")
+  publishedResultSets          ResultSet[]              @relation("ResultSetPublishedBy")
+  resultCorrections            ResultCorrection[]
+  learningMaterials            LearningMaterial[]
+  announcements                Announcement[]
+  id                           String                   @id @default(uuid())
+  email                        String                   @unique
+  displayName                  String
+  createdAt                    DateTime                 @default(now())
+  updatedAt                    DateTime                 @updatedAt
+  organizationMemberships      OrganizationMembership[]
+  schoolMemberships            SchoolMembership[]
+  bureauAccesses               BureauAccess[]
+  passwordCredential           PasswordCredential?
+  studentAccess                StudentAccess?
+  guardianVerifications        StudentGuardian[]        @relation("GuardianVerifiedBy")
+  guardianRevocations          StudentGuardian[]        @relation("GuardianRevokedBy")
+  schoolServiceUpdates         SchoolServiceAccess[]
+  familyMessages               FamilyMessage[]
+  teacherConversations         FamilyConversation[]     @relation("FamilyConversationTeacher")
+  closedFamilyConversations    FamilyConversation[]     @relation("FamilyConversationClosedBy")
+  escalatedFamilyConversations FamilyConversation[]     @relation("FamilyConversationEscalatedBy")
+  guardianAccess               GuardianAccess?
+  sessions                     Session[]
+  approvedEnrollments          Enrollment[]             @relation("EnrollmentApprovedBy")
+  withdrawnEnrollments         Enrollment[]             @relation("EnrollmentWithdrawnBy")
+  teachingAssignments          TeachingAssignment[]
+  marks                        Mark[]
 }
 
 model OrganizationMembership {
@@ -209,30 +209,31 @@ model SchoolMembership {
 }
 
 model BureauAccess {
-  id             String     @id @default(uuid())
+  id             String       @id @default(uuid())
   userId         String
   organizationId String
   role           BureauRole
   revokedAt      DateTime?
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
-  user           User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@unique([userId, organizationId])
   @@index([organizationId, role, revokedAt])
 }
+
 model ReportingPeriod {
-  id              String                @id @default(uuid())
+  id              String                 @id @default(uuid())
   organizationId  String
   name            String
-  startsOn        DateTime              @db.Date
-  endsOn          DateTime              @db.Date
-  submissionDueOn DateTime              @db.Date
-  status          ReportingPeriodStatus @default(draft)
-  createdAt       DateTime              @default(now())
-  updatedAt       DateTime              @updatedAt
-  organization    Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  startsOn        DateTime               @db.Date
+  endsOn          DateTime               @db.Date
+  submissionDueOn DateTime               @db.Date
+  status          ReportingPeriodStatus  @default(draft)
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+  organization    Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   requirements    ReportingRequirement[]
   submissions     ReportingSubmission[]
 
@@ -251,6 +252,7 @@ model ReportingRequirement {
   @@unique([reportingPeriodId, schoolId])
   @@index([schoolId])
 }
+
 model ReportingSubmission {
   id                String                    @id @default(uuid())
   reportingPeriodId String
@@ -273,13 +275,31 @@ model ReportingSubmission {
   @@index([schoolId, status])
   @@index([reportingPeriodId, status])
 }
+
+model AuditEvent {
+  id             String   @id @default(uuid())
+  organizationId String?
+  schoolId       String?
+  actorUserId    String?
+  action         String
+  resourceType   String
+  resourceId     String?
+  metadata       Json     @default("{}")
+  occurredAt     DateTime @default(now())
+
+  @@index([organizationId, occurredAt])
+  @@index([schoolId, occurredAt])
+  @@index([actorUserId, occurredAt])
+  @@index([action, resourceType, occurredAt])
+}
+
 model PasswordCredential {
-  userId       String   @id
-  passwordHash String
-  mustChangePassword Boolean @default(false)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId             String   @id
+  passwordHash       String
+  mustChangePassword Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Session {
@@ -356,21 +376,21 @@ model SchoolClass {
 }
 
 model Student {
-  transferRequests TransferRequest[]
-  issuedDocuments  IssuedDocument[]
-  publishedResults PublishedResult[]
-  id               String            @id @default(uuid())
-  studentReference String            @unique
-  givenName        String
-  familyName       String?
-  dateOfBirth      DateTime?         @db.Date
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
-  guardians        StudentGuardian[]
+  transferRequests    TransferRequest[]
+  issuedDocuments     IssuedDocument[]
+  publishedResults    PublishedResult[]
+  id                  String               @id @default(uuid())
+  studentReference    String               @unique
+  givenName           String
+  familyName          String?
+  dateOfBirth         DateTime?            @db.Date
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  guardians           StudentGuardian[]
   familyConversations FamilyConversation[]
-  studentAccess    StudentAccess?
-  enrollments      Enrollment[]
-  marks            Mark[]
+  studentAccess       StudentAccess?
+  enrollments         Enrollment[]
+  marks               Mark[]
 }
 
 model StudentAccess {
@@ -384,14 +404,14 @@ model StudentAccess {
 }
 
 model Guardian {
-  id        String            @id @default(uuid())
-  name      String
-  phone     String?
-  email     String?
-  createdAt DateTime          @default(now())
-  updatedAt DateTime          @updatedAt
-  students  StudentGuardian[]
-  access    GuardianAccess?
+  id                  String               @id @default(uuid())
+  name                String
+  phone               String?
+  email               String?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  students            StudentGuardian[]
+  access              GuardianAccess?
   familyConversations FamilyConversation[]
 }
 
@@ -416,13 +436,13 @@ model StudentGuardian {
   revokedAt            DateTime?
   revokedById          String?
   revocationReason     String?
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
-  student              Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  guardian             Guardian @relation(fields: [guardianId], references: [id], onDelete: Cascade)
-  verificationSchool   School? @relation(fields: [verificationSchoolId], references: [id], onDelete: Restrict)
-  verifiedBy           User? @relation("GuardianVerifiedBy", fields: [verifiedById], references: [id], onDelete: Restrict)
-  revokedBy            User? @relation("GuardianRevokedBy", fields: [revokedById], references: [id], onDelete: Restrict)
+  createdAt            DateTime                   @default(now())
+  updatedAt            DateTime                   @updatedAt
+  student              Student                    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  guardian             Guardian                   @relation(fields: [guardianId], references: [id], onDelete: Cascade)
+  verificationSchool   School?                    @relation(fields: [verificationSchoolId], references: [id], onDelete: Restrict)
+  verifiedBy           User?                      @relation("GuardianVerifiedBy", fields: [verifiedById], references: [id], onDelete: Restrict)
+  revokedBy            User?                      @relation("GuardianRevokedBy", fields: [revokedById], references: [id], onDelete: Restrict)
 
   @@id([studentId, guardianId])
   @@index([guardianId])
@@ -430,31 +450,31 @@ model StudentGuardian {
 }
 
 model Enrollment {
-  receivingTransfer TransferRequest? @relation("TransferDestination")
-  sourceTransfers TransferRequest[] @relation("TransferSource")
-  publishedResults PublishedResult[]
-  id               String            @id @default(uuid())
-  studentId        String
-  schoolId         String
-  academicYearId   String
-  gradeLevelId     String
-  schoolClassId    String?
-  status           EnrollmentStatus  @default(draft)
-  approvedAt       DateTime?
-  approvedById     String?
-  withdrawnAt      DateTime?
-  withdrawnById    String?
-  withdrawalReason String?
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
-  student          Student           @relation(fields: [studentId], references: [id], onDelete: Restrict)
-  school           School            @relation(fields: [schoolId], references: [id], onDelete: Restrict)
-  academicYear     AcademicYear      @relation(fields: [academicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
-  gradeLevel       GradeLevel        @relation(fields: [gradeLevelId, schoolId], references: [id, schoolId], onDelete: Restrict)
-  schoolClass      SchoolClass?      @relation(fields: [schoolClassId, schoolId], references: [id, schoolId], onDelete: Restrict)
-  approvedBy       User?             @relation("EnrollmentApprovedBy", fields: [approvedById], references: [id], onDelete: Restrict)
-  withdrawnBy      User?             @relation("EnrollmentWithdrawnBy", fields: [withdrawnById], references: [id], onDelete: Restrict)
-  marks            Mark[]
+  receivingTransfer TransferRequest?  @relation("TransferDestination")
+  sourceTransfers   TransferRequest[] @relation("TransferSource")
+  publishedResults  PublishedResult[]
+  id                String            @id @default(uuid())
+  studentId         String
+  schoolId          String
+  academicYearId    String
+  gradeLevelId      String
+  schoolClassId     String?
+  status            EnrollmentStatus  @default(draft)
+  approvedAt        DateTime?
+  approvedById      String?
+  withdrawnAt       DateTime?
+  withdrawnById     String?
+  withdrawalReason  String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  student           Student           @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  school            School            @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  academicYear      AcademicYear      @relation(fields: [academicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  gradeLevel        GradeLevel        @relation(fields: [gradeLevelId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  schoolClass       SchoolClass?      @relation(fields: [schoolClassId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  approvedBy        User?             @relation("EnrollmentApprovedBy", fields: [approvedById], references: [id], onDelete: Restrict)
+  withdrawnBy       User?             @relation("EnrollmentWithdrawnBy", fields: [withdrawnById], references: [id], onDelete: Restrict)
+  marks             Mark[]
 
   @@unique([studentId, schoolId, academicYearId])
   @@unique([id, schoolId, studentId])
@@ -483,7 +503,7 @@ model Subject {
 }
 
 model LearningMaterial {
-  id               String    @id @default(uuid())
+  id               String       @id @default(uuid())
   schoolId         String
   academicYearId   String
   schoolClassId    String
@@ -494,20 +514,20 @@ model LearningMaterial {
   resourceLocation String
   publishedAt      DateTime?
   createdById      String
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
-  school           School    @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  school           School       @relation(fields: [schoolId], references: [id], onDelete: Restrict)
   academicYear     AcademicYear @relation(fields: [academicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
-  schoolClass      SchoolClass @relation(fields: [schoolClassId, schoolId, academicYearId], references: [id, schoolId, academicYearId], onDelete: Restrict)
-  subject          Subject @relation(fields: [subjectId, schoolId], references: [id, schoolId], onDelete: Restrict)
-  createdBy        User @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  schoolClass      SchoolClass  @relation(fields: [schoolClassId, schoolId, academicYearId], references: [id, schoolId, academicYearId], onDelete: Restrict)
+  subject          Subject      @relation(fields: [subjectId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  createdBy        User         @relation(fields: [createdById], references: [id], onDelete: Restrict)
 
   @@index([schoolId, academicYearId, schoolClassId, publishedAt])
   @@index([createdById, schoolId])
 }
 
 model Announcement {
-  id            String @id @default(uuid())
+  id            String       @id @default(uuid())
   schoolId      String
   schoolClassId String?
   title         String
@@ -515,11 +535,11 @@ model Announcement {
   publishedAt   DateTime?
   expiresAt     DateTime?
   createdById   String
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  school        School @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  school        School       @relation(fields: [schoolId], references: [id], onDelete: Restrict)
   schoolClass   SchoolClass? @relation(fields: [schoolClassId, schoolId], references: [id, schoolId], onDelete: Restrict)
-  createdBy     User @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  createdBy     User         @relation(fields: [createdById], references: [id], onDelete: Restrict)
 
   @@index([schoolId, publishedAt, expiresAt])
   @@index([schoolClassId, schoolId])
@@ -701,39 +721,38 @@ model ResultCorrection {
 }
 
 model IssuedDocument {
-  id                    String         @id @default(uuid())
+  id                    String              @id @default(uuid())
   studentId             String
   schoolId              String
   academicYearId        String
   documentType          DocumentType
-  snapshot              Json           @default("{}")
-  supersedesId          String?        @unique
+  snapshot              Json                @default("{}")
+  supersedesId          String?             @unique
   correctionReason      String?
   correctedById         String?
   correctedAt           DateTime?
   withdrawalReason      String?
   withdrawnById         String?
   withdrawnAt           DateTime?
-  verificationReference String         @unique
-  status                DocumentStatus @default(active)
-  issuedAt              DateTime       @default(now())
+  verificationReference String              @unique
+  status                DocumentStatus      @default(active)
+  issuedAt              DateTime            @default(now())
   issuedById            String
-  createdAt             DateTime       @default(now())
-  updatedAt             DateTime       @updatedAt
-  student               Student        @relation(fields: [studentId], references: [id], onDelete: Restrict)
-  school                School         @relation(fields: [schoolId], references: [id], onDelete: Restrict)
-  academicYear          AcademicYear   @relation(fields: [academicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
-  issuedBy              User           @relation(fields: [issuedById], references: [id], onDelete: Restrict)
-  correctedBy           User?          @relation("DocumentCorrectedBy", fields: [correctedById], references: [id], onDelete: Restrict)
-  withdrawnBy           User?          @relation("DocumentWithdrawnBy", fields: [withdrawnById], references: [id], onDelete: Restrict)
-  supersedes            IssuedDocument? @relation("DocumentVersion", fields: [supersedesId], references: [id], onDelete: Restrict)
-  replacedBy            IssuedDocument? @relation("DocumentVersion")
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+  student               Student             @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  school                School              @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  academicYear          AcademicYear        @relation(fields: [academicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  issuedBy              User                @relation(fields: [issuedById], references: [id], onDelete: Restrict)
+  correctedBy           User?               @relation("DocumentCorrectedBy", fields: [correctedById], references: [id], onDelete: Restrict)
+  withdrawnBy           User?               @relation("DocumentWithdrawnBy", fields: [withdrawnById], references: [id], onDelete: Restrict)
+  supersedes            IssuedDocument?     @relation("DocumentVersion", fields: [supersedesId], references: [id], onDelete: Restrict)
+  replacedBy            IssuedDocument?     @relation("DocumentVersion")
   verificationEvents    VerificationEvent[]
 
   @@index([schoolId, studentId, issuedAt])
   @@index([schoolId, issuedAt])
 }
-
 
 model VerificationEvent {
   id               String                   @id @default(uuid())
@@ -746,40 +765,41 @@ model VerificationEvent {
 
   @@index([schoolId, occurredAt, resultStatus])
 }
+
 model TransferRequest {
-  id                 String         @id @default(uuid())
-  studentId          String
-  sendingSchoolId    String
-  receivingSchoolId  String
-  sourceEnrollmentId String
-  status             TransferStatus @default(requested)
-  transferPackage    Json
-  requestedById      String
-  requestedAt        DateTime       @default(now())
-  sendingApprovedById String?
-  sendingApprovedAt   DateTime?
-  acceptedById        String?
-  acceptedAt          DateTime?
-  rejectedById        String?
-  rejectedAt          DateTime?
-  rejectionReason     String?
-  cancelledById       String?
-  cancelledAt         DateTime?
-  cancellationReason  String?
-  completedAt         DateTime?
-  receivingEnrollmentId String?     @unique
-  createdAt          DateTime       @default(now())
-  updatedAt          DateTime       @updatedAt
-  student            Student        @relation(fields: [studentId], references: [id], onDelete: Restrict)
-  sendingSchool      School         @relation("SendingTransfers", fields: [sendingSchoolId], references: [id], onDelete: Restrict)
-  receivingSchool    School         @relation("ReceivingTransfers", fields: [receivingSchoolId], references: [id], onDelete: Restrict)
-  sourceEnrollment   Enrollment     @relation("TransferSource", fields: [sourceEnrollmentId, sendingSchoolId, studentId], references: [id, schoolId, studentId], onDelete: Restrict)
-  requestedBy        User           @relation(fields: [requestedById], references: [id], onDelete: Restrict)
-  sendingApprovedBy  User?          @relation("TransferApprovedBy", fields: [sendingApprovedById], references: [id], onDelete: Restrict)
-  acceptedBy         User?          @relation("TransferAcceptedBy", fields: [acceptedById], references: [id], onDelete: Restrict)
-  rejectedBy         User?          @relation("TransferRejectedBy", fields: [rejectedById], references: [id], onDelete: Restrict)
-  cancelledBy        User?          @relation("TransferCancelledBy", fields: [cancelledById], references: [id], onDelete: Restrict)
-  receivingEnrollment Enrollment?   @relation("TransferDestination", fields: [receivingEnrollmentId, receivingSchoolId, studentId], references: [id, schoolId, studentId], onDelete: Restrict)
+  id                    String         @id @default(uuid())
+  studentId             String
+  sendingSchoolId       String
+  receivingSchoolId     String
+  sourceEnrollmentId    String
+  status                TransferStatus @default(requested)
+  transferPackage       Json
+  requestedById         String
+  requestedAt           DateTime       @default(now())
+  sendingApprovedById   String?
+  sendingApprovedAt     DateTime?
+  acceptedById          String?
+  acceptedAt            DateTime?
+  rejectedById          String?
+  rejectedAt            DateTime?
+  rejectionReason       String?
+  cancelledById         String?
+  cancelledAt           DateTime?
+  cancellationReason    String?
+  completedAt           DateTime?
+  receivingEnrollmentId String?        @unique
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+  student               Student        @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  sendingSchool         School         @relation("SendingTransfers", fields: [sendingSchoolId], references: [id], onDelete: Restrict)
+  receivingSchool       School         @relation("ReceivingTransfers", fields: [receivingSchoolId], references: [id], onDelete: Restrict)
+  sourceEnrollment      Enrollment     @relation("TransferSource", fields: [sourceEnrollmentId, sendingSchoolId, studentId], references: [id, schoolId, studentId], onDelete: Restrict)
+  requestedBy           User           @relation(fields: [requestedById], references: [id], onDelete: Restrict)
+  sendingApprovedBy     User?          @relation("TransferApprovedBy", fields: [sendingApprovedById], references: [id], onDelete: Restrict)
+  acceptedBy            User?          @relation("TransferAcceptedBy", fields: [acceptedById], references: [id], onDelete: Restrict)
+  rejectedBy            User?          @relation("TransferRejectedBy", fields: [rejectedById], references: [id], onDelete: Restrict)
+  cancelledBy           User?          @relation("TransferCancelledBy", fields: [cancelledById], references: [id], onDelete: Restrict)
+  receivingEnrollment   Enrollment?    @relation("TransferDestination", fields: [receivingEnrollmentId, receivingSchoolId, studentId], references: [id, schoolId, studentId], onDelete: Restrict)
 
   @@unique([receivingEnrollmentId, receivingSchoolId, studentId])
   @@index([sendingSchoolId, status, requestedAt])
@@ -788,15 +808,15 @@ model TransferRequest {
 }
 
 model SchoolServiceAccess {
-  id                  String   @id @default(uuid())
-  schoolId            String   @unique
-  parentPortalEnabled Boolean  @default(false)
+  id                  String    @id @default(uuid())
+  schoolId            String    @unique
+  parentPortalEnabled Boolean   @default(false)
   enabledAt           DateTime?
   updatedById         String?
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
-  school              School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  updatedBy           User?    @relation(fields: [updatedById], references: [id], onDelete: Restrict)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  school              School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  updatedBy           User?     @relation(fields: [updatedById], references: [id], onDelete: Restrict)
 }
 
 model FamilyConversation {
@@ -830,7 +850,7 @@ model FamilyMessage {
   id             String             @id @default(uuid())
   conversationId String
   senderUserId   String
-  senderKind     FamilySenderKind @default(guardian)
+  senderKind     FamilySenderKind   @default(guardian)
   body           String
   createdAt      DateTime           @default(now())
   readAt         DateTime?
