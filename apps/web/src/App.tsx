@@ -35,6 +35,8 @@ import { NotificationCenter } from './NotificationCenter'
 import { SchoolOperationsWorkspace } from './SchoolOperationsWorkspace'
 import { SchoolDocuments } from './SchoolDocuments'
 import { YearRolloverWorkspace } from './YearRolloverWorkspace'
+import { AccountSecurity, AdminRecovery } from './AccountSecurity'
+import { PublicRecovery } from './PublicRecovery'
 
 type Authentication =
   | { status: 'checking' }
@@ -352,6 +354,13 @@ function SignedInShell({
           Sign out
         </button>
       </div>
+      {selectedSchool?.capabilities.canRegister &&
+        selectedSchool.capabilities.canApprove && (
+          <AdminRecovery
+            baseUrl={baseUrl}
+            schoolId={selectedSchool.school.id}
+          />
+        )}
       <section aria-labelledby="accessible-schools-heading">
         <h2 id="accessible-schools-heading">My schools</h2>
         {schools.status === 'error' && (
@@ -700,6 +709,7 @@ function AuthenticatedApp() {
             </button>
           </form>
           {formError && <p role="alert">{formError}</p>}
+          {baseUrl && <PublicRecovery baseUrl={baseUrl} />}
         </section>
       )}
       {authentication.status === 'signedIn' &&
@@ -718,6 +728,7 @@ function AuthenticatedApp() {
         baseUrl &&
         !authentication.user.mustChangePassword && (
           <>
+            <AccountSecurity baseUrl={baseUrl} />
             <NotificationCenter baseUrl={baseUrl} />
             <SignedInShell
               baseUrl={baseUrl}
