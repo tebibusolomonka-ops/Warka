@@ -88,6 +88,7 @@ import { registerBackupRoutes } from './backupRoutes.js'
 import { checkReadiness } from './readiness.js'
 import { installRequestLogging, writeRequestLog } from './requestLogging.js'
 import { ServiceMetrics, registerMetricsRoutes } from './serviceMetrics.js'
+import { registerOperationsRoutes } from './operationsRoutes.js'
 import { OperationsPermissionError } from './operationsAccess.js'
 import { registerSchoolContactRoutes } from './schoolContactRoutes.js'
 import { registerSupportRequestRoutes } from './supportRequestRoutes.js'
@@ -339,6 +340,7 @@ export function buildApp(
   registerStaffAccessRoutes(app, getDatabase, authenticate)
   registerBackupRoutes(app, getDatabase, authenticate)
   registerMetricsRoutes(app, getDatabase, authenticate, metrics)
+  registerOperationsRoutes(app, getDatabase, authenticate, metrics)
   registerSupportRequestRoutes(app, getDatabase, authenticate)
   registerSchoolContactRoutes(app, getDatabase, authenticate)
   registerSchoolRoutes(app, getStore, getAccess, authenticate)
