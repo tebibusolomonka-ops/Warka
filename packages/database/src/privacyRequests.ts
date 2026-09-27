@@ -55,7 +55,10 @@ export class PrivacyPermissionError extends Error {
 }
 
 export async function privacyRequesterScope(
-  database: PrismaClient,
+  database: Pick<
+    PrismaClient,
+    'student' | 'studentAccess' | 'guardianAccess' | 'studentGuardian'
+  >,
   userId: string,
   studentId: string,
   schoolId: string,

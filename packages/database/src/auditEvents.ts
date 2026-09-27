@@ -66,6 +66,7 @@ export const AuditActionSchema = z.enum([
   'documentRequest.processing',
   'documentRequest.issued',
   'documentRequest.rejected',
+  'privacyPackage.generated',
 ])
 
 export const AuditResourceTypeSchema = z.enum([
@@ -95,6 +96,7 @@ export const AuditResourceTypeSchema = z.enum([
   'schoolContact',
   'trainingRecord',
   'supportRequest',
+  'privacyRequest',
 ])
 
 const metadataValue = z.union([

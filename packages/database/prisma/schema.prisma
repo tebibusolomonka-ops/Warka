@@ -1569,6 +1569,7 @@ model PrivacyRequest {
   reviewedById        String?
   reviewReason        String?
   fulfilledAt         DateTime?
+  accessPackage       Json?
   school              School @relation(fields: [schoolId], references: [id], onDelete: Restrict)
   student             Student @relation(fields: [studentId], references: [id], onDelete: Restrict)
   requester           User @relation("PrivacyRequestRequester", fields: [requesterUserId], references: [id], onDelete: Restrict)

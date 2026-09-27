@@ -769,3 +769,8 @@ export {
   createPrivacyRequest,
   listOwnPrivacyRequests,
 } from './privacyRequests.js'
+
+export {
+  generatePrivacyAccessPackage,
+  PrivacyPackageStateError,
+} from './privacyAccessPackages.js'
