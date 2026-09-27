@@ -91,6 +91,7 @@ import { ServiceMetrics, registerMetricsRoutes } from './serviceMetrics.js'
 import { registerOperationsRoutes } from './operationsRoutes.js'
 import { registerQuarantineRoutes } from './quarantineRoutes.js'
 import { registerSearchRoutes } from './searchRoutes.js'
+import { registerResponseCompression } from './responseCompression.js'
 import { registerSchedulerRoutes } from './schedulerRoutes.js'
 import { operationsTestActions } from './operationsTestAdapter.js'
 import { OperationsPermissionError } from './operationsAccess.js'
@@ -300,137 +301,147 @@ export function buildApp(
   const authenticate = authenticateRequest(getAuth)
 
   app.register(cookie)
+  registerResponseCompression(app)
   app.decorateRequest('currentUser', null)
   const metrics = new ServiceMetrics()
   installRequestLogging(app, (entry) => {
     writeRequestLog(entry)
     metrics.record(entry)
   })
-  app.get('/health', async () => HealthResponseSchema.parse({ status: 'ok' }))
-  app.get('/ready', async (_request, reply) => {
-    const readiness = await checkReadiness({ database: getDatabase() })
-    return reply
-      .code(readiness.status === 'ready' ? 200 : 503)
-      .send({ status: readiness.status })
-  })
-  if (testRecoveryEnabled)
-    app.get('/__test/recovery-token/:email', async (request, reply) => {
-      const email = String(
-        (request.params as { email: string }).email,
-      ).toLowerCase()
-      const key = createHash('sha256').update(email).digest('hex')
-      const token = testRecoveryTokens.get(key)
-      testRecoveryTokens.delete(key)
-      if (!token) return reply.code(404).send({ error: 'Not found' })
-      return { token }
+  app.after(() => {
+    app.get('/health', async () => HealthResponseSchema.parse({ status: 'ok' }))
+    app.get('/ready', async (_request, reply) => {
+      const readiness = await checkReadiness({ database: getDatabase() })
+      return reply
+        .code(readiness.status === 'ready' ? 200 : 503)
+        .send({ status: readiness.status })
     })
-  registerAuthRoutes(
-    app,
-    getAuth,
-    options.production ?? process.env.NODE_ENV === 'production',
-  )
-  registerAdministratorRecoveryRoutes(
-    app,
-    getDatabase,
-    authenticate,
-    options.production === false || testRecoveryEnabled
-      ? recoveryDelivery
-      : undefined,
-    options.assistedRecovery,
-  )
-  registerOnboardingRoutes(
-    app,
-    () => options.onboarding ?? prismaOnboardingService(getDatabase()),
-    authenticate,
-  )
-  registerCorrectionRoutes(app, getDatabase, authenticate)
-  registerPrivacyRoutes(app, getDatabase, authenticate)
-  registerDataGovernanceRoutes(app, getDatabase, authenticate)
-  registerStaffAccessRoutes(app, getDatabase, authenticate)
-  registerBackupRoutes(app, getDatabase, authenticate, operationsTestActions())
-  registerMetricsRoutes(app, getDatabase, authenticate, metrics)
-  registerOperationsRoutes(app, getDatabase, authenticate, metrics)
-  registerQuarantineRoutes(app, getDatabase, authenticate)
-  registerSearchRoutes(app, getDatabase, authenticate)
-  registerSchedulerRoutes(app, getDatabase, authenticate)
-  registerSupportRequestRoutes(app, getDatabase, authenticate)
-  registerSchoolContactRoutes(app, getDatabase, authenticate)
-  registerSchoolRoutes(app, getStore, getAccess, authenticate)
-  registerStudentRoutes(
-    app,
-    getStore,
-    getAccess,
-    getStudents,
-    getStudentAccounts,
-    getStudentOptions,
-    authenticate,
-  )
-  registerStudentPortalRoutes(app, getStudentPortal, authenticate)
-  registerLearningMaterialRoutes(app, getMaterials, authenticate)
-  registerAnnouncementRoutes(app, getAnnouncements, authenticate)
-  registerParentServiceRoutes(app, getDatabase, authenticate)
-  registerBureauRoutes(app, getDatabase, authenticate)
-  registerImportRoutes(app, getDatabase, authenticate)
-  registerSchoolExportRoutes(app, getDatabase, authenticate)
-  registerNotificationRoutes(app, getDatabase, authenticate)
-  registerSchoolDocumentProfileRoutes(app, getDatabase, authenticate)
-  registerFileDeliveryRoutes(app, getDatabase, authenticate)
-  registerGovernanceRoutes(app, getDatabase, authenticate)
-  registerGuardianRelationshipRoutes(app, getDatabase, authenticate)
-  registerFamilyConversationRoutes(
-    app,
-    () =>
-      options.familyConversations ??
-      prismaFamilyConversationService(getDatabase()),
-    authenticate,
-  )
-  registerParentPortalRoutes(
-    app,
-    () => options.parentPortal ?? prismaParentPortalService(getDatabase()),
-    () => options.parentAcademic ?? prismaParentAcademicService(getDatabase()),
-    authenticate,
-  )
-  registerGuardianAccountRoutes(
-    app,
-    () =>
-      options.guardianAccounts ?? prismaGuardianAccountService(getDatabase()),
-    authenticate,
-  )
-  registerTransferRoutes(
-    app,
-    () => options.transfers ?? prismaTransferManagementService(getDatabase()),
-    authenticate,
-  )
-  registerDocumentManagementRoutes(
-    app,
-    () => options.documents ?? prismaDocumentManagementService(getDatabase()),
-    authenticate,
-  )
-  registerStudentDocumentRoutes(app, getDatabase, authenticate)
-  registerSchoolDocumentRoutes(app, getDatabase, authenticate)
-  registerAcademicRolloverRoutes(
-    app,
-    () => options.rollover ?? prismaAcademicRolloverService(getDatabase()),
-    authenticate,
-  )
-  registerDocumentDownloadRoutes(
-    app,
-    () => options.downloads ?? prismaDocumentDownloadService(getDatabase()),
-    authenticate,
-  )
-  registerDocumentVerificationRoutes(
-    app,
-    () =>
-      options.verification ?? prismaDocumentVerificationService(getDatabase()),
-  )
-  registerAcademicRoutes(app, getAcademic, authenticate)
-  registerEnrollmentRoutes(
-    app,
-    getStore,
-    getAccess,
-    getEnrollments,
-    authenticate,
-  )
+    if (testRecoveryEnabled)
+      app.get('/__test/recovery-token/:email', async (request, reply) => {
+        const email = String(
+          (request.params as { email: string }).email,
+        ).toLowerCase()
+        const key = createHash('sha256').update(email).digest('hex')
+        const token = testRecoveryTokens.get(key)
+        testRecoveryTokens.delete(key)
+        if (!token) return reply.code(404).send({ error: 'Not found' })
+        return { token }
+      })
+    registerAuthRoutes(
+      app,
+      getAuth,
+      options.production ?? process.env.NODE_ENV === 'production',
+    )
+    registerAdministratorRecoveryRoutes(
+      app,
+      getDatabase,
+      authenticate,
+      options.production === false || testRecoveryEnabled
+        ? recoveryDelivery
+        : undefined,
+      options.assistedRecovery,
+    )
+    registerOnboardingRoutes(
+      app,
+      () => options.onboarding ?? prismaOnboardingService(getDatabase()),
+      authenticate,
+    )
+    registerCorrectionRoutes(app, getDatabase, authenticate)
+    registerPrivacyRoutes(app, getDatabase, authenticate)
+    registerDataGovernanceRoutes(app, getDatabase, authenticate)
+    registerStaffAccessRoutes(app, getDatabase, authenticate)
+    registerBackupRoutes(
+      app,
+      getDatabase,
+      authenticate,
+      operationsTestActions(),
+    )
+    registerMetricsRoutes(app, getDatabase, authenticate, metrics)
+    registerOperationsRoutes(app, getDatabase, authenticate, metrics)
+    registerQuarantineRoutes(app, getDatabase, authenticate)
+    registerSearchRoutes(app, getDatabase, authenticate)
+    registerSchedulerRoutes(app, getDatabase, authenticate)
+    registerSupportRequestRoutes(app, getDatabase, authenticate)
+    registerSchoolContactRoutes(app, getDatabase, authenticate)
+    registerSchoolRoutes(app, getStore, getAccess, authenticate)
+    registerStudentRoutes(
+      app,
+      getStore,
+      getAccess,
+      getStudents,
+      getStudentAccounts,
+      getStudentOptions,
+      authenticate,
+    )
+    registerStudentPortalRoutes(app, getStudentPortal, authenticate)
+    registerLearningMaterialRoutes(app, getMaterials, authenticate)
+    registerAnnouncementRoutes(app, getAnnouncements, authenticate)
+    registerParentServiceRoutes(app, getDatabase, authenticate)
+    registerBureauRoutes(app, getDatabase, authenticate)
+    registerImportRoutes(app, getDatabase, authenticate)
+    registerSchoolExportRoutes(app, getDatabase, authenticate)
+    registerNotificationRoutes(app, getDatabase, authenticate)
+    registerSchoolDocumentProfileRoutes(app, getDatabase, authenticate)
+    registerFileDeliveryRoutes(app, getDatabase, authenticate)
+    registerGovernanceRoutes(app, getDatabase, authenticate)
+    registerGuardianRelationshipRoutes(app, getDatabase, authenticate)
+    registerFamilyConversationRoutes(
+      app,
+      () =>
+        options.familyConversations ??
+        prismaFamilyConversationService(getDatabase()),
+      authenticate,
+    )
+    registerParentPortalRoutes(
+      app,
+      () => options.parentPortal ?? prismaParentPortalService(getDatabase()),
+      () =>
+        options.parentAcademic ?? prismaParentAcademicService(getDatabase()),
+      authenticate,
+    )
+    registerGuardianAccountRoutes(
+      app,
+      () =>
+        options.guardianAccounts ?? prismaGuardianAccountService(getDatabase()),
+      authenticate,
+    )
+    registerTransferRoutes(
+      app,
+      () => options.transfers ?? prismaTransferManagementService(getDatabase()),
+      authenticate,
+    )
+    registerDocumentManagementRoutes(
+      app,
+      () => options.documents ?? prismaDocumentManagementService(getDatabase()),
+      authenticate,
+    )
+    registerStudentDocumentRoutes(app, getDatabase, authenticate)
+    registerSchoolDocumentRoutes(app, getDatabase, authenticate)
+    registerAcademicRolloverRoutes(
+      app,
+      () => options.rollover ?? prismaAcademicRolloverService(getDatabase()),
+      authenticate,
+    )
+    registerDocumentDownloadRoutes(
+      app,
+      () => options.downloads ?? prismaDocumentDownloadService(getDatabase()),
+      authenticate,
+    )
+    registerDocumentVerificationRoutes(
+      app,
+      () =>
+        options.verification ??
+        prismaDocumentVerificationService(getDatabase()),
+    )
+    registerAcademicRoutes(app, getAcademic, authenticate)
+    registerEnrollmentRoutes(
+      app,
+      getStore,
+      getAccess,
+      getEnrollments,
+      authenticate,
+    )
+  })
 
   app.setNotFoundHandler((_request, reply) =>
     reply.code(404).send(

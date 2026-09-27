@@ -16,7 +16,7 @@ export function registerDocumentDownloadRoutes(
 ) {
   app.get(
     '/schools/:schoolId/documents/:documentId/download',
-    { preHandler: authenticate },
+    { preHandler: authenticate, compress: false },
     async (request, reply) => {
       const actor = authenticatedUser(request)
       const { schoolId, documentId } = paramsSchema.parse(request.params)

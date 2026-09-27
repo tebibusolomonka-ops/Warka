@@ -69,7 +69,7 @@ export function registerFileDeliveryRoutes(
 
   app.get(
     '/schools/:schoolId/materials/:materialId/download',
-    { preHandler: authenticate },
+    { preHandler: authenticate, compress: false },
     async (request, reply) => {
       const { schoolId, materialId } = materialParams.parse(request.params)
       const material = await getDatabase().learningMaterial.findFirst({
@@ -88,7 +88,7 @@ export function registerFileDeliveryRoutes(
 
   app.get(
     '/schools/:schoolId/document-profile/logo',
-    { preHandler: authenticate },
+    { preHandler: authenticate, compress: false },
     async (request, reply) => {
       const { schoolId } = schoolParams.parse(request.params)
       const profile = await getDatabase().schoolDocumentProfile.findUnique({
