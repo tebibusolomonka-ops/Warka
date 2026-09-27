@@ -1,6 +1,22 @@
 import type { PrismaClient, ScheduledTaskType } from '@prisma/client'
 import { randomUUID } from 'node:crypto'
 
+export async function enqueueFileScanTask(
+  database: Pick<PrismaClient, 'scheduledTaskExecution'>,
+  scanId: string,
+) {
+  return database.scheduledTaskExecution.create({
+    data: {
+      taskType: 'fileScan',
+      scope: 'file_scan',
+      resourceId: scanId,
+      scheduledFor: new Date(),
+      status: 'pending',
+      attempt: 1,
+    },
+  })
+}
+
 export async function startScheduledTask(
   database: PrismaClient,
   taskType: ScheduledTaskType,

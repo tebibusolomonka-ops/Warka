@@ -16,9 +16,13 @@ export function retryEligible(
   return (
     task.status === 'failed' &&
     task.attempt < maxScheduledAttempts &&
-    ['BACKUP_FAILED', 'RETENTION_EVALUATION_FAILED'].includes(
-      task.failureCode ?? '',
-    ) &&
+    [
+      'BACKUP_FAILED',
+      'RETENTION_EVALUATION_FAILED',
+      'SCANNER_UNAVAILABLE',
+      'SCANNER_TIMEOUT',
+      'SCAN_ERROR',
+    ].includes(task.failureCode ?? '') &&
     !!task.completedAt &&
     now.getTime() - task.completedAt.getTime() >= retryDelayMs(task.attempt)
   )

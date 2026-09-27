@@ -61,6 +61,35 @@ export async function processPendingFileScan(input: {
               : 'pending',
       },
     })
+    if (
+      outcome.status === 'clean' &&
+      scan.fileAsset.purpose === 'schoolBranding' &&
+      scan.fileAsset.schoolId
+    ) {
+      const latest = await transaction.fileAsset.findFirst({
+        where: { schoolId: scan.fileAsset.schoolId, purpose: 'schoolBranding' },
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        select: { id: true },
+      })
+      if (latest?.id === scan.fileAssetId) {
+        await transaction.schoolDocumentProfile.upsert({
+          where: { schoolId: scan.fileAsset.schoolId },
+          create: {
+            schoolId: scan.fileAsset.schoolId,
+            logoAssetId: scan.fileAssetId,
+          },
+          update: { logoAssetId: scan.fileAssetId },
+        })
+        await recordAuditEvent(transaction, {
+          schoolId: scan.fileAsset.schoolId,
+          actorUserId: scan.fileAsset.createdById,
+          action: 'schoolDocumentProfile.updated',
+          resourceType: 'schoolDocumentProfile',
+          resourceId: scan.fileAsset.schoolId,
+          metadata: { logoAssetId: scan.fileAssetId },
+        })
+      }
+    }
     if (outcome.status === 'infected')
       await recordAuditEvent(transaction, {
         schoolId: scan.fileAsset.schoolId ?? undefined,

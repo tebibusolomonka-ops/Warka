@@ -1,10 +1,12 @@
 import {
   recordAuditEvent,
   requireSchoolDocumentProfileManager,
+  enqueueFileScanTask,
   type PrismaClient,
 } from '@warka/database'
 import type { FileStorage } from './fileStorage.js'
 import { validateUpload } from './fileValidation.js'
+import { configuredScannerName } from './fileScannerConfig.js'
 
 export async function uploadSchoolLogo(input: {
   database: PrismaClient
@@ -34,7 +36,8 @@ export async function uploadSchoolLogo(input: {
           schoolId: input.schoolId,
           createdById: input.actorId,
           purpose: 'schoolBranding',
-          status: 'available',
+          status: 'pending',
+          scanRequired: true,
           storageKey: stored.key,
           originalFileName: checked.originalFileName,
           contentType: checked.contentType,
@@ -42,23 +45,27 @@ export async function uploadSchoolLogo(input: {
           checksum: checked.checksum,
         },
       })
-      await transaction.schoolDocumentProfile.upsert({
-        where: { schoolId: input.schoolId },
-        create: { schoolId: input.schoolId, logoAssetId: asset.id },
-        update: { logoAssetId: asset.id },
+      const scan = await transaction.fileScan.create({
+        data: {
+          fileAssetId: asset.id,
+          scanner: configuredScannerName(),
+          status: 'pending',
+        },
       })
+      await enqueueFileScanTask(transaction, scan.id)
       await recordAuditEvent(transaction, {
         schoolId: input.schoolId,
         actorUserId: input.actorId,
         action: 'schoolDocumentProfile.updated',
         resourceType: 'schoolDocumentProfile',
         resourceId: input.schoolId,
-        metadata: { logoAssetId: asset.id },
+        metadata: { pendingLogoAssetId: asset.id },
       })
       return {
         id: asset.id,
         originalFileName: asset.originalFileName,
         sizeBytes: asset.sizeBytes.toString(),
+        status: asset.status,
       }
     })
   } catch {

@@ -3,12 +3,14 @@ import {
   findStudentAccessForUser,
   hasOrganizationAdminRole,
   mayManageClassSubject,
+  enqueueFileScanTask,
   type PrismaClient,
 } from '@warka/database'
 import { z } from 'zod'
 import { validateUpload } from './fileValidation.js'
 import { configuredFileStorage } from './objectFileStorage.js'
 import type { FileStorage } from './fileStorage.js'
+import { configuredScannerName } from './fileScannerConfig.js'
 
 const materialContext = {
   academicYearId: z.uuid(),
@@ -174,25 +176,31 @@ export function prismaLearningMaterialService(
       const targetStorage = storage ?? configuredFileStorage()
       const stored = await targetStorage.put(file.bytes)
       try {
-        const asset = await database.fileAsset.create({
-          data: {
-            schoolId,
-            learningMaterialId: material.id,
-            createdById: actorId,
-            purpose: 'learningMaterial',
-            status: 'available',
-            storageKey: stored.key,
-            originalFileName: checked.originalFileName,
-            contentType: checked.contentType,
-            sizeBytes: BigInt(checked.sizeBytes),
-            checksum: checked.checksum,
-          },
-          select: {
-            id: true,
-            status: true,
-            originalFileName: true,
-            sizeBytes: true,
-          },
+        const asset = await database.$transaction(async (transaction) => {
+          const created = await transaction.fileAsset.create({
+            data: {
+              schoolId,
+              learningMaterialId: material.id,
+              createdById: actorId,
+              purpose: 'learningMaterial',
+              status: 'pending',
+              scanRequired: true,
+              storageKey: stored.key,
+              originalFileName: checked.originalFileName,
+              contentType: checked.contentType,
+              sizeBytes: BigInt(checked.sizeBytes),
+              checksum: checked.checksum,
+            },
+          })
+          const scan = await transaction.fileScan.create({
+            data: {
+              fileAssetId: created.id,
+              scanner: configuredScannerName(),
+              status: 'pending',
+            },
+          })
+          await enqueueFileScanTask(transaction, scan.id)
+          return created
         })
         return { ...asset, sizeBytes: asset.sizeBytes.toString() }
       } catch {

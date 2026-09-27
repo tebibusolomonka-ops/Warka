@@ -24,7 +24,7 @@ const input = {
 }
 
 function store(role: string | null, assigned = true) {
-  return {
+  const database = {
     school: {
       findUnique: vi.fn().mockResolvedValue({ organizationId: randomUUID() }),
     },
@@ -64,14 +64,23 @@ function store(role: string | null, assigned = true) {
     fileAsset: {
       create: vi.fn().mockResolvedValue({
         id: randomUUID(),
-        status: 'available',
+        status: 'pending',
         originalFileName: 'lesson.pdf',
         sizeBytes: 32n,
       }),
       findUnique: vi.fn().mockResolvedValue({ status: 'available' }),
     },
+    fileScan: { create: vi.fn().mockResolvedValue({ id: randomUUID() }) },
+    scheduledTaskExecution: {
+      create: vi.fn().mockResolvedValue({ id: randomUUID() }),
+    },
     studentAccess: { findUnique: vi.fn().mockResolvedValue(null) },
     enrollment: { findFirst: vi.fn() },
+  }
+  return {
+    ...database,
+    $transaction: async (work: (tx: typeof database) => Promise<unknown>) =>
+      work(database),
   }
 }
 
@@ -205,11 +214,14 @@ it('stores a validated uploaded material only after storage succeeds and cleans 
   expect(database.fileAsset.create).toHaveBeenCalledWith(
     expect.objectContaining({
       data: expect.objectContaining({
-        status: 'available',
+        status: 'pending',
+        scanRequired: true,
         purpose: 'learningMaterial',
       }),
     }),
   )
+  expect(database.fileScan.create).toHaveBeenCalledOnce()
+  expect(database.scheduledTaskExecution.create).toHaveBeenCalledOnce()
   database.fileAsset.create.mockRejectedValueOnce(
     new Error('database unavailable'),
   )

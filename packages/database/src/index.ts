@@ -44,6 +44,7 @@ export {
 } from './backupPolicy.js'
 export {
   startScheduledTask,
+  enqueueFileScanTask,
   completeScheduledTask,
   failScheduledTask,
 } from './scheduledTaskExecutions.js'

@@ -20,10 +20,13 @@ function fixture() {
     fileAsset: {
       create: vi.fn().mockResolvedValue({
         id: 'asset-id',
+        status: 'pending',
         originalFileName: 'logo.png',
         sizeBytes: BigInt(logo.length),
       }),
     },
+    fileScan: { create: vi.fn().mockResolvedValue({ id: 'scan-id' }) },
+    scheduledTaskExecution: { create: vi.fn().mockResolvedValue({}) },
     schoolDocumentProfile: {
       upsert: vi.fn().mockResolvedValue({}),
       findUnique: vi.fn().mockResolvedValue({ logoAssetId: 'old-asset' }),
@@ -58,9 +61,10 @@ describe('school logo management', () => {
       claimedContentType: 'image/png',
     })
     expect(result.id).toBe('asset-id')
-    expect(transaction.schoolDocumentProfile.upsert).toHaveBeenCalledWith(
-      expect.objectContaining({ update: { logoAssetId: 'asset-id' } }),
-    )
+    expect(result.status).toBe('pending')
+    expect(transaction.schoolDocumentProfile.upsert).not.toHaveBeenCalled()
+    expect(transaction.fileScan.create).toHaveBeenCalledOnce()
+    expect(transaction.scheduledTaskExecution.create).toHaveBeenCalledOnce()
     expect(storage.delete).not.toHaveBeenCalled()
     expect(transaction.auditEvent.create).toHaveBeenCalled()
   })
