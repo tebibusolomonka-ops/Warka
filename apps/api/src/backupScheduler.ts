@@ -7,6 +7,7 @@ import {
   failScheduledTask,
 } from '@warka/database'
 import { executeBackup, LocalBackupStorage } from './backupService.js'
+import { verifyBackup } from './backupVerification.js'
 import { sendOperationsAlert } from './operationsAlerts.js'
 import { requireOperator } from './operationsAccess.js'
 
@@ -89,6 +90,7 @@ export class BackupScheduler {
       config.databaseUrl,
     ),
     private readonly backup: typeof executeBackup = executeBackup,
+    private readonly verify: typeof verifyBackup = verifyBackup,
   ) {}
 
   async tick(now = new Date()) {
@@ -102,29 +104,67 @@ export class BackupScheduler {
         orderBy: { createdAt: 'desc' },
         select: { createdAt: true },
       })
-      if (!backupDue(policy, latest?.createdAt ?? null, now)) return
-      await requireOperator(this.database, this.config.actorId)
-      const execution = await startScheduledTask(
-        this.database,
-        'backup',
-        'database',
-        now,
-      )
-      try {
-        const recordId = await this.backup({
-          database: this.database,
-          actorId: this.config.actorId,
-          databaseUrl: this.config.databaseUrl,
-          storage: new LocalBackupStorage(this.config.storageDirectory),
-          onFailure: (recordId) =>
-            sendOperationsAlert(this.database, 'backupFailed', recordId).then(
-              () => undefined,
-            ),
+      if (backupDue(policy, latest?.createdAt ?? null, now)) {
+        await requireOperator(this.database, this.config.actorId)
+        const execution = await startScheduledTask(
+          this.database,
+          'backup',
+          'database',
+          now,
+        )
+        try {
+          const recordId = await this.backup({
+            database: this.database,
+            actorId: this.config.actorId,
+            databaseUrl: this.config.databaseUrl,
+            storage: new LocalBackupStorage(this.config.storageDirectory),
+            onFailure: (recordId) =>
+              sendOperationsAlert(this.database, 'backupFailed', recordId).then(
+                () => undefined,
+              ),
+          })
+          await completeScheduledTask(this.database, execution.id, recordId)
+        } catch {
+          await failScheduledTask(this.database, execution.id, 'BACKUP_FAILED')
+          throw new Error('Scheduled backup failed')
+        }
+      }
+      if (policy.verificationRequired) {
+        const pending = await this.database.backupRecord.findMany({
+          where: { status: 'completed', verificationResult: null },
+          orderBy: { completedAt: 'asc' },
+          take: 10,
+          select: { id: true },
         })
-        await completeScheduledTask(this.database, execution.id, recordId)
-      } catch {
-        await failScheduledTask(this.database, execution.id, 'BACKUP_FAILED')
-        throw new Error('Scheduled backup failed')
+        for (const record of pending) {
+          const execution = await startScheduledTask(
+            this.database,
+            'backupVerification',
+            'database',
+            now,
+            record.id,
+          )
+          try {
+            const passed = await this.verify({
+              database: this.database,
+              id: record.id,
+              storage: new LocalBackupStorage(this.config.storageDirectory),
+            })
+            if (!passed) throw new Error('Backup verification failed')
+            await completeScheduledTask(this.database, execution.id, record.id)
+          } catch {
+            await failScheduledTask(
+              this.database,
+              execution.id,
+              'VERIFICATION_FAILED',
+            )
+            await sendOperationsAlert(
+              this.database,
+              'verificationFailed',
+              record.id,
+            ).catch(() => undefined)
+          }
+        }
       }
     })
     this.running = work.then(() => undefined)

@@ -308,6 +308,7 @@ enum BackupFrequency {
 
 enum ScheduledTaskType {
   backup
+  backupVerification
 }
 
 enum ScheduledTaskStatus {

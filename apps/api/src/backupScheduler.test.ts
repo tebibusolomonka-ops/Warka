@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { PrismaClient } from '@warka/database'
 import type { executeBackup } from './backupService.js'
+import type { verifyBackup } from './backupVerification.js'
 import {
   BackupScheduler,
   schedulerConfiguration,
@@ -36,6 +37,7 @@ function fixture(policyEnabled = true, latest?: Date) {
       findFirst: vi
         .fn()
         .mockResolvedValue(latest ? { createdAt: latest } : null),
+      findMany: vi.fn().mockResolvedValue([]),
     },
     scheduledTaskExecution: {
       create: vi.fn().mockResolvedValue({ id: 'execution-id' }),
@@ -83,7 +85,10 @@ describe('backup scheduler', () => {
           .fn()
           .mockResolvedValue({ enabled: true, frequency: 'daily' }),
       },
-      backupRecord: { findFirst: vi.fn().mockResolvedValue(null) },
+      backupRecord: {
+        findFirst: vi.fn().mockResolvedValue(null),
+        findMany: vi.fn().mockResolvedValue([]),
+      },
       scheduledTaskExecution: {
         create: vi.fn().mockResolvedValue({ id: 'execution-id' }),
         updateMany: vi.fn().mockResolvedValue({ count: 1 }),
@@ -114,7 +119,10 @@ describe('backup scheduler', () => {
           .fn()
           .mockResolvedValue({ enabled: true, frequency: 'daily' }),
       },
-      backupRecord: { findFirst: vi.fn().mockResolvedValue(null) },
+      backupRecord: {
+        findFirst: vi.fn().mockResolvedValue(null),
+        findMany: vi.fn().mockResolvedValue([]),
+      },
       scheduledTaskExecution: {
         create: vi.fn().mockResolvedValue({ id: 'execution-id' }),
         updateMany: vi.fn().mockResolvedValue({ count: 1 }),
@@ -159,6 +167,62 @@ describe('backup scheduler', () => {
     )
     await scheduler.tick(now)
     expect(backup).not.toHaveBeenCalled()
+  })
+
+  it('verifies completed unverified artifacts and records the outcome', async () => {
+    const { database } = fixture(true, now)
+    const findMany = vi.fn().mockResolvedValue([{ id: 'backup-record' }])
+    ;(
+      database as unknown as { backupRecord: { findMany: typeof findMany } }
+    ).backupRecord.findMany = findMany
+    const verify = vi.fn().mockResolvedValue(true)
+    const scheduler = new BackupScheduler(
+      database,
+      config,
+      { run: async (work) => work() },
+      vi.fn() as unknown as typeof executeBackup,
+      verify as unknown as typeof verifyBackup,
+    )
+    await scheduler.tick(now)
+    expect(verify).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'backup-record' }),
+    )
+    expect(findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { status: 'completed', verificationResult: null },
+      }),
+    )
+    expect(database.scheduledTaskExecution.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ status: 'completed' }),
+      }),
+    )
+  })
+
+  it('records verification failure without deleting the artifact', async () => {
+    const { database } = fixture(true, now)
+    ;(
+      database as unknown as {
+        backupRecord: { findMany: ReturnType<typeof vi.fn> }
+      }
+    ).backupRecord.findMany.mockResolvedValue([{ id: 'failed-backup' }])
+    const verify = vi.fn().mockResolvedValue(false)
+    const scheduler = new BackupScheduler(
+      database,
+      config,
+      { run: async (work) => work() },
+      vi.fn() as unknown as typeof executeBackup,
+      verify as unknown as typeof verifyBackup,
+    )
+    await scheduler.tick(now)
+    expect(database.scheduledTaskExecution.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          status: 'failed',
+          failureCode: 'VERIFICATION_FAILED',
+        }),
+      }),
+    )
   })
 
   it('validates opt-in configuration', () => {
