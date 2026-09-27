@@ -41,7 +41,7 @@ export async function resolveSession(
   if (!session || session.expiresAt.getTime() <= now.getTime()) {
     return null
   }
-  return session.user
+  return session.user.accountStatus === 'active' ? session.user : null
 }
 
 export async function revokeSession(

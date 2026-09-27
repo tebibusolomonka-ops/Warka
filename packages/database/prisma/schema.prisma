@@ -7,6 +7,12 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum AccountStatus {
+  active
+  suspended
+  deactivated
+}
+
 enum OrganizationRole {
   owner
   administrator
@@ -286,6 +292,7 @@ model User {
   id                           String                   @id @default(uuid())
   email                        String                   @unique
   displayName                  String
+  accountStatus                AccountStatus @default(active)
   createdAt                    DateTime                 @default(now())
   updatedAt                    DateTime                 @updatedAt
   organizationMemberships      OrganizationMembership[]

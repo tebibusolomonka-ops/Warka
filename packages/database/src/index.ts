@@ -38,7 +38,11 @@ export {
   DuplicateEmailError,
 } from './users.js'
 export type { CreateUser } from './users.js'
-export type { User } from '@prisma/client'
+export type { User, AccountStatus } from '@prisma/client'
+export {
+  changeAccountStatus,
+  AccountLifecyclePermissionError,
+} from './accountLifecycle.js'
 export {
   OrganizationRoleSchema,
   createOrganizationMembership,

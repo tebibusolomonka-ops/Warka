@@ -6,13 +6,14 @@ import { createAuthService } from './authService.js'
 
 describe('authentication service', () => {
   it('verifies credentials and resolves a persisted session', async () => {
-    const user = {
+    const user: User = {
       id: randomUUID(),
       email: 'owner@example.test',
       displayName: 'Owner',
+      accountStatus: 'active',
       createdAt: new Date(),
       updatedAt: new Date(),
-    } satisfies User
+    }
     const passwordHash = await hashPassword('correct password')
     const sessions = new Map<string, { user: User; expiresAt: Date }>()
     const database = {
@@ -58,6 +59,13 @@ describe('authentication service', () => {
       await auth.login('unknown@example.test', 'correct password'),
     ).toBeNull()
 
+    user.accountStatus = 'suspended'
+    expect(await auth.currentUser(login!.token)).toBeNull()
+    expect(await auth.login(user.email, 'correct password')).toBeNull()
+    user.accountStatus = 'deactivated'
+    expect(await auth.currentUser(login!.token)).toBeNull()
+    expect(await auth.login(user.email, 'correct password')).toBeNull()
+    user.accountStatus = 'active'
     await auth.logout(login!.token)
     expect(await auth.currentUser(login!.token)).toBeNull()
   })
@@ -65,13 +73,14 @@ describe('authentication service', () => {
 
 describe('password changes', () => {
   it('checks the authenticated session, clears the first-login flag, and revokes other sessions', async () => {
-    const user = {
+    const user: User = {
       id: randomUUID(),
       email: 'student@example.test',
       displayName: 'Student',
+      accountStatus: 'active',
       createdAt: new Date(),
       updatedAt: new Date(),
-    } satisfies User
+    }
     let passwordHash = await hashPassword('initial password')
     let mustChangePassword = true
     const sessions = new Map<string, { user: User; expiresAt: Date }>()

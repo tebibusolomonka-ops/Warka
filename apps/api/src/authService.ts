@@ -92,7 +92,11 @@ export function createAuthService(
       const passwordHash = user
         ? await findPasswordHashForUser(database, user.id)
         : null
-      if (!(await verifyPassword(password, passwordHash)) || !user) {
+      if (
+        !(await verifyPassword(password, passwordHash)) ||
+        !user ||
+        user.accountStatus !== 'active'
+      ) {
         await recordFailedLogin(database, email)
         return null
       }
