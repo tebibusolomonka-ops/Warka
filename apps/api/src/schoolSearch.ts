@@ -1,0 +1,102 @@
+import type { PrismaClient } from '@warka/database'
+import { findSchoolMembership, hasOrganizationAdminRole } from '@warka/database'
+import { z } from 'zod'
+
+export const SearchTypeSchema = z.enum([
+  'student',
+  'staff',
+  'issuedDocument',
+  'documentRequest',
+  'transfer',
+  'supportRequest',
+  'incident',
+])
+export type SearchType = z.infer<typeof SearchTypeSchema>
+export type SchoolSearchResult = {
+  type: SearchType
+  title: string
+  subtitle: string
+  reference: string
+  schoolId: string
+}
+export type SearchInput = {
+  actorId: string
+  schoolId: string
+  query: string
+  types: SearchType[]
+  limit: number
+  offset: number
+}
+export class SearchAccessError extends Error {
+  constructor() {
+    super('Search access denied')
+  }
+}
+
+export async function searchSchoolScope(
+  database: PrismaClient,
+  actorId: string,
+  schoolId: string,
+) {
+  const school = await database.school.findUnique({
+    where: { id: schoolId },
+    select: { organizationId: true },
+  })
+  if (!school) throw new SearchAccessError()
+  const user = await database.user.findUnique({
+    where: { id: actorId },
+    select: { accountStatus: true },
+  })
+  if (user?.accountStatus !== 'active') throw new SearchAccessError()
+  const organizationAdmin = await hasOrganizationAdminRole(
+    database,
+    actorId,
+    school.organizationId,
+  )
+  const membership = await findSchoolMembership(database, actorId, schoolId)
+  if (!organizationAdmin && !membership) throw new SearchAccessError()
+  const role = organizationAdmin ? 'organizationAdmin' : membership!.role
+  return {
+    schoolId,
+    role,
+    allowedTypes:
+      role === 'organizationAdmin' || role === 'administrator'
+        ? ([
+            'student',
+            'staff',
+            'issuedDocument',
+            'documentRequest',
+            'transfer',
+            'supportRequest',
+          ] as SearchType[])
+        : role === 'registrar' || role === 'approver'
+          ? ([
+              'student',
+              'issuedDocument',
+              'documentRequest',
+              'transfer',
+            ] as SearchType[])
+          : ([] as SearchType[]),
+  }
+}
+
+export function validatedSearchInput(input: SearchInput) {
+  const query = input.query.trim()
+  if (
+    query.length < 2 ||
+    query.length > 100 ||
+    !Number.isInteger(input.limit) ||
+    input.limit < 1 ||
+    input.limit > 50 ||
+    !Number.isInteger(input.offset) ||
+    input.offset < 0
+  )
+    throw new Error('Invalid search parameters')
+  return {
+    ...input,
+    query,
+    types: [
+      ...new Set(input.types.map((type) => SearchTypeSchema.parse(type))),
+    ],
+  }
+}
