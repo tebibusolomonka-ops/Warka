@@ -65,6 +65,80 @@ export function registerPrivacyRoutes(
   getDatabase: () => PrismaClient,
   authenticate: preHandlerHookHandler,
 ) {
+  app.get(
+    '/privacy/subjects/mine',
+    { preHandler: authenticate },
+    async (request) => {
+      const userId = authenticatedUser(request).id
+      const [self, guardian] = await Promise.all([
+        getDatabase().studentAccess.findUnique({
+          where: { userId },
+          select: {
+            student: {
+              select: {
+                id: true,
+                studentReference: true,
+                givenName: true,
+                familyName: true,
+                enrollments: {
+                  where: { status: 'approved' },
+                  select: { schoolId: true },
+                },
+              },
+            },
+          },
+        }),
+        getDatabase().guardianAccess.findUnique({
+          where: { userId },
+          select: {
+            guardian: {
+              select: {
+                students: {
+                  where: {
+                    verificationStatus: 'verified',
+                    revokedAt: null,
+                    verificationSchoolId: { not: null },
+                  },
+                  select: {
+                    verificationSchoolId: true,
+                    student: {
+                      select: {
+                        id: true,
+                        studentReference: true,
+                        givenName: true,
+                        familyName: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        }),
+      ])
+      const subjects = [
+        ...(self?.student.enrollments.map((item) => ({
+          schoolId: item.schoolId,
+          studentId: self.student.id,
+          studentReference: self.student.studentReference,
+          displayName: [self.student.givenName, self.student.familyName]
+            .filter(Boolean)
+            .join(' '),
+          requesterKind: 'student' as const,
+        })) ?? []),
+        ...(guardian?.guardian.students.map((item) => ({
+          schoolId: item.verificationSchoolId!,
+          studentId: item.student.id,
+          studentReference: item.student.studentReference,
+          displayName: [item.student.givenName, item.student.familyName]
+            .filter(Boolean)
+            .join(' '),
+          requesterKind: 'guardian' as const,
+        })) ?? []),
+      ]
+      return subjects
+    },
+  )
   app.post(
     '/schools/:schoolId/privacy/requests',
     { preHandler: authenticate },

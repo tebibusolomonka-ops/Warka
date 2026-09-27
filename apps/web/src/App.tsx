@@ -37,6 +37,7 @@ import { SchoolDocuments } from './SchoolDocuments'
 import { YearRolloverWorkspace } from './YearRolloverWorkspace'
 import { SchoolOnboardingWorkspace } from './SchoolOnboardingWorkspace'
 import { StaffLifecycleWorkspace } from './StaffLifecycleWorkspace'
+import { PrivacyWorkspace } from './PrivacyWorkspace'
 import { SupportWorkspace } from './SupportWorkspace'
 import { AccountSecurity, AdminRecovery } from './AccountSecurity'
 import { PublicRecovery } from './PublicRecovery'
@@ -321,6 +322,11 @@ function SignedInShell({
           onSessionExpired={sessionExpired}
           onSignOut={onSignOut}
         />
+        <PrivacyWorkspace
+          baseUrl={baseUrl}
+          mode="requester"
+          onSessionExpired={sessionExpired}
+        />
       </>
     )
   if (activeWorkspace === 'student' && portal.status === 'loaded')
@@ -332,6 +338,11 @@ function SignedInShell({
           identity={portal.identity}
           onSessionExpired={sessionExpired}
           onSignOut={onSignOut}
+        />
+        <PrivacyWorkspace
+          baseUrl={baseUrl}
+          mode="requester"
+          onSessionExpired={sessionExpired}
         />
       </>
     )
@@ -450,6 +461,12 @@ function SignedInShell({
                     baseUrl={baseUrl}
                     schoolId={selectedSchool.school.id}
                     currentUserId={user.id}
+                  />
+                  <PrivacyWorkspace
+                    baseUrl={baseUrl}
+                    mode="staff"
+                    schoolId={selectedSchool.school.id}
+                    onSessionExpired={sessionExpired}
                   />
                   <YearRolloverWorkspace
                     baseUrl={baseUrl}
