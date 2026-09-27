@@ -335,6 +335,20 @@ enum FileAssetStatus {
   deleted
 }
 
+enum FileScanStatus {
+  pending
+  scanning
+  clean
+  infected
+  failed
+  unavailable
+}
+
+enum FileScanResult {
+  clean
+  infected
+}
+
 enum OperationalIncidentSeverity {
   low
   medium
@@ -493,6 +507,7 @@ model FileAsset {
   checksum String
   storageKey String @unique
   status FileAssetStatus @default(pending)
+  scanRequired Boolean @default(false)
   createdAt DateTime @default(now())
   createdById String
   deletedAt DateTime?
@@ -504,10 +519,27 @@ model FileAsset {
   learningMaterial LearningMaterial? @relation(fields: [learningMaterialId], references: [id], onDelete: Restrict)
   issuedDocument IssuedDocument? @relation(fields: [issuedDocumentId], references: [id], onDelete: Restrict)
   activeLogoFor SchoolDocumentProfile? @relation("ActiveSchoolLogo")
+  scans FileScan[]
 
   @@index([schoolId, purpose, status])
   @@index([ownerUserId, purpose, status])
   @@index([createdAt])
+}
+
+model FileScan {
+  id String @id @default(uuid())
+  fileAssetId String
+  scanner String
+  status FileScanStatus @default(pending)
+  startedAt DateTime?
+  completedAt DateTime?
+  result FileScanResult?
+  failureCode String?
+  createdAt DateTime @default(now())
+  fileAsset FileAsset @relation(fields: [fileAssetId], references: [id], onDelete: Restrict)
+
+  @@index([fileAssetId, createdAt])
+  @@index([status, createdAt])
 }
 
 model MaintenanceWindow {

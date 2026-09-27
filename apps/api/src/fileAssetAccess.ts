@@ -40,6 +40,15 @@ export async function requireFileAssetAccess(
     asset.status !== 'available'
   )
     throw new FileAssetAccessError()
+  if (asset.scanRequired) {
+    const scan = await database.fileScan.findFirst({
+      where: { fileAssetId: asset.id },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      select: { status: true, result: true },
+    })
+    if (scan?.status !== 'clean' || scan.result !== 'clean')
+      throw new FileAssetAccessError()
+  }
 
   if (asset.purpose === 'learningMaterial') {
     if (!asset.learningMaterialId || !asset.schoolId)

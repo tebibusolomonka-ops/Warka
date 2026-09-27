@@ -22,6 +22,11 @@ export function createDatabaseClient(
 
 export type { PrismaClient }
 export {
+  FileScannerSchema,
+  createFileScan,
+  latestFileScan,
+} from './fileScans.js'
+export {
   MaintenanceWindowInputSchema,
   createMaintenanceWindow,
   changeMaintenanceWindowStatus,
