@@ -496,9 +496,13 @@ model FileAsset {
   createdAt DateTime @default(now())
   createdById String
   deletedAt DateTime?
+  learningMaterialId String? @unique
+  issuedDocumentId String? @unique
   school School? @relation(fields: [schoolId], references: [id], onDelete: Restrict)
   ownerUser User? @relation("FileAssetOwner", fields: [ownerUserId], references: [id], onDelete: Restrict)
   createdBy User @relation("FileAssetCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  learningMaterial LearningMaterial? @relation(fields: [learningMaterialId], references: [id], onDelete: Restrict)
+  issuedDocument IssuedDocument? @relation(fields: [issuedDocumentId], references: [id], onDelete: Restrict)
 
   @@index([schoolId, purpose, status])
   @@index([ownerUserId, purpose, status])
@@ -1263,6 +1267,7 @@ model Subject {
 }
 
 model LearningMaterial {
+  fileAsset FileAsset?
   id               String       @id @default(uuid())
   schoolId         String
   academicYearId   String
@@ -1482,6 +1487,7 @@ model ResultCorrection {
 }
 
 model IssuedDocument {
+  fileAsset FileAsset?
   id                    String              @id @default(uuid())
   studentId             String
   schoolId              String
