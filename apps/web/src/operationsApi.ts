@@ -57,6 +57,12 @@ const status = z.object({
     z.object({ id: z.uuid(), title: z.string(), status: z.string() }),
   ),
   metrics,
+  fileSecurity: z
+    .object({
+      scanner: z.enum(['available', 'degraded', 'unavailable']),
+      counts: z.record(z.string(), z.number()),
+    })
+    .optional(),
 })
 const timeline = incident.extend({
   updates: z.array(
@@ -114,6 +120,41 @@ export type SchedulerState = z.infer<typeof schedulerState>
 export type ScheduledExecution = z.infer<typeof scheduledExecution>
 export type DueBackupPolicy = z.infer<typeof dueBackupPolicy>
 export type StorageSummary = z.infer<typeof storageSummary>
+const fileScan = z.object({
+  id: z.uuid(),
+  scanner: z.string(),
+  status: z.string(),
+  result: z.string().nullable(),
+  failureCode: z.string().nullable(),
+  startedAt: date.nullable(),
+  completedAt: date.nullable(),
+  createdAt: date,
+  fileAsset: z.object({
+    id: z.uuid(),
+    schoolId: z.uuid().nullable(),
+    purpose: z.string(),
+    status: z.string(),
+    originalFileName: z.string(),
+    createdAt: date,
+  }),
+})
+export type FileSecurityScan = z.infer<typeof fileScan>
+export const listFileSecurityScans = async (baseUrl: string) =>
+  z
+    .object({ scans: z.array(fileScan) })
+    .parse(await requestJson(baseUrl, '/operations/file-security/scans')).scans
+export const rescanFileAsset = (baseUrl: string, id: string) =>
+  requestJson(
+    baseUrl,
+    `/operations/file-security/assets/${encodeURIComponent(id)}/rescan`,
+    { method: 'POST' },
+  )
+export const removeQuarantinedAsset = (baseUrl: string, id: string) =>
+  requestJson(
+    baseUrl,
+    `/operations/file-security/assets/${encodeURIComponent(id)}`,
+    { method: 'DELETE' },
+  )
 export const getStorageSummary = async (baseUrl: string) =>
   storageSummary.parse(await requestJson(baseUrl, '/operations/storage'))
 

@@ -226,6 +226,7 @@ export function prismaLearningMaterialService(
           academicYear: { select: { name: true } },
           schoolClass: { select: { name: true } },
           subject: { select: { name: true } },
+          fileAsset: { select: { status: true } },
         },
         orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       })

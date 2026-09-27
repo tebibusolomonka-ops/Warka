@@ -64,6 +64,15 @@ export async function processPendingFileScan(input: {
     })
     if (
       outcome.status === 'clean' &&
+      scan.fileAsset.purpose === 'learningMaterial' &&
+      scan.fileAsset.learningMaterialId
+    )
+      await transaction.learningMaterial.updateMany({
+        where: { id: scan.fileAsset.learningMaterialId, publishedAt: null },
+        data: { publishedAt: new Date() },
+      })
+    if (
+      outcome.status === 'clean' &&
       scan.fileAsset.purpose === 'schoolBranding' &&
       scan.fileAsset.schoolId
     ) {

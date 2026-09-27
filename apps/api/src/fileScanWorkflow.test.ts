@@ -25,6 +25,8 @@ function fixture(outcome: ScanOutcome, claimed = 1) {
       storageKey: `asset_${randomUUID()}`,
       schoolId: randomUUID(),
       createdById: randomUUID(),
+      purpose: 'learningMaterial',
+      learningMaterialId: randomUUID(),
     },
   }
   const updateScan = vi.fn().mockResolvedValue({})
@@ -36,15 +38,14 @@ function fixture(outcome: ScanOutcome, claimed = 1) {
       update: updateScan,
     },
     fileAsset: { updateMany: updateAsset },
+    learningMaterial: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
     $transaction: vi.fn(async (run) => run(database)),
   } as unknown as PrismaClient
   const storage = {
-    get: vi
-      .fn()
-      .mockResolvedValue({
-        stream: Readable.from([Buffer.from('synthetic')]),
-        sizeBytes: 9,
-      }),
+    get: vi.fn().mockResolvedValue({
+      stream: Readable.from([Buffer.from('synthetic')]),
+      sizeBytes: 9,
+    }),
   } as unknown as FileStorage
   const scanner = new FakeFileScanner([outcome])
   return { database, storage, scanner, scanId, updateScan, updateAsset }
@@ -73,6 +74,9 @@ describe('file quarantine lifecycle', () => {
         where: expect.objectContaining({ status: 'pending' }),
         data: { status: assetStatus },
       })
+      expect(f.database.learningMaterial.updateMany).toHaveBeenCalledTimes(
+        outcome.status === 'clean' ? 1 : 0,
+      )
       expect(recordAuditEvent).toHaveBeenCalledTimes(
         outcome.status === 'infected' ? 1 : 0,
       )

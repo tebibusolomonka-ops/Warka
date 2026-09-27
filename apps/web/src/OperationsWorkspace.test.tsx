@@ -20,6 +20,7 @@ import {
   listScheduledExecutions,
   listDueBackupPolicies,
   retryScheduledExecution,
+  listFileSecurityScans,
 } from './operationsApi'
 
 vi.mock('./operationsApi', () => ({
@@ -41,6 +42,9 @@ vi.mock('./operationsApi', () => ({
   listScheduledExecutions: vi.fn(),
   listDueBackupPolicies: vi.fn(),
   retryScheduledExecution: vi.fn(),
+  listFileSecurityScans: vi.fn(),
+  rescanFileAsset: vi.fn(),
+  removeQuarantinedAsset: vi.fn(),
 }))
 
 const id = '123e4567-e89b-42d3-a456-426614174001'
@@ -65,6 +69,7 @@ it('shows safe operational sections and runs backup, verification, and rehearsal
     quarantinedAssetCount: 0,
     byPurpose: [{ purpose: 'learningMaterial', count: 2 }],
   })
+  vi.mocked(listFileSecurityScans).mockResolvedValue([])
   vi.mocked(listBackups).mockResolvedValue([
     {
       id,

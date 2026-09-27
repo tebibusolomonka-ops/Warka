@@ -9,8 +9,9 @@ import { ApiError } from './api'
 import {
   postAnnouncement,
   postLearningMaterial,
-  publishLearningMaterial,
   uploadLearningMaterial,
+  listStaffMaterials,
+  type StaffMaterial,
 } from './resourceApi'
 
 type Data = { structure: AcademicStructure; assignments: TeachingAssignment[] }
@@ -28,6 +29,7 @@ export function ResourceWorkspace({
 }) {
   const [load, setLoad] = useState<Load>({ status: 'loading' })
   const [refresh, setRefresh] = useState(0)
+  const [materialRefresh, setMaterialRefresh] = useState(0)
   const [assignmentId, setAssignmentId] = useState('')
   const [materialTitle, setMaterialTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -35,6 +37,7 @@ export function ResourceWorkspace({
   const [resourceKind, setResourceKind] = useState<'link' | 'file'>('link')
   const [materialFile, setMaterialFile] = useState<File | null>(null)
   const [uploadStatus, setUploadStatus] = useState('')
+  const [materials, setMaterials] = useState<StaffMaterial[]>([])
   const [announcementClassId, setAnnouncementClassId] = useState('')
   const [announcementTitle, setAnnouncementTitle] = useState('')
   const [body, setBody] = useState('')
@@ -63,6 +66,18 @@ export function ResourceWorkspace({
       active = false
     }
   }, [baseUrl, schoolId, refresh, onSessionExpired])
+
+  useEffect(() => {
+    let active = true
+    listStaffMaterials(baseUrl, schoolId)
+      .then((items) => {
+        if (active) setMaterials(items)
+      })
+      .catch(() => undefined)
+    return () => {
+      active = false
+    }
+  }, [baseUrl, schoolId, materialRefresh])
 
   const data = load.status === 'loaded' ? load.data : null
   const role = data?.structure.role
@@ -122,14 +137,17 @@ export function ResourceWorkspace({
           material.id,
           materialFile!,
         )
-        setUploadStatus('Publishing material…')
-        await publishLearningMaterial(baseUrl, schoolId, material.id)
       }
       setMaterialTitle('')
       setDescription('')
       setResourceLocation('')
       setUploadStatus('')
-      setMessage('Material published.')
+      setMessage(
+        resourceKind === 'file'
+          ? 'Material processing. It will become available after a clean security scan.'
+          : 'Material published.',
+      )
+      setMaterialRefresh((value) => value + 1)
     } catch (cause) {
       if (cause instanceof ApiError && cause.status === 401) onSessionExpired()
       else setError('Could not publish material.')
@@ -185,6 +203,20 @@ export function ResourceWorkspace({
       {role === 'teacher' && (
         <div className="academic-panel">
           <h3>Publish learning material</h3>
+          <h4>My materials</h4>
+          <ul>
+            {materials.map((item) => (
+              <li key={item.id}>
+                {item.title}:{' '}
+                {item.resourceType === 'link' ||
+                item.fileAsset?.status === 'available'
+                  ? 'Available'
+                  : item.fileAsset?.status === 'quarantined'
+                    ? 'Rejected or quarantined'
+                    : 'Processing'}
+              </li>
+            ))}
+          </ul>
           {assignments.length === 0 ? (
             <p>No teaching assignments available.</p>
           ) : (

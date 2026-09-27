@@ -13,6 +13,7 @@ import {
   postLearningMaterial,
   uploadLearningMaterial,
   publishLearningMaterial,
+  listStaffMaterials,
 } from './resourceApi'
 
 vi.mock('./academicApi', async (importOriginal) => ({
@@ -25,6 +26,7 @@ vi.mock('./resourceApi', () => ({
   postLearningMaterial: vi.fn(),
   uploadLearningMaterial: vi.fn(),
   publishLearningMaterial: vi.fn(),
+  listStaffMaterials: vi.fn(),
 }))
 
 const baseUrl = 'http://localhost:3000/api'
@@ -70,11 +72,12 @@ beforeEach(() => {
     id: '123e4567-e89b-42d3-a456-426614174099',
   })
   vi.mocked(postAnnouncement).mockResolvedValue({})
+  vi.mocked(listStaffMaterials).mockResolvedValue([])
 })
 afterEach(cleanup)
 
 describe('staff resources', () => {
-  it('uploads a file before publishing and reports server-confirmed success', async () => {
+  it('uploads a file and reports processing until the clean scan publishes it', async () => {
     vi.mocked(uploadLearningMaterial).mockResolvedValue({})
     vi.mocked(publishLearningMaterial).mockResolvedValue({})
     render(
@@ -108,8 +111,10 @@ describe('staff resources', () => {
         file,
       ),
     )
-    await waitFor(() => expect(publishLearningMaterial).toHaveBeenCalledOnce())
-    await screen.findByText('Material published.')
+    expect(publishLearningMaterial).not.toHaveBeenCalled()
+    await screen.findByText(
+      'Material processing. It will become available after a clean security scan.',
+    )
   })
   it('creates material from a real assignment and limits teacher notices to their class', async () => {
     render(

@@ -74,6 +74,20 @@ export function publishLearningMaterial(
   )
 }
 
+const staffMaterial = z.object({
+  id: z.uuid(),
+  title: z.string(),
+  resourceType: z.enum(['file', 'link']),
+  publishedAt: z.string().nullable(),
+  fileAsset: z.object({ status: z.string() }).nullable(),
+})
+export type StaffMaterial = z.infer<typeof staffMaterial>
+export async function listStaffMaterials(baseUrl: string, schoolId: string) {
+  return z
+    .array(staffMaterial)
+    .parse(await requestJson(baseUrl, `${schoolPath(schoolId)}/materials`))
+}
+
 export function postAnnouncement(
   baseUrl: string,
   schoolId: string,
