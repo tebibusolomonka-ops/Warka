@@ -278,6 +278,18 @@ model Organization {
   retentionHolds   RetentionHold[]
 }
 
+enum BackupScope {
+  database
+}
+
+enum BackupStatus {
+  pending
+  running
+  completed
+  failed
+  verified
+}
+
 model School {
   resultSets                    ResultSet[]
   publishedResults              PublishedResult[]
@@ -326,6 +338,7 @@ model School {
 }
 
 model User {
+  createdBackups               BackupRecord[] @relation("BackupCreatedBy")
   submittedResultSets          ResultSet[]              @relation("ResultSetSubmittedBy")
   issuedDocuments              IssuedDocument[]
   requestedTransfers           TransferRequest[]
@@ -392,6 +405,24 @@ model User {
   createdRetentionHolds         RetentionHold[] @relation("RetentionHoldCreatedBy")
   releasedRetentionHolds        RetentionHold[] @relation("RetentionHoldReleasedBy")
   marks                        Mark[]
+}
+
+model BackupRecord {
+  id               String       @id @default(uuid())
+  scope            BackupScope  @default(database)
+  status           BackupStatus @default(pending)
+  startedAt        DateTime?
+  completedAt      DateTime?
+  createdAt        DateTime     @default(now())
+  createdById      String
+  sizeBytes        BigInt?
+  checksum         String?
+  storageReference String?
+  failureReason    String?
+  createdBy        User         @relation("BackupCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@index([createdAt])
+  @@index([status, createdAt])
 }
 
 model OrganizationMembership {

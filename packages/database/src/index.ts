@@ -21,6 +21,12 @@ export function createDatabaseClient(
 }
 
 export type { PrismaClient }
+export {
+  createPendingBackup,
+  startBackup,
+  completeBackup,
+  failBackup,
+} from './backupRecords.js'
 export { createOrganization, findOrganizationById } from './organizations.js'
 export type { CreateOrganization } from './organizations.js'
 export {
