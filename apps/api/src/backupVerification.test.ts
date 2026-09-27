@@ -20,13 +20,11 @@ describe('backup verification', () => {
       backupRecord: { findUnique: vi.fn().mockResolvedValue(record), update },
     } as unknown as PrismaClient
     const storage = {
-      inspect: vi
-        .fn()
-        .mockResolvedValue({
-          path: 'artifact',
-          sizeBytes: 10n,
-          checksum: record.checksum,
-        }),
+      inspect: vi.fn().mockResolvedValue({
+        path: 'artifact',
+        sizeBytes: 10n,
+        checksum: record.checksum,
+      }),
     } as unknown as BackupStorage
     const inspect = vi.fn()
     expect(
@@ -54,13 +52,11 @@ describe('backup verification', () => {
       backupRecord: { findUnique: vi.fn().mockResolvedValue(record), update },
     } as unknown as PrismaClient
     const storage = {
-      inspect: vi
-        .fn()
-        .mockResolvedValue({
-          path: 'artifact',
-          sizeBytes: 10n,
-          checksum: 'b'.repeat(64),
-        }),
+      inspect: vi.fn().mockResolvedValue({
+        path: 'artifact',
+        sizeBytes: 10n,
+        checksum: 'b'.repeat(64),
+      }),
       remove: vi.fn(),
     } as unknown as BackupStorage
     expect(

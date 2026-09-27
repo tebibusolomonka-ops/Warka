@@ -21,13 +21,11 @@ describe('restore rehearsal', () => {
       },
     } as unknown as PrismaClient
     const storage = {
-      inspect: vi
-        .fn()
-        .mockResolvedValue({
-          path: 'archive',
-          sizeBytes: 10n,
-          checksum: backup.checksum,
-        }),
+      inspect: vi.fn().mockResolvedValue({
+        path: 'archive',
+        sizeBytes: 10n,
+        checksum: backup.checksum,
+      }),
     } as unknown as BackupStorage
     const process: RestoreProcess = {
       create: vi.fn(),
@@ -71,13 +69,11 @@ describe('restore rehearsal', () => {
       },
     } as unknown as PrismaClient
     const storage = {
-      inspect: vi
-        .fn()
-        .mockResolvedValue({
-          path: 'archive',
-          sizeBytes: 10n,
-          checksum: backup.checksum,
-        }),
+      inspect: vi.fn().mockResolvedValue({
+        path: 'archive',
+        sizeBytes: 10n,
+        checksum: backup.checksum,
+      }),
     } as unknown as BackupStorage
     const process: RestoreProcess = {
       create: vi.fn(),
