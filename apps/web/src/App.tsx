@@ -43,6 +43,7 @@ import { OperationsWorkspace } from './OperationsWorkspace'
 import { SupportWorkspace } from './SupportWorkspace'
 import { AccountSecurity, AdminRecovery } from './AccountSecurity'
 import { PublicRecovery } from './PublicRecovery'
+import { SearchWorkspace } from './SearchWorkspace'
 
 type Authentication =
   | { status: 'checking' }
@@ -409,6 +410,17 @@ function SignedInShell({
                 ))}
               </select>
             </div>
+            {selectedSchool && (
+              <>
+                <nav aria-label="School navigation">
+                  <a href="#global-search">Search</a>
+                </nav>
+                <SearchWorkspace
+                  baseUrl={baseUrl}
+                  schoolId={selectedSchool.school.id}
+                />
+              </>
+            )}
             {selectedSchool &&
               (selectedSchool.capabilities.canApprove ||
                 !selectedSchool.capabilities.canRegister) && (
