@@ -727,3 +727,9 @@ export {
   offboardStaff,
   StaffOffboardingPermissionError,
 } from './staffOffboarding.js'
+
+export {
+  listStaffAccess,
+  accessPeriodStatus,
+  StaffAccessPermissionError,
+} from './staffAccessSummary.js'

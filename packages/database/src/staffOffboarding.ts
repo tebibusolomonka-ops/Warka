@@ -16,7 +16,7 @@ export async function offboardStaff(
     targetUserId: string
     schoolId: string
     reason: string
-    endOrganizationMembership?: boolean
+    endOrganizationMembership?: boolean | undefined
   },
   now = new Date(),
 ) {

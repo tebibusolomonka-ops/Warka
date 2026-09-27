@@ -4,6 +4,9 @@ import cookie from '@fastify/cookie'
 import {
   createDatabaseClient,
   AdministratorRecoveryPermissionError,
+  AccountLifecyclePermissionError,
+  StaffOffboardingPermissionError,
+  StaffAccessPermissionError,
   SchoolOnboardingStateError,
   OnboardingChecklistStateError,
   TrainingRecordStateError,
@@ -66,6 +69,7 @@ import { ErrorResponseSchema, HealthResponseSchema } from '@warka/shared'
 import { ZodError } from 'zod'
 import { createAuthService, type AuthService } from './authService.js'
 import { registerAuthRoutes } from './authRoutes.js'
+import { registerStaffAccessRoutes } from './staffAccessRoutes.js'
 import { registerSchoolContactRoutes } from './schoolContactRoutes.js'
 import { registerSupportRequestRoutes } from './supportRequestRoutes.js'
 import { registerOnboardingRoutes } from './onboardingRoutes.js'
@@ -196,6 +200,7 @@ import { registerAcademicRoutes } from './academicRoutes.js'
 export function buildApp(
   options: {
     store?: SchoolStore
+    database?: PrismaClient
     auth?: AuthService
     access?: SchoolAccess
     students?: StudentService
@@ -236,7 +241,7 @@ export function buildApp(
     : undefined
   const recoveryDelivery = options.recoveryDelivery ?? testRecoveryDelivery
 
-  let database: PrismaClient | undefined
+  let database: PrismaClient | undefined = options.database
 
   const getDatabase = () => (database ??= createDatabaseClient())
   const getStore = () => options.store ?? prismaSchoolStore(getDatabase())
@@ -300,6 +305,7 @@ export function buildApp(
     () => options.onboarding ?? prismaOnboardingService(getDatabase()),
     authenticate,
   )
+  registerStaffAccessRoutes(app, getDatabase, authenticate)
   registerSupportRequestRoutes(app, getDatabase, authenticate)
   registerSchoolContactRoutes(app, getDatabase, authenticate)
   registerSchoolRoutes(app, getStore, getAccess, authenticate)
@@ -423,6 +429,9 @@ export function buildApp(
       error instanceof AccessReviewPermissionError ||
       error instanceof SupportAccessPermissionError ||
       error instanceof AdministratorRecoveryPermissionError ||
+      error instanceof AccountLifecyclePermissionError ||
+      error instanceof StaffOffboardingPermissionError ||
+      error instanceof StaffAccessPermissionError ||
       error instanceof RetentionPermissionError
     ) {
       return reply.code(403).send({
@@ -751,7 +760,7 @@ export function buildApp(
   })
 
   app.addHook('onClose', async () => {
-    await database?.$disconnect()
+    if (!options.database) await database?.$disconnect()
   })
 
   return app
