@@ -7,6 +7,10 @@ import {
   FileScanScheduler,
   fileScanSchedulerConfiguration,
 } from './fileScanScheduler.js'
+import {
+  EmailOutboxScheduler,
+  emailOutboxConfiguration,
+} from './emailOutboxScheduler.js'
 
 const app = buildApp()
 const schedulerConfig = schedulerConfiguration(process.env)
@@ -21,11 +25,18 @@ const scanDatabase = scanConfig.enabled ? createDatabaseClient() : undefined
 const scanScheduler = scanDatabase
   ? new FileScanScheduler(scanDatabase, scanConfig)
   : undefined
+const emailConfig = emailOutboxConfiguration(process.env)
+const emailDatabase = emailConfig.enabled ? createDatabaseClient() : undefined
+const emailScheduler = emailDatabase
+  ? new EmailOutboxScheduler(emailDatabase, emailConfig)
+  : undefined
 app.addHook('onClose', async () => {
   await scheduler?.stop()
   await scanScheduler?.stop()
+  await emailScheduler?.stop()
   await schedulerDatabase?.$disconnect()
   await scanDatabase?.$disconnect()
+  await emailDatabase?.$disconnect()
 })
 
 try {
@@ -40,6 +51,7 @@ try {
     )
   else scheduler?.start(() => app.log.error('Backup scheduler poll failed'))
   scanScheduler?.start(() => app.log.error('File scan scheduler poll failed'))
+  emailScheduler?.start(() => app.log.error('Email outbox poll failed'))
 } catch (error) {
   app.log.error(error)
   await app.close()

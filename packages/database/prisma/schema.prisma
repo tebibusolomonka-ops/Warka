@@ -321,6 +321,7 @@ enum ScheduledTaskType {
   backupVerification
   retentionEvaluation
   fileScan
+  emailDelivery
 }
 
 enum ScheduledTaskStatus {
