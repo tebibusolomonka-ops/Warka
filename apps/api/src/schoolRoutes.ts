@@ -8,6 +8,7 @@ import {
 } from '@warka/shared'
 import { z } from 'zod'
 import { authenticatedUser } from './authenticateRequest.js'
+import { privateConditionalCache } from './cachePolicy.js'
 import type { SchoolAccess } from './schoolAccess.js'
 import {
   RecordNotFound,
@@ -90,7 +91,7 @@ export function registerSchoolRoutes(
 
   app.get(
     '/schools/:schoolId',
-    { preHandler: authenticate },
+    { preHandler: authenticate, onSend: privateConditionalCache },
     async (request) => {
       const user = authenticatedUser(request)
       const { schoolId } = schoolParams.parse(request.params)

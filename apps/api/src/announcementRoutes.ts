@@ -1,6 +1,7 @@
 import type { FastifyInstance, preHandlerHookHandler } from 'fastify'
 import { z } from 'zod'
 import { authenticatedUser } from './authenticateRequest.js'
+import { privateConditionalCache } from './cachePolicy.js'
 import {
   AnnouncementInputSchema,
   type AnnouncementService,
@@ -58,7 +59,7 @@ export function registerAnnouncementRoutes(
   )
   app.get(
     '/student/announcements',
-    { preHandler: authenticate },
+    { preHandler: authenticate, onSend: privateConditionalCache },
     async (request) =>
       getAnnouncements().studentList(authenticatedUser(request).id),
   )

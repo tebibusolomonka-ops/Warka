@@ -92,6 +92,7 @@ import { registerOperationsRoutes } from './operationsRoutes.js'
 import { registerQuarantineRoutes } from './quarantineRoutes.js'
 import { registerSearchRoutes } from './searchRoutes.js'
 import { registerResponseCompression } from './responseCompression.js'
+import { installDefaultCachePolicy } from './cachePolicy.js'
 import { registerSchedulerRoutes } from './schedulerRoutes.js'
 import { operationsTestActions } from './operationsTestAdapter.js'
 import { OperationsPermissionError } from './operationsAccess.js'
@@ -302,6 +303,7 @@ export function buildApp(
 
   app.register(cookie)
   registerResponseCompression(app)
+  installDefaultCachePolicy(app)
   app.decorateRequest('currentUser', null)
   const metrics = new ServiceMetrics()
   installRequestLogging(app, (entry) => {

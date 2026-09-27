@@ -1,6 +1,7 @@
 import type { FastifyInstance, preHandlerHookHandler } from 'fastify'
 import { z } from 'zod'
 import { authenticatedUser } from './authenticateRequest.js'
+import { privateConditionalCache } from './cachePolicy.js'
 import {
   LearningMaterialInputSchema,
   type LearningMaterialService,
@@ -79,7 +80,10 @@ export function registerLearningMaterialRoutes(
       return reply.code(201).send(result)
     },
   )
-  app.get('/student/materials', { preHandler: authenticate }, async (request) =>
-    getMaterials().studentList(authenticatedUser(request).id),
+  app.get(
+    '/student/materials',
+    { preHandler: authenticate, onSend: privateConditionalCache },
+    async (request) =>
+      getMaterials().studentList(authenticatedUser(request).id),
   )
 }
