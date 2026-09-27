@@ -1,15 +1,17 @@
 import { access, constants } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 import type { PrismaClient } from '@warka/database'
+import { schedulerHealth } from './schedulerHealth.js'
 
 export type DependencyState = 'ready' | 'unavailable'
 export type Readiness = {
-  status: 'ready' | 'unavailable'
+  status: 'ready' | 'degraded' | 'unavailable'
   dependencies: {
     database: DependencyState
     documentRenderer: DependencyState
     backupStorage: DependencyState
   }
+  scheduler?: Awaited<ReturnType<typeof schedulerHealth.snapshot>>
 }
 
 export async function checkReadiness(input: {
@@ -51,10 +53,16 @@ export async function checkReadiness(input: {
       dependencies.backupStorage = 'unavailable'
     }
   }
-  return {
-    status: Object.values(dependencies).every((state) => state === 'ready')
-      ? 'ready'
-      : 'unavailable',
-    dependencies,
-  }
+  const schedulerEnabled =
+    env.WARKA_BACKUP_SCHEDULER_ENABLED === 'true' ||
+    env.WARKA_RETENTION_EVALUATION_ENABLED === 'true'
+  const scheduler = schedulerEnabled
+    ? await schedulerHealth.snapshot(input.database)
+    : undefined
+  const status = Object.values(dependencies).every((state) => state === 'ready')
+    ? scheduler?.status === 'degraded'
+      ? 'degraded'
+      : 'ready'
+    : 'unavailable'
+  return { status, dependencies, ...(scheduler ? { scheduler } : {}) }
 }

@@ -13,6 +13,7 @@ import { sendOperationsAlert } from './operationsAlerts.js'
 import { requireOperator } from './operationsAccess.js'
 import { cleanupBackupArtifacts } from './backupRetention.js'
 import { maxScheduledAttempts, retryEligible } from './schedulerRetry.js'
+import { schedulerHealth } from './schedulerHealth.js'
 
 const lockKey = 8_246_181
 
@@ -126,12 +127,14 @@ export class BackupScheduler {
       seriesId,
     )
     try {
-      const recordId = await this.backup({
-        database: this.database,
-        actorId: this.config.actorId,
-        databaseUrl: this.config.databaseUrl,
-        storage: new LocalBackupStorage(this.config.storageDirectory),
-      })
+      const recordId = await schedulerHealth.track(() =>
+        this.backup({
+          database: this.database,
+          actorId: this.config.actorId,
+          databaseUrl: this.config.databaseUrl,
+          storage: new LocalBackupStorage(this.config.storageDirectory),
+        }),
+      )
       await completeScheduledTask(this.database, execution.id, recordId)
     } catch {
       await failScheduledTask(this.database, execution.id, 'BACKUP_FAILED')
@@ -171,7 +174,9 @@ export class BackupScheduler {
       seriesId,
     )
     try {
-      const result = await this.evaluateRetention(this.database, policy, now)
+      const result = await schedulerHealth.track(() =>
+        this.evaluateRetention(this.database, policy, now),
+      )
       await completeScheduledTask(this.database, execution.id, policy.id, {
         eligibleCount: result.eligibleCount,
         oldestEligibleAt: result.oldestEligibleAt,
@@ -259,6 +264,7 @@ export class BackupScheduler {
 
   async tick(now = new Date()) {
     if (!this.config.enabled || this.stopped || this.running) return
+    schedulerHealth.polled(now)
     const work = this.lock.run(async () => {
       await this.retryFailedTasks(now)
       await this.evaluateRetentionPolicies(now)
@@ -291,12 +297,14 @@ export class BackupScheduler {
             record.id,
           )
           try {
-            const passed = await this.verify({
-              database: this.database,
-              id: record.id,
-              storage: new LocalBackupStorage(this.config.storageDirectory),
+            await schedulerHealth.track(async () => {
+              const passed = await this.verify({
+                database: this.database,
+                id: record.id,
+                storage: new LocalBackupStorage(this.config.storageDirectory),
+              })
+              if (!passed) throw new Error('Backup verification failed')
             })
-            if (!passed) throw new Error('Backup verification failed')
             await completeScheduledTask(this.database, execution.id, record.id)
           } catch {
             await failScheduledTask(
@@ -328,6 +336,7 @@ export class BackupScheduler {
 
   start(onError: (error: unknown) => void) {
     if (!this.config.enabled || this.timer) return
+    schedulerHealth.configure(this.config.enabled, this.config.intervalMs)
     this.stopped = false
     const poll = () => void this.tick().catch(onError)
     this.timer = setInterval(poll, this.config.intervalMs)
@@ -340,5 +349,6 @@ export class BackupScheduler {
     if (this.timer) clearInterval(this.timer)
     this.timer = undefined
     await this.running?.catch(() => undefined)
+    schedulerHealth.configure(false, this.config.intervalMs)
   }
 }
