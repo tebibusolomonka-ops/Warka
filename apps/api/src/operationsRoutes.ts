@@ -36,6 +36,36 @@ export function registerOperationsRoutes(
   const operator = async (request: Parameters<preHandlerHookHandler>[0]) =>
     requireOperator(getDatabase(), authenticatedUser(request).id)
   app.get(
+    '/operations/storage',
+    { preHandler: authenticate },
+    async (request) => {
+      await operator(request)
+      const database = getDatabase()
+      const [summary, byPurpose, quarantined] = await Promise.all([
+        database.fileAsset.aggregate({
+          where: { status: 'available' },
+          _count: { id: true },
+          _sum: { sizeBytes: true },
+        }),
+        database.fileAsset.groupBy({
+          by: ['purpose'],
+          where: { status: 'available' },
+          _count: { id: true },
+        }),
+        database.fileAsset.count({ where: { status: 'quarantined' } }),
+      ])
+      return {
+        availableAssetCount: summary._count.id,
+        storedBytes: (summary._sum.sizeBytes ?? 0n).toString(),
+        quarantinedAssetCount: quarantined,
+        byPurpose: byPurpose.map((item) => ({
+          purpose: item.purpose,
+          count: item._count.id,
+        })),
+      }
+    },
+  )
+  app.get(
     '/operations/status',
     { preHandler: authenticate },
     async (request) => {

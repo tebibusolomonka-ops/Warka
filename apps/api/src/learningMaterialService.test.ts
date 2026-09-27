@@ -185,12 +185,10 @@ describe('learning materials', () => {
 it('stores a validated uploaded material only after storage succeeds and cleans an orphan on database failure', async () => {
   const database = store('teacher')
   const storage = {
-    put: vi
-      .fn()
-      .mockResolvedValue({
-        key: 'asset_11111111-1111-4111-8111-111111111111',
-        sizeBytes: 32,
-      }),
+    put: vi.fn().mockResolvedValue({
+      key: 'asset_11111111-1111-4111-8111-111111111111',
+      sizeBytes: 32,
+    }),
     delete: vi.fn().mockResolvedValue(undefined),
   } as unknown as FileStorage
   const file = {

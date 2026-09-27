@@ -9,6 +9,7 @@ import {
 import { OperationsWorkspace } from './OperationsWorkspace'
 import {
   getOperationsStatus,
+  getStorageSummary,
   listBackups,
   listIncidents,
   listMaintenance,
@@ -23,6 +24,7 @@ import {
 
 vi.mock('./operationsApi', () => ({
   getOperationsStatus: vi.fn(),
+  getStorageSummary: vi.fn(),
   listBackups: vi.fn(),
   listIncidents: vi.fn(),
   listMaintenance: vi.fn(),
@@ -56,6 +58,12 @@ it('shows safe operational sections and runs backup, verification, and rehearsal
     openIncidents: [],
     plannedMaintenance: [],
     metrics: [{ route: 'GET /health', requests: 2, errors: 0, durationMs: 12 }],
+  })
+  vi.mocked(getStorageSummary).mockResolvedValue({
+    availableAssetCount: 2,
+    storedBytes: '1024',
+    quarantinedAssetCount: 0,
+    byPurpose: [{ purpose: 'learningMaterial', count: 2 }],
   })
   vi.mocked(listBackups).mockResolvedValue([
     {
@@ -112,6 +120,7 @@ it('shows safe operational sections and runs backup, verification, and rehearsal
   vi.mocked(rehearseBackup).mockResolvedValue({})
   render(<OperationsWorkspace baseUrl="http://localhost:3000/api" />)
   await screen.findByRole('heading', { name: 'Operations' })
+  expect(screen.getByText('Available assets: 2')).toBeTruthy()
   expect(screen.getByText('Latest: succeeded')).toBeTruthy()
   expect(
     screen.getByText('Automatic scheduled execution: healthy'),

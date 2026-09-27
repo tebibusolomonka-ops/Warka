@@ -7,3 +7,5 @@ During a batch, run focused tests, TypeScript checks, and relevant schema checks
 The operations browser journey uses a test-only adapter behind `NODE_ENV=test` and an explicit enable flag. It writes an artifact and exercises metadata transitions; native `pg_dump`, archive inspection, and restore process boundaries are tested separately with injected process adapters.
 
 The scheduler browser journey uses an explicit test-only tick and failure adapter. It exercises database-coordinated execution, verification, retry history, and authorization without wall-clock waiting. Native backup processes remain a separate boundary.
+
+File tests cover storage key confinement, object adapter calls, signature validation, scoped authorization, upload failures, document checksums, and private delivery headers. Browser journeys cover teacher upload, student download, unrelated-student denial, branding, and issued document delivery with a dedicated local test storage root. Live PostgreSQL browser execution remains CI dependent.

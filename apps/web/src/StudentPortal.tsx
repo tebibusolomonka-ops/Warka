@@ -240,14 +240,23 @@ export function StudentPortal({
                   <li key={item.id}>
                     <strong>{item.title}</strong>
                     {item.description && <p>{item.description}</p>}
-                    {new URL(item.resourceLocation).protocol === 'https:' && (
+                    {item.resourceType === 'file' ? (
                       <a
-                        href={item.resourceLocation}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        href={`${baseUrl}/schools/${item.schoolId}/materials/${item.id}/download`}
+                        download
                       >
-                        Open resource
+                        Download file
                       </a>
+                    ) : (
+                      new URL(item.resourceLocation).protocol === 'https:' && (
+                        <a
+                          href={item.resourceLocation}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          Open resource
+                        </a>
+                      )
                     )}
                   </li>
                 ))}

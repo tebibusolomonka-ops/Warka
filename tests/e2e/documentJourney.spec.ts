@@ -171,6 +171,17 @@ test('student requests a transcript, school issues it, and another student canno
       .getByRole('region', { name: 'School documents' })
       .getByRole('button', { name: 'Documents' })
       .click()
+    const png = Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/Wn8AAAAASUVORK5CYII=',
+      'base64',
+    )
+    await page
+      .getByLabel('PNG or JPEG logo')
+      .setInputFiles({ name: 'school.png', mimeType: 'image/png', buffer: png })
+    await page.getByRole('button', { name: 'Upload logo' }).click()
+    await expect(
+      page.getByRole('img', { name: 'Current school logo' }),
+    ).toBeVisible()
     await page
       .getByRole('button', { name: /Documents Student.*Transcript.*requested/ })
       .click()
@@ -186,6 +197,11 @@ test('student requests a transcript, school issues it, and another student canno
     const issued = await database.issuedDocument.findFirstOrThrow({
       where: { schoolId, studentId },
     })
+    const artifact = await database.fileAsset.findUnique({
+      where: { issuedDocumentId: issued.id },
+    })
+    expect(artifact?.status).toBe('available')
+    expect(artifact?.checksum).toMatch(/^[a-f0-9]{64}$/)
     await signOut()
     await signIn(studentEmail)
     await page.getByRole('button', { name: 'Documents' }).click()
@@ -212,6 +228,8 @@ test('student requests a transcript, school issues it, and another student canno
       })
       await database.auditEvent.deleteMany({ where: { schoolId } })
       await database.documentRequest.deleteMany({ where: { schoolId } })
+      await database.schoolDocumentProfile.deleteMany({ where: { schoolId } })
+      await database.fileAsset.deleteMany({ where: { schoolId } })
       await database.issuedDocument.deleteMany({ where: { schoolId } })
       await database.publishedResult.deleteMany({ where: { schoolId } })
       await database.resultSet.deleteMany({ where: { schoolId } })

@@ -6,6 +6,7 @@ import {
   withdrawDocument,
   type PrismaClient,
   type DocumentArtifactWriter,
+  DocumentSnapshotSchema,
 } from '@warka/database'
 import { createHash } from 'node:crypto'
 import { renderReportCard, renderTranscript } from './documentPdf.js'
@@ -53,28 +54,9 @@ export function prismaDocumentManagementService(
   database: PrismaClient,
   storage?: FileStorage,
 ): DocumentManagementService {
-  async function withArtifact<T>(
+  const withArtifact = <T>(
     action: (write: DocumentArtifactWriter) => Promise<T>,
-  ) {
-    const storedKeys: string[] = []
-    const write: DocumentArtifactWriter = async (transaction, document) => {
-      const target = storage ?? configuredFileStorage()
-      storedKeys.push(
-        await storeIssuedDocumentArtifact(transaction, target, document),
-      )
-    }
-    try {
-      return await action(write)
-    } catch (error) {
-      if (storedKeys.length) {
-        const target = storage ?? configuredFileStorage()
-        await Promise.all(
-          storedKeys.map((key) => target.delete(key).catch(() => undefined)),
-        )
-      }
-      throw error
-    }
-  }
+  ) => withIssuedArtifact(action, storage)
   return {
     async list(actorId, schoolId, studentId) {
       await requireDocumentAuthority(database, actorId, schoolId)
@@ -117,12 +99,7 @@ export function prismaDocumentManagementService(
         issueDocument(
           database,
           actorId,
-          {
-            schoolId,
-            studentId,
-            academicYearId,
-            documentType,
-          },
+          { schoolId, studentId, academicYearId, documentType },
           write,
         ),
       )
@@ -138,15 +115,61 @@ export function prismaDocumentManagementService(
   }
 }
 
+export async function withIssuedArtifact<T>(
+  action: (write: DocumentArtifactWriter) => Promise<T>,
+  storage?: FileStorage,
+) {
+  const storedKeys: string[] = []
+  const write: DocumentArtifactWriter = async (transaction, document) => {
+    const target = storage ?? configuredFileStorage()
+    storedKeys.push(
+      await storeIssuedDocumentArtifact(transaction, target, document),
+    )
+  }
+  try {
+    return await action(write)
+  } catch (error) {
+    if (storedKeys.length) {
+      const target = storage ?? configuredFileStorage()
+      await Promise.all(
+        storedKeys.map((key) => target.delete(key).catch(() => undefined)),
+      )
+    }
+    throw error
+  }
+}
+
 export async function storeIssuedDocumentArtifact(
   transaction: Parameters<DocumentArtifactWriter>[0],
   storage: FileStorage,
   document: IssuedDocument,
 ) {
+  const snapshot = DocumentSnapshotSchema.parse(document.snapshot)
+  let brandingLogo:
+    { bytes: Uint8Array; contentType: 'image/png' | 'image/jpeg' } | undefined
+  if (snapshot.brandingLogoAssetId) {
+    const logo = await transaction.fileAsset.findUnique({
+      where: { id: snapshot.brandingLogoAssetId },
+    })
+    if (
+      !logo ||
+      logo.status !== 'available' ||
+      (logo.contentType !== 'image/png' && logo.contentType !== 'image/jpeg')
+    )
+      throw new Error('Official logo artifact is unavailable')
+    const file = await storage.get(logo.storageKey)
+    const chunks: Buffer[] = []
+    for await (const chunk of file.stream as AsyncIterable<Buffer>)
+      chunks.push(Buffer.from(chunk))
+    brandingLogo = {
+      bytes: Buffer.concat(chunks),
+      contentType: logo.contentType,
+    }
+  }
   const bytes = Buffer.from(
     document.documentType === 'reportCard'
-      ? await renderReportCard(document)
-      : await renderTranscript(document),
+      ? await renderReportCard(document, process.env, brandingLogo)
+      : await renderTranscript(document, process.env, brandingLogo),
   )
   const stored = await storage.put(bytes)
   try {

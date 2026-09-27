@@ -5,6 +5,7 @@ import {
   createDocumentInTransaction,
   DocumentReasonSchema,
   requireDocumentAuthority,
+  type DocumentArtifactWriter,
 } from './issuedDocuments.js'
 import {
   DocumentRequestPermissionError,
@@ -44,6 +45,7 @@ export async function issueRequestedDocument(
   actorId: string,
   schoolId: string,
   requestId: string,
+  writeArtifact?: DocumentArtifactWriter,
 ) {
   z.uuid().parse(requestId)
   await requireDocumentAuthority(database, actorId, schoolId)
@@ -60,6 +62,7 @@ export async function issueRequestedDocument(
         academicYearId: request.academicYearId,
         documentType: request.documentType,
       })
+      await writeArtifact?.(transaction, document)
       const changed = await transaction.documentRequest.updateMany({
         where: {
           id: requestId,

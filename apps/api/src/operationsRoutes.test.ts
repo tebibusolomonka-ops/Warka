@@ -23,6 +23,17 @@ function fixture(owner: boolean) {
     restoreRehearsal: { findFirst: vi.fn().mockResolvedValue(null) },
     operationalIncident: { findMany: vi.fn().mockResolvedValue([]) },
     maintenanceWindow: { findMany: vi.fn().mockResolvedValue([]) },
+    fileAsset: {
+      aggregate: vi
+        .fn()
+        .mockResolvedValue({ _count: { id: 2 }, _sum: { sizeBytes: 1024n } }),
+      groupBy: vi
+        .fn()
+        .mockResolvedValue([
+          { purpose: 'learningMaterial', _count: { id: 2 } },
+        ]),
+      count: vi.fn().mockResolvedValue(1),
+    },
   } as unknown as PrismaClient
   const app = Fastify()
   app.decorateRequest('currentUser', null)
@@ -54,10 +65,19 @@ describe('operations status API', () => {
     vi.stubEnv('WARKA_OPERATOR_USER_IDS', actorId)
     const app = fixture(false)
     expect((await app.inject('/operations/status')).statusCode).toBe(401)
+    expect((await app.inject('/operations/storage')).statusCode).toBe(401)
     expect(
       (
         await app.inject({
           url: '/operations/status',
+          headers: { 'x-user': actorId },
+        })
+      ).statusCode,
+    ).toBe(403)
+    expect(
+      (
+        await app.inject({
+          url: '/operations/storage',
           headers: { 'x-user': actorId },
         })
       ).statusCode,
@@ -90,6 +110,18 @@ describe('operations status API', () => {
     expect(response.json().recentBackup.status).toBe('verified')
     expect(response.body).not.toContain('storageReference')
     expect(response.body).not.toContain('DATABASE_URL')
+    const storage = await app.inject({
+      url: '/operations/storage',
+      headers: { 'x-user': actorId },
+    })
+    expect(storage.statusCode).toBe(200)
+    expect(storage.json()).toEqual({
+      availableAssetCount: 2,
+      storedBytes: '1024',
+      quarantinedAssetCount: 1,
+      byPurpose: [{ purpose: 'learningMaterial', count: 2 }],
+    })
+    expect(storage.body).not.toContain('originalFileName')
     await app.close()
   })
 })

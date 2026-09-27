@@ -109,6 +109,40 @@ describe('issued document artifacts', () => {
     expect(f.stored.size).toBe(2)
   })
 
+  it('embeds the logo referenced by the immutable snapshot', async () => {
+    const f = fixture()
+    const logoAssetId = randomUUID()
+    const png = Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/Wn8AAAAASUVORK5CYII=',
+      'base64',
+    )
+    const originalGet = f.storage.get
+    f.storage.get = async (key) =>
+      key === 'logo-key'
+        ? { stream: Readable.from([png]), sizeBytes: png.length }
+        : originalGet(key)
+    f.transaction.fileAsset.findUnique = vi.fn().mockResolvedValue({
+      id: logoAssetId,
+      status: 'available',
+      contentType: 'image/png',
+      storageKey: 'logo-key',
+    }) as never
+    const issued = document('reportCard')
+    issued.snapshot = {
+      ...(issued.snapshot as object),
+      brandingLogoAssetId: logoAssetId,
+    }
+    const key = await storeIssuedDocumentArtifact(
+      f.transaction,
+      f.storage,
+      issued,
+    )
+    expect(f.stored.get(key)?.byteLength).toBeGreaterThan(1000)
+    expect(f.transaction.fileAsset.findUnique).toHaveBeenCalledWith({
+      where: { id: logoAssetId },
+    })
+  })
+
   it('removes the stored bytes when asset metadata fails', async () => {
     const f = fixture()
     f.create.mockRejectedValueOnce(new Error('Database unavailable'))

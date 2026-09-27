@@ -8,6 +8,8 @@ import {
   listSchoolDocumentRequests,
   listSchoolIssuedDocuments,
   saveSchoolDocumentProfile,
+  uploadSchoolLogo,
+  removeSchoolLogo,
   type SchoolDocumentRequest,
   type SchoolIssuedDocument,
   type SchoolDocumentProfile,
@@ -34,6 +36,8 @@ export function SchoolDocuments({
   const [profile, setProfile] = useState<SchoolDocumentProfile | null>(null)
   const [officialName, setOfficialName] = useState('')
   const [footer, setFooter] = useState('')
+  const [logoFile, setLogoFile] = useState<File | null>(null)
+  const [logoBusy, setLogoBusy] = useState(false)
   const [reason, setReason] = useState('')
   const [message, setMessage] = useState('')
   const [refresh, setRefresh] = useState(0)
@@ -117,6 +121,25 @@ export function SchoolDocuments({
       setMessage('Document profile saved')
     } catch {
       setMessage('Could not save document profile')
+    }
+  }
+  async function changeLogo(action: 'upload' | 'remove') {
+    if (action === 'upload' && !logoFile) return
+    setLogoBusy(true)
+    setMessage('')
+    try {
+      if (action === 'upload')
+        await uploadSchoolLogo(baseUrl, schoolId, logoFile!)
+      else await removeSchoolLogo(baseUrl, schoolId)
+      setProfile(await getSchoolDocumentProfile(baseUrl, schoolId))
+      setLogoFile(null)
+      setMessage(
+        action === 'upload' ? 'School logo saved' : 'School logo removed',
+      )
+    } catch {
+      setMessage('Could not update school logo')
+    } finally {
+      setLogoBusy(false)
     }
   }
   return (
@@ -277,23 +300,67 @@ export function SchoolDocuments({
             <p>School administrators manage the document profile.</p>
           )}
           {canRegister && canApprove && (
-            <form onSubmit={saveProfile}>
-              <label>
-                Official school name
-                <input
-                  value={officialName}
-                  onChange={(event) => setOfficialName(event.target.value)}
-                />
-              </label>
-              <label>
-                Document footer
-                <input
-                  value={footer}
-                  onChange={(event) => setFooter(event.target.value)}
-                />
-              </label>
-              <button type="submit">Save document profile</button>
-            </form>
+            <>
+              <form onSubmit={saveProfile}>
+                <label>
+                  Official school name
+                  <input
+                    value={officialName}
+                    onChange={(event) => setOfficialName(event.target.value)}
+                  />
+                </label>
+                <label>
+                  Document footer
+                  <input
+                    value={footer}
+                    onChange={(event) => setFooter(event.target.value)}
+                  />
+                </label>
+                <button type="submit">Save document profile</button>
+              </form>
+              <div>
+                <h4>School logo</h4>
+                {profile?.logoAssetId ? (
+                  <img
+                    src={`${baseUrl}/schools/${schoolId}/document-profile/logo`}
+                    alt="Current school logo"
+                    className="school-logo-preview"
+                  />
+                ) : (
+                  <p>No logo uploaded.</p>
+                )}
+                <label>
+                  PNG or JPEG logo
+                  <input
+                    type="file"
+                    accept=".png,.jpg,.jpeg"
+                    onChange={(event) =>
+                      setLogoFile(event.target.files?.[0] ?? null)
+                    }
+                  />
+                </label>
+                <button
+                  type="button"
+                  disabled={!logoFile || logoBusy}
+                  onClick={() => void changeLogo('upload')}
+                >
+                  {logoBusy
+                    ? 'Saving logo…'
+                    : profile?.logoAssetId
+                      ? 'Replace logo'
+                      : 'Upload logo'}
+                </button>
+                {profile?.logoAssetId && (
+                  <button
+                    type="button"
+                    disabled={logoBusy}
+                    onClick={() => void changeLogo('remove')}
+                  >
+                    Remove logo
+                  </button>
+                )}
+              </div>
+            </>
           )}
           {message && <p role="status">{message}</p>}
         </>

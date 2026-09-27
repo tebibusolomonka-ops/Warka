@@ -24,6 +24,7 @@ export const DocumentSnapshotSchema = z.strictObject({
     studentReference: z.string().min(1),
   }),
   issuingSchool: z.string().min(1),
+  brandingLogoAssetId: z.uuid().optional(),
   schoolContact: z
     .strictObject({
       addressLine: z.string().optional(),
@@ -166,6 +167,9 @@ export async function createDocumentInTransaction(
       studentReference: student.studentReference,
     },
     issuingSchool: profile?.officialName || school.name,
+    ...(profile?.logoAssetId
+      ? { brandingLogoAssetId: profile.logoAssetId }
+      : {}),
     ...(profile
       ? {
           schoolContact: Object.fromEntries(

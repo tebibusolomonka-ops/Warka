@@ -20,12 +20,20 @@ export function reportCardContent(document: IssuedDocument) {
 export async function renderReportCard(
   document: IssuedDocument,
   env: NodeJS.ProcessEnv = process.env,
+  brandingLogo?: { bytes: Uint8Array; contentType: 'image/png' | 'image/jpeg' },
 ): Promise<Uint8Array> {
   const { snapshot, verificationReference } = reportCardContent(document)
   const pdf = await PDFDocument.create()
   pdf.registerFontkit(fontkit)
   const font = await pdf.embedFont(await readFile(fontFile), { subset: true })
   const page = pdf.addPage([595.28, 841.89])
+  if (brandingLogo) {
+    const image =
+      brandingLogo.contentType === 'image/png'
+        ? await pdf.embedPng(brandingLogo.bytes)
+        : await pdf.embedJpg(brandingLogo.bytes)
+    page.drawImage(image, { x: 479, y: 751, width: 64, height: 64 })
+  }
   const left = 48
   const right = 547
   let y = 792
@@ -118,6 +126,7 @@ export function transcriptContent(document: IssuedDocument) {
 export async function renderTranscript(
   document: IssuedDocument,
   env: NodeJS.ProcessEnv = process.env,
+  brandingLogo?: { bytes: Uint8Array; contentType: 'image/png' | 'image/jpeg' },
 ): Promise<Uint8Array> {
   const { snapshot, verificationReference } = transcriptContent(document)
   const pdf = await PDFDocument.create()
@@ -125,6 +134,13 @@ export async function renderTranscript(
   const font = await pdf.embedFont(await readFile(fontFile), { subset: true })
   const left = 48
   let page = pdf.addPage([595.28, 841.89])
+  if (brandingLogo) {
+    const image =
+      brandingLogo.contentType === 'image/png'
+        ? await pdf.embedPng(brandingLogo.bytes)
+        : await pdf.embedJpg(brandingLogo.bytes)
+    page.drawImage(image, { x: 479, y: 751, width: 64, height: 64 })
+  }
   let y = 790
   let pageNumber = 1
   const write = (value: string, x = left, size = 9) => {

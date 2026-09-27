@@ -29,6 +29,35 @@ beforeEach(() => {
 afterEach(cleanup)
 
 describe('student resources', () => {
+  it('links uploaded material to the authenticated Warka download route', async () => {
+    vi.mocked(getStudentMaterials).mockResolvedValue([
+      {
+        id: '123e4567-e89b-42d3-a456-426614174090',
+        schoolId: '123e4567-e89b-42d3-a456-426614174091',
+        title: 'Worksheet',
+        description: null,
+        resourceType: 'file',
+        resourceLocation: '',
+        assetId: '123e4567-e89b-42d3-a456-426614174092',
+        subject: 'Math',
+        academicYear: '2026',
+        publishedAt: '2026-09-24T00:00:00.000Z',
+      },
+    ])
+    render(
+      <StudentPortal
+        baseUrl={baseUrl}
+        identity={identity}
+        onSessionExpired={vi.fn()}
+        onSignOut={vi.fn()}
+      />,
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Materials' }))
+    const link = await screen.findByRole('link', { name: 'Download file' })
+    expect(link.getAttribute('href')).toBe(
+      `${baseUrl}/schools/123e4567-e89b-42d3-a456-426614174091/materials/123e4567-e89b-42d3-a456-426614174090/download`,
+    )
+  })
   it('groups materials by subject, opens only safe links, and renders descriptions as text', async () => {
     vi.mocked(getStudentMaterials).mockResolvedValue([
       {

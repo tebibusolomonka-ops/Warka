@@ -8,6 +8,7 @@ import {
   createMaintenance,
   getIncident,
   getOperationsStatus,
+  getStorageSummary,
   listBackups,
   listIncidents,
   listMaintenance,
@@ -26,6 +27,7 @@ import {
   type SchedulerState,
   type ScheduledExecution,
   type DueBackupPolicy,
+  type StorageSummary,
 } from './operationsApi'
 
 export function OperationsWorkspace({ baseUrl }: { baseUrl: string }) {
@@ -37,6 +39,7 @@ export function OperationsWorkspace({ baseUrl }: { baseUrl: string }) {
   const [scheduler, setScheduler] = useState<SchedulerState>()
   const [executions, setExecutions] = useState<ScheduledExecution[]>([])
   const [duePolicies, setDuePolicies] = useState<DueBackupPolicy[]>([])
+  const [storage, setStorage] = useState<StorageSummary>()
   const [timeline, setTimeline] = useState<IncidentTimeline>()
   const [incidentTitle, setIncidentTitle] = useState('')
   const [incidentSummary, setIncidentSummary] = useState('')
@@ -60,6 +63,7 @@ export function OperationsWorkspace({ baseUrl }: { baseUrl: string }) {
       getSchedulerState(baseUrl),
       listScheduledExecutions(baseUrl),
       listDueBackupPolicies(baseUrl),
+      getStorageSummary(baseUrl),
     ])
       .then(
         ([
@@ -70,6 +74,7 @@ export function OperationsWorkspace({ baseUrl }: { baseUrl: string }) {
           nextScheduler,
           nextExecutions,
           nextDuePolicies,
+          nextStorage,
         ]) => {
           if (!active) return
           setAvailable(true)
@@ -80,6 +85,7 @@ export function OperationsWorkspace({ baseUrl }: { baseUrl: string }) {
           setScheduler(nextScheduler)
           setExecutions(nextExecutions)
           setDuePolicies(nextDuePolicies)
+          setStorage(nextStorage)
         },
       )
       .catch((caught: unknown) => {
@@ -154,6 +160,7 @@ export function OperationsWorkspace({ baseUrl }: { baseUrl: string }) {
         <a href="#operations-incidents">Incidents</a>{' '}
         <a href="#operations-maintenance">Maintenance</a>{' '}
         <a href="#operations-metrics">Metrics</a>
+        <a href="#operations-storage">Storage</a>
       </nav>
       {error && <p role="alert">{error}</p>}
       <section id="operations-status">
@@ -169,6 +176,19 @@ export function OperationsWorkspace({ baseUrl }: { baseUrl: string }) {
           )}
         </ul>
         <p>Open incidents: {status?.openIncidents.length ?? 0}</p>
+      </section>
+      <section id="operations-storage">
+        <h3>File storage</h3>
+        <p>Available assets: {storage?.availableAssetCount ?? 0}</p>
+        <p>Stored bytes: {storage?.storedBytes ?? '0'}</p>
+        <p>Quarantined assets: {storage?.quarantinedAssetCount ?? 0}</p>
+        <ul>
+          {storage?.byPurpose.map((item) => (
+            <li key={item.purpose}>
+              {item.purpose}: {item.count}
+            </li>
+          ))}
+        </ul>
       </section>
       <section id="operations-backups">
         <h3>Backups</h3>

@@ -11,6 +11,7 @@ import {
 } from '@warka/database'
 import { z } from 'zod'
 import { authenticatedUser } from './authenticateRequest.js'
+import { withIssuedArtifact } from './documentManagementService.js'
 
 const schoolParams = z.strictObject({ schoolId: z.uuid() })
 const requestParams = z.strictObject({
@@ -92,11 +93,14 @@ export function registerSchoolDocumentRoutes(
     async (request) => {
       const actor = authenticatedUser(request)
       const { schoolId, requestId } = requestParams.parse(request.params)
-      const item = await issueRequestedDocument(
-        getDatabase(),
-        actor.id,
-        schoolId,
-        requestId,
+      const item = await withIssuedArtifact((write) =>
+        issueRequestedDocument(
+          getDatabase(),
+          actor.id,
+          schoolId,
+          requestId,
+          write,
+        ),
       )
       return {
         status: item.status,

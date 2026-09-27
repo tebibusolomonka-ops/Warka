@@ -265,18 +265,25 @@ export function prismaLearningMaterialService(
         },
         orderBy: [{ publishedAt: 'desc' }, { id: 'desc' }],
       })
-      return items.map((item) => ({
-        id: item.id,
-        title: item.title,
-        description: item.description,
-        resourceType: item.resourceType,
-        resourceLocation: item.resourceLocation,
-        assetId:
-          item.fileAsset?.status === 'available' ? item.fileAsset.id : null,
-        subject: item.subject.name,
-        academicYear: item.academicYear.name,
-        publishedAt: item.publishedAt!.toISOString(),
-      }))
+      return items
+        .filter(
+          (item) =>
+            item.resourceType !== 'file' ||
+            item.fileAsset?.status === 'available',
+        )
+        .map((item) => ({
+          id: item.id,
+          schoolId: item.schoolId,
+          title: item.title,
+          description: item.description,
+          resourceType: item.resourceType,
+          resourceLocation: item.resourceLocation,
+          assetId:
+            item.fileAsset?.status === 'available' ? item.fileAsset.id : null,
+          subject: item.subject.name,
+          academicYear: item.academicYear.name,
+          publishedAt: item.publishedAt!.toISOString(),
+        }))
     },
   }
 }

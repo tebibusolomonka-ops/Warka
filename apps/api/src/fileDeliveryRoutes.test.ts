@@ -31,12 +31,10 @@ function fixture() {
     },
   } as unknown as PrismaClient
   const storage = {
-    get: vi
-      .fn()
-      .mockResolvedValue({
-        stream: Readable.from([bytes]),
-        sizeBytes: bytes.length,
-      }),
+    get: vi.fn().mockResolvedValue({
+      stream: Readable.from([bytes]),
+      sizeBytes: bytes.length,
+    }),
   } as unknown as FileStorage
   const app = Fastify()
   app.decorateRequest('currentUser', null)
@@ -137,6 +135,18 @@ describe('purpose-bound file delivery', () => {
         ).statusCode,
       ).toBe(404)
       expect(storage.get).not.toHaveBeenCalled()
+      vi.mocked(storage.get).mockRejectedValueOnce(
+        Object.assign(new Error('Missing'), { code: 'ENOENT' }),
+      )
+      expect(
+        (
+          await app.inject({
+            method: 'GET',
+            url,
+            headers: { 'x-user': actorId },
+          })
+        ).statusCode,
+      ).toBe(404)
     } finally {
       await app.close()
     }

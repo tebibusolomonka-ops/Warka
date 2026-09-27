@@ -13,6 +13,8 @@ import {
   getSchoolDocumentRequest,
   listSchoolDocumentRequests,
   listSchoolIssuedDocuments,
+  uploadSchoolLogo,
+  removeSchoolLogo,
 } from './schoolDocumentApi'
 
 vi.mock('./schoolDocumentApi', () => ({
@@ -22,6 +24,8 @@ vi.mock('./schoolDocumentApi', () => ({
   listSchoolDocumentRequests: vi.fn(),
   listSchoolIssuedDocuments: vi.fn(),
   saveSchoolDocumentProfile: vi.fn(),
+  uploadSchoolLogo: vi.fn(),
+  removeSchoolLogo: vi.fn(),
 }))
 const schoolId = '123e4567-e89b-42d3-a456-426614174001'
 const requestId = '123e4567-e89b-42d3-a456-426614174002'
@@ -48,6 +52,46 @@ beforeEach(() => {
 afterEach(cleanup)
 
 describe('school documents', () => {
+  it('uploads, replaces, and removes the current school logo only after server confirmation', async () => {
+    vi.mocked(getSchoolDocumentProfile)
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({
+        logoAssetId: '123e4567-e89b-42d3-a456-426614174080',
+        officialName: null,
+        addressLine: null,
+        city: null,
+        region: null,
+        phone: null,
+        email: null,
+        website: null,
+        documentFooter: null,
+      })
+      .mockResolvedValueOnce(null)
+    vi.mocked(uploadSchoolLogo).mockResolvedValue({})
+    vi.mocked(removeSchoolLogo).mockResolvedValue({})
+    render(
+      <SchoolDocuments
+        baseUrl="/api"
+        schoolId={schoolId}
+        canRegister
+        canApprove
+        onSessionExpired={vi.fn()}
+      />,
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Documents' }))
+    await screen.findByText('No logo uploaded.')
+    fireEvent.change(screen.getByLabelText('PNG or JPEG logo'), {
+      target: { files: [new File(['png'], 'logo.png', { type: 'image/png' })] },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Upload logo' }))
+    await waitFor(() => expect(uploadSchoolLogo).toHaveBeenCalledOnce())
+    await screen.findByRole('img', { name: 'Current school logo' })
+    fireEvent.click(screen.getByRole('button', { name: 'Remove logo' }))
+    await waitFor(() =>
+      expect(removeSchoolLogo).toHaveBeenCalledWith('/api', schoolId),
+    )
+    await screen.findByText('No logo uploaded.')
+  })
   it('shows requests and lets a registrar start processing without issuance', async () => {
     render(
       <SchoolDocuments

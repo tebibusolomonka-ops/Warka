@@ -98,6 +98,12 @@ const dueBackupPolicy = z.object({
   retentionCount: z.number(),
   due: z.boolean(),
 })
+const storageSummary = z.object({
+  availableAssetCount: z.number(),
+  storedBytes: z.string(),
+  quarantinedAssetCount: z.number(),
+  byPurpose: z.array(z.object({ purpose: z.string(), count: z.number() })),
+})
 
 export type Backup = z.infer<typeof backup>
 export type Incident = z.infer<typeof incident>
@@ -107,6 +113,9 @@ export type IncidentTimeline = z.infer<typeof timeline>
 export type SchedulerState = z.infer<typeof schedulerState>
 export type ScheduledExecution = z.infer<typeof scheduledExecution>
 export type DueBackupPolicy = z.infer<typeof dueBackupPolicy>
+export type StorageSummary = z.infer<typeof storageSummary>
+export const getStorageSummary = async (baseUrl: string) =>
+  storageSummary.parse(await requestJson(baseUrl, '/operations/storage'))
 
 export const getOperationsStatus = async (baseUrl: string) =>
   status.parse(await requestJson(baseUrl, '/operations/status'))

@@ -173,6 +173,7 @@ import { registerNotificationRoutes } from './notificationRoutes.js'
 import { registerSchoolDocumentProfileRoutes } from './schoolDocumentProfileRoutes.js'
 import { registerFileDeliveryRoutes } from './fileDeliveryRoutes.js'
 import { FileAssetAccessError } from './fileAssetAccess.js'
+import { FileValidationError } from './fileValidation.js'
 import {
   GovernancePermissionError,
   registerGovernanceRoutes,
@@ -436,12 +437,14 @@ export function buildApp(
   )
 
   app.setErrorHandler((error, _request, reply) => {
-    if (error instanceof FileAssetAccessError)
+    if (error instanceof FileValidationError)
       return reply
-        .code(404)
-        .send({
-          error: { code: 'FILE_NOT_FOUND', message: 'File not available' },
-        })
+        .code(400)
+        .send({ error: { code: 'INVALID_FILE', message: error.message } })
+    if (error instanceof FileAssetAccessError)
+      return reply.code(404).send({
+        error: { code: 'FILE_NOT_FOUND', message: 'File not available' },
+      })
     if (
       typeof error === 'object' &&
       error !== null &&

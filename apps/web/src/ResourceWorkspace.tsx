@@ -6,7 +6,12 @@ import {
   type TeachingAssignment,
 } from './academicApi'
 import { ApiError } from './api'
-import { postAnnouncement, postLearningMaterial } from './resourceApi'
+import {
+  postAnnouncement,
+  postLearningMaterial,
+  publishLearningMaterial,
+  uploadLearningMaterial,
+} from './resourceApi'
 
 type Data = { structure: AcademicStructure; assignments: TeachingAssignment[] }
 type Load =
@@ -27,6 +32,9 @@ export function ResourceWorkspace({
   const [materialTitle, setMaterialTitle] = useState('')
   const [description, setDescription] = useState('')
   const [resourceLocation, setResourceLocation] = useState('')
+  const [resourceKind, setResourceKind] = useState<'link' | 'file'>('link')
+  const [materialFile, setMaterialFile] = useState<File | null>(null)
+  const [uploadStatus, setUploadStatus] = useState('')
   const [announcementClassId, setAnnouncementClassId] = useState('')
   const [announcementTitle, setAnnouncementTitle] = useState('')
   const [body, setBody] = useState('')
@@ -88,27 +96,44 @@ export function ResourceWorkspace({
   async function submitMaterial(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!assignment) return
+    if (resourceKind === 'file' && !materialFile) {
+      setError('Select a file to publish.')
+      return
+    }
     setBusy(true)
     setError('')
     setMessage('')
     try {
-      await postLearningMaterial(baseUrl, schoolId, {
+      const material = await postLearningMaterial(baseUrl, schoolId, {
         academicYearId: assignment.academicYearId,
         schoolClassId: assignment.schoolClassId,
         subjectId: assignment.subjectId,
         title: materialTitle,
         ...(description.trim() ? { description } : {}),
-        resourceType: 'link',
-        resourceLocation,
-        publish: true,
+        resourceType: resourceKind,
+        ...(resourceKind === 'link' ? { resourceLocation } : {}),
+        publish: resourceKind === 'link',
       })
+      if (resourceKind === 'file') {
+        setUploadStatus('Uploading file…')
+        await uploadLearningMaterial(
+          baseUrl,
+          schoolId,
+          material.id,
+          materialFile!,
+        )
+        setUploadStatus('Publishing material…')
+        await publishLearningMaterial(baseUrl, schoolId, material.id)
+      }
       setMaterialTitle('')
       setDescription('')
       setResourceLocation('')
+      setUploadStatus('')
       setMessage('Material published.')
     } catch (cause) {
       if (cause instanceof ApiError && cause.status === 401) onSessionExpired()
       else setError('Could not publish material.')
+      setUploadStatus('')
     } finally {
       setBusy(false)
     }
@@ -193,18 +218,47 @@ export function ResourceWorkspace({
                 />
               </label>
               <label className="field">
-                Resource URL
-                <input
-                  type="url"
-                  value={resourceLocation}
-                  onChange={(event) => setResourceLocation(event.target.value)}
-                  required
-                  pattern="https://.*"
-                />
+                Material source
+                <select
+                  value={resourceKind}
+                  onChange={(event) =>
+                    setResourceKind(event.target.value as 'link' | 'file')
+                  }
+                >
+                  <option value="link">External link</option>
+                  <option value="file">Uploaded file</option>
+                </select>
               </label>
+              {resourceKind === 'link' ? (
+                <label className="field">
+                  Resource URL
+                  <input
+                    type="url"
+                    value={resourceLocation}
+                    onChange={(event) =>
+                      setResourceLocation(event.target.value)
+                    }
+                    required
+                    pattern="https://.*"
+                  />
+                </label>
+              ) : (
+                <label className="field">
+                  PDF, text, PNG, or JPEG file
+                  <input
+                    type="file"
+                    accept=".pdf,.txt,.png,.jpg,.jpeg"
+                    required
+                    onChange={(event) =>
+                      setMaterialFile(event.target.files?.[0] ?? null)
+                    }
+                  />
+                </label>
+              )}
               <button type="submit" disabled={busy}>
                 Publish material
               </button>
+              {uploadStatus && <p role="status">{uploadStatus}</p>}
             </form>
           )}
         </div>

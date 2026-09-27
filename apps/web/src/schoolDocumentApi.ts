@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { requestJson } from './api'
+import { fileBase64 } from './resourceApi'
 
 const requestSchema = z.strictObject({
   id: z.uuid(),
@@ -23,6 +24,7 @@ const documentSchema = z.strictObject({
   supersedesId: z.uuid().nullable(),
 })
 const profileSchema = z.object({
+  logoAssetId: z.uuid().nullable().optional(),
   officialName: z.string().nullable(),
   addressLine: z.string().nullable(),
   city: z.string().nullable(),
@@ -32,6 +34,27 @@ const profileSchema = z.object({
   website: z.string().nullable(),
   documentFooter: z.string().nullable(),
 })
+
+export async function uploadSchoolLogo(
+  baseUrl: string,
+  schoolId: string,
+  file: File,
+) {
+  return requestJson(baseUrl, `/schools/${schoolId}/document-profile/logo`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      originalFileName: file.name,
+      contentType: file.type,
+      base64: await fileBase64(file),
+    }),
+  })
+}
+export async function removeSchoolLogo(baseUrl: string, schoolId: string) {
+  return requestJson(baseUrl, `/schools/${schoolId}/document-profile/logo`, {
+    method: 'DELETE',
+  })
+}
 export type SchoolDocumentRequest = z.infer<typeof requestSchema>
 export type SchoolIssuedDocument = z.infer<typeof documentSchema>
 export type SchoolDocumentProfile = z.infer<typeof profileSchema>

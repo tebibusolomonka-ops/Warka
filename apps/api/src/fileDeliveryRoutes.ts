@@ -51,9 +51,14 @@ export function registerFileDeliveryRoutes(
       'read',
     )
     if (asset.schoolId !== schoolId) throw new FileAssetAccessError()
-    const file = await (storage ?? configuredFileStorage()).get(
-      asset.storageKey,
-    )
+    let file
+    try {
+      file = await (storage ?? configuredFileStorage()).get(asset.storageKey)
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT')
+        throw new FileAssetAccessError()
+      throw error
+    }
     reply.header('Content-Type', asset.contentType)
     reply.header('Content-Length', String(file.sizeBytes))
     reply.header('Content-Disposition', disposition(asset.originalFileName))

@@ -15,6 +15,8 @@ test('staff provisions student portal access with official records', async ({
   const schoolName = 'Browser School ' + suffix
   const receivingSchoolName = 'Receiving School ' + suffix
   const staffEmail = 'staff-' + suffix + '@example.test'
+  const teacherEmail = 'teacher-' + suffix + '@example.test'
+  const otherEmail = 'other-' + suffix + '@example.test'
   const studentEmail = 'student-' + suffix + '@example.test'
   const staffPassword = 'StaffPassphrase123!'
   const initialPassword = 'InitialPassphrase123!'
@@ -23,6 +25,9 @@ test('staff provisions student portal access with official records', async ({
   let receivingSchoolId = ''
   let studentId = ''
   let staffId = ''
+  let teacherId = ''
+  let otherUserId = ''
+  let otherStudentId = ''
   let studentUserId = ''
   let organizationId = ''
   try {
@@ -91,6 +96,26 @@ test('staff provisions student portal access with official records', async ({
     const subject = await database.subject.create({
       data: { schoolId, name: 'Browser Mathematics' },
     })
+    const teacher = await database.user.create({
+      data: {
+        email: teacherEmail,
+        displayName: 'Browser Teacher',
+        passwordCredential: {
+          create: { passwordHash: await hashPassword(staffPassword) },
+        },
+        schoolMemberships: { create: { schoolId, role: 'teacher' } },
+      },
+    })
+    teacherId = teacher.id
+    await database.teachingAssignment.create({
+      data: {
+        schoolId,
+        userId: teacherId,
+        academicYearId: year.id,
+        schoolClassId: schoolClass.id,
+        subjectId: subject.id,
+      },
+    })
     const period = await database.gradingPeriod.create({
       data: {
         schoolId,
@@ -108,6 +133,25 @@ test('staff provisions student portal access with official records', async ({
       },
     })
     studentId = student.id
+    const other = await database.student.create({
+      data: {
+        studentReference: 'OTHER-BROWSER-' + suffix,
+        givenName: 'Other',
+        familyName: 'Learner',
+      },
+    })
+    otherStudentId = other.id
+    const otherUser = await database.user.create({
+      data: {
+        email: otherEmail,
+        displayName: 'Other Learner',
+        passwordCredential: {
+          create: { passwordHash: await hashPassword(staffPassword) },
+        },
+        studentAccess: { create: { studentId: otherStudentId } },
+      },
+    })
+    otherUserId = otherUser.id
     const enrollment = await database.enrollment.create({
       data: {
         studentId,
@@ -168,6 +212,32 @@ test('staff provisions student portal access with official records', async ({
     })
 
     await page.goto('/')
+    await page.getByLabel('Email', { exact: true }).fill(teacherEmail)
+    await page.getByLabel('Password', { exact: true }).fill(staffPassword)
+    await page.getByRole('button', { name: 'Sign in' }).click()
+    await page.getByLabel('School', { exact: true }).selectOption(schoolId)
+    await expect(
+      page.getByRole('heading', { name: 'Publish learning material' }),
+    ).toBeVisible()
+    await page.getByLabel('Material source').selectOption('file')
+    await page
+      .getByRole('heading', { name: 'Publish learning material' })
+      .locator('..')
+      .getByLabel('Title')
+      .fill('Browser PDF Worksheet')
+    await page.getByLabel('PDF, text, PNG, or JPEG file').setInputFiles({
+      name: 'worksheet.pdf',
+      mimeType: 'application/pdf',
+      buffer: Buffer.from('%PDF-1.7\nsynthetic worksheet'),
+    })
+    await page.getByRole('button', { name: 'Publish material' }).click()
+    await expect(page.getByText('Material published.')).toBeVisible()
+    const uploaded = await database.learningMaterial.findFirstOrThrow({
+      where: { schoolId, title: 'Browser PDF Worksheet' },
+    })
+    await page.getByRole('button', { name: 'Sign out' }).click()
+
+    await page.goto('/')
     await page.getByLabel('Email', { exact: true }).fill(staffEmail)
     await page.getByLabel('Password', { exact: true }).fill(staffPassword)
     await page.getByRole('button', { name: 'Sign in' }).click()
@@ -221,12 +291,31 @@ test('staff provisions student portal access with official records', async ({
     await expect(page.getByText(/Browser Mathematics: 82%/)).toBeVisible()
     await page.getByRole('button', { name: 'Materials' }).click()
     await expect(page.getByText('Browser Algebra Guide')).toBeVisible()
+    await expect(page.getByText('Browser PDF Worksheet')).toBeVisible()
+    const fileDownload = page.waitForEvent('download')
+    await page.getByRole('link', { name: 'Download file' }).click()
+    expect((await fileDownload).suggestedFilename()).toBe('worksheet.pdf')
     await page.getByRole('button', { name: 'Announcements' }).click()
     await expect(page.getByText('Browser Assembly')).toBeVisible()
     await page.getByRole('button', { name: 'Sign out' }).click()
     await expect
       .poll(async () => (await page.request.get('/api/auth/me')).status())
       .toBe(401)
+    await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible()
+    await page.getByLabel('Email', { exact: true }).fill(otherEmail)
+    await page.getByLabel('Password', { exact: true }).fill(staffPassword)
+    await page.getByRole('button', { name: 'Sign in' }).click()
+    await expect(
+      page.getByRole('heading', { name: 'Student portal' }),
+    ).toBeVisible()
+    expect(
+      (
+        await page.request.get(
+          `/api/schools/${schoolId}/materials/${uploaded.id}/download`,
+        )
+      ).status(),
+    ).toBe(404)
+    await page.getByRole('button', { name: 'Sign out' }).click()
     await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible()
 
     await page.getByLabel('Email', { exact: true }).fill(staffEmail)
@@ -342,6 +431,12 @@ test('staff provisions student portal access with official records', async ({
       await database.user.delete({ where: { id: studentUserId } })
     }
     if (schoolId) {
+      await database.session.deleteMany({
+        where: { userId: { in: [teacherId, otherUserId] } },
+      })
+      await database.teachingAssignment.deleteMany({ where: { schoolId } })
+      await database.auditEvent.deleteMany({ where: { schoolId } })
+      await database.fileAsset.deleteMany({ where: { schoolId } })
       await database.session.deleteMany({ where: { userId: staffId } })
       await database.transferRequest.deleteMany({
         where: { sendingSchoolId: schoolId },
@@ -366,6 +461,15 @@ test('staff provisions student portal access with official records', async ({
       await database.schoolMembership.deleteMany({
         where: { schoolId: { in: [schoolId, receivingSchoolId] } },
       })
+      await database.studentAccess.deleteMany({
+        where: { userId: otherUserId },
+      })
+      await database.passwordCredential.deleteMany({
+        where: { userId: { in: [teacherId, otherUserId] } },
+      })
+      await database.user.deleteMany({
+        where: { id: { in: [teacherId, otherUserId] } },
+      })
       await database.passwordCredential.deleteMany({
         where: { userId: staffId },
       })
@@ -374,6 +478,8 @@ test('staff provisions student portal access with official records', async ({
       await database.school.delete({ where: { id: schoolId } })
     }
     if (studentId) await database.student.delete({ where: { id: studentId } })
+    if (otherStudentId)
+      await database.student.delete({ where: { id: otherStudentId } })
     if (organizationId)
       await database.organization.delete({ where: { id: organizationId } })
     await database.$disconnect()

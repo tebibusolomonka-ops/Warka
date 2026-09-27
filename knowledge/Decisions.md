@@ -10,5 +10,6 @@
 - Infrastructure operations require both an explicit operator allowlist and current organization owner access. Backup artifacts stay outside PostgreSQL, and restore rehearsals use generated isolated databases.
 - Production backup and restore use native PostgreSQL processes with fixed arguments. Browser tests use an explicit test-only adapter; this is not evidence of a native restore. Operational metrics use route patterns without person or request identifiers as labels.
 - Scheduled operations use a PostgreSQL advisory lock and unique retry series. Retries have a fixed attempt cap and backoff. Backup artifact retention is operational storage cleanup with preserved record history; it is separate from personal-data retention evaluation, which never deletes records.
+- File keys are generated server-side and never sent to ordinary clients. Local development storage rejects traversal and symlinks; production object storage uses private objects. File access is checked against the current material, document, or branding relationship. Public document verification never grants PDF access. Artifact storage participates in issuance success and failed database writes trigger best-effort orphan cleanup.
 
 See [[Security]] for the resulting invariants.

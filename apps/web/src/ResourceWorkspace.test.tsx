@@ -8,7 +8,12 @@ import {
 } from '@testing-library/react'
 import { ResourceWorkspace } from './ResourceWorkspace'
 import { getAcademicStructure, getTeachingAssignments } from './academicApi'
-import { postAnnouncement, postLearningMaterial } from './resourceApi'
+import {
+  postAnnouncement,
+  postLearningMaterial,
+  uploadLearningMaterial,
+  publishLearningMaterial,
+} from './resourceApi'
 
 vi.mock('./academicApi', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./academicApi')>()),
@@ -18,6 +23,8 @@ vi.mock('./academicApi', async (importOriginal) => ({
 vi.mock('./resourceApi', () => ({
   postAnnouncement: vi.fn(),
   postLearningMaterial: vi.fn(),
+  uploadLearningMaterial: vi.fn(),
+  publishLearningMaterial: vi.fn(),
 }))
 
 const baseUrl = 'http://localhost:3000/api'
@@ -59,12 +66,51 @@ beforeEach(() => {
   vi.resetAllMocks()
   vi.mocked(getAcademicStructure).mockResolvedValue(structure)
   vi.mocked(getTeachingAssignments).mockResolvedValue([assignment])
-  vi.mocked(postLearningMaterial).mockResolvedValue({})
+  vi.mocked(postLearningMaterial).mockResolvedValue({
+    id: '123e4567-e89b-42d3-a456-426614174099',
+  })
   vi.mocked(postAnnouncement).mockResolvedValue({})
 })
 afterEach(cleanup)
 
 describe('staff resources', () => {
+  it('uploads a file before publishing and reports server-confirmed success', async () => {
+    vi.mocked(uploadLearningMaterial).mockResolvedValue({})
+    vi.mocked(publishLearningMaterial).mockResolvedValue({})
+    render(
+      <ResourceWorkspace
+        baseUrl={baseUrl}
+        schoolId={schoolId}
+        onSessionExpired={vi.fn()}
+      />,
+    )
+    await screen.findByRole('heading', { name: 'Publish learning material' })
+    fireEvent.change(screen.getByLabelText('Material source'), {
+      target: { value: 'file' },
+    })
+    fireEvent.change(screen.getAllByLabelText('Title')[0]!, {
+      target: { value: 'Worksheet' },
+    })
+    const file = new File(['%PDF-1.7\n'], 'worksheet.pdf', {
+      type: 'application/pdf',
+    })
+    fireEvent.change(screen.getByLabelText('PDF, text, PNG, or JPEG file'), {
+      target: { files: [file] },
+    })
+    fireEvent.submit(
+      screen.getByRole('button', { name: 'Publish material' }).closest('form')!,
+    )
+    await waitFor(() =>
+      expect(uploadLearningMaterial).toHaveBeenCalledWith(
+        baseUrl,
+        schoolId,
+        '123e4567-e89b-42d3-a456-426614174099',
+        file,
+      ),
+    )
+    await waitFor(() => expect(publishLearningMaterial).toHaveBeenCalledOnce())
+    await screen.findByText('Material published.')
+  })
   it('creates material from a real assignment and limits teacher notices to their class', async () => {
     render(
       <ResourceWorkspace

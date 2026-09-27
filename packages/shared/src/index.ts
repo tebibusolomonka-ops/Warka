@@ -93,16 +93,29 @@ export const StudentResultSchema = z.object({
 export const StudentResultsSchema = z.array(StudentResultSchema)
 export type StudentResult = z.infer<typeof StudentResultSchema>
 
-export const StudentMaterialSchema = z.object({
+const studentMaterialBase = {
   id: z.uuid(),
   title: z.string(),
   description: z.string().nullable(),
-  resourceType: z.literal('link'),
-  resourceLocation: z.url(),
   subject: z.string(),
   academicYear: z.string(),
   publishedAt: z.iso.datetime(),
-})
+}
+export const StudentMaterialSchema = z.discriminatedUnion('resourceType', [
+  z.object({
+    ...studentMaterialBase,
+    resourceType: z.literal('link'),
+    resourceLocation: z.url(),
+    assetId: z.null().optional(),
+  }),
+  z.object({
+    ...studentMaterialBase,
+    resourceType: z.literal('file'),
+    resourceLocation: z.literal(''),
+    assetId: z.uuid(),
+    schoolId: z.uuid(),
+  }),
+])
 export const StudentMaterialsSchema = z.array(StudentMaterialSchema)
 export type StudentMaterial = z.infer<typeof StudentMaterialSchema>
 
