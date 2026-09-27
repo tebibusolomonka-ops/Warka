@@ -7,6 +7,37 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum PrivacyRequestType {
+  access
+  correction
+  restriction
+  objection
+}
+
+enum PrivacyRequestStatus {
+  submitted
+  underReview
+  approved
+  rejected
+  fulfilled
+  cancelled
+}
+
+enum PrivacyRequesterKind {
+  student
+  guardian
+}
+
+enum PrivacyRestrictionCategory {
+  parentPortalSharing
+  publicDocumentVerification
+}
+
+enum PrivacyRestrictionState {
+  active
+  ended
+}
+
 enum CorrectionRequestStatus {
   pending
   approved
@@ -285,6 +316,7 @@ model School {
   trainingRecords              TrainingRecord[]
   correctionRequests           StudentCorrectionRequest[]
   enrollmentCorrectionRequests EnrollmentCorrectionRequest[]
+  privacyRequests              PrivacyRequest[]
   supportRequests              SupportRequest[]
 
   @@index([organizationId])
@@ -350,6 +382,8 @@ model User {
   reviewedStudentCorrections   StudentCorrectionRequest[] @relation("StudentCorrectionReviewedBy")
   requestedEnrollmentCorrections EnrollmentCorrectionRequest[] @relation("EnrollmentCorrectionRequestedBy")
   reviewedEnrollmentCorrections  EnrollmentCorrectionRequest[] @relation("EnrollmentCorrectionReviewedBy")
+  privacyRequests              PrivacyRequest[] @relation("PrivacyRequestRequester")
+  reviewedPrivacyRequests      PrivacyRequest[] @relation("PrivacyRequestReviewer")
   marks                        Mark[]
 }
 
@@ -806,6 +840,7 @@ model Student {
   enrollments         Enrollment[]
   marks               Mark[]
   correctionRequests  StudentCorrectionRequest[]
+  privacyRequests     PrivacyRequest[]
 }
 
 model StudentCorrectionRequest {
@@ -1515,4 +1550,31 @@ model ProgressionException {
 
   @@index([planId, status])
   @@index([entryId, kind])
+}
+
+model PrivacyRequest {
+  id                  String @id @default(uuid())
+  schoolId            String
+  studentId           String
+  requesterUserId     String
+  requesterKind       PrivacyRequesterKind
+  type                PrivacyRequestType
+  status              PrivacyRequestStatus @default(submitted)
+  details             String
+  correctionField     StudentCorrectionField?
+  correctionValue     String?
+  restrictionCategory PrivacyRestrictionCategory?
+  createdAt           DateTime @default(now())
+  reviewedAt          DateTime?
+  reviewedById        String?
+  reviewReason        String?
+  fulfilledAt         DateTime?
+  school              School @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  student             Student @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  requester           User @relation("PrivacyRequestRequester", fields: [requesterUserId], references: [id], onDelete: Restrict)
+  reviewedBy          User? @relation("PrivacyRequestReviewer", fields: [reviewedById], references: [id], onDelete: Restrict)
+
+  @@index([schoolId, status, createdAt])
+  @@index([requesterUserId, createdAt])
+  @@index([studentId, createdAt])
 }

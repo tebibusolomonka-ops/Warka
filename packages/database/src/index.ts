@@ -761,3 +761,11 @@ export {
   CorrectionPermissionError,
   CorrectionStateError,
 } from './correctionReview.js'
+
+export {
+  PrivacyRequestInputSchema,
+  PrivacyPermissionError,
+  privacyRequesterScope,
+  createPrivacyRequest,
+  listOwnPrivacyRequests,
+} from './privacyRequests.js'
