@@ -22,6 +22,11 @@ export function createDatabaseClient(
 
 export type { PrismaClient }
 export {
+  backupDue,
+  cleanupEligible,
+  updateBackupPolicy,
+} from './backupPolicy.js'
+export {
   createPendingBackup,
   startBackup,
   completeBackup,

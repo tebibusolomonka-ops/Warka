@@ -301,6 +301,11 @@ enum RestoreRehearsalStatus {
   failed
 }
 
+enum BackupFrequency {
+  daily
+  weekly
+}
+
 model School {
   resultSets                    ResultSet[]
   publishedResults              PublishedResult[]
@@ -351,6 +356,7 @@ model School {
 model User {
   createdBackups               BackupRecord[] @relation("BackupCreatedBy")
   performedRestoreRehearsals RestoreRehearsal[] @relation("RestoreRehearsalPerformedBy")
+  updatedBackupPolicies BackupPolicy[] @relation("BackupPolicyUpdatedBy")
   submittedResultSets          ResultSet[]              @relation("ResultSetSubmittedBy")
   issuedDocuments              IssuedDocument[]
   requestedTransfers           TransferRequest[]
@@ -417,6 +423,17 @@ model User {
   createdRetentionHolds         RetentionHold[] @relation("RetentionHoldCreatedBy")
   releasedRetentionHolds        RetentionHold[] @relation("RetentionHoldReleasedBy")
   marks                        Mark[]
+}
+
+model BackupPolicy {
+  id String @id @default("database")
+  enabled Boolean @default(false)
+  frequency BackupFrequency @default(daily)
+  retentionCount Int @default(7)
+  verificationRequired Boolean @default(true)
+  updatedById String
+  updatedAt DateTime @updatedAt
+  updatedBy User @relation("BackupPolicyUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
 }
 
 model BackupRecord {

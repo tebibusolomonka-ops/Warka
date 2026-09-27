@@ -76,6 +76,7 @@ export const AuditActionSchema = z.enum([
   'privacyRequest.fulfilled',
   'retentionHold.created',
   'retentionHold.released',
+  'backupPolicy.updated',
 ])
 
 export const AuditResourceTypeSchema = z.enum([
@@ -108,6 +109,7 @@ export const AuditResourceTypeSchema = z.enum([
   'privacyRequest',
   'processingRestriction',
   'retentionHold',
+  'backupPolicy',
 ])
 
 const metadataValue = z.union([
