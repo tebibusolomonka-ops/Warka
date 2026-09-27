@@ -50,6 +50,7 @@ function fixture(policyEnabled = true, latest?: Date) {
     scheduledTaskExecution: {
       create: vi.fn().mockResolvedValue({ id: 'execution-id' }),
       updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+      findMany: vi.fn().mockResolvedValue([]),
     },
   } as unknown as PrismaClient
   const lock: SchedulerLock = { run: async (work) => work() }
@@ -100,6 +101,7 @@ describe('backup scheduler', () => {
       scheduledTaskExecution: {
         create: vi.fn().mockResolvedValue({ id: 'execution-id' }),
         updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+        findMany: vi.fn().mockResolvedValue([]),
       },
     } as unknown as PrismaClient
     const scheduler = new BackupScheduler(
@@ -134,6 +136,7 @@ describe('backup scheduler', () => {
       scheduledTaskExecution: {
         create: vi.fn().mockResolvedValue({ id: 'execution-id' }),
         updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+        findMany: vi.fn().mockResolvedValue([]),
       },
     } as unknown as PrismaClient
     const scheduler = new BackupScheduler(
@@ -310,5 +313,54 @@ describe('backup scheduler', () => {
     )
     await disabled.tick(now)
     expect(raw.retentionPolicy.findMany).toHaveBeenCalledOnce()
+  })
+
+  it('retries a failed backup once after backoff and preserves its series', async () => {
+    const { database, backup, scheduler } = fixture(true, now)
+    const tasks = database.scheduledTaskExecution as unknown as {
+      findMany: ReturnType<typeof vi.fn>
+      findFirst: ReturnType<typeof vi.fn>
+      create: ReturnType<typeof vi.fn>
+    }
+    tasks.findMany.mockResolvedValue([
+      {
+        id: 'first-attempt',
+        seriesId: 'retry-series',
+        taskType: 'backup',
+        status: 'failed',
+        attempt: 1,
+        failureCode: 'BACKUP_FAILED',
+        completedAt: new Date(now.getTime() - 61_000),
+      },
+    ])
+    tasks.findFirst = vi.fn().mockResolvedValue(null)
+    await scheduler.tick(now)
+    expect(backup).toHaveBeenCalledOnce()
+    expect(tasks.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ attempt: 2, seriesId: 'retry-series' }),
+      }),
+    )
+  })
+
+  it('does not duplicate a retry that already has a later attempt', async () => {
+    const { database, backup, scheduler } = fixture(true, now)
+    const tasks = database.scheduledTaskExecution as unknown as {
+      findMany: ReturnType<typeof vi.fn>
+      findFirst: ReturnType<typeof vi.fn>
+    }
+    tasks.findMany.mockResolvedValue([
+      {
+        seriesId: 'retry-series',
+        taskType: 'backup',
+        status: 'failed',
+        attempt: 1,
+        failureCode: 'BACKUP_FAILED',
+        completedAt: new Date(now.getTime() - 61_000),
+      },
+    ])
+    tasks.findFirst = vi.fn().mockResolvedValue({ id: 'later-attempt' })
+    await scheduler.tick(now)
+    expect(backup).not.toHaveBeenCalled()
   })
 })

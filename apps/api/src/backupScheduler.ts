@@ -12,6 +12,7 @@ import { verifyBackup } from './backupVerification.js'
 import { sendOperationsAlert } from './operationsAlerts.js'
 import { requireOperator } from './operationsAccess.js'
 import { cleanupBackupArtifacts } from './backupRetention.js'
+import { maxScheduledAttempts, retryEligible } from './schedulerRetry.js'
 
 const lockKey = 8_246_181
 
@@ -114,6 +115,121 @@ export class BackupScheduler {
     private readonly evaluateRetention: typeof evaluateConfiguredRetentionPolicy = evaluateConfiguredRetentionPolicy,
   ) {}
 
+  private async runBackupTask(now: Date, attempt = 1, seriesId?: string) {
+    const execution = await startScheduledTask(
+      this.database,
+      'backup',
+      'database',
+      now,
+      undefined,
+      attempt,
+      seriesId,
+    )
+    try {
+      const recordId = await this.backup({
+        database: this.database,
+        actorId: this.config.actorId,
+        databaseUrl: this.config.databaseUrl,
+        storage: new LocalBackupStorage(this.config.storageDirectory),
+      })
+      await completeScheduledTask(this.database, execution.id, recordId)
+    } catch {
+      await failScheduledTask(this.database, execution.id, 'BACKUP_FAILED')
+      if (attempt >= maxScheduledAttempts)
+        await sendOperationsAlert(
+          this.database,
+          'backupFailed',
+          execution.seriesId,
+        ).catch(() => undefined)
+      throw new Error('Scheduled backup failed')
+    }
+  }
+
+  private async runRetentionTask(
+    policy: {
+      id: string
+      organizationId: string
+      category:
+        | 'messages'
+        | 'auditEvents'
+        | 'issuedDocuments'
+        | 'academicRecords'
+        | 'enrollmentRecords'
+      retentionDays: number
+    },
+    now: Date,
+    attempt = 1,
+    seriesId?: string,
+  ) {
+    const execution = await startScheduledTask(
+      this.database,
+      'retentionEvaluation',
+      policy.organizationId,
+      now,
+      policy.id,
+      attempt,
+      seriesId,
+    )
+    try {
+      const result = await this.evaluateRetention(this.database, policy, now)
+      await completeScheduledTask(this.database, execution.id, policy.id, {
+        eligibleCount: result.eligibleCount,
+        oldestEligibleAt: result.oldestEligibleAt,
+      })
+    } catch {
+      await failScheduledTask(
+        this.database,
+        execution.id,
+        'RETENTION_EVALUATION_FAILED',
+      )
+    }
+  }
+
+  private async retryFailedTasks(now: Date) {
+    const failures = await this.database.scheduledTaskExecution.findMany({
+      where: { status: 'failed', attempt: { lt: maxScheduledAttempts } },
+      orderBy: { completedAt: 'asc' },
+      take: 25,
+    })
+    for (const failure of failures) {
+      if (!retryEligible(failure, now)) continue
+      const later = await this.database.scheduledTaskExecution.findFirst({
+        where: { seriesId: failure.seriesId, attempt: { gt: failure.attempt } },
+        select: { id: true },
+      })
+      if (later) continue
+      if (failure.taskType === 'backup' && this.config.backupEnabled) {
+        await requireOperator(this.database, this.config.actorId)
+        await this.runBackupTask(
+          now,
+          failure.attempt + 1,
+          failure.seriesId,
+        ).catch(() => undefined)
+      }
+      if (
+        failure.taskType === 'retentionEvaluation' &&
+        this.config.retentionEvaluationEnabled
+      ) {
+        const policy = await this.database.retentionPolicy.findUnique({
+          where: { id: failure.resourceId ?? '' },
+          select: {
+            id: true,
+            organizationId: true,
+            category: true,
+            retentionDays: true,
+          },
+        })
+        if (policy)
+          await this.runRetentionTask(
+            policy,
+            now,
+            failure.attempt + 1,
+            failure.seriesId,
+          )
+      }
+    }
+  }
+
   private async evaluateRetentionPolicies(now: Date) {
     if (!this.config.retentionEvaluationEnabled) return
     await requireOperator(this.database, this.config.actorId)
@@ -137,32 +253,14 @@ export class BackupScheduler {
       })
       if (latest && now.getTime() - latest.scheduledFor.getTime() < 86_400_000)
         continue
-      const execution = await startScheduledTask(
-        this.database,
-        'retentionEvaluation',
-        policy.organizationId,
-        now,
-        policy.id,
-      )
-      try {
-        const result = await this.evaluateRetention(this.database, policy, now)
-        await completeScheduledTask(this.database, execution.id, policy.id, {
-          eligibleCount: result.eligibleCount,
-          oldestEligibleAt: result.oldestEligibleAt,
-        })
-      } catch {
-        await failScheduledTask(
-          this.database,
-          execution.id,
-          'RETENTION_EVALUATION_FAILED',
-        )
-      }
+      await this.runRetentionTask(policy, now)
     }
   }
 
   async tick(now = new Date()) {
     if (!this.config.enabled || this.stopped || this.running) return
     const work = this.lock.run(async () => {
+      await this.retryFailedTasks(now)
       await this.evaluateRetentionPolicies(now)
       if (!this.config.backupEnabled) return
       const policy = await this.database.backupPolicy.findUnique({
@@ -175,28 +273,7 @@ export class BackupScheduler {
         select: { createdAt: true },
       })
       if (backupDue(policy, latest?.createdAt ?? null, now)) {
-        const execution = await startScheduledTask(
-          this.database,
-          'backup',
-          'database',
-          now,
-        )
-        try {
-          const recordId = await this.backup({
-            database: this.database,
-            actorId: this.config.actorId,
-            databaseUrl: this.config.databaseUrl,
-            storage: new LocalBackupStorage(this.config.storageDirectory),
-            onFailure: (recordId) =>
-              sendOperationsAlert(this.database, 'backupFailed', recordId).then(
-                () => undefined,
-              ),
-          })
-          await completeScheduledTask(this.database, execution.id, recordId)
-        } catch {
-          await failScheduledTask(this.database, execution.id, 'BACKUP_FAILED')
-          throw new Error('Scheduled backup failed')
-        }
+        await this.runBackupTask(now)
       }
       if (policy.verificationRequired) {
         const pending = await this.database.backupRecord.findMany({

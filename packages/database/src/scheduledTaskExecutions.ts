@@ -1,4 +1,5 @@
 import type { PrismaClient, ScheduledTaskType } from '@prisma/client'
+import { randomUUID } from 'node:crypto'
 
 export async function startScheduledTask(
   database: PrismaClient,
@@ -7,6 +8,7 @@ export async function startScheduledTask(
   scheduledFor: Date,
   resourceId?: string,
   attempt = 1,
+  seriesId: string = randomUUID(),
 ) {
   if (
     !/^[a-zA-Z0-9_-]{1,80}$/.test(scope) ||
@@ -17,6 +19,7 @@ export async function startScheduledTask(
   return database.scheduledTaskExecution.create({
     data: {
       taskType,
+      seriesId,
       scope,
       resourceId: resourceId ?? null,
       scheduledFor,

@@ -524,6 +524,7 @@ model BackupPolicy {
 
 model ScheduledTaskExecution {
   id String @id @default(uuid())
+  seriesId String @default(uuid())
   taskType ScheduledTaskType
   scope String
   resourceId String?
@@ -539,6 +540,7 @@ model ScheduledTaskExecution {
 
   @@index([taskType, scope, scheduledFor])
   @@index([status, createdAt])
+  @@unique([seriesId, attempt])
 }
 
 model BackupRecord {
