@@ -58,6 +58,14 @@ enum AccountStatus {
   deactivated
 }
 
+enum EmailDeliveryStatus {
+  queued
+  sending
+  sent
+  failed
+  cancelled
+}
+
 enum OrganizationRole {
   owner
   administrator
@@ -462,6 +470,7 @@ model User {
   escalatedFamilyConversations FamilyConversation[]     @relation("FamilyConversationEscalatedBy")
   guardianAccess               GuardianAccess?
   recoveryRequests             AccountRecoveryRequest[]
+  emailDeliveries              EmailDelivery[]
   startedOnboardings            SchoolOnboarding[] @relation("OnboardingStartedBy")
   completedOnboardings          SchoolOnboarding[] @relation("OnboardingCompletedBy")
   completedChecklistItems       OnboardingChecklistItem[]
@@ -1020,6 +1029,26 @@ model AccountRecoveryRequest {
 
   @@index([userId, status])
   @@index([expiresAt])
+}
+
+model EmailDelivery {
+  id                 String              @id @default(uuid())
+  recipientUserId    String?
+  recipientAddress   String
+  templateKey        String
+  status             EmailDeliveryStatus @default(queued)
+  createdAt          DateTime            @default(now())
+  scheduledAt        DateTime            @default(now())
+  startedAt          DateTime?
+  sentAt             DateTime?
+  failedAt           DateTime?
+  attemptCount       Int                 @default(0)
+  providerMessageId  String?
+  failureCode        String?
+  recipientUser      User?               @relation(fields: [recipientUserId], references: [id], onDelete: SetNull)
+
+  @@index([status, scheduledAt])
+  @@index([recipientUserId, createdAt])
 }
 
 model AcademicYear {

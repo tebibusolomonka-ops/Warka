@@ -557,6 +557,14 @@ export {
 } from './notifications.js'
 export type { CreateNotification } from './notifications.js'
 export type { Notification } from '@prisma/client'
+export {
+  QueueEmailDeliverySchema,
+  queueEmailDelivery,
+  getEmailDelivery,
+  listEmailDeliveries,
+  cancelQueuedEmailDelivery,
+} from './emailDeliveries.js'
+export type { QueueEmailDelivery } from './emailDeliveries.js'
 
 export {
   SchoolDocumentProfileInputSchema,
