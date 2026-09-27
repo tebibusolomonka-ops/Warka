@@ -340,6 +340,7 @@ export type {
   DocumentType,
   DocumentStatus,
   IssuedDocument,
+  DocumentArtifactWriter,
 } from './issuedDocuments.js'
 
 export {

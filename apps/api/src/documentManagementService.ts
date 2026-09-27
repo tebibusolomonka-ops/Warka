@@ -5,7 +5,13 @@ import {
   requireDocumentAuthority,
   withdrawDocument,
   type PrismaClient,
+  type DocumentArtifactWriter,
 } from '@warka/database'
+import { createHash } from 'node:crypto'
+import { renderReportCard, renderTranscript } from './documentPdf.js'
+import { configuredFileStorage } from './objectFileStorage.js'
+import type { FileStorage } from './fileStorage.js'
+import type { IssuedDocument } from '@warka/database'
 
 export class DocumentStudentNotFoundError extends Error {
   constructor() {
@@ -45,7 +51,30 @@ export type DocumentManagementService = {
 
 export function prismaDocumentManagementService(
   database: PrismaClient,
+  storage?: FileStorage,
 ): DocumentManagementService {
+  async function withArtifact<T>(
+    action: (write: DocumentArtifactWriter) => Promise<T>,
+  ) {
+    const storedKeys: string[] = []
+    const write: DocumentArtifactWriter = async (transaction, document) => {
+      const target = storage ?? configuredFileStorage()
+      storedKeys.push(
+        await storeIssuedDocumentArtifact(transaction, target, document),
+      )
+    }
+    try {
+      return await action(write)
+    } catch (error) {
+      if (storedKeys.length) {
+        const target = storage ?? configuredFileStorage()
+        await Promise.all(
+          storedKeys.map((key) => target.delete(key).catch(() => undefined)),
+        )
+      }
+      throw error
+    }
+  }
   return {
     async list(actorId, schoolId, studentId) {
       await requireDocumentAuthority(database, actorId, schoolId)
@@ -84,18 +113,60 @@ export function prismaDocumentManagementService(
       }
     },
     async issue(actorId, schoolId, studentId, academicYearId, documentType) {
-      return issueDocument(database, actorId, {
-        schoolId,
-        studentId,
-        academicYearId,
-        documentType,
-      })
+      return withArtifact((write) =>
+        issueDocument(
+          database,
+          actorId,
+          {
+            schoolId,
+            studentId,
+            academicYearId,
+            documentType,
+          },
+          write,
+        ),
+      )
     },
     correct(actorId, schoolId, documentId, reason) {
-      return correctDocument(database, actorId, schoolId, documentId, reason)
+      return withArtifact((write) =>
+        correctDocument(database, actorId, schoolId, documentId, reason, write),
+      )
     },
     withdraw(actorId, schoolId, documentId, reason) {
       return withdrawDocument(database, actorId, schoolId, documentId, reason)
     },
   }
+}
+
+export async function storeIssuedDocumentArtifact(
+  transaction: Parameters<DocumentArtifactWriter>[0],
+  storage: FileStorage,
+  document: IssuedDocument,
+) {
+  const bytes = Buffer.from(
+    document.documentType === 'reportCard'
+      ? await renderReportCard(document)
+      : await renderTranscript(document),
+  )
+  const stored = await storage.put(bytes)
+  try {
+    await transaction.fileAsset.create({
+      data: {
+        schoolId: document.schoolId,
+        issuedDocumentId: document.id,
+        createdById: document.issuedById,
+        purpose: 'issuedDocument',
+        status: 'available',
+        storageKey: stored.key,
+        originalFileName: `warka-${document.documentType === 'reportCard' ? 'report-card' : 'transcript'}-${document.id}.pdf`,
+        contentType: 'application/pdf',
+        sizeBytes: BigInt(bytes.byteLength),
+        checksum: createHash('sha256').update(bytes).digest('hex'),
+      },
+    })
+  } catch (error) {
+    await storage.delete(stored.key).catch(() => undefined)
+    throw error
+  }
+  return stored.key
 }

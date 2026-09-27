@@ -5,6 +5,8 @@ import {
   type IssuedDocument,
   type PrismaClient,
 } from '@warka/database'
+import { configuredFileStorage } from './objectFileStorage.js'
+import type { FileStorage } from './fileStorage.js'
 
 export class DocumentDownloadDeniedError extends Error {
   constructor() {
@@ -18,12 +20,24 @@ export type DocumentDownloadService = {
     schoolId: string,
     documentId: string,
   ): Promise<IssuedDocument>
+  artifact?(
+    documentId: string,
+  ): Promise<{ stream: NodeJS.ReadableStream; sizeBytes: number } | null>
 }
 
 export function prismaDocumentDownloadService(
   database: PrismaClient,
+  storage?: FileStorage,
 ): DocumentDownloadService {
   return {
+    async artifact(documentId) {
+      const asset = await database.fileAsset.findUnique({
+        where: { issuedDocumentId: documentId },
+      })
+      if (!asset) return null
+      if (asset.status !== 'available') throw new DocumentDownloadDeniedError()
+      return (storage ?? configuredFileStorage()).get(asset.storageKey)
+    },
     async find(actorId, schoolId, documentId) {
       const document = await database.issuedDocument.findFirst({
         where: { id: documentId, schoolId },

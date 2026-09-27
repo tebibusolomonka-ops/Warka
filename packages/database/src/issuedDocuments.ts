@@ -13,6 +13,10 @@ export const IssueDocumentSchema = z.strictObject({
 })
 
 export type IssueDocument = z.infer<typeof IssueDocumentSchema>
+export type DocumentArtifactWriter = (
+  transaction: Prisma.TransactionClient,
+  document: Awaited<ReturnType<typeof createDocumentInTransaction>>,
+) => Promise<void>
 
 export const DocumentSnapshotSchema = z.strictObject({
   student: z.strictObject({
@@ -96,13 +100,20 @@ export async function issueDocument(
   database: PrismaClient,
   actorId: string,
   input: IssueDocument,
+  writeArtifact?: DocumentArtifactWriter,
 ) {
   const data = IssueDocumentSchema.parse(input)
   z.uuid().parse(actorId)
   await requireDocumentAuthority(database, actorId, data.schoolId)
-  return database.$transaction((transaction) =>
-    createDocumentInTransaction(transaction, actorId, data),
-  )
+  return database.$transaction(async (transaction) => {
+    const document = await createDocumentInTransaction(
+      transaction,
+      actorId,
+      data,
+    )
+    await writeArtifact?.(transaction, document)
+    return document
+  })
 }
 
 export async function createDocumentInTransaction(
@@ -217,6 +228,7 @@ export async function correctDocument(
   schoolId: string,
   documentId: string,
   reason: string,
+  writeArtifact?: DocumentArtifactWriter,
 ) {
   z.uuid().parse(documentId)
   const correctionReason = DocumentReasonSchema.parse(reason)
@@ -237,7 +249,7 @@ export async function correctDocument(
       },
     })
     if (changed.count !== 1) throw new DocumentStateError()
-    return createDocumentInTransaction(
+    const document = await createDocumentInTransaction(
       transaction,
       actorId,
       {
@@ -248,6 +260,8 @@ export async function correctDocument(
       },
       previous.id,
     )
+    await writeArtifact?.(transaction, document)
+    return document
   })
 }
 
