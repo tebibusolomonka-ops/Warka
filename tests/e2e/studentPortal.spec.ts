@@ -155,6 +155,23 @@ test('staff provisions student portal access with official records', async ({
       },
     })
     otherStudentId = other.id
+    const receivingYear = await database.academicYear.findFirstOrThrow({
+      where: { schoolId: receivingSchoolId },
+    })
+    const receivingGrade = await database.gradeLevel.findFirstOrThrow({
+      where: { schoolId: receivingSchoolId },
+    })
+    await database.enrollment.create({
+      data: {
+        studentId: otherStudentId,
+        schoolId: receivingSchoolId,
+        academicYearId: receivingYear.id,
+        gradeLevelId: receivingGrade.id,
+        status: 'approved',
+        approvedAt: new Date(),
+        approvedById: staffId,
+      },
+    })
     const otherUser = await database.user.create({
       data: {
         email: otherEmail,
@@ -412,6 +429,72 @@ test('staff provisions student portal access with official records', async ({
     })
     expect(issued).not.toBeNull()
     const reference = issued!.verificationReference
+    await database.supportRequest.create({
+      data: {
+        schoolId,
+        createdById: staffId,
+        category: 'technical',
+        title: 'Browser search support request',
+        description: 'Synthetic issue for scoped search journey',
+      },
+    })
+    const searchInput = page.getByLabel('Search this school')
+    await searchInput.fill('BROWSER-' + suffix)
+    await expect(
+      page
+        .getByRole('region', { name: 'Students' })
+        .getByRole('button', { name: /Browser Learner/ }),
+    ).toBeVisible()
+    await page
+      .getByRole('region', { name: 'Students' })
+      .getByRole('button', { name: /Browser Learner/ })
+      .click()
+    await expect(
+      page
+        .getByRole('region', { name: 'Selected search result' })
+        .getByText(/Opened student/),
+    ).toBeVisible()
+    await searchInput.fill('OTHER-BROWSER-' + suffix)
+    const isolated = await page.request.get(
+      `/api/search?schoolId=${schoolId}&q=${encodeURIComponent('OTHER-BROWSER-' + suffix)}&types=student`,
+    )
+    expect(isolated.status()).toBe(200)
+    expect((await isolated.json()).groups.student).toEqual([])
+    await expect(
+      page
+        .getByRole('region', { name: 'Students' })
+        .getByRole('button', { name: /Other Learner/ }),
+    ).toHaveCount(0)
+    await searchInput.fill(reference)
+    await expect(
+      page
+        .getByRole('region', { name: 'Documents' })
+        .getByRole('button', { name: /transcript/ }),
+    ).toBeVisible()
+    await page
+      .getByRole('region', { name: 'Documents' })
+      .getByRole('button', { name: /transcript/ })
+      .click()
+    await expect(
+      page
+        .getByRole('region', { name: 'Selected search result' })
+        .getByText(/Opened issuedDocument/),
+    ).toBeVisible()
+    await searchInput.fill('Browser search support')
+    await expect(
+      page
+        .getByRole('region', { name: 'Support' })
+        .getByRole('button', { name: /Browser search support request/ }),
+    ).toBeVisible()
+    await page
+      .getByRole('region', { name: 'Support' })
+      .getByRole('button', { name: /Browser search support request/ })
+      .click()
+    await expect(
+      page
+        .getByRole('region', { name: 'Selected search result' })
+        .getByText(/Opened supportRequest/),
+    ).toBeVisible()
     await expect(
       page.getByText('Verification reference: ' + reference),
     ).toBeVisible()
@@ -527,6 +610,7 @@ test('staff provisions student portal access with official records', async ({
       })
       await database.teachingAssignment.deleteMany({ where: { schoolId } })
       await database.auditEvent.deleteMany({ where: { schoolId } })
+      await database.supportRequest.deleteMany({ where: { schoolId } })
       await database.fileAsset.deleteMany({ where: { schoolId } })
       await database.session.deleteMany({ where: { userId: staffId } })
       await database.transferRequest.deleteMany({

@@ -81,3 +81,49 @@ describe('unified search API', () => {
     await app.close()
   })
 })
+
+describe('search result opening', () => {
+  it('requires school scope again and never resolves another school student', async () => {
+    const database = {
+      school: {
+        findUnique: vi.fn().mockResolvedValue({
+          organizationId: '33333333-3333-4333-8333-333333333333',
+        }),
+      },
+      user: {
+        findUnique: vi.fn().mockResolvedValue({ accountStatus: 'active' }),
+      },
+      organizationMembership: { findUnique: vi.fn().mockResolvedValue(null) },
+      schoolMembership: {
+        findUnique: vi.fn().mockResolvedValue({
+          role: 'administrator',
+          startsAt: new Date(0),
+          endsAt: null,
+        }),
+      },
+      student: { findFirst: vi.fn().mockResolvedValue(null) },
+    } as unknown as PrismaClient
+    const app = Fastify()
+    app.decorateRequest('currentUser', null)
+    registerSearchRoutes(
+      app,
+      () => database,
+      async (request) => {
+        request.currentUser = { id: actorId } as User
+      },
+    )
+    const response = await app.inject(
+      `/search/open?schoolId=${schoolId}&type=student&reference=OTHER-SCHOOL`,
+    )
+    expect(response.statusCode).toBe(404)
+    expect(database.student.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          studentReference: 'OTHER-SCHOOL',
+          enrollments: { some: { schoolId } },
+        },
+      }),
+    )
+    await app.close()
+  })
+})

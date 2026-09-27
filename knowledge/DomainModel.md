@@ -9,3 +9,5 @@ Backup records track archive metadata, integrity verification, and isolated rest
 `FileAsset` records identify a controlled purpose, school scope, storage key, checksum, size, lifecycle status, and optional link to a learning material or issued document. A document profile points to its current logo asset; prior assets and corrected document PDFs retain their own historical metadata. Bytes remain outside PostgreSQL.
 
 `FileScan` records controlled status, result, timestamps, and failure code for an asset. Required uploads begin pending; a clean result permits availability, infection quarantines the asset, and scanner failure leaves it unavailable. Rescans create new scan records and scheduled work.
+
+Search results are derived summaries, not a new durable identity or access grant. They contain a type, safe title and subtitle, a domain reference, and school scope; opening a result checks current authorization again.

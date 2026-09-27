@@ -35,3 +35,30 @@ export async function searchSchool(
     await requestJson(baseUrl, `/search?${params}`, signal ? { signal } : {}),
   )
 }
+const opened = z.object({
+  type: searchType,
+  title: z.string(),
+  reference: z.string(),
+  status: z.string().optional(),
+  studentReference: z.string().optional(),
+  category: z.string().optional(),
+})
+export type OpenedSearchResult = z.infer<typeof opened>
+export async function openSearchResult(
+  baseUrl: string,
+  item: SearchResult,
+  signal?: AbortSignal,
+) {
+  const params = new URLSearchParams({
+    schoolId: item.schoolId,
+    type: item.type,
+    reference: item.reference,
+  })
+  return opened.parse(
+    await requestJson(
+      baseUrl,
+      `/search/open?${params}`,
+      signal ? { signal } : {},
+    ),
+  )
+}
