@@ -320,7 +320,17 @@ export async function listCorrectionRequests(
         orderBy: [{ requestedAt: 'desc' }, { id: 'desc' }],
         take,
         skip,
-        include: { requestedBy: { select: { id: true, displayName: true } } },
+        include: {
+          requestedBy: { select: { id: true, displayName: true } },
+          student: {
+            select: {
+              id: true,
+              givenName: true,
+              familyName: true,
+              studentReference: true,
+            },
+          },
+        },
       }),
       take,
       skip,
@@ -329,6 +339,9 @@ export async function listCorrectionRequests(
   const where = {
     schoolId,
     ...(input.status ? { status: input.status } : {}),
+    ...(input.studentId
+      ? { enrollment: { studentId: z.uuid().parse(input.studentId) } }
+      : {}),
     ...(input.enrollmentId
       ? { enrollmentId: z.uuid().parse(input.enrollmentId) }
       : {}),
@@ -340,7 +353,21 @@ export async function listCorrectionRequests(
       orderBy: [{ requestedAt: 'desc' }, { id: 'desc' }],
       take,
       skip,
-      include: { requestedBy: { select: { id: true, displayName: true } } },
+      include: {
+        requestedBy: { select: { id: true, displayName: true } },
+        enrollment: {
+          select: {
+            student: {
+              select: {
+                id: true,
+                givenName: true,
+                familyName: true,
+                studentReference: true,
+              },
+            },
+          },
+        },
+      },
     }),
     take,
     skip,

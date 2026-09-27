@@ -10,6 +10,7 @@ import {
 import { StudentAccountPanel } from './StudentAccountPanel'
 import { GuardianManagement } from './GuardianManagement'
 import { DocumentPanel } from './DocumentPanel'
+import { CorrectionWorkspace } from './CorrectionWorkspace'
 import {
   actOnEnrollment,
   ApiError,
@@ -51,7 +52,9 @@ export function StudentWorkspace({
   onSessionExpired: () => void
 }) {
   const schoolId = access.school.id
-  const [view, setView] = useState<'list' | 'register' | 'detail'>('list')
+  const [view, setView] = useState<
+    'list' | 'register' | 'detail' | 'corrections'
+  >('list')
   const [list, setList] = useState<ListState>({ status: 'loading' })
   const [offset, setOffset] = useState(0)
   const [refresh, setRefresh] = useState(0)
@@ -268,7 +271,28 @@ export function StudentWorkspace({
             Register student
           </button>
         )}
+        {access.capabilities.canApprove && (
+          <button type="button" onClick={() => setView('corrections')}>
+            Correction review
+          </button>
+        )}
       </nav>
+
+      {view === 'corrections' && access.capabilities.canApprove && (
+        <CorrectionWorkspace
+          baseUrl={baseUrl}
+          schoolId={schoolId}
+          detail={null}
+          canRequest={false}
+          canApprove
+          canApproveIdentity={access.capabilities.canRegister}
+          onSessionExpired={onSessionExpired}
+          onApplied={(studentId) => {
+            void openDetail(studentId)
+            setRefresh((value) => value + 1)
+          }}
+        />
+      )}
 
       {view === 'list' && (
         <>
@@ -538,6 +562,25 @@ export function StudentWorkspace({
               <p>Warka reference: {detail.data.student.studentReference}</p>
               {detail.data.student.dateOfBirth && (
                 <p>Date of birth: {detail.data.student.dateOfBirth}</p>
+              )}
+              {(access.capabilities.canRegister ||
+                access.capabilities.canApprove) && (
+                <CorrectionWorkspace
+                  baseUrl={baseUrl}
+                  schoolId={schoolId}
+                  detail={detail.data}
+                  canRequest={access.capabilities.canRegister}
+                  canApprove={access.capabilities.canApprove}
+                  canApproveIdentity={
+                    access.capabilities.canRegister &&
+                    access.capabilities.canApprove
+                  }
+                  onSessionExpired={onSessionExpired}
+                  onApplied={(studentId) => {
+                    void openDetail(studentId)
+                    setRefresh((value) => value + 1)
+                  }}
+                />
               )}
               {access.capabilities.canRegister && (
                 <StudentAccountPanel
