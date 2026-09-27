@@ -322,6 +322,19 @@ enum ScheduledTaskStatus {
   skipped
 }
 
+enum FileAssetPurpose {
+  learningMaterial
+  schoolBranding
+  issuedDocument
+}
+
+enum FileAssetStatus {
+  pending
+  available
+  quarantined
+  deleted
+}
+
 enum OperationalIncidentSeverity {
   low
   medium
@@ -344,6 +357,7 @@ enum MaintenanceWindowStatus {
 }
 
 model School {
+  fileAssets FileAsset[]
   resultSets                    ResultSet[]
   publishedResults              PublishedResult[]
   learningMaterials             LearningMaterial[]
@@ -391,6 +405,8 @@ model School {
 }
 
 model User {
+  createdFileAssets FileAsset[] @relation("FileAssetCreatedBy")
+  ownedFileAssets FileAsset[] @relation("FileAssetOwner")
   createdBackups               BackupRecord[] @relation("BackupCreatedBy")
   performedRestoreRehearsals RestoreRehearsal[] @relation("RestoreRehearsalPerformedBy")
   updatedBackupPolicies BackupPolicy[] @relation("BackupPolicyUpdatedBy")
@@ -464,6 +480,29 @@ model User {
   createdRetentionHolds         RetentionHold[] @relation("RetentionHoldCreatedBy")
   releasedRetentionHolds        RetentionHold[] @relation("RetentionHoldReleasedBy")
   marks                        Mark[]
+}
+
+model FileAsset {
+  id String @id @default(uuid())
+  schoolId String?
+  ownerUserId String?
+  purpose FileAssetPurpose
+  originalFileName String
+  contentType String
+  sizeBytes BigInt
+  checksum String
+  storageKey String @unique
+  status FileAssetStatus @default(pending)
+  createdAt DateTime @default(now())
+  createdById String
+  deletedAt DateTime?
+  school School? @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  ownerUser User? @relation("FileAssetOwner", fields: [ownerUserId], references: [id], onDelete: Restrict)
+  createdBy User @relation("FileAssetCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@index([schoolId, purpose, status])
+  @@index([ownerUserId, purpose, status])
+  @@index([createdAt])
 }
 
 model MaintenanceWindow {
