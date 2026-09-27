@@ -11,11 +11,9 @@ const schoolId = '22222222-2222-4222-8222-222222222222'
 function store(role: string | null, accountStatus = 'active') {
   return {
     school: {
-      findUnique: vi
-        .fn()
-        .mockResolvedValue({
-          organizationId: '33333333-3333-4333-8333-333333333333',
-        }),
+      findUnique: vi.fn().mockResolvedValue({
+        organizationId: '33333333-3333-4333-8333-333333333333',
+      }),
     },
     user: { findUnique: vi.fn().mockResolvedValue({ accountStatus }) },
     organizationMembership: { findUnique: vi.fn().mockResolvedValue(null) },

@@ -8,11 +8,9 @@ const schoolId = '22222222-2222-4222-8222-222222222222'
 function store(role: string, owner = false) {
   return {
     school: {
-      findUnique: vi
-        .fn()
-        .mockResolvedValue({
-          organizationId: '33333333-3333-4333-8333-333333333333',
-        }),
+      findUnique: vi.fn().mockResolvedValue({
+        organizationId: '33333333-3333-4333-8333-333333333333',
+      }),
     },
     user: {
       findUnique: vi.fn().mockResolvedValue({ accountStatus: 'active' }),
@@ -34,15 +32,13 @@ function store(role: string, owner = false) {
         ]),
     },
     operationalIncident: {
-      findMany: vi
-        .fn()
-        .mockResolvedValue([
-          {
-            id: 'incident-id',
-            title: 'Service outage',
-            status: 'investigating',
-          },
-        ]),
+      findMany: vi.fn().mockResolvedValue([
+        {
+          id: 'incident-id',
+          title: 'Service outage',
+          status: 'investigating',
+        },
+      ]),
     },
   } as unknown as PrismaClient
 }

@@ -60,7 +60,11 @@ export class FileScanScheduler {
         scanId: execution.resourceId,
       })
       if (outcome.status === 'failed')
-        await failScheduledTask(this.database, execution.id, outcome.failureCode)
+        await failScheduledTask(
+          this.database,
+          execution.id,
+          outcome.failureCode,
+        )
       else
         await completeScheduledTask(
           this.database,

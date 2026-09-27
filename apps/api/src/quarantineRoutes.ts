@@ -34,7 +34,7 @@ export function registerQuarantineRoutes(
       await operator(request)
       const query = querySchema.parse(request.query)
       const scans = await getDatabase().fileScan.findMany({
-      ...(query.status ? { where: { status: query.status } } : {}),
+        ...(query.status ? { where: { status: query.status } } : {}),
         orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
         take: query.limit,
         select: {
@@ -77,26 +77,22 @@ export function registerQuarantineRoutes(
         !asset.scanRequired ||
         !['quarantined', 'pending'].includes(asset.status)
       )
-        return reply
-          .code(409)
-          .send({
-            error: {
-              code: 'RESCAN_NOT_ALLOWED',
-              message: 'Asset is not eligible for rescan',
-            },
-          })
+        return reply.code(409).send({
+          error: {
+            code: 'RESCAN_NOT_ALLOWED',
+            message: 'Asset is not eligible for rescan',
+          },
+        })
       const active = await database.fileScan.count({
         where: { fileAssetId: id, status: { in: ['pending', 'scanning'] } },
       })
       if (active)
-        return reply
-          .code(409)
-          .send({
-            error: {
-              code: 'SCAN_ALREADY_PENDING',
-              message: 'Scan already pending',
-            },
-          })
+        return reply.code(409).send({
+          error: {
+            code: 'SCAN_ALREADY_PENDING',
+            message: 'Scan already pending',
+          },
+        })
       const scan = await database.$transaction(async (tx) => {
         const claimed = await tx.fileAsset.updateMany({
           where: { id, status: asset.status },
@@ -122,11 +118,9 @@ export function registerQuarantineRoutes(
         return created
       })
       if (!scan)
-        return reply
-          .code(409)
-          .send({
-            error: { code: 'RESCAN_CONFLICT', message: 'Asset changed' },
-          })
+        return reply.code(409).send({
+          error: { code: 'RESCAN_CONFLICT', message: 'Asset changed' },
+        })
       return reply.code(202).send({ scanId: scan.id, status: 'pending' })
     },
   )
@@ -142,24 +136,20 @@ export function registerQuarantineRoutes(
         select: { id: true, schoolId: true, status: true, storageKey: true },
       })
       if (!asset || asset.status !== 'quarantined')
-        return reply
-          .code(409)
-          .send({
-            error: {
-              code: 'REMOVAL_NOT_ALLOWED',
-              message: 'Asset is not quarantined',
-            },
-          })
+        return reply.code(409).send({
+          error: {
+            code: 'REMOVAL_NOT_ALLOWED',
+            message: 'Asset is not quarantined',
+          },
+        })
       const claimed = await database.fileAsset.updateMany({
         where: { id, status: 'quarantined' },
         data: { status: 'deleted', deletedAt: new Date() },
       })
       if (claimed.count !== 1)
-        return reply
-          .code(409)
-          .send({
-            error: { code: 'REMOVAL_CONFLICT', message: 'Asset changed' },
-          })
+        return reply.code(409).send({
+          error: { code: 'REMOVAL_CONFLICT', message: 'Asset changed' },
+        })
       await recordAuditEvent(database, {
         schoolId: asset.schoolId ?? undefined,
         actorUserId: authenticatedUser(request).id,

@@ -13,32 +13,28 @@ function fixture(owner: boolean) {
       findFirst: vi.fn().mockResolvedValue(owner ? { userId: actorId } : null),
     },
     fileScan: {
-      findMany: vi
-        .fn()
-        .mockResolvedValue([
-          {
-            id: 'scan',
-            status: 'infected',
-            fileAsset: {
-              id: assetId,
-              status: 'quarantined',
-              originalFileName: 'lesson.pdf',
-            },
+      findMany: vi.fn().mockResolvedValue([
+        {
+          id: 'scan',
+          status: 'infected',
+          fileAsset: {
+            id: assetId,
+            status: 'quarantined',
+            originalFileName: 'lesson.pdf',
           },
-        ]),
+        },
+      ]),
       count: vi.fn().mockResolvedValue(0),
       create: vi.fn().mockResolvedValue({ id: 'scan2' }),
     },
     fileAsset: {
-      findUnique: vi
-        .fn()
-        .mockResolvedValue({
-          id: assetId,
-          schoolId: null,
-          status: 'quarantined',
-          scanRequired: true,
-          storageKey: 'private-key',
-        }),
+      findUnique: vi.fn().mockResolvedValue({
+        id: assetId,
+        schoolId: null,
+        status: 'quarantined',
+        scanRequired: true,
+        storageKey: 'private-key',
+      }),
       updateMany: vi.fn().mockResolvedValue({ count: 1 }),
     },
     scheduledTaskExecution: {

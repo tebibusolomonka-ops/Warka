@@ -8,11 +8,9 @@ const schoolId = '22222222-2222-4222-8222-222222222222'
 function store(role = 'administrator') {
   return {
     school: {
-      findUnique: vi
-        .fn()
-        .mockResolvedValue({
-          organizationId: '33333333-3333-4333-8333-333333333333',
-        }),
+      findUnique: vi.fn().mockResolvedValue({
+        organizationId: '33333333-3333-4333-8333-333333333333',
+      }),
     },
     user: {
       findUnique: vi.fn().mockResolvedValue({ accountStatus: 'active' }),
@@ -24,39 +22,33 @@ function store(role = 'administrator') {
         .mockResolvedValue({ role, startsAt: new Date(0), endsAt: null }),
     },
     issuedDocument: {
-      findMany: vi
-        .fn()
-        .mockResolvedValue([
-          {
-            verificationReference: 'WRK-DOC-1',
-            documentType: 'transcript',
-            status: 'active',
-            student: { studentReference: 'WRK-STU-1' },
-          },
-        ]),
+      findMany: vi.fn().mockResolvedValue([
+        {
+          verificationReference: 'WRK-DOC-1',
+          documentType: 'transcript',
+          status: 'active',
+          student: { studentReference: 'WRK-STU-1' },
+        },
+      ]),
     },
     documentRequest: {
-      findMany: vi
-        .fn()
-        .mockResolvedValue([
-          {
-            id: 'request-id',
-            documentType: 'transcript',
-            status: 'requested',
-            student: { studentReference: 'WRK-STU-1' },
-          },
-        ]),
+      findMany: vi.fn().mockResolvedValue([
+        {
+          id: 'request-id',
+          documentType: 'transcript',
+          status: 'requested',
+          student: { studentReference: 'WRK-STU-1' },
+        },
+      ]),
     },
     transferRequest: {
-      findMany: vi
-        .fn()
-        .mockResolvedValue([
-          {
-            id: 'transfer-id',
-            status: 'requested',
-            student: { studentReference: 'WRK-STU-1' },
-          },
-        ]),
+      findMany: vi.fn().mockResolvedValue([
+        {
+          id: 'transfer-id',
+          status: 'requested',
+          student: { studentReference: 'WRK-STU-1' },
+        },
+      ]),
     },
   } as unknown as PrismaClient
 }
