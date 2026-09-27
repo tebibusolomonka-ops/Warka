@@ -753,3 +753,11 @@ export {
   createEnrollmentCorrectionRequest,
 } from './enrollmentCorrectionRequests.js'
 export type { EnrollmentCorrectionRequest } from '@prisma/client'
+
+export {
+  reviewStudentCorrection,
+  reviewEnrollmentCorrection,
+  listCorrectionRequests,
+  CorrectionPermissionError,
+  CorrectionStateError,
+} from './correctionReview.js'

@@ -7,6 +7,12 @@ import {
   AccountLifecyclePermissionError,
   StaffOffboardingPermissionError,
   StaffAccessPermissionError,
+  StudentCorrectionPermissionError,
+  EnrollmentCorrectionPermissionError,
+  CorrectionPermissionError,
+  CorrectionStateError,
+  StudentCorrectionStateError,
+  EnrollmentCorrectionStateError,
   SchoolOnboardingStateError,
   OnboardingChecklistStateError,
   TrainingRecordStateError,
@@ -69,6 +75,7 @@ import { ErrorResponseSchema, HealthResponseSchema } from '@warka/shared'
 import { ZodError } from 'zod'
 import { createAuthService, type AuthService } from './authService.js'
 import { registerAuthRoutes } from './authRoutes.js'
+import { registerCorrectionRoutes } from './correctionRoutes.js'
 import { registerStaffAccessRoutes } from './staffAccessRoutes.js'
 import { registerSchoolContactRoutes } from './schoolContactRoutes.js'
 import { registerSupportRequestRoutes } from './supportRequestRoutes.js'
@@ -305,6 +312,7 @@ export function buildApp(
     () => options.onboarding ?? prismaOnboardingService(getDatabase()),
     authenticate,
   )
+  registerCorrectionRoutes(app, getDatabase, authenticate)
   registerStaffAccessRoutes(app, getDatabase, authenticate)
   registerSupportRequestRoutes(app, getDatabase, authenticate)
   registerSchoolContactRoutes(app, getDatabase, authenticate)
@@ -432,6 +440,9 @@ export function buildApp(
       error instanceof AccountLifecyclePermissionError ||
       error instanceof StaffOffboardingPermissionError ||
       error instanceof StaffAccessPermissionError ||
+      error instanceof StudentCorrectionPermissionError ||
+      error instanceof EnrollmentCorrectionPermissionError ||
+      error instanceof CorrectionPermissionError ||
       error instanceof RetentionPermissionError
     ) {
       return reply.code(403).send({
@@ -444,6 +455,15 @@ export function buildApp(
     ) {
       return reply.code(409).send({
         error: { code: 'GOVERNANCE_STATE_CONFLICT', message: error.message },
+      })
+    }
+    if (
+      error instanceof CorrectionStateError ||
+      error instanceof StudentCorrectionStateError ||
+      error instanceof EnrollmentCorrectionStateError
+    ) {
+      return reply.code(409).send({
+        error: { code: 'CORRECTION_STATE_CONFLICT', message: error.message },
       })
     }
     if (error instanceof RetentionPolicyNotFoundError) {

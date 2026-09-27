@@ -819,6 +819,8 @@ model StudentCorrectionRequest {
   status         CorrectionRequestStatus @default(pending)
   requestedById  String
   requestedAt    DateTime                @default(now())
+  reviewReason   String?
+  effectiveAt    DateTime?
   reviewedAt     DateTime?
   reviewedById   String?
   student        Student                 @relation(fields: [studentId], references: [id], onDelete: Restrict)
@@ -937,6 +939,8 @@ model EnrollmentCorrectionRequest {
   status                    CorrectionRequestStatus @default(pending)
   requestedById             String
   requestedAt               DateTime                @default(now())
+  reviewReason   String?
+  effectiveAt    DateTime?
   reviewedAt                DateTime?
   reviewedById              String?
   enrollment                Enrollment              @relation(fields: [enrollmentId], references: [id], onDelete: Restrict)
