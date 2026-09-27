@@ -1,6 +1,7 @@
 import { Prisma, type PrismaClient } from '@prisma/client'
 import { z } from 'zod'
 import { recordAuditEvent } from './auditEvents.js'
+import { notifyPrivacyRequester } from './privacyNotifications.js'
 import { PrivacyPermissionError } from './privacyRequests.js'
 import { requirePrivacyReviewer } from './privacyReviewAccess.js'
 
@@ -81,6 +82,12 @@ export async function applyProcessingRestriction(
           status: restriction.status,
         },
       })
+      await notifyPrivacyRequester(
+        transaction,
+        request.requesterUserId,
+        requestId,
+        'restrictionApproved',
+      )
       return restriction
     },
     { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },

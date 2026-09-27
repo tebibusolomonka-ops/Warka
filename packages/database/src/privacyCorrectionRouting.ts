@@ -1,6 +1,7 @@
 import { Prisma, type PrismaClient } from '@prisma/client'
 import { z } from 'zod'
 import { recordAuditEvent } from './auditEvents.js'
+import { notifyPrivacyRequester } from './privacyNotifications.js'
 import { StudentCorrectionInputSchema } from './studentCorrectionRequests.js'
 import {
   PrivacyPermissionError,
@@ -88,6 +89,12 @@ export async function routePrivacyCorrection(
         resourceId: requestId,
         metadata: { correctionRequestId: correction.id },
       })
+      await notifyPrivacyRequester(
+        transaction,
+        request.requesterUserId,
+        requestId,
+        'correctionRouted',
+      )
       return correction
     },
     { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },

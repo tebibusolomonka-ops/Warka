@@ -10,17 +10,17 @@ const schoolId = '123e4567-e89b-42d3-a456-426614174002'
 const studentId = '123e4567-e89b-42d3-a456-426614174003'
 function store(category: 'parentPortalSharing' | 'publicDocumentVerification') {
   const data = {
+    notification: { create: vi.fn() },
     privacyRequest: {
-      findUnique: vi
-        .fn()
-        .mockResolvedValue({
-          id,
-          schoolId,
-          studentId,
-          type: 'restriction',
-          status: 'approved',
-          restrictionCategory: category,
-        }),
+      findUnique: vi.fn().mockResolvedValue({
+        id,
+        schoolId,
+        studentId,
+        requesterUserId: id,
+        type: 'restriction',
+        status: 'approved',
+        restrictionCategory: category,
+      }),
     },
     user: {
       findUnique: vi.fn().mockResolvedValue({ accountStatus: 'active' }),

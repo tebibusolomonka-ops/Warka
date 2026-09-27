@@ -23,18 +23,17 @@ const auth: AuthService = {
   passwordState: async () => false,
 }
 const database = {
+  notification: { create: vi.fn() },
   student: { findFirst: vi.fn().mockResolvedValue({ id: studentId }) },
   studentAccess: { findUnique: vi.fn().mockResolvedValue({ studentId }) },
   guardianAccess: { findUnique: vi.fn().mockResolvedValue(null) },
   studentGuardian: { findFirst: vi.fn() },
   privacyRequest: {
-    create: vi
-      .fn()
-      .mockResolvedValue({
-        id: randomUUID(),
-        type: 'access',
-        status: 'submitted',
-      }),
+    create: vi.fn().mockResolvedValue({
+      id: randomUUID(),
+      type: 'access',
+      status: 'submitted',
+    }),
     count: vi.fn().mockResolvedValue(0),
     findMany: vi.fn().mockResolvedValue([]),
   },

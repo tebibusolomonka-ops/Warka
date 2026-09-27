@@ -30,6 +30,7 @@ function store(type: 'access' | 'correction' = 'correction') {
     accessPackage: { student: {} },
   }
   const data = {
+    notification: { create: vi.fn() },
     privacyRequest: {
       findUnique: vi.fn().mockResolvedValue(request),
       findUniqueOrThrow: vi

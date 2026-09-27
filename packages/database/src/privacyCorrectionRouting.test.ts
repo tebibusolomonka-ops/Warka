@@ -8,22 +8,21 @@ const studentId = '123e4567-e89b-42d3-a456-426614174002'
 const schoolId = '123e4567-e89b-42d3-a456-426614174003'
 function store() {
   const data = {
+    notification: { create: vi.fn() },
     privacyRequest: {
-      findUnique: vi
-        .fn()
-        .mockResolvedValue({
-          id,
-          schoolId,
-          studentId,
-          requesterUserId: id,
-          requesterKind: 'student',
-          type: 'correction',
-          status: 'approved',
-          correctionField: 'givenName',
-          correctionValue: 'Hanna',
-          details: 'Correct spelling',
-          officialCorrectionRequestId: null,
-        }),
+      findUnique: vi.fn().mockResolvedValue({
+        id,
+        schoolId,
+        studentId,
+        requesterUserId: id,
+        requesterKind: 'student',
+        type: 'correction',
+        status: 'approved',
+        correctionField: 'givenName',
+        correctionValue: 'Hanna',
+        details: 'Correct spelling',
+        officialCorrectionRequestId: null,
+      }),
       update: vi.fn(),
     },
     user: {
@@ -38,13 +37,11 @@ function store() {
     guardianAccess: { findUnique: vi.fn() },
     studentGuardian: { findFirst: vi.fn() },
     student: {
-      findFirst: vi
-        .fn()
-        .mockResolvedValue({
-          givenName: 'Hana',
-          familyName: null,
-          dateOfBirth: null,
-        }),
+      findFirst: vi.fn().mockResolvedValue({
+        givenName: 'Hana',
+        familyName: null,
+        dateOfBirth: null,
+      }),
     },
     studentCorrectionRequest: {
       create: vi.fn().mockResolvedValue({ id }),

@@ -1,5 +1,6 @@
 import type { PrismaClient, PrivacyRequesterKind } from '@prisma/client'
 import { z } from 'zod'
+import { notifyPrivacyRequester } from './privacyNotifications.js'
 
 export const PrivacyRequestInputSchema = z
   .strictObject({
@@ -104,7 +105,7 @@ export async function createPrivacyRequest(
     data.studentId,
     data.schoolId,
   )
-  return database.privacyRequest.create({
+  const request = await database.privacyRequest.create({
     data: {
       schoolId: data.schoolId,
       studentId: data.studentId,
@@ -117,6 +118,13 @@ export async function createPrivacyRequest(
       restrictionCategory: data.restrictionCategory ?? null,
     },
   })
+  await notifyPrivacyRequester(
+    database,
+    requesterUserId,
+    request.id,
+    'submitted',
+  )
+  return request
 }
 
 export async function listOwnPrivacyRequests(

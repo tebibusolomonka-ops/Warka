@@ -22,6 +22,7 @@ function store() {
     guardianAccess: { findUnique: vi.fn() },
     studentGuardian: { findFirst: vi.fn() },
     privacyRequest: { create: vi.fn().mockResolvedValue({ id: 'request' }) },
+    notification: { create: vi.fn() },
   } as unknown as PrismaClient
 }
 

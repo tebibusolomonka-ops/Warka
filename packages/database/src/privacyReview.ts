@@ -1,6 +1,7 @@
 import { Prisma, type PrismaClient } from '@prisma/client'
 import { z } from 'zod'
 import { recordAuditEvent } from './auditEvents.js'
+import { notifyPrivacyRequester } from './privacyNotifications.js'
 import { generatePrivacyAccessPackage } from './privacyAccessPackages.js'
 import { routePrivacyCorrection } from './privacyCorrectionRouting.js'
 import { PrivacyPermissionError } from './privacyRequests.js'
@@ -79,6 +80,12 @@ export async function reviewPrivacyRequest(
         resourceId: requestId,
         metadata: { type: current.type },
       })
+      await notifyPrivacyRequester(
+        transaction,
+        current.requesterUserId,
+        requestId,
+        status,
+      )
       return updated
     },
     { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
@@ -142,6 +149,12 @@ export async function fulfillPrivacyAccessRequest(
         resourceId: requestId,
         metadata: { type: 'access' },
       })
+      await notifyPrivacyRequester(
+        transaction,
+        request.requesterUserId,
+        requestId,
+        'fulfilled',
+      )
       return updated
     },
     { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
