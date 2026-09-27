@@ -275,6 +275,7 @@ model Organization {
   memberships      OrganizationMembership[]
   bureauAccesses   BureauAccess[]
   reportingPeriods ReportingPeriod[]
+  retentionHolds   RetentionHold[]
 }
 
 model School {
@@ -388,6 +389,8 @@ model User {
   reviewedPrivacyRequests      PrivacyRequest[] @relation("PrivacyRequestReviewer")
   approvedRestrictions         ProcessingRestriction[] @relation("RestrictionApprovedBy")
   endedRestrictions            ProcessingRestriction[] @relation("RestrictionEndedBy")
+  createdRetentionHolds         RetentionHold[] @relation("RetentionHoldCreatedBy")
+  releasedRetentionHolds        RetentionHold[] @relation("RetentionHoldReleasedBy")
   marks                        Mark[]
 }
 
@@ -846,6 +849,7 @@ model Student {
   correctionRequests  StudentCorrectionRequest[]
   privacyRequests     PrivacyRequest[]
   processingRestrictions ProcessingRestriction[]
+  retentionHolds RetentionHold[]
 }
 
 model StudentCorrectionRequest {
@@ -1279,6 +1283,7 @@ model IssuedDocument {
   withdrawnBy           User?               @relation("DocumentWithdrawnBy", fields: [withdrawnById], references: [id], onDelete: Restrict)
   supersedes            IssuedDocument?     @relation("DocumentVersion", fields: [supersedesId], references: [id], onDelete: Restrict)
   replacedBy            IssuedDocument?     @relation("DocumentVersion")
+  retentionHolds       RetentionHold[]
   verificationEvents    VerificationEvent[]
   documentRequest       DocumentRequest?
 
@@ -1579,6 +1584,7 @@ model PrivacyRequest {
   officialCorrectionRequestId String?
   officialCorrectionRequest StudentCorrectionRequest? @relation(fields: [officialCorrectionRequestId], references: [id], onDelete: Restrict)
   processingRestrictions ProcessingRestriction[]
+  retentionHolds RetentionHold[]
   school              School @relation(fields: [schoolId], references: [id], onDelete: Restrict)
   student             Student @relation(fields: [studentId], references: [id], onDelete: Restrict)
   requester           User @relation("PrivacyRequestRequester", fields: [requesterUserId], references: [id], onDelete: Restrict)
@@ -1609,4 +1615,34 @@ model ProcessingRestriction {
 
   @@unique([privacyRequestId, category])
   @@index([schoolId, studentId, category, status])
+}
+
+enum RetentionHoldScope {
+  student
+  privacyRequest
+  issuedDocument
+}
+
+model RetentionHold {
+  id String @id @default(uuid())
+  organizationId String
+  scope RetentionHoldScope
+  studentId String?
+  privacyRequestId String?
+  issuedDocumentId String?
+  reason String
+  createdById String
+  createdAt DateTime @default(now())
+  releasedById String?
+  releasedAt DateTime?
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  student Student? @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  privacyRequest PrivacyRequest? @relation(fields: [privacyRequestId], references: [id], onDelete: Restrict)
+  issuedDocument IssuedDocument? @relation(fields: [issuedDocumentId], references: [id], onDelete: Restrict)
+  createdBy User @relation("RetentionHoldCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  releasedBy User? @relation("RetentionHoldReleasedBy", fields: [releasedById], references: [id], onDelete: Restrict)
+
+  @@index([organizationId, scope, releasedAt])
+  @@index([studentId, releasedAt])
+  @@index([issuedDocumentId, releasedAt])
 }

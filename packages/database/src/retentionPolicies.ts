@@ -111,7 +111,12 @@ async function eligibleRecords(
   if (category === 'messages') {
     const result = await database.familyMessage.aggregate({
       where: {
-        conversation: { school: { organizationId } },
+        conversation: {
+          school: { organizationId },
+          student: {
+            retentionHolds: { none: { organizationId, releasedAt: null } },
+          },
+        },
         createdAt: { lt: cutoff },
       },
       _count: true,
@@ -141,7 +146,14 @@ async function eligibleRecords(
   }
   if (category === 'issuedDocuments') {
     const result = await database.issuedDocument.aggregate({
-      where: { school: { organizationId }, createdAt: { lt: cutoff } },
+      where: {
+        school: { organizationId },
+        createdAt: { lt: cutoff },
+        retentionHolds: { none: { releasedAt: null } },
+        student: {
+          retentionHolds: { none: { organizationId, releasedAt: null } },
+        },
+      },
       _count: true,
       _min: { createdAt: true },
     })
@@ -149,14 +161,26 @@ async function eligibleRecords(
   }
   if (category === 'academicRecords') {
     const result = await database.publishedResult.aggregate({
-      where: { school: { organizationId }, createdAt: { lt: cutoff } },
+      where: {
+        school: { organizationId },
+        createdAt: { lt: cutoff },
+        student: {
+          retentionHolds: { none: { organizationId, releasedAt: null } },
+        },
+      },
       _count: true,
       _min: { createdAt: true },
     })
     return { count: result._count, oldest: result._min.createdAt }
   }
   const result = await database.enrollment.aggregate({
-    where: { school: { organizationId }, createdAt: { lt: cutoff } },
+    where: {
+      school: { organizationId },
+      createdAt: { lt: cutoff },
+      student: {
+        retentionHolds: { none: { organizationId, releasedAt: null } },
+      },
+    },
     _count: true,
     _min: { createdAt: true },
   })

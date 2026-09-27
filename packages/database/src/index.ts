@@ -794,3 +794,9 @@ export {
   cancelOwnPrivacyRequest,
   PrivacyReviewStateError,
 } from './privacyReview.js'
+
+export {
+  createRetentionHold,
+  releaseRetentionHold,
+  listRetentionHolds,
+} from './retentionHolds.js'
