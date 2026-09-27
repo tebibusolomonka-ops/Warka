@@ -138,7 +138,12 @@ describe('academic service authorization', () => {
     await service.assignments(teacherId, schoolId)
     expect(database.teachingAssignment.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { schoolId, userId: teacherId },
+        where: expect.objectContaining({
+          schoolId,
+          userId: teacherId,
+          startsAt: { lte: expect.any(Date) },
+          OR: [{ endsAt: null }, { endsAt: { gt: expect.any(Date) } }],
+        }),
       }),
     )
     await expect(

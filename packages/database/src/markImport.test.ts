@@ -40,7 +40,13 @@ function fixture(role = 'teacher') {
       findUnique: vi.fn().mockResolvedValue({ organizationId: randomUUID() }),
     },
     organizationMembership: { findUnique: vi.fn().mockResolvedValue(null) },
-    schoolMembership: { findUnique: vi.fn().mockResolvedValue({ role }) },
+    schoolMembership: {
+      findUnique: vi.fn().mockResolvedValue({
+        role,
+        startsAt: new Date(0),
+        endsAt: null,
+      }),
+    },
     resultSet: { findFirst: vi.fn().mockResolvedValue(null) },
     teachingAssignment: {
       findFirst: vi.fn().mockResolvedValue({ id: randomUUID() }),
@@ -174,5 +180,45 @@ describe('CSV mark import', () => {
       ),
     ).rejects.toBeInstanceOf(MarkPermissionError)
     expect(database.student.findUnique).not.toHaveBeenCalled()
+  })
+
+  it('denies an expired school membership before importing marks', async () => {
+    const database = fixture()
+    vi.mocked(database.schoolMembership.findUnique).mockResolvedValue({
+      role: 'teacher',
+      startsAt: new Date(0),
+      endsAt: new Date(0),
+    } as never)
+    await expect(
+      validateMarkImport(
+        database,
+        actorId,
+        schoolId,
+        assessmentId,
+        'studentReference,score\nWKA-FIRST,10',
+      ),
+    ).rejects.toBeInstanceOf(MarkPermissionError)
+    expect(database.student.findUnique).not.toHaveBeenCalled()
+  })
+
+  it('denies an expired teaching assignment before importing marks', async () => {
+    const database = fixture()
+    vi.mocked(database.teachingAssignment.findFirst).mockResolvedValue(null)
+    await expect(
+      validateMarkImport(
+        database,
+        actorId,
+        schoolId,
+        assessmentId,
+        'studentReference,score\nWKA-FIRST,10',
+      ),
+    ).rejects.toBeInstanceOf(MarkPermissionError)
+    expect(database.teachingAssignment.findFirst).toHaveBeenCalledWith({
+      where: expect.objectContaining({
+        startsAt: { lte: expect.any(Date) },
+        OR: [{ endsAt: null }, { endsAt: { gt: expect.any(Date) } }],
+      }),
+      select: { id: true },
+    })
   })
 })

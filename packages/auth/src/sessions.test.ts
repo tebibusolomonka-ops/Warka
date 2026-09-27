@@ -10,7 +10,7 @@ import {
 } from './sessions.js'
 
 const now = new Date('2026-09-24T10:00:00.000Z')
-const user = { id: 'user-id' } as User
+const user = { id: 'user-id', accountStatus: 'active' } as User
 
 describe('sessions', () => {
   it('creates a random token while storing only its hash and expiration', async () => {
@@ -45,7 +45,17 @@ describe('sessions', () => {
       await resolveSession(database, token, new Date(now.getTime() + 1000)),
     ).toBeNull()
     expect(await resolveSession(database, 'invalid', now)).toBeNull()
-    expect(findUnique).toHaveBeenCalledTimes(2)
+    findUnique.mockResolvedValueOnce({
+      user: { ...user, accountStatus: 'suspended' },
+      expiresAt: new Date(now.getTime() + 1000),
+    })
+    expect(await resolveSession(database, token, now)).toBeNull()
+    findUnique.mockResolvedValueOnce({
+      user: { ...user, accountStatus: 'deactivated' },
+      expiresAt: new Date(now.getTime() + 1000),
+    })
+    expect(await resolveSession(database, token, now)).toBeNull()
+    expect(findUnique).toHaveBeenCalledTimes(4)
   })
 
   it('revokes one session or all sessions for a user', async () => {
