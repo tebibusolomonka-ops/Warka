@@ -23,6 +23,11 @@ export type TransactionalEmailInput =
       to: string
       displayName: string
     }
+  | {
+      templateKey: 'notificationUpdate'
+      to: string
+      displayName: string
+    }
 
 function escapeHtml(value: string) {
   return value.replace(/[&<>"']/g, (character) => {
@@ -74,6 +79,11 @@ export function renderTransactionalEmail(
       subject = 'Your Warka account was reactivated'
       text = `${greeting}\n\nYour Warka account was reactivated. You may sign in again.`
       html = `<p>Hello ${safeName},</p><p>Your Warka account was reactivated. You may sign in again.</p>`
+      break
+    case 'notificationUpdate':
+      subject = 'An update is available in Warka'
+      text = `${greeting}\n\nAn update is available in Warka. Sign in to view the details.`
+      html = `<p>Hello ${safeName},</p><p>An update is available in Warka. Sign in to view the details.</p>`
       break
   }
   return { to, subject, text, html }

@@ -52,6 +52,7 @@ describe('email delivery retries', () => {
       emailDelivery: { updateMany },
     }
     const database = {
+      notification: { findMany: vi.fn().mockResolvedValue([]) },
       scheduledTaskExecution: { findMany },
       $transaction: (work: (value: unknown) => Promise<unknown>) =>
         work(transaction),

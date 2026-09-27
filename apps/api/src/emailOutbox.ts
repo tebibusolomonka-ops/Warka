@@ -8,6 +8,7 @@ const knownTemplates = new Set([
   'passwordChanged',
   'accountSuspended',
   'accountReactivated',
+  'notificationUpdate',
 ])
 
 export async function enqueueTransactionalEmail(
@@ -15,6 +16,7 @@ export async function enqueueTransactionalEmail(
   input: {
     recipientUserId?: string
     recoveryRequestId?: string
+    notificationId?: string
     recipientAddress: string
     templateKey: string
     scheduledAt?: Date
@@ -27,11 +29,14 @@ export async function enqueueTransactionalEmail(
     throw new Error(
       'Recovery request reference required only for recovery email',
     )
+  if ((data.templateKey === 'notificationUpdate') !== !!data.notificationId)
+    throw new Error('Notification reference required only for update email')
   return database.$transaction(async (transaction) => {
     const delivery = await transaction.emailDelivery.create({
       data: {
         recipientUserId: data.recipientUserId ?? null,
         recoveryRequestId: data.recoveryRequestId ?? null,
+        notificationId: data.notificationId ?? null,
         recipientAddress: data.recipientAddress,
         templateKey: data.templateKey,
         ...(data.scheduledAt ? { scheduledAt: data.scheduledAt } : {}),
@@ -108,7 +113,8 @@ export async function processQueuedEmailDelivery(
     } else if (
       templateKey === 'passwordChanged' ||
       templateKey === 'accountSuspended' ||
-      templateKey === 'accountReactivated'
+      templateKey === 'accountReactivated' ||
+      templateKey === 'notificationUpdate'
     ) {
       message = renderTransactionalEmail({ templateKey, ...common })
     } else throw new Error('Unknown transactional email template')

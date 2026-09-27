@@ -6,6 +6,7 @@ import { processQueuedEmailDelivery } from './emailOutbox.js'
 import { SmtpEmailProvider, smtpConfiguration } from './smtpEmailProvider.js'
 import { retryDelayMs } from './schedulerRetry.js'
 import { sendOperationsAlert } from './operationsAlerts.js'
+import { routePendingNotificationEmails } from './notificationEmailRouting.js'
 
 export const maxEmailDeliveryAttempts = 3
 
@@ -174,6 +175,7 @@ export class EmailOutboxScheduler {
   async tick(now = new Date()) {
     if (!this.config.enabled || this.stopped || this.running) return
     const work = this.lock.run(async () => {
+      await routePendingNotificationEmails(this.database, now)
       await this.retry(now)
       const queued = await this.database.scheduledTaskExecution.findMany({
         where: {

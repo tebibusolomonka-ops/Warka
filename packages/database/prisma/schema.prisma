@@ -1049,6 +1049,7 @@ model EmailDelivery {
   id                 String              @id @default(uuid())
   recipientUserId    String?
   recoveryRequestId  String?             @unique
+  notificationId     String?             @unique
   recipientAddress   String
   templateKey        String
   status             EmailDeliveryStatus @default(queued)
@@ -1062,6 +1063,7 @@ model EmailDelivery {
   failureCode        String?
   recipientUser      User?               @relation(fields: [recipientUserId], references: [id], onDelete: SetNull)
   recoveryRequest    AccountRecoveryRequest? @relation(fields: [recoveryRequestId], references: [id], onDelete: SetNull)
+  notification       Notification?       @relation(fields: [notificationId], references: [id], onDelete: SetNull)
 
   @@index([status, scheduledAt])
   @@index([recipientUserId, createdAt])
@@ -1768,10 +1770,13 @@ model Notification {
   dedupeKey    String?   @unique
   createdAt    DateTime  @default(now())
   readAt       DateTime?
+  emailRoutedAt DateTime?
   user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  emailDelivery EmailDelivery?
 
   @@index([userId, createdAt, id])
   @@index([userId, readAt])
+  @@index([emailRoutedAt, createdAt])
 }
 
 model NotificationPreference {
