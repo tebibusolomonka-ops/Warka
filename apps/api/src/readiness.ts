@@ -2,6 +2,8 @@ import { access, constants } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 import type { PrismaClient } from '@warka/database'
 import { schedulerHealth } from './schedulerHealth.js'
+import { configuredFileScanner } from './fileScannerConfig.js'
+import type { ScannerHealth } from './fileScanner.js'
 
 export type DependencyState = 'ready' | 'unavailable'
 export type Readiness = {
@@ -12,12 +14,14 @@ export type Readiness = {
     backupStorage: DependencyState
   }
   scheduler?: Awaited<ReturnType<typeof schedulerHealth.snapshot>>
+  scanner?: ScannerHealth
 }
 
 export async function checkReadiness(input: {
   database: PrismaClient
   env?: NodeJS.ProcessEnv
   checkPath?: (path: string) => Promise<void>
+  checkScanner?: () => Promise<ScannerHealth>
 }): Promise<Readiness> {
   const env = input.env ?? process.env
   const checkPath =
@@ -59,10 +63,26 @@ export async function checkReadiness(input: {
   const scheduler = schedulerEnabled
     ? await schedulerHealth.snapshot(input.database)
     : undefined
+  let scanner: ScannerHealth | undefined
+  if (env.WARKA_FILE_SCAN_SCHEDULER_ENABLED === 'true') {
+    try {
+      scanner = await (
+        input.checkScanner ?? (() => configuredFileScanner(env).health())
+      )()
+    } catch {
+      scanner = 'unavailable'
+    }
+  }
   const status = Object.values(dependencies).every((state) => state === 'ready')
-    ? scheduler?.status === 'degraded'
+    ? scheduler?.status === 'degraded' ||
+      (scanner !== undefined && scanner !== 'available')
       ? 'degraded'
       : 'ready'
     : 'unavailable'
-  return { status, dependencies, ...(scheduler ? { scheduler } : {}) }
+  return {
+    status,
+    dependencies,
+    ...(scheduler ? { scheduler } : {}),
+    ...(scanner ? { scanner } : {}),
+  }
 }

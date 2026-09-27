@@ -55,4 +55,21 @@ describe('dependency readiness', () => {
     expect(result.scheduler?.recentFailedTaskCount).toBe(1)
     schedulerHealth.configure(false, 60_000)
   })
+  it('degrades readiness when the required scanner is unavailable while keeping liveness independent', async () => {
+    const result = await checkReadiness({
+      database: {
+        $queryRaw: vi.fn().mockResolvedValue([]),
+      } as unknown as PrismaClient,
+      env: {
+        PUBLIC_BASE_URL: 'https://example.test',
+        BACKUP_STORAGE_DIR: 'private',
+        WARKA_FILE_SCAN_SCHEDULER_ENABLED: 'true',
+      },
+      checkPath: vi.fn().mockResolvedValue(undefined),
+      checkScanner: vi.fn().mockResolvedValue('unavailable'),
+    })
+    expect(result.status).toBe('degraded')
+    expect(result.scanner).toBe('unavailable')
+    expect(JSON.stringify(result)).not.toContain('CLAMAV_HOST')
+  })
 })

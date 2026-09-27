@@ -34,6 +34,11 @@ function fixture(owner: boolean) {
         ]),
       count: vi.fn().mockResolvedValue(1),
     },
+    fileScan: {
+      groupBy: vi
+        .fn()
+        .mockResolvedValue([{ status: 'infected', _count: { id: 1 } }]),
+    },
   } as unknown as PrismaClient
   const app = Fastify()
   app.decorateRequest('currentUser', null)
@@ -108,6 +113,7 @@ describe('operations status API', () => {
     })
     expect(response.statusCode).toBe(200)
     expect(response.json().recentBackup.status).toBe('verified')
+    expect(response.json().fileSecurity.counts.infected).toBe(1)
     expect(response.body).not.toContain('storageReference')
     expect(response.body).not.toContain('DATABASE_URL')
     const storage = await app.inject({

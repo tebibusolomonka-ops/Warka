@@ -71,7 +71,7 @@ export function registerOperationsRoutes(
     async (request) => {
       await operator(request)
       const database = getDatabase()
-      const [health, backup, rehearsal, incidents, maintenance] =
+      const [health, backup, rehearsal, incidents, maintenance, scanCounts] =
         await Promise.all([
           readiness(database),
           database.backupRecord.findFirst({
@@ -118,6 +118,10 @@ export function registerOperationsRoutes(
               status: true,
             },
           }),
+          database.fileScan.groupBy({
+            by: ['status'],
+            _count: { id: true },
+          }),
         ])
       return {
         readiness: health,
@@ -126,6 +130,12 @@ export function registerOperationsRoutes(
         openIncidents: incidents,
         plannedMaintenance: maintenance,
         metrics: metrics.snapshot(),
+        fileSecurity: {
+          scanner: health.scanner ?? 'unavailable',
+          counts: Object.fromEntries(
+            scanCounts.map((item) => [item.status, item._count.id]),
+          ),
+        },
       }
     },
   )
