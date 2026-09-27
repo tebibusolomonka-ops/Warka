@@ -22,7 +22,6 @@ import {
   retryScheduledExecution,
   listFileSecurityScans,
   listEmailDeliveries,
-  retryEmailDelivery,
 } from './operationsApi'
 
 vi.mock('./operationsApi', () => ({

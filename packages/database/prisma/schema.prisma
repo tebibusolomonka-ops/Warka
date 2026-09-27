@@ -66,6 +66,17 @@ enum EmailDeliveryStatus {
   cancelled
 }
 
+enum NotificationCategory {
+  accountSecurity
+  academicResults
+  schoolAnnouncements
+  learningMaterials
+  documents
+  familyCommunication
+  support
+  privacy
+}
+
 enum OrganizationRole {
   owner
   administrator
@@ -472,6 +483,7 @@ model User {
   guardianAccess               GuardianAccess?
   recoveryRequests             AccountRecoveryRequest[]
   emailDeliveries              EmailDelivery[]
+  notificationPreferences      NotificationPreference[]
   startedOnboardings            SchoolOnboarding[] @relation("OnboardingStartedBy")
   completedOnboardings          SchoolOnboarding[] @relation("OnboardingCompletedBy")
   completedChecklistItems       OnboardingChecklistItem[]
@@ -1760,6 +1772,19 @@ model Notification {
 
   @@index([userId, createdAt, id])
   @@index([userId, readAt])
+}
+
+model NotificationPreference {
+  id              String               @id @default(uuid())
+  userId          String
+  category        NotificationCategory
+  inAppEnabled    Boolean              @default(true)
+  emailEnabled    Boolean              @default(false)
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  user            User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, category])
 }
 model SchoolDocumentProfile {
   schoolId       String   @id

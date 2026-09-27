@@ -566,6 +566,13 @@ export {
 } from './emailDeliveries.js'
 export type { QueueEmailDelivery } from './emailDeliveries.js'
 export {
+  NotificationCategorySchema,
+  notificationCategories,
+  getNotificationPreferences,
+  setNotificationPreference,
+} from './notificationPreferences.js'
+export type { EffectiveNotificationPreference } from './notificationPreferences.js'
+export {
   deriveRecoveryToken,
   issueDerivedRecoveryToken,
 } from './recoveryTokens.js'
