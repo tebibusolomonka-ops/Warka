@@ -70,12 +70,9 @@ export async function searchSchoolScope(
             'supportRequest',
           ] as SearchType[])
         : role === 'registrar' || role === 'approver'
-          ? ([
-              'student',
-              'issuedDocument',
-              'documentRequest',
-              'transfer',
-            ] as SearchType[])
+          ? ((role === 'approver'
+              ? ['student', 'issuedDocument', 'documentRequest', 'transfer']
+              : ['student', 'documentRequest', 'transfer']) as SearchType[])
           : ([] as SearchType[]),
   }
 }
