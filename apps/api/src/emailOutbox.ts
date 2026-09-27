@@ -1,9 +1,10 @@
 import type { PrismaClient } from '@warka/database'
-import { QueueEmailDeliverySchema } from '@warka/database'
+import { QueueEmailDeliverySchema, deriveRecoveryToken } from '@warka/database'
 import type { EmailProvider } from './emailProvider.js'
 import { renderTransactionalEmail } from './transactionalEmailTemplates.js'
 
 const knownTemplates = new Set([
+  'accountRecovery',
   'passwordChanged',
   'accountSuspended',
   'accountReactivated',
@@ -13,6 +14,7 @@ export async function enqueueTransactionalEmail(
   database: PrismaClient,
   input: {
     recipientUserId?: string
+    recoveryRequestId?: string
     recipientAddress: string
     templateKey: string
     scheduledAt?: Date
@@ -21,10 +23,15 @@ export async function enqueueTransactionalEmail(
   const data = QueueEmailDeliverySchema.parse(input)
   if (!knownTemplates.has(data.templateKey))
     throw new Error('Unknown transactional email template')
+  if ((data.templateKey === 'accountRecovery') !== !!data.recoveryRequestId)
+    throw new Error(
+      'Recovery request reference required only for recovery email',
+    )
   return database.$transaction(async (transaction) => {
     const delivery = await transaction.emailDelivery.create({
       data: {
         recipientUserId: data.recipientUserId ?? null,
+        recoveryRequestId: data.recoveryRequestId ?? null,
         recipientAddress: data.recipientAddress,
         templateKey: data.templateKey,
         ...(data.scheduledAt ? { scheduledAt: data.scheduledAt } : {}),
@@ -49,6 +56,7 @@ export async function processQueuedEmailDelivery(
   provider: EmailProvider,
   id: string,
   now = new Date(),
+  recovery?: { tokenKey: string; publicAppUrl: string },
 ) {
   const claimed = await database.emailDelivery.updateMany({
     where: { id, status: 'queued', scheduledAt: { lte: now } },
@@ -61,22 +69,49 @@ export async function processQueuedEmailDelivery(
   if (claimed.count !== 1) return { status: 'notClaimed' as const }
   const delivery = await database.emailDelivery.findUniqueOrThrow({
     where: { id },
-    include: { recipientUser: { select: { displayName: true } } },
+    include: {
+      recipientUser: { select: { displayName: true } },
+      recoveryRequest: {
+        select: { id: true, status: true, expiresAt: true },
+      },
+    },
   })
   const templateKey = delivery.templateKey
-  if (
-    templateKey !== 'passwordChanged' &&
-    templateKey !== 'accountSuspended' &&
-    templateKey !== 'accountReactivated'
-  )
-    throw new Error('Unknown transactional email template')
   let result: Awaited<ReturnType<EmailProvider['send']>>
   try {
-    const message = renderTransactionalEmail({
-      templateKey,
+    const common = {
       to: delivery.recipientAddress,
       displayName: delivery.recipientUser?.displayName ?? 'Warka user',
-    })
+    }
+    let message
+    if (templateKey === 'accountRecovery') {
+      if (
+        !recovery ||
+        !delivery.recoveryRequest ||
+        delivery.recoveryRequest.status !== 'pending' ||
+        delivery.recoveryRequest.expiresAt <= now
+      )
+        throw new Error('Recovery request is unavailable')
+      const url = new URL(recovery.publicAppUrl)
+      url.pathname = '/'
+      url.search = ''
+      url.hash = ''
+      url.searchParams.set(
+        'recoveryToken',
+        deriveRecoveryToken(delivery.recoveryRequest.id, recovery.tokenKey),
+      )
+      message = renderTransactionalEmail({
+        templateKey,
+        ...common,
+        recoveryUrl: url.toString(),
+      })
+    } else if (
+      templateKey === 'passwordChanged' ||
+      templateKey === 'accountSuspended' ||
+      templateKey === 'accountReactivated'
+    ) {
+      message = renderTransactionalEmail({ templateKey, ...common })
+    } else throw new Error('Unknown transactional email template')
     result = await provider.send(message)
   } catch {
     result = { status: 'failed', failureCode: 'UNAVAILABLE', retryable: false }

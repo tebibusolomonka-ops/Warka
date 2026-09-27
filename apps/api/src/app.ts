@@ -281,6 +281,9 @@ export function buildApp(
       options.production === false || testRecoveryEnabled
         ? recoveryDelivery
         : undefined,
+      process.env.WARKA_EMAIL_OUTBOX_ENABLED === 'true'
+        ? process.env.WARKA_RECOVERY_TOKEN_KEY
+        : undefined,
     )
   const getAccess = () => options.access ?? createSchoolAccess(getDatabase())
   const getStudents = () =>

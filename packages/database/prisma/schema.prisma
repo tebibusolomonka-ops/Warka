@@ -1027,6 +1027,7 @@ model AccountRecoveryRequest {
   cancelledAt DateTime?
   tokenHash   String?               @unique
   user        User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  emailDelivery EmailDelivery?
 
   @@index([userId, status])
   @@index([expiresAt])
@@ -1035,6 +1036,7 @@ model AccountRecoveryRequest {
 model EmailDelivery {
   id                 String              @id @default(uuid())
   recipientUserId    String?
+  recoveryRequestId  String?             @unique
   recipientAddress   String
   templateKey        String
   status             EmailDeliveryStatus @default(queued)
@@ -1047,6 +1049,7 @@ model EmailDelivery {
   providerMessageId  String?
   failureCode        String?
   recipientUser      User?               @relation(fields: [recipientUserId], references: [id], onDelete: SetNull)
+  recoveryRequest    AccountRecoveryRequest? @relation(fields: [recoveryRequestId], references: [id], onDelete: SetNull)
 
   @@index([status, scheduledAt])
   @@index([recipientUserId, createdAt])

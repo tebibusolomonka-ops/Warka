@@ -18,12 +18,14 @@ import {
   recordFailedLogin,
   clearFailedLogins,
   createRecoveryToken,
+  issueDerivedRecoveryToken,
   findPasswordHashForUser,
   mustChangePassword,
   findUserByEmail,
   type PrismaClient,
   type User,
 } from '@warka/database'
+import { enqueueTransactionalEmail } from './emailOutbox.js'
 
 export type AuthService = {
   listSessions?(token: string): Promise<Array<{
@@ -53,6 +55,7 @@ export type AuthService = {
 export function createAuthService(
   database: PrismaClient,
   deliverRecoveryToken?: (email: string, token: string) => Promise<void>,
+  recoveryOutboxKey?: string,
 ): AuthService {
   return {
     async listSessions(token) {
@@ -71,11 +74,31 @@ export function createAuthService(
     },
     async requestRecovery(email) {
       const user = await findUserByEmail(database, email)
-      if (!user) return
+      if (!user || user.accountStatus !== 'active') return
+      if (!deliverRecoveryToken && !recoveryOutboxKey) return
       const request = await createRecoveryRequest(database, user.id)
-      if (!deliverRecoveryToken) return
-      const token = await createRecoveryToken(database, request.id)
-      if (token) await deliverRecoveryToken(user.email, token)
+      if (deliverRecoveryToken) {
+        const token = await createRecoveryToken(database, request.id)
+        if (token) await deliverRecoveryToken(user.email, token)
+        return
+      }
+      const existing = await database.emailDelivery.findUnique({
+        where: { recoveryRequestId: request.id },
+        select: { id: true },
+      })
+      if (existing) return
+      const token = await issueDerivedRecoveryToken(
+        database,
+        request.id,
+        recoveryOutboxKey!,
+      )
+      if (!token) return
+      await enqueueTransactionalEmail(database, {
+        recipientUserId: user.id,
+        recoveryRequestId: request.id,
+        recipientAddress: user.email,
+        templateKey: 'accountRecovery',
+      })
     },
     async resetRecovery(token, newPassword) {
       try {

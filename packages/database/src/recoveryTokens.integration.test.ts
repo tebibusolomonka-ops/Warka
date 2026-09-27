@@ -9,6 +9,8 @@ import {
   createRecoveryToken,
   resolveRecoveryToken,
   consumeRecoveryToken,
+  deriveRecoveryToken,
+  issueDerivedRecoveryToken,
 } from './recoveryTokens.js'
 
 const url = process.env.TEST_DATABASE_URL ?? process.env.DATABASE_URL
@@ -18,6 +20,32 @@ afterAll(async () => {
 })
 
 describe.skipIf(!database)('recovery tokens in PostgreSQL', () => {
+  it('stores only a hash of the derived recovery email token', async () => {
+    const user = await database!.user.create({
+      data: {
+        email: `derived-token-${randomUUID()}@example.test`,
+        displayName: 'Recovery Recipient',
+      },
+    })
+    const key = Buffer.alloc(32, 5).toString('base64url')
+    try {
+      const request = await createRecoveryRequest(database!, user.id)
+      const token = await issueDerivedRecoveryToken(database!, request.id, key)
+      expect(token).toBe(deriveRecoveryToken(request.id, key))
+      const stored = await database!.accountRecoveryRequest.findUniqueOrThrow({
+        where: { id: request.id },
+      })
+      expect(stored.tokenHash).not.toBe(token)
+      expect(await resolveRecoveryToken(database!, token!)).toMatchObject({
+        id: request.id,
+      })
+      expect(await consumeRecoveryToken(database!, token!)).toBe(true)
+      expect(await consumeRecoveryToken(database!, token!)).toBe(false)
+    } finally {
+      await database!.user.delete({ where: { id: user.id } })
+    }
+  })
+
   it('stores only hashes and accepts a live token once', async () => {
     const user = await database!.user.create({
       data: {

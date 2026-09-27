@@ -1,9 +1,31 @@
-import { createHash, randomBytes } from 'node:crypto'
+import { createHash, createHmac, randomBytes } from 'node:crypto'
 import type { PrismaClient } from '@prisma/client'
 import { z } from 'zod'
 
 export function hashRecoveryToken(token: string) {
   return createHash('sha256').update(token, 'utf8').digest('hex')
+}
+
+export function deriveRecoveryToken(requestId: string, secret: string) {
+  const bytes = Buffer.from(secret, 'base64url')
+  if (bytes.length !== 32) throw new Error('Invalid recovery token key')
+  return createHmac('sha256', bytes)
+    .update(`warka-recovery-v1:${z.uuid().parse(requestId)}`)
+    .digest('base64url')
+}
+
+export async function issueDerivedRecoveryToken(
+  database: PrismaClient,
+  requestId: string,
+  secret: string,
+  now = new Date(),
+) {
+  const token = deriveRecoveryToken(requestId, secret)
+  const changed = await database.accountRecoveryRequest.updateMany({
+    where: { id: requestId, status: 'pending', expiresAt: { gt: now } },
+    data: { tokenHash: hashRecoveryToken(token) },
+  })
+  return changed.count === 1 ? token : null
 }
 
 export async function createRecoveryToken(

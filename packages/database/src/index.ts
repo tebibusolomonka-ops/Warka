@@ -565,6 +565,10 @@ export {
   cancelQueuedEmailDelivery,
 } from './emailDeliveries.js'
 export type { QueueEmailDelivery } from './emailDeliveries.js'
+export {
+  deriveRecoveryToken,
+  issueDerivedRecoveryToken,
+} from './recoveryTokens.js'
 
 export {
   SchoolDocumentProfileInputSchema,

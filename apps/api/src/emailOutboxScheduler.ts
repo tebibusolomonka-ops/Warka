@@ -18,10 +18,30 @@ export function emailOutboxConfiguration(env: NodeJS.ProcessEnv = process.env) {
     throw new Error('Invalid email outbox interval')
   if (flag === 'true' && !env.DATABASE_URL)
     throw new Error('Email outbox database is required')
+  if (flag === 'true') {
+    if (!env.WARKA_RECOVERY_TOKEN_KEY || !env.WARKA_PUBLIC_APP_URL)
+      throw new Error('Email recovery configuration is required')
+    if (Buffer.from(env.WARKA_RECOVERY_TOKEN_KEY, 'base64url').length !== 32)
+      throw new Error('Invalid recovery token key')
+    const url = new URL(env.WARKA_PUBLIC_APP_URL)
+    if (
+      (url.protocol !== 'https:' &&
+        !(url.protocol === 'http:' && url.hostname === 'localhost')) ||
+      url.username ||
+      url.password ||
+      url.search ||
+      url.hash
+    )
+      throw new Error('Invalid public application URL')
+  }
   return {
     enabled: flag === 'true',
     intervalMs,
     databaseUrl: env.DATABASE_URL ?? '',
+    recovery: {
+      tokenKey: env.WARKA_RECOVERY_TOKEN_KEY ?? '',
+      publicAppUrl: env.WARKA_PUBLIC_APP_URL ?? '',
+    },
   }
 }
 
@@ -55,6 +75,8 @@ export class EmailOutboxScheduler {
         this.database,
         this.provider,
         task.resourceId,
+        new Date(),
+        this.config.recovery,
       )
       if (outcome.status === 'failed')
         await failScheduledTask(this.database, task.id, outcome.failureCode)

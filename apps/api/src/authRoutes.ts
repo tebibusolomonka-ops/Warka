@@ -76,12 +76,16 @@ export function registerAuthRoutes(
   })
 
   app.post('/auth/recovery/request', async (request, reply) => {
+    const startedAt = Date.now()
     const { email } = z.strictObject({ email: z.email() }).parse(request.body)
     if (limited(`request:${request.ip}`))
       return reply
         .code(429)
         .send({ error: { code: 'RATE_LIMITED', message: 'Try again later' } })
     await getAuth().requestRecovery?.(email)
+    await new Promise((resolve) =>
+      setTimeout(resolve, Math.max(0, 150 - (Date.now() - startedAt))),
+    )
     return reply.code(202).send({
       message: 'If the account exists, recovery instructions will be sent.',
     })

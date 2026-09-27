@@ -3,6 +3,7 @@ import { z } from 'zod'
 
 export const QueueEmailDeliverySchema = z.strictObject({
   recipientUserId: z.uuid().optional(),
+  recoveryRequestId: z.uuid().optional(),
   recipientAddress: z.email().max(320),
   templateKey: z.string().regex(/^[a-z][a-zA-Z0-9.]{1,63}$/),
   scheduledAt: z.date().optional(),
@@ -18,6 +19,7 @@ export function queueEmailDelivery(
   return database.emailDelivery.create({
     data: {
       recipientUserId: data.recipientUserId ?? null,
+      recoveryRequestId: data.recoveryRequestId ?? null,
       recipientAddress: data.recipientAddress,
       templateKey: data.templateKey,
       ...(data.scheduledAt ? { scheduledAt: data.scheduledAt } : {}),
