@@ -39,6 +39,7 @@ import { SchoolOnboardingWorkspace } from './SchoolOnboardingWorkspace'
 import { StaffLifecycleWorkspace } from './StaffLifecycleWorkspace'
 import { PrivacyWorkspace } from './PrivacyWorkspace'
 import { DataGovernanceWorkspace } from './DataGovernanceWorkspace'
+import { OperationsWorkspace } from './OperationsWorkspace'
 import { SupportWorkspace } from './SupportWorkspace'
 import { AccountSecurity, AdminRecovery } from './AccountSecurity'
 import { PublicRecovery } from './PublicRecovery'
@@ -582,6 +583,9 @@ function SignedInShell({
                   ? { schoolId: selectedSchool.school.id }
                   : {})}
               />
+              {selected.role === 'owner' && (
+                <OperationsWorkspace baseUrl={baseUrl} />
+              )}
               {selectedSchool && (
                 <DataGovernanceWorkspace
                   baseUrl={baseUrl}
