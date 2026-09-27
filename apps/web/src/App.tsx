@@ -42,6 +42,7 @@ import { DataGovernanceWorkspace } from './DataGovernanceWorkspace'
 import { OperationsWorkspace } from './OperationsWorkspace'
 import { SupportWorkspace } from './SupportWorkspace'
 import { AccountSecurity, AdminRecovery } from './AccountSecurity'
+import { CommunicationPreferencesWorkspace } from './CommunicationPreferencesWorkspace'
 import { PublicRecovery } from './PublicRecovery'
 import { SearchWorkspace } from './SearchWorkspace'
 
@@ -792,6 +793,7 @@ function AuthenticatedApp() {
         !authentication.user.mustChangePassword && (
           <>
             <AccountSecurity baseUrl={baseUrl} />
+            <CommunicationPreferencesWorkspace baseUrl={baseUrl} />
             <SupportWorkspace baseUrl={baseUrl} />
             <NotificationCenter baseUrl={baseUrl} />
             <SignedInShell
