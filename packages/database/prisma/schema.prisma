@@ -1603,6 +1603,7 @@ model Notification {
   message      String
   resourceType String?
   resourceId   String?
+  dedupeKey    String?   @unique
   createdAt    DateTime  @default(now())
   readAt       DateTime?
   user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)

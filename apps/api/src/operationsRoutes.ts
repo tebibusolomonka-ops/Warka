@@ -10,6 +10,7 @@ import {
 } from '@warka/database'
 import { authenticatedUser } from './authenticateRequest.js'
 import { requireOperator } from './operationsAccess.js'
+import { sendOperationsAlert } from './operationsAlerts.js'
 import { checkReadiness, type Readiness } from './readiness.js'
 import type { ServiceMetrics } from './serviceMetrics.js'
 
@@ -123,11 +124,18 @@ export function registerOperationsRoutes(
     { preHandler: authenticate },
     async (request) => {
       await operator(request)
-      return createOperationalIncident(
+      const incident = await createOperationalIncident(
         getDatabase(),
         authenticatedUser(request).id,
         request.body,
       )
+      if (incident.severity === 'critical')
+        await sendOperationsAlert(
+          getDatabase(),
+          'criticalIncident',
+          incident.id,
+        )
+      return incident
     },
   )
   app.get(
@@ -174,13 +182,20 @@ export function registerOperationsRoutes(
     async (request) => {
       await operator(request)
       const { status, message } = incidentStatusBody.parse(request.body)
-      return changeOperationalIncidentStatus(
+      const incident = await changeOperationalIncidentStatus(
         getDatabase(),
         idParams.parse(request.params).id,
         authenticatedUser(request).id,
         status,
         message,
       )
+      if (status === 'resolved')
+        await sendOperationsAlert(
+          getDatabase(),
+          'incidentResolved',
+          incident.id,
+        )
+      return incident
     },
   )
   app.get(

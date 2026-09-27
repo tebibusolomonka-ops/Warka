@@ -11,6 +11,7 @@ import {
 import { verifyBackup } from './backupVerification.js'
 import { runRestoreRehearsal } from './restoreRehearsal.js'
 import { requireOperator } from './operationsAccess.js'
+import { sendOperationsAlert } from './operationsAlerts.js'
 
 const params = z.strictObject({ id: z.uuid() })
 const policyBody = z.strictObject({
@@ -103,6 +104,10 @@ export function registerBackupRoutes(
         actorId,
         databaseUrl: process.env.DATABASE_URL ?? '',
         storage: storage(),
+        onFailure: (recordId) =>
+          sendOperationsAlert(getDatabase(), 'backupFailed', recordId).then(
+            () => undefined,
+          ),
       })
       await recordAuditEvent(getDatabase(), {
         actorUserId: actorId,
@@ -131,6 +136,8 @@ export function registerBackupRoutes(
         resourceId: id,
         metadata: { passed },
       })
+      if (!passed)
+        await sendOperationsAlert(getDatabase(), 'verificationFailed', id)
       return { id, passed }
     },
   )
@@ -155,6 +162,8 @@ export function registerBackupRoutes(
         resourceId: result.id,
         metadata: { passed: result.passed },
       })
+      if (!result.passed)
+        await sendOperationsAlert(getDatabase(), 'rehearsalFailed', result.id)
       return result
     },
   )

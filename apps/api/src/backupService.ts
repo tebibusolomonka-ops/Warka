@@ -127,6 +127,7 @@ export async function executeBackup(input: {
   databaseUrl: string
   storage: BackupStorage
   process?: BackupProcess
+  onFailure?: (recordId: string) => Promise<void>
 }) {
   const connection = backupConnection(input.databaseUrl)
   const record = await createPendingBackup(input.database, input.actorId)
@@ -146,6 +147,7 @@ export async function executeBackup(input: {
     if (artifact)
       await input.storage.remove(artifact.reference).catch(() => undefined)
     await failBackup(input.database, record.id, 'Backup execution failed')
+    await input.onFailure?.(record.id).catch(() => undefined)
     throw new Error('Backup execution failed')
   }
 }
