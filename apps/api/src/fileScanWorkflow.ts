@@ -1,6 +1,7 @@
 import { recordAuditEvent, type PrismaClient } from '@warka/database'
 import type { FileScanner, ScanOutcome } from './fileScanner.js'
 import type { FileStorage } from './fileStorage.js'
+import { notifyFileSecurity } from './fileSecurityNotifications.js'
 
 export async function processPendingFileScan(input: {
   database: PrismaClient
@@ -100,5 +101,20 @@ export async function processPendingFileScan(input: {
         metadata: { scanId },
       })
   })
+  const event =
+    outcome.status === 'infected'
+      ? 'quarantined'
+      : outcome.status === 'failed'
+        ? 'failed'
+        : 'rescanComplete'
+  await notifyFileSecurity(database, {
+    event,
+    fileAssetId: scan.fileAssetId,
+    ownerUserId:
+      scan.fileAsset.purpose === 'learningMaterial'
+        ? scan.fileAsset.createdById
+        : null,
+    scanId,
+  }).catch(() => undefined)
   return outcome
 }

@@ -74,6 +74,7 @@ function store(role: string | null, assigned = true) {
     scheduledTaskExecution: {
       create: vi.fn().mockResolvedValue({ id: randomUUID() }),
     },
+    notification: { createMany: vi.fn().mockResolvedValue({ count: 1 }) },
     studentAccess: { findUnique: vi.fn().mockResolvedValue(null) },
     enrollment: { findFirst: vi.fn() },
   }
@@ -222,6 +223,9 @@ it('stores a validated uploaded material only after storage succeeds and cleans 
   )
   expect(database.fileScan.create).toHaveBeenCalledOnce()
   expect(database.scheduledTaskExecution.create).toHaveBeenCalledOnce()
+  expect(database.notification.createMany).toHaveBeenCalledWith(
+    expect.objectContaining({ skipDuplicates: true }),
+  )
   database.fileAsset.create.mockRejectedValueOnce(
     new Error('database unavailable'),
   )

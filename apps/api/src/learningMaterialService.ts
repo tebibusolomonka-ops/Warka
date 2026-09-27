@@ -11,6 +11,7 @@ import { validateUpload } from './fileValidation.js'
 import { configuredFileStorage } from './objectFileStorage.js'
 import type { FileStorage } from './fileStorage.js'
 import { configuredScannerName } from './fileScannerConfig.js'
+import { notifyFileSecurity } from './fileSecurityNotifications.js'
 
 const materialContext = {
   academicYearId: z.uuid(),
@@ -200,6 +201,12 @@ export function prismaLearningMaterialService(
             },
           })
           await enqueueFileScanTask(transaction, scan.id)
+          await notifyFileSecurity(transaction, {
+            event: 'processing',
+            fileAssetId: created.id,
+            ownerUserId: actorId,
+            scanId: scan.id,
+          })
           return created
         })
         return { ...asset, sizeBytes: asset.sizeBytes.toString() }
