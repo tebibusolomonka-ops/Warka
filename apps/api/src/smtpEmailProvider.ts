@@ -43,7 +43,7 @@ function failure(error: unknown): EmailSendResult {
   const responseCode =
     typeof value?.responseCode === 'number' ? value.responseCode : 0
   if (code === 'ETIMEDOUT' || code === 'ESOCKET')
-    return { status: 'failed', failureCode: 'TIMEOUT', retryable: true }
+    return { status: 'failed', failureCode: 'TIMEOUT', retryable: false }
   if (code === 'EENVELOPE' || responseCode === 550 || responseCode === 553)
     return {
       status: 'failed',
@@ -52,7 +52,12 @@ function failure(error: unknown): EmailSendResult {
     }
   if (code === 'EAUTH' || responseCode >= 500)
     return { status: 'failed', failureCode: 'REJECTED', retryable: false }
-  return { status: 'failed', failureCode: 'UNAVAILABLE', retryable: true }
+  if (
+    ['ECONNECTION', 'ECONNREFUSED', 'ENOTFOUND'].includes(code) ||
+    (responseCode >= 400 && responseCode < 500)
+  )
+    return { status: 'failed', failureCode: 'UNAVAILABLE', retryable: true }
+  return { status: 'failed', failureCode: 'AMBIGUOUS', retryable: false }
 }
 
 export class SmtpEmailProvider implements EmailProvider {

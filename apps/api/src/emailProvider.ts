@@ -13,7 +13,12 @@ export type EmailSendResult =
   | { status: 'sent'; providerMessageId?: string }
   | {
       status: 'failed'
-      failureCode: 'UNAVAILABLE' | 'TIMEOUT' | 'REJECTED' | 'INVALID_RECIPIENT'
+      failureCode:
+        | 'UNAVAILABLE'
+        | 'TIMEOUT'
+        | 'AMBIGUOUS'
+        | 'REJECTED'
+        | 'INVALID_RECIPIENT'
       retryable: boolean
     }
 

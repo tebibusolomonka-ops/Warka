@@ -114,7 +114,7 @@ export async function processQueuedEmailDelivery(
     } else throw new Error('Unknown transactional email template')
     result = await provider.send(message)
   } catch {
-    result = { status: 'failed', failureCode: 'UNAVAILABLE', retryable: false }
+    result = { status: 'failed', failureCode: 'AMBIGUOUS', retryable: false }
   }
   if (result.status === 'sent') {
     await database.emailDelivery.update({

@@ -4,6 +4,28 @@ import { PostgresSchedulerLock, type SchedulerLock } from './backupScheduler.js'
 import type { EmailProvider } from './emailProvider.js'
 import { processQueuedEmailDelivery } from './emailOutbox.js'
 import { SmtpEmailProvider, smtpConfiguration } from './smtpEmailProvider.js'
+import { retryDelayMs } from './schedulerRetry.js'
+import { sendOperationsAlert } from './operationsAlerts.js'
+
+export const maxEmailDeliveryAttempts = 3
+
+export function emailRetryEligible(
+  task: {
+    status: string
+    attempt: number
+    failureCode: string | null
+    completedAt: Date | null
+  },
+  now = new Date(),
+) {
+  return (
+    task.status === 'failed' &&
+    task.attempt < maxEmailDeliveryAttempts &&
+    task.failureCode === 'UNAVAILABLE' &&
+    !!task.completedAt &&
+    now.getTime() - task.completedAt.getTime() >= retryDelayMs(task.attempt)
+  )
+}
 
 export function emailOutboxConfiguration(env: NodeJS.ProcessEnv = process.env) {
   const flag = env.WARKA_EMAIL_OUTBOX_ENABLED ?? 'false'
@@ -65,7 +87,11 @@ export class EmailOutboxScheduler {
     ),
   ) {}
 
-  private async runTask(task: { id: string; resourceId: string | null }) {
+  private async runTask(task: {
+    id: string
+    resourceId: string | null
+    attempt: number
+  }) {
     if (!task.resourceId) {
       await failScheduledTask(this.database, task.id, 'DELIVERY_ERROR')
       return
@@ -78,17 +104,77 @@ export class EmailOutboxScheduler {
         new Date(),
         this.config.recovery,
       )
-      if (outcome.status === 'failed')
+      if (outcome.status === 'failed') {
         await failScheduledTask(this.database, task.id, outcome.failureCode)
-      else await completeScheduledTask(this.database, task.id, task.resourceId)
+        if (!outcome.retryable || task.attempt >= maxEmailDeliveryAttempts)
+          await sendOperationsAlert(
+            this.database,
+            'emailDeliveryFailed',
+            task.resourceId,
+          ).catch(() => undefined)
+      } else
+        await completeScheduledTask(this.database, task.id, task.resourceId)
     } catch {
       await failScheduledTask(this.database, task.id, 'DELIVERY_ERROR')
+    }
+  }
+
+  private async retry(now: Date) {
+    const failures = await this.database.scheduledTaskExecution.findMany({
+      where: {
+        taskType: 'emailDelivery',
+        status: 'failed',
+        attempt: { lt: maxEmailDeliveryAttempts },
+        failureCode: 'UNAVAILABLE',
+      },
+      orderBy: { completedAt: 'asc' },
+      take: 25,
+    })
+    for (const failure of failures) {
+      if (!failure.resourceId || !emailRetryEligible(failure, now)) continue
+      await this.database.$transaction(async (transaction) => {
+        const later = await transaction.scheduledTaskExecution.findFirst({
+          where: {
+            seriesId: failure.seriesId,
+            attempt: { gt: failure.attempt },
+          },
+          select: { id: true },
+        })
+        if (later) return
+        const reset = await transaction.emailDelivery.updateMany({
+          where: {
+            id: failure.resourceId!,
+            status: 'failed',
+            failureCode: 'UNAVAILABLE',
+            attemptCount: failure.attempt,
+          },
+          data: {
+            status: 'queued',
+            scheduledAt: now,
+            failureCode: null,
+            failedAt: null,
+          },
+        })
+        if (reset.count !== 1) return
+        await transaction.scheduledTaskExecution.create({
+          data: {
+            taskType: 'emailDelivery',
+            scope: 'transactional_email',
+            resourceId: failure.resourceId,
+            scheduledFor: now,
+            status: 'pending',
+            seriesId: failure.seriesId,
+            attempt: failure.attempt + 1,
+          },
+        })
+      })
     }
   }
 
   async tick(now = new Date()) {
     if (!this.config.enabled || this.stopped || this.running) return
     const work = this.lock.run(async () => {
+      await this.retry(now)
       const queued = await this.database.scheduledTaskExecution.findMany({
         where: {
           taskType: 'emailDelivery',

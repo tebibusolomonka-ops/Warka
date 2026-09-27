@@ -6,6 +6,7 @@ type AlertEvent =
   | 'rehearsalFailed'
   | 'criticalIncident'
   | 'incidentResolved'
+  | 'emailDeliveryFailed'
 
 const messages: Record<AlertEvent, { title: string; message: string }> = {
   backupFailed: {
@@ -27,6 +28,10 @@ const messages: Record<AlertEvent, { title: string; message: string }> = {
   incidentResolved: {
     title: 'Service incident resolved',
     message: 'An operational incident was resolved.',
+  },
+  emailDeliveryFailed: {
+    title: 'Email delivery needs review',
+    message: 'A transactional email delivery could not be completed.',
   },
 }
 

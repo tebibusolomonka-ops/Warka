@@ -79,7 +79,19 @@ describe('SMTP email provider', () => {
     expect(await provider.send(message)).toEqual({
       status: 'failed',
       failureCode: 'TIMEOUT',
+      retryable: false,
+    })
+    sendMail.mockRejectedValueOnce({ code: 'ECONNECTION' })
+    expect(await provider.send(message)).toEqual({
+      status: 'failed',
+      failureCode: 'UNAVAILABLE',
       retryable: true,
+    })
+    sendMail.mockRejectedValueOnce(new Error('unknown outcome'))
+    expect(await provider.send(message)).toEqual({
+      status: 'failed',
+      failureCode: 'AMBIGUOUS',
+      retryable: false,
     })
   })
 })
