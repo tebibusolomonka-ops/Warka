@@ -84,6 +84,8 @@ import { registerCorrectionRoutes } from './correctionRoutes.js'
 import { registerPrivacyRoutes } from './privacyRoutes.js'
 import { registerDataGovernanceRoutes } from './dataGovernanceRoutes.js'
 import { registerStaffAccessRoutes } from './staffAccessRoutes.js'
+import { registerBackupRoutes } from './backupRoutes.js'
+import { OperationsPermissionError } from './operationsAccess.js'
 import { registerSchoolContactRoutes } from './schoolContactRoutes.js'
 import { registerSupportRequestRoutes } from './supportRequestRoutes.js'
 import { registerOnboardingRoutes } from './onboardingRoutes.js'
@@ -323,6 +325,7 @@ export function buildApp(
   registerPrivacyRoutes(app, getDatabase, authenticate)
   registerDataGovernanceRoutes(app, getDatabase, authenticate)
   registerStaffAccessRoutes(app, getDatabase, authenticate)
+  registerBackupRoutes(app, getDatabase, authenticate)
   registerSupportRequestRoutes(app, getDatabase, authenticate)
   registerSchoolContactRoutes(app, getDatabase, authenticate)
   registerSchoolRoutes(app, getStore, getAccess, authenticate)
@@ -453,7 +456,8 @@ export function buildApp(
       error instanceof EnrollmentCorrectionPermissionError ||
       error instanceof CorrectionPermissionError ||
       error instanceof RetentionPermissionError ||
-      error instanceof PrivacyPermissionError
+      error instanceof PrivacyPermissionError ||
+      error instanceof OperationsPermissionError
     ) {
       return reply.code(403).send({
         error: { code: 'GOVERNANCE_ACCESS_DENIED', message: error.message },

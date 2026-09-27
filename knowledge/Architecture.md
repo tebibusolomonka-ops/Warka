@@ -6,5 +6,6 @@
 - Authentication uses HttpOnly cookies; API and domain services enforce authorization. School, organization, student, guardian, bureau, and temporary support scopes are distinct.
 - Student and guardian portals use their own relationship checks. Bureau access has dedicated authorization. Support access is temporary and school-scoped.
 - Notifications are persisted and scoped to recipients. Documents and published results use issued snapshots. Reporting uses named exports and scoped views. Governance includes review workflows, privacy requests, correction routing, retention holds, and non-destructive evaluation.
+- Whole-database backup metadata lives in PostgreSQL; archive bytes live behind a storage adapter. The local adapter uses a configured filesystem directory. Backup, verification, and isolated restore rehearsal run through PostgreSQL native tools with controlled arguments.
 
 See [[DomainModel]], [[Decisions]], and [[Security]].
