@@ -77,6 +77,13 @@ enum NotificationCategory {
   privacy
 }
 
+enum EmailDigestStatus {
+  queued
+  sending
+  sent
+  failed
+}
+
 enum OrganizationRole {
   owner
   administrator
@@ -484,6 +491,7 @@ model User {
   recoveryRequests             AccountRecoveryRequest[]
   emailDeliveries              EmailDelivery[]
   notificationPreferences      NotificationPreference[]
+  emailDigests                 EmailDigest[]
   startedOnboardings            SchoolOnboarding[] @relation("OnboardingStartedBy")
   completedOnboardings          SchoolOnboarding[] @relation("OnboardingCompletedBy")
   completedChecklistItems       OnboardingChecklistItem[]
@@ -1790,6 +1798,21 @@ model NotificationPreference {
   user            User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, category])
+}
+
+model EmailDigest {
+  id            String            @id @default(uuid())
+  userId        String
+  windowStartAt DateTime
+  windowEndAt   DateTime
+  status        EmailDigestStatus @default(queued)
+  itemCount     Int
+  createdAt     DateTime          @default(now())
+  sentAt        DateTime?
+  user          User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, windowStartAt, windowEndAt])
+  @@index([status, createdAt])
 }
 model SchoolDocumentProfile {
   schoolId       String   @id

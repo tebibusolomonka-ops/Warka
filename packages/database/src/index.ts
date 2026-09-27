@@ -573,6 +573,12 @@ export {
 } from './notificationPreferences.js'
 export type { EffectiveNotificationPreference } from './notificationPreferences.js'
 export {
+  CreateEmailDigestSchema,
+  createEmailDigest,
+  listEmailDigests,
+  markEmailDigestSent,
+} from './emailDigests.js'
+export {
   deriveRecoveryToken,
   issueDerivedRecoveryToken,
 } from './recoveryTokens.js'
