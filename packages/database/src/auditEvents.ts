@@ -70,6 +70,10 @@ export const AuditActionSchema = z.enum([
   'privacyCorrection.routed',
   'processingRestriction.applied',
   'processingRestriction.ended',
+  'privacyRequest.reviewStarted',
+  'privacyRequest.approved',
+  'privacyRequest.rejected',
+  'privacyRequest.fulfilled',
 ])
 
 export const AuditResourceTypeSchema = z.enum([

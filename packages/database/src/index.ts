@@ -787,3 +787,10 @@ export {
   isParentPortalSharingRestricted,
   ProcessingRestrictionStateError,
 } from './processingRestrictions.js'
+
+export {
+  reviewPrivacyRequest,
+  fulfillPrivacyAccessRequest,
+  cancelOwnPrivacyRequest,
+  PrivacyReviewStateError,
+} from './privacyReview.js'
