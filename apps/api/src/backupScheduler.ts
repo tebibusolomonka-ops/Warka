@@ -197,42 +197,68 @@ export class BackupScheduler {
       take: 25,
     })
     for (const failure of failures) {
-      if (!retryEligible(failure, now)) continue
-      const later = await this.database.scheduledTaskExecution.findFirst({
-        where: { seriesId: failure.seriesId, attempt: { gt: failure.attempt } },
-        select: { id: true },
-      })
-      if (later) continue
-      if (failure.taskType === 'backup' && this.config.backupEnabled) {
-        await requireOperator(this.database, this.config.actorId)
-        await this.runBackupTask(
-          now,
-          failure.attempt + 1,
-          failure.seriesId,
-        ).catch(() => undefined)
-      }
-      if (
-        failure.taskType === 'retentionEvaluation' &&
-        this.config.retentionEvaluationEnabled
-      ) {
-        const policy = await this.database.retentionPolicy.findUnique({
-          where: { id: failure.resourceId ?? '' },
-          select: {
-            id: true,
-            organizationId: true,
-            category: true,
-            retentionDays: true,
-          },
-        })
-        if (policy)
-          await this.runRetentionTask(
-            policy,
-            now,
-            failure.attempt + 1,
-            failure.seriesId,
-          )
-      }
+      if (retryEligible(failure, now)) await this.retryOne(failure, now)
     }
+  }
+
+  private async retryOne(
+    failure: {
+      seriesId: string
+      attempt: number
+      taskType: string
+      resourceId: string | null
+    },
+    now: Date,
+  ) {
+    const later = await this.database.scheduledTaskExecution.findFirst({
+      where: { seriesId: failure.seriesId, attempt: { gt: failure.attempt } },
+      select: { id: true },
+    })
+    if (later) return false
+    if (failure.taskType === 'backup' && this.config.backupEnabled) {
+      await requireOperator(this.database, this.config.actorId)
+      await this.runBackupTask(
+        now,
+        failure.attempt + 1,
+        failure.seriesId,
+      ).catch(() => undefined)
+      return true
+    }
+    if (
+      failure.taskType === 'retentionEvaluation' &&
+      this.config.retentionEvaluationEnabled
+    ) {
+      const policy = await this.database.retentionPolicy.findUnique({
+        where: { id: failure.resourceId ?? '' },
+        select: {
+          id: true,
+          organizationId: true,
+          category: true,
+          retentionDays: true,
+        },
+      })
+      if (!policy) return false
+      await requireOperator(this.database, this.config.actorId)
+      await this.runRetentionTask(
+        policy,
+        now,
+        failure.attempt + 1,
+        failure.seriesId,
+      )
+      return true
+    }
+    return false
+  }
+
+  async retryExecution(id: string, now = new Date()) {
+    const result = await this.lock.run(async () => {
+      const failure = await this.database.scheduledTaskExecution.findUnique({
+        where: { id },
+      })
+      if (!failure || !retryEligible(failure, now)) return false
+      return this.retryOne(failure, now)
+    })
+    return result === true
   }
 
   private async evaluateRetentionPolicies(now: Date) {
