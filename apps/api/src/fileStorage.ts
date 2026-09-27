@@ -18,6 +18,15 @@ export function fileStorageKey() {
   return `asset_${randomUUID()}`
 }
 
+export function assertFileStorageKey(key: string) {
+  if (
+    !/^asset_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(
+      key,
+    )
+  )
+    throw new Error('Invalid file storage key')
+}
+
 export class LocalFileStorage implements FileStorage {
   private readonly root: string
   constructor(root: string) {
@@ -26,12 +35,7 @@ export class LocalFileStorage implements FileStorage {
   }
 
   private path(key: string) {
-    if (
-      !/^asset_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(
-        key,
-      )
-    )
-      throw new Error('Invalid file storage key')
+    assertFileStorageKey(key)
     return join(this.root, key)
   }
 
