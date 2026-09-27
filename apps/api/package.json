@@ -18,6 +18,7 @@
     "@warka/database": "workspace:*",
     "@warka/shared": "workspace:*",
     "fastify": "^5.6.0",
+    "file-type": "^22.1.1",
     "pdf-lib": "1.17.1",
     "pg": "^8.23.0",
     "qrcode": "^1.5.4",
