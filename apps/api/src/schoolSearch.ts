@@ -139,3 +139,47 @@ export async function searchStudents(
     schoolId: search.schoolId,
   }))
 }
+
+export async function searchStaff(
+  database: PrismaClient,
+  input: SearchInput,
+): Promise<SchoolSearchResult[]> {
+  const search = validatedSearchInput(input)
+  const scope = await searchSchoolScope(
+    database,
+    search.actorId,
+    search.schoolId,
+  )
+  if (!scope.allowedTypes.includes('staff')) throw new SearchAccessError()
+  const term = literalSearchTerm(search.query)
+  const roleTerm = z
+    .enum(['administrator', 'registrar', 'teacher', 'approver'])
+    .safeParse(search.query.toLowerCase())
+  const memberships = await database.schoolMembership.findMany({
+    where: {
+      schoolId: search.schoolId,
+      OR: [
+        { user: { displayName: { contains: term, mode: 'insensitive' } } },
+        { user: { email: { contains: term, mode: 'insensitive' } } },
+        ...(roleTerm.success ? [{ role: roleTerm.data }] : []),
+      ],
+    },
+    orderBy: [{ user: { displayName: 'asc' } }, { userId: 'asc' }],
+    skip: search.offset,
+    take: search.limit,
+    select: {
+      role: true,
+      startsAt: true,
+      endsAt: true,
+      user: { select: { displayName: true, email: true, accountStatus: true } },
+    },
+  })
+  const now = new Date()
+  return memberships.map((membership) => ({
+    type: 'staff',
+    title: membership.user.displayName,
+    subtitle: `${membership.role} · ${membership.user.accountStatus !== 'active' ? 'deactivated' : membership.startsAt > now ? 'upcoming' : membership.endsAt && membership.endsAt <= now ? 'expired' : 'active'}`,
+    reference: membership.user.email,
+    schoolId: search.schoolId,
+  }))
+}
