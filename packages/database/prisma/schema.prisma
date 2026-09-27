@@ -290,6 +290,11 @@ enum BackupStatus {
   verified
 }
 
+enum BackupVerificationResult {
+  passed
+  failed
+}
+
 model School {
   resultSets                    ResultSet[]
   publishedResults              PublishedResult[]
@@ -419,6 +424,9 @@ model BackupRecord {
   checksum         String?
   storageReference String?
   failureReason    String?
+  verifiedAt       DateTime?
+  verificationResult BackupVerificationResult?
+  verificationReason String?
   createdBy        User         @relation("BackupCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
 
   @@index([createdAt])
