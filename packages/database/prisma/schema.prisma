@@ -7,6 +7,19 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum CorrectionRequestStatus {
+  pending
+  approved
+  rejected
+  cancelled
+}
+
+enum StudentCorrectionField {
+  givenName
+  familyName
+  dateOfBirth
+}
+
 enum AccountStatus {
   active
   suspended
@@ -270,6 +283,7 @@ model School {
   onboarding                   SchoolOnboarding?
   contacts                     SchoolContact[]
   trainingRecords              TrainingRecord[]
+  correctionRequests           StudentCorrectionRequest[]
   supportRequests              SupportRequest[]
 
   @@index([organizationId])
@@ -331,6 +345,8 @@ model User {
   resolvedProgressionExceptions ProgressionException[] @relation("ProgressionExceptionResolvedBy")
   notifications                Notification[]
   teachingAssignments          TeachingAssignment[]
+  requestedStudentCorrections  StudentCorrectionRequest[] @relation("StudentCorrectionRequestedBy")
+  reviewedStudentCorrections   StudentCorrectionRequest[] @relation("StudentCorrectionReviewedBy")
   marks                        Mark[]
 }
 
@@ -786,6 +802,29 @@ model Student {
   studentAccess       StudentAccess?
   enrollments         Enrollment[]
   marks               Mark[]
+  correctionRequests  StudentCorrectionRequest[]
+}
+
+model StudentCorrectionRequest {
+  id             String                  @id @default(uuid())
+  studentId      String
+  schoolId       String
+  field          StudentCorrectionField
+  previousValue  String?
+  proposedValue  String?
+  reason         String
+  status         CorrectionRequestStatus @default(pending)
+  requestedById  String
+  requestedAt    DateTime                @default(now())
+  reviewedAt     DateTime?
+  reviewedById   String?
+  student        Student                 @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  school         School                  @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  requestedBy    User                    @relation("StudentCorrectionRequestedBy", fields: [requestedById], references: [id], onDelete: Restrict)
+  reviewedBy     User?                   @relation("StudentCorrectionReviewedBy", fields: [reviewedById], references: [id], onDelete: Restrict)
+
+  @@index([schoolId, status, requestedAt])
+  @@index([studentId, requestedAt])
 }
 
 model StudentAccess {

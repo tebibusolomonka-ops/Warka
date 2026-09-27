@@ -733,3 +733,15 @@ export {
   accessPeriodStatus,
   StaffAccessPermissionError,
 } from './staffAccessSummary.js'
+
+export {
+  StudentCorrectionInputSchema,
+  StudentCorrectionPermissionError,
+  StudentCorrectionStateError,
+  createStudentCorrectionRequest,
+} from './studentCorrectionRequests.js'
+export type {
+  StudentCorrectionRequest,
+  StudentCorrectionField,
+  CorrectionRequestStatus,
+} from '@prisma/client'
