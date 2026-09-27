@@ -11,3 +11,4 @@ Notification delivery preferences, safe notification email routing, digest sched
 ## Later
 
 Production storage configuration and operational deployment decisions remain environment-specific. No delivery commitment is implied.
+Communication preference controls, safe notification email routing, daily/weekly digests, owned delivery history, and controlled browser journeys are implemented through commit 240. Deployment still requires PostgreSQL migration, a stable recovery key, a public app URL, and configured SMTP.

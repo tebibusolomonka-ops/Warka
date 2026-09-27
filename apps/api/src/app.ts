@@ -93,6 +93,7 @@ import { registerQuarantineRoutes } from './quarantineRoutes.js'
 import { registerEmailAdministrationRoutes } from './emailAdministrationRoutes.js'
 import { registerCommunicationPreferenceRoutes } from './communicationPreferenceRoutes.js'
 import { registerCommunicationDeliveryRoutes } from './communicationDeliveryRoutes.js'
+import type { FakeEmailProvider } from './emailProvider.js'
 import { registerSearchRoutes } from './searchRoutes.js'
 import { registerResponseCompression } from './responseCompression.js'
 import { installDefaultCachePolicy } from './cachePolicy.js'
@@ -255,6 +256,8 @@ export function buildApp(
     onboarding?: OnboardingService
     assistedRecovery?: AssistedRecovery
     recoveryDelivery?: (email: string, token: string) => Promise<void>
+    testEmailProvider?: FakeEmailProvider
+    testEmailTick?: () => Promise<void>
     production?: boolean
   } = {},
 ) {
@@ -281,7 +284,8 @@ export function buildApp(
     options.auth ??
     createAuthService(
       getDatabase(),
-      options.production === false || testRecoveryEnabled
+      (options.production === false || testRecoveryEnabled) &&
+        !options.testEmailProvider
         ? recoveryDelivery
         : undefined,
       process.env.WARKA_EMAIL_OUTBOX_ENABLED === 'true'
@@ -330,11 +334,37 @@ export function buildApp(
           (request.params as { email: string }).email,
         ).toLowerCase()
         const key = createHash('sha256').update(email).digest('hex')
-        const token = testRecoveryTokens.get(key)
+        await options.testEmailTick?.()
+        const message = [...(options.testEmailProvider?.messages ?? [])]
+          .reverse()
+          .find(
+            (item) =>
+              item.to.toLowerCase() === email &&
+              item.subject === 'Reset your Warka password',
+          )
+        const token =
+          message?.text.match(/recoveryToken=([^\s]+)/)?.[1] ??
+          testRecoveryTokens.get(key)
         testRecoveryTokens.delete(key)
         if (!token) return reply.code(404).send({ error: 'Not found' })
         return { token }
       })
+    if (testRecoveryEnabled && options.testEmailProvider) {
+      app.post('/__test/email-tick', async () => {
+        await options.testEmailTick?.()
+        return { count: options.testEmailProvider!.messages.length }
+      })
+      app.get('/__test/email-messages/:email', async (request) => {
+        const email = String(
+          (request.params as { email: string }).email,
+        ).toLowerCase()
+        return {
+          messages: options.testEmailProvider!.messages.filter(
+            (item) => item.to.toLowerCase() === email,
+          ),
+        }
+      })
+    }
     registerAuthRoutes(
       app,
       getAuth,

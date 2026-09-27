@@ -16,3 +16,5 @@
 - Transactional templates are server owned and render escaped text and HTML only in memory. SMTP credentials come from validated server configuration. Recovery tokens are derived from a server key and request ID, hashed at rest, and reconstructed only for delivery; outbox metadata contains no token. Only known safe provider failures retry, with a fixed attempt cap and backoff. Ambiguous SMTP outcomes require review.
 
 See [[Security]] for the resulting invariants.
+- Communication choices are per user and category. Account-security in-app notices cannot be disabled. Immediate email uses only selected event types and minimal template text; daily/weekly digests are opt-in and deduplicated by user/window.
+- Email links use a validated Warka base URL and normal authentication. Self-service delivery history omits addresses, provider IDs, failure internals, and message bodies. Operations is limited to transactional delivery administration; arbitrary bulk sending is out of scope.

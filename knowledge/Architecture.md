@@ -15,3 +15,4 @@
 - Transactional email uses persistent delivery records and scheduled executions. The provider interface separates a production SMTP adapter from a deterministic test provider. The database scheduler lock coordinates claims; operator-only APIs expose safe delivery status and restricted retries.
 
 See [[DomainModel]], [[Decisions]], and [[Security]].
+Notification email routing reads selected in-app events without copying their private contents into messages. User preferences select immediate email or daily/weekly digest for supported categories; the scheduler stores one digest per user/window. Email links point to the authenticated Warka app. Self-service delivery history is limited to the signed-in user and safe status fields.

@@ -13,3 +13,4 @@ Backup records track archive metadata, integrity verification, and isolated rest
 Search results are derived summaries, not a new durable identity or access grant. They contain a type, safe title and subtitle, a domain reference, and school scope; opening a result checks current authorization again.
 
 `EmailDelivery` records recipient, template, status, schedule, attempts, and safe provider outcome. A scheduled execution tracks asynchronous delivery and bounded retry. Recovery delivery references an expiring `AccountRecoveryRequest`; it never stores the raw token or rendered message.
+`NotificationPreference` belongs to a user/category and controls in-app, email, and supported digest cadence; account security in-app delivery remains mandatory. `EmailDigest` belongs to one user/window and has a unique delivery. `Notification.emailRoutedAt` prevents duplicate immediate routing. User-facing delivery history is derived from owned `EmailDelivery` records.

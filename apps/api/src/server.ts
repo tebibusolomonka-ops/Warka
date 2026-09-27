@@ -11,8 +11,14 @@ import {
   EmailOutboxScheduler,
   emailOutboxConfiguration,
 } from './emailOutboxScheduler.js'
+import { FakeEmailProvider } from './emailProvider.js'
 
-const app = buildApp()
+const controlledEmail =
+  process.env.NODE_ENV === 'test' &&
+  process.env.RECOVERY_TEST_DELIVERY === 'enabled' &&
+  process.env.WARKA_EMAIL_OUTBOX_ENABLED === 'true' &&
+  process.env.WARKA_EMAIL_CONTROLLED_TEST === 'enabled'
+const testEmailProvider = controlledEmail ? new FakeEmailProvider() : undefined
 const schedulerConfig = schedulerConfiguration(process.env)
 const schedulerDatabase = schedulerConfig.enabled
   ? createDatabaseClient()
@@ -28,8 +34,12 @@ const scanScheduler = scanDatabase
 const emailConfig = emailOutboxConfiguration(process.env)
 const emailDatabase = emailConfig.enabled ? createDatabaseClient() : undefined
 const emailScheduler = emailDatabase
-  ? new EmailOutboxScheduler(emailDatabase, emailConfig)
+  ? new EmailOutboxScheduler(emailDatabase, emailConfig, testEmailProvider)
   : undefined
+const app = buildApp({
+  ...(testEmailProvider ? { testEmailProvider } : {}),
+  testEmailTick: () => emailScheduler?.tick() ?? Promise.resolve(),
+})
 app.addHook('onClose', async () => {
   await scheduler?.stop()
   await scanScheduler?.stop()
@@ -51,7 +61,8 @@ try {
     )
   else scheduler?.start(() => app.log.error('Backup scheduler poll failed'))
   scanScheduler?.start(() => app.log.error('File scan scheduler poll failed'))
-  emailScheduler?.start(() => app.log.error('Email outbox poll failed'))
+  if (!controlledEmail)
+    emailScheduler?.start(() => app.log.error('Email outbox poll failed'))
 } catch (error) {
   app.log.error(error)
   await app.close()

@@ -119,12 +119,41 @@ test('account security, recovery, and administrator scope', async ({
         'If the account exists, recovery instructions will be sent.',
       ),
     ).toBeVisible()
+    const unknown = await page.request.post('/api/auth/recovery/request', {
+      data: { email: `missing-${suffix}@example.test` },
+    })
+    expect(unknown.status()).toBe(202)
+    expect(await unknown.json()).toEqual({
+      message: 'If the account exists, recovery instructions will be sent.',
+    })
+    expect((await page.request.post('/api/__test/email-tick')).status()).toBe(
+      200,
+    )
+    const sent = await page.request.get(
+      `/api/__test/email-messages/${encodeURIComponent(email)}`,
+    )
+    expect(sent.status()).toBe(200)
+    const messages = (await sent.json()).messages as Array<{
+      subject: string
+      text: string
+    }>
+    const recoveryEmail = messages.find(
+      (message) => message.subject === 'Reset your Warka password',
+    )
+    expect(recoveryEmail).toBeDefined()
+    expect(recoveryEmail!.text).toContain('recoveryToken=')
     const delivery = await page.request.get(
       `/api/__test/recovery-token/${encodeURIComponent(email)}`,
     )
     expect(delivery.status()).toBe(200)
     const { token } = (await delivery.json()) as { token: string }
     const oldSession = await createSession(database, adminId)
+    const recoveryUrl = recoveryEmail!.text.match(
+      /http:\/\/localhost:4173\/\?recoveryToken=[^\s]+/,
+    )?.[0]
+    expect(recoveryUrl).toBeDefined()
+    await page.goto(recoveryUrl!)
+    await expect(page.getByLabel('Recovery token')).toHaveValue(token)
     await page.getByLabel('Recovery token').fill(token)
     await page.getByLabel('New recovery password').fill(recovered)
     await page.getByRole('button', { name: 'Reset password' }).click()
@@ -150,6 +179,16 @@ test('account security, recovery, and administrator scope', async ({
       page.getByRole('heading', { name: 'My schools' }),
     ).toBeVisible()
   } finally {
+    const deliveries = await database.emailDelivery.findMany({
+      where: { recipientUserId: { in: [adminId, targetId, outsiderId] } },
+      select: { id: true },
+    })
+    await database.scheduledTaskExecution.deleteMany({
+      where: { resourceId: { in: deliveries.map((item) => item.id) } },
+    })
+    await database.emailDelivery.deleteMany({
+      where: { recipientUserId: { in: [adminId, targetId, outsiderId] } },
+    })
     if (schoolId) await database.auditEvent.deleteMany({ where: { schoolId } })
     await database.auditEvent.deleteMany({
       where: { actorUserId: { in: [adminId, targetId, outsiderId] } },

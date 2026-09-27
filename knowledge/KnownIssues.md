@@ -8,3 +8,4 @@
 - Outbound email remains disabled until operators supply validated SMTP settings, a stable recovery derivation key, and the public application URL. Local PostgreSQL and SMTP services are unavailable, so outbox persistence and real delivery require CI or deployment validation. Ambiguous SMTP outcomes are held for operator review rather than automatically resent.
 
 Resolved prior validation failures are recorded in [[Batches/141-160]].
+- Local PostgreSQL is unavailable for live browser journeys; Playwright discovery is local, while execution depends on CI or a dedicated PostgreSQL service. SMTP delivery and production configuration remain deployment checks.
