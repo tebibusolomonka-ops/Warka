@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { PrismaClient } from '@warka/database'
+import type { evaluateConfiguredRetentionPolicy } from '@warka/database'
 import type { executeBackup } from './backupService.js'
 import type { verifyBackup } from './backupVerification.js'
 import {
@@ -21,10 +22,12 @@ vi.mock('./backupRetention.js', () => ({
 const now = new Date('2026-09-27T12:00:00Z')
 const config: SchedulerConfiguration = {
   enabled: true,
+  backupEnabled: true,
   intervalMs: 10_000,
   actorId: '717ac602-fd66-4400-9116-13a79b8cc3da',
   databaseUrl: 'postgresql://localhost/warka',
   storageDirectory: 'test-storage',
+  retentionEvaluationEnabled: false,
 }
 
 function fixture(policyEnabled = true, latest?: Date) {
@@ -238,5 +241,74 @@ describe('backup scheduler', () => {
     expect(() =>
       schedulerConfiguration({ WARKA_BACKUP_SCHEDULER_INTERVAL_MS: '1' }),
     ).toThrow()
+  })
+
+  it('evaluates configured retention policies without destructive mutations', async () => {
+    const { database } = fixture()
+    const policy = {
+      id: 'retention-policy',
+      organizationId: '771ac602-fd66-4400-9116-13a79b8cc3da',
+      category: 'issuedDocuments' as const,
+      retentionDays: 365,
+    }
+    const raw = database as unknown as {
+      retentionPolicy: { findMany: ReturnType<typeof vi.fn> }
+      scheduledTaskExecution: {
+        findFirst: ReturnType<typeof vi.fn>
+        updateMany: ReturnType<typeof vi.fn>
+      }
+    }
+    raw.retentionPolicy = { findMany: vi.fn().mockResolvedValue([policy]) }
+    raw.scheduledTaskExecution.findFirst = vi.fn().mockResolvedValue(null)
+    const evaluate = vi.fn().mockResolvedValue({
+      eligibleCount: 3,
+      oldestEligibleAt: new Date('2020-01-01'),
+    })
+    const scheduler = new BackupScheduler(
+      database,
+      { ...config, backupEnabled: false, retentionEvaluationEnabled: true },
+      { run: async (work) => work() },
+      vi.fn() as unknown as typeof executeBackup,
+      vi.fn() as unknown as typeof verifyBackup,
+      evaluate as unknown as typeof evaluateConfiguredRetentionPolicy,
+    )
+    await scheduler.tick(now)
+    expect(evaluate).toHaveBeenCalledWith(database, policy, now)
+    expect(raw.scheduledTaskExecution.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          eligibleCount: 3,
+          status: 'completed',
+        }),
+      }),
+    )
+    expect(database.backupRecord.findFirst).not.toHaveBeenCalled()
+  })
+
+  it('skips retention work when no policy exists or the task is disabled', async () => {
+    const { database } = fixture()
+    const raw = database as unknown as {
+      retentionPolicy: { findMany: ReturnType<typeof vi.fn> }
+    }
+    raw.retentionPolicy = { findMany: vi.fn().mockResolvedValue([]) }
+    const noPolicy = new BackupScheduler(
+      database,
+      { ...config, backupEnabled: false, retentionEvaluationEnabled: true },
+      { run: async (work) => work() },
+    )
+    await noPolicy.tick(now)
+    expect(database.scheduledTaskExecution.create).not.toHaveBeenCalled()
+    const disabled = new BackupScheduler(
+      database,
+      {
+        ...config,
+        enabled: false,
+        backupEnabled: false,
+        retentionEvaluationEnabled: false,
+      },
+      { run: async (work) => work() },
+    )
+    await disabled.tick(now)
+    expect(raw.retentionPolicy.findMany).toHaveBeenCalledOnce()
   })
 })

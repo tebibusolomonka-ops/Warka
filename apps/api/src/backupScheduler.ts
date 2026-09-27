@@ -5,6 +5,7 @@ import {
   startScheduledTask,
   completeScheduledTask,
   failScheduledTask,
+  evaluateConfiguredRetentionPolicy,
 } from '@warka/database'
 import { executeBackup, LocalBackupStorage } from './backupService.js'
 import { verifyBackup } from './backupVerification.js'
@@ -16,21 +17,31 @@ const lockKey = 8_246_181
 
 export type SchedulerConfiguration = {
   enabled: boolean
+  backupEnabled: boolean
   intervalMs: number
   actorId: string
   databaseUrl: string
   storageDirectory: string
+  retentionEvaluationEnabled: boolean
 }
 
 export function schedulerConfiguration(
   env: NodeJS.ProcessEnv,
 ): SchedulerConfiguration {
-  const enabled = env.WARKA_BACKUP_SCHEDULER_ENABLED === 'true'
+  const backupEnabled = env.WARKA_BACKUP_SCHEDULER_ENABLED === 'true'
+  const retentionEvaluationEnabled =
+    env.WARKA_RETENTION_EVALUATION_ENABLED === 'true'
+  const enabled = backupEnabled || retentionEvaluationEnabled
   if (
     env.WARKA_BACKUP_SCHEDULER_ENABLED &&
     !['true', 'false'].includes(env.WARKA_BACKUP_SCHEDULER_ENABLED)
   )
     throw new Error('Invalid backup scheduler enabled setting')
+  if (
+    env.WARKA_RETENTION_EVALUATION_ENABLED &&
+    !['true', 'false'].includes(env.WARKA_RETENTION_EVALUATION_ENABLED)
+  )
+    throw new Error('Invalid retention evaluation setting')
   const intervalMs = Number(env.WARKA_BACKUP_SCHEDULER_INTERVAL_MS ?? 60_000)
   if (
     !Number.isInteger(intervalMs) ||
@@ -46,7 +57,15 @@ export function schedulerConfiguration(
     (!/^[\da-f-]{36}$/i.test(actorId) || !databaseUrl || !storageDirectory)
   )
     throw new Error('Incomplete backup scheduler configuration')
-  return { enabled, intervalMs, actorId, databaseUrl, storageDirectory }
+  return {
+    enabled,
+    backupEnabled,
+    intervalMs,
+    actorId,
+    databaseUrl,
+    storageDirectory,
+    retentionEvaluationEnabled,
+  }
 }
 
 export interface SchedulerLock {
@@ -92,11 +111,60 @@ export class BackupScheduler {
     ),
     private readonly backup: typeof executeBackup = executeBackup,
     private readonly verify: typeof verifyBackup = verifyBackup,
+    private readonly evaluateRetention: typeof evaluateConfiguredRetentionPolicy = evaluateConfiguredRetentionPolicy,
   ) {}
+
+  private async evaluateRetentionPolicies(now: Date) {
+    if (!this.config.retentionEvaluationEnabled) return
+    await requireOperator(this.database, this.config.actorId)
+    const policies = await this.database.retentionPolicy.findMany({
+      select: {
+        id: true,
+        organizationId: true,
+        category: true,
+        retentionDays: true,
+      },
+    })
+    for (const policy of policies) {
+      const latest = await this.database.scheduledTaskExecution.findFirst({
+        where: {
+          taskType: 'retentionEvaluation',
+          scope: policy.organizationId,
+          resourceId: policy.id,
+        },
+        orderBy: { scheduledFor: 'desc' },
+        select: { scheduledFor: true },
+      })
+      if (latest && now.getTime() - latest.scheduledFor.getTime() < 86_400_000)
+        continue
+      const execution = await startScheduledTask(
+        this.database,
+        'retentionEvaluation',
+        policy.organizationId,
+        now,
+        policy.id,
+      )
+      try {
+        const result = await this.evaluateRetention(this.database, policy, now)
+        await completeScheduledTask(this.database, execution.id, policy.id, {
+          eligibleCount: result.eligibleCount,
+          oldestEligibleAt: result.oldestEligibleAt,
+        })
+      } catch {
+        await failScheduledTask(
+          this.database,
+          execution.id,
+          'RETENTION_EVALUATION_FAILED',
+        )
+      }
+    }
+  }
 
   async tick(now = new Date()) {
     if (!this.config.enabled || this.stopped || this.running) return
     const work = this.lock.run(async () => {
+      await this.evaluateRetentionPolicies(now)
+      if (!this.config.backupEnabled) return
       const policy = await this.database.backupPolicy.findUnique({
         where: { id: 'database' },
       })

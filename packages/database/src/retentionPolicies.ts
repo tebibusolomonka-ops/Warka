@@ -187,6 +187,34 @@ async function eligibleRecords(
   return { count: result._count, oldest: result._min.createdAt }
 }
 
+export async function evaluateConfiguredRetentionPolicy(
+  database: PrismaClient,
+  policy: {
+    organizationId: string
+    category: RetentionCategory
+    retentionDays: number
+  },
+  evaluatedAt = new Date(),
+) {
+  const cutoff = new Date(
+    evaluatedAt.getTime() - policy.retentionDays * 24 * 60 * 60 * 1000,
+  )
+  const eligible = await eligibleRecords(
+    database,
+    policy.organizationId,
+    policy.category,
+    cutoff,
+  )
+  return {
+    category: policy.category,
+    retentionDays: policy.retentionDays,
+    evaluatedAt,
+    cutoff,
+    eligibleCount: eligible.count,
+    oldestEligibleAt: eligible.oldest,
+  }
+}
+
 export async function evaluateRetention(
   database: PrismaClient,
   actorUserId: string,
@@ -206,23 +234,7 @@ export async function evaluateRetention(
     },
   })
   if (!policy) throw new RetentionPolicyNotFoundError()
-  const cutoff = new Date(
-    evaluatedAt.getTime() - policy.retentionDays * 24 * 60 * 60 * 1000,
-  )
-  const eligible = await eligibleRecords(
-    database,
-    organizationId,
-    checkedCategory,
-    cutoff,
-  )
-  return {
-    category: checkedCategory,
-    retentionDays: policy.retentionDays,
-    evaluatedAt,
-    cutoff,
-    eligibleCount: eligible.count,
-    oldestEligibleAt: eligible.oldest,
-  }
+  return evaluateConfiguredRetentionPolicy(database, policy, evaluatedAt)
 }
 
 export type { RetentionPolicy } from '@prisma/client'

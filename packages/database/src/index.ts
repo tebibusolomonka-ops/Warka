@@ -42,6 +42,7 @@ export {
   completeScheduledTask,
   failScheduledTask,
 } from './scheduledTaskExecutions.js'
+export { evaluateConfiguredRetentionPolicy } from './retentionPolicies.js'
 export {
   createPendingBackup,
   startBackup,

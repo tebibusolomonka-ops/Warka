@@ -31,13 +31,20 @@ export async function completeScheduledTask(
   database: PrismaClient,
   id: string,
   resourceId?: string,
+  summary?: { eligibleCount: number; oldestEligibleAt: Date | null },
 ) {
+  if (
+    summary &&
+    (!Number.isInteger(summary.eligibleCount) || summary.eligibleCount < 0)
+  )
+    throw new Error('Invalid scheduled task summary')
   const result = await database.scheduledTaskExecution.updateMany({
     where: { id, status: 'running' },
     data: {
       status: 'completed',
       completedAt: new Date(),
       resourceId: resourceId ?? null,
+      ...(summary ? summary : {}),
     },
   })
   if (result.count !== 1) throw new Error('Scheduled task is not running')

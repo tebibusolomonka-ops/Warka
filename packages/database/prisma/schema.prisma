@@ -311,6 +311,7 @@ enum BackupFrequency {
 enum ScheduledTaskType {
   backup
   backupVerification
+  retentionEvaluation
 }
 
 enum ScheduledTaskStatus {
@@ -532,6 +533,8 @@ model ScheduledTaskExecution {
   status ScheduledTaskStatus @default(pending)
   attempt Int @default(1)
   failureCode String?
+  eligibleCount Int?
+  oldestEligibleAt DateTime?
   createdAt DateTime @default(now())
 
   @@index([taskType, scope, scheduledFor])
