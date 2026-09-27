@@ -1,5 +1,6 @@
 import type { FastifyInstance, preHandlerHookHandler } from 'fastify'
 import {
+  effectiveMembershipWhere,
   AccessReviewDecisionSchema,
   approveSupportAccess,
   AuditActionSchema,
@@ -69,7 +70,10 @@ async function requireSchoolAuditAdministrator(
   const [school, membership] = await Promise.all([
     database.school.findFirst({ where: { id: schoolId, organizationId } }),
     database.schoolMembership.findUnique({
-      where: { userId_schoolId: { userId: actorUserId, schoolId } },
+      where: {
+        ...effectiveMembershipWhere(),
+        userId_schoolId: { userId: actorUserId, schoolId },
+      },
     }),
   ])
   if (!school || membership?.role !== 'administrator')

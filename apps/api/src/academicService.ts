@@ -1,4 +1,5 @@
 import {
+  effectiveMembershipWhere,
   applyMarkImport,
   assignTeacher,
   correctPublishedResult,
@@ -83,7 +84,11 @@ export function prismaAcademicService(database: PrismaClient) {
           }),
           role === 'administrator'
             ? database.schoolMembership.findMany({
-                where: { schoolId, role: { in: ['teacher', 'administrator'] } },
+                where: {
+                  schoolId,
+                  role: { in: ['teacher', 'administrator'] },
+                  ...effectiveMembershipWhere(),
+                },
                 include: { user: { select: { id: true, displayName: true } } },
               })
             : Promise.resolve([]),

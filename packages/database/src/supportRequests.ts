@@ -1,3 +1,4 @@
+import { effectiveMembershipWhere } from './membershipPeriods.js'
 import type { PrismaClient } from '@prisma/client'
 import { z } from 'zod'
 import { recordAuditEvent } from './auditEvents.js'
@@ -33,6 +34,7 @@ export async function requireSchoolSupportUser(
 ) {
   const membership = await database.schoolMembership.findUnique({
     where: {
+      ...effectiveMembershipWhere(),
       userId_schoolId: {
         userId: z.uuid().parse(actorId),
         schoolId: z.uuid().parse(schoolId),

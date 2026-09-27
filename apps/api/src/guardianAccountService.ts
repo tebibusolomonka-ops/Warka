@@ -1,5 +1,6 @@
 import { hashPassword } from '@warka/auth'
 import {
+  effectiveMembershipWhere,
   createUser,
   DuplicateEmailError,
   DuplicateGuardianAccessError,
@@ -77,7 +78,10 @@ export function prismaGuardianAccountService(
       await Promise.all([
         hasOrganizationAdminRole(database, actorId, school.organizationId),
         database.schoolMembership.findUnique({
-          where: { userId_schoolId: { userId: actorId, schoolId } },
+          where: {
+            ...effectiveMembershipWhere(),
+            userId_schoolId: { userId: actorId, schoolId },
+          },
         }),
         database.studentGuardian.findFirst({
           where: {

@@ -1,3 +1,4 @@
+import { effectiveMembershipWhere } from './membershipPeriods.js'
 import { randomBytes } from 'node:crypto'
 import { Prisma, type PrismaClient } from '@prisma/client'
 import { z } from 'zod'
@@ -28,7 +29,10 @@ export async function assistAccountRecovery(
   const [organizationAdmin, schoolAdmin] = await Promise.all([
     hasOrganizationAdminRole(database, actorUserId, school.organizationId),
     database.schoolMembership.findUnique({
-      where: { userId_schoolId: { userId: actorUserId, schoolId } },
+      where: {
+        ...effectiveMembershipWhere(),
+        userId_schoolId: { userId: actorUserId, schoolId },
+      },
     }),
   ])
   if (!organizationAdmin && schoolAdmin?.role !== 'administrator')
@@ -37,7 +41,11 @@ export async function assistAccountRecovery(
     where: {
       id: targetUserId,
       OR: [
-        { schoolMemberships: { some: { schoolId } } },
+        {
+          schoolMemberships: {
+            some: { schoolId, ...effectiveMembershipWhere() },
+          },
+        },
         {
           studentAccess: {
             is: { student: { enrollments: { some: { schoolId } } } },

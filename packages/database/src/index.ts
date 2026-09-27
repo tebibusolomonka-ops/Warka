@@ -717,3 +717,8 @@ export {
 } from './supportRouting.js'
 
 export { listSupportCaseSchools } from './supportRouting.js'
+
+export {
+  isMembershipEffective,
+  effectiveMembershipWhere,
+} from './membershipPeriods.js'

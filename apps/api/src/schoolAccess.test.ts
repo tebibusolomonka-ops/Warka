@@ -31,7 +31,15 @@ function accessFor(
       findUnique: vi.fn().mockImplementation(async ({ where }) => {
         const { userId, organizationId: id } = where.userId_organizationId
         const role = organizationRoles.get(`${userId}:${id}`)
-        return role ? { userId, organizationId: id, role } : null
+        return role
+          ? {
+              userId,
+              organizationId: id,
+              role,
+              startsAt: new Date(0),
+              endsAt: null,
+            }
+          : null
       }),
       findMany: vi.fn().mockImplementation(async ({ where }) => {
         const role = organizationRoles.get(`${where.userId}:${organizationId}`)
@@ -53,7 +61,9 @@ function accessFor(
       findUnique: vi.fn().mockImplementation(async ({ where }) => {
         const { userId, schoolId: id } = where.userId_schoolId
         const role = schoolRoles.get(`${userId}:${id}`)
-        return role ? { userId, schoolId: id, role } : null
+        return role
+          ? { userId, schoolId: id, role, startsAt: new Date(0), endsAt: null }
+          : null
       }),
     },
   } as unknown as PrismaClient

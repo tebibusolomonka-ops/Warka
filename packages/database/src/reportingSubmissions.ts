@@ -1,3 +1,4 @@
+import { effectiveMembershipWhere } from './membershipPeriods.js'
 import { Prisma, type PrismaClient } from '@prisma/client'
 import { z } from 'zod'
 import { recordAuditEvent } from './auditEvents.js'
@@ -24,7 +25,10 @@ async function requireSchoolSubmitter(
   schoolId: string,
 ) {
   const membership = await database.schoolMembership.findUnique({
-    where: { userId_schoolId: { userId, schoolId } },
+    where: {
+      ...effectiveMembershipWhere(),
+      userId_schoolId: { userId, schoolId },
+    },
   })
   if (!membership || !['administrator', 'registrar'].includes(membership.role))
     throw new ReportingSubmissionError('School reporting permission denied')
@@ -123,6 +127,7 @@ export async function approveSchoolReport(
       where: {
         schoolId: submission.schoolId,
         role: { in: ['administrator', 'registrar'] },
+        ...effectiveMembershipWhere(),
       },
       select: { userId: true },
     })
@@ -187,6 +192,7 @@ export async function returnSchoolReport(
       where: {
         schoolId: submission.schoolId,
         role: { in: ['administrator', 'registrar'] },
+        ...effectiveMembershipWhere(),
       },
       select: { userId: true },
     })

@@ -1,3 +1,4 @@
+import { effectiveMembershipWhere } from './membershipPeriods.js'
 import type { PrismaClient } from '@prisma/client'
 import { z } from 'zod'
 import { requireAcademicYearAdmin } from './academicYearClosing.js'
@@ -60,7 +61,7 @@ export async function listOnboardingChecklist(
   ] = await Promise.all([
     database.schoolDocumentProfile.count({ where: { schoolId } }),
     database.schoolMembership.count({
-      where: { schoolId, role: 'administrator' },
+      where: { schoolId, role: 'administrator', ...effectiveMembershipWhere() },
     }),
     database.academicYear.count({ where: { schoolId } }),
     database.gradeLevel.count({ where: { schoolId } }),

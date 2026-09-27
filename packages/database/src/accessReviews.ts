@@ -1,3 +1,4 @@
+import { effectiveMembershipWhere } from './membershipPeriods.js'
 import {
   type AccessReviewDecision,
   type AccessReviewEntry,
@@ -35,6 +36,7 @@ async function requireAccessReviewAuthority(
   const organizationMembership =
     await database.organizationMembership.findUnique({
       where: {
+        ...effectiveMembershipWhere(),
         userId_organizationId: { userId: actorUserId, organizationId },
       },
     })
@@ -47,7 +49,10 @@ async function requireAccessReviewAuthority(
     const [school, schoolMembership] = await Promise.all([
       database.school.findFirst({ where: { id: schoolId, organizationId } }),
       database.schoolMembership.findUnique({
-        where: { userId_schoolId: { userId: actorUserId, schoolId } },
+        where: {
+          ...effectiveMembershipWhere(),
+          userId_schoolId: { userId: actorUserId, schoolId },
+        },
       }),
     ])
     if (school && schoolMembership?.role === 'administrator') return

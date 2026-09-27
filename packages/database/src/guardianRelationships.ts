@@ -1,3 +1,4 @@
+import { effectiveMembershipWhere } from './membershipPeriods.js'
 import { z } from 'zod'
 import type { PrismaClient, StudentGuardian } from '@prisma/client'
 import { recordAuditEvent } from './auditEvents.js'
@@ -48,7 +49,10 @@ async function requireRelationshipAuthority(
     school.organizationId,
   )
   const schoolMembership = await database.schoolMembership.findUnique({
-    where: { userId_schoolId: { userId: actorId, schoolId } },
+    where: {
+      ...effectiveMembershipWhere(),
+      userId_schoolId: { userId: actorId, schoolId },
+    },
   })
   if (
     !organizationAdmin &&

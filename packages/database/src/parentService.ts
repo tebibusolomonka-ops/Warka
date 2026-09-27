@@ -1,3 +1,4 @@
+import { effectiveMembershipWhere } from './membershipPeriods.js'
 import type { PrismaClient, SchoolServiceAccess } from '@prisma/client'
 import { recordAuditEvent } from './auditEvents.js'
 import { hasOrganizationAdminRole } from './organizationMemberships.js'
@@ -22,7 +23,10 @@ async function requireSchoolAdministrator(
     school.organizationId,
   )
   const schoolMember = await database.schoolMembership.findUnique({
-    where: { userId_schoolId: { userId: actorId, schoolId } },
+    where: {
+      ...effectiveMembershipWhere(),
+      userId_schoolId: { userId: actorId, schoolId },
+    },
   })
   if (!organizationAdmin && schoolMember?.role !== 'administrator') {
     throw new ParentServicePermissionError()

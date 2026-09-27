@@ -1,3 +1,7 @@
+import {
+  effectiveMembershipWhere,
+  isMembershipEffective,
+} from './membershipPeriods.js'
 import { Prisma, type AccountStatus, type PrismaClient } from '@prisma/client'
 import { z } from 'zod'
 import { recordAuditEvent } from './auditEvents.js'
@@ -45,6 +49,7 @@ export async function changeAccountStatus(
       const [organizationMembership, schoolMembership] = await Promise.all([
         transaction.organizationMembership.findUnique({
           where: {
+            ...effectiveMembershipWhere(),
             userId_organizationId: {
               userId: actorUserId,
               organizationId: school.organizationId,
@@ -52,7 +57,10 @@ export async function changeAccountStatus(
           },
         }),
         transaction.schoolMembership.findUnique({
-          where: { userId_schoolId: { userId: actorUserId, schoolId } },
+          where: {
+            ...effectiveMembershipWhere(),
+            userId_schoolId: { userId: actorUserId, schoolId },
+          },
         }),
       ])
       if (
@@ -62,7 +70,11 @@ export async function changeAccountStatus(
         schoolMembership?.role !== 'administrator'
       )
         throw new AccountLifecyclePermissionError()
-      if (!target.schoolMemberships.some((item) => item.schoolId === schoolId))
+      if (
+        !target.schoolMemberships.some(
+          (item) => item.schoolId === schoolId && isMembershipEffective(item),
+        )
+      )
         throw new AccountLifecyclePermissionError()
       if (target.accountStatus === status) return target
       const updated = await transaction.user.update({

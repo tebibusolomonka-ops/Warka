@@ -1,4 +1,5 @@
 import {
+  effectiveMembershipWhere,
   findStudentAccessForUser,
   recordAuditEvent,
   type IssuedDocument,
@@ -31,7 +32,10 @@ export function prismaDocumentDownloadService(
       const student = await findStudentAccessForUser(database, actorId)
       if (student?.studentId === document.studentId) return document
       const staff = await database.schoolMembership.findUnique({
-        where: { userId_schoolId: { userId: actorId, schoolId } },
+        where: {
+          ...effectiveMembershipWhere(),
+          userId_schoolId: { userId: actorId, schoolId },
+        },
       })
       if (
         !staff ||

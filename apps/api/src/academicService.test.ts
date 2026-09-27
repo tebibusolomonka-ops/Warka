@@ -42,7 +42,7 @@ function fixture() {
         .mockImplementation(async ({ where }) =>
           where.userId_organizationId.userId === ownerId &&
           where.userId_organizationId.organizationId === organizationId
-            ? { role: 'owner' }
+            ? { role: 'owner', startsAt: new Date(0), endsAt: null }
             : null,
         ),
     },
@@ -55,7 +55,7 @@ function fixture() {
           [registrarId]: 'registrar',
         }
         const role = roles[where.userId_schoolId.userId]
-        return role ? { role } : null
+        return role ? { role, startsAt: new Date(0), endsAt: null } : null
       }),
     },
     teachingAssignment: {

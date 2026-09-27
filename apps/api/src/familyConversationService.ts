@@ -1,5 +1,9 @@
 import type { FamilyConversation, PrismaClient } from '@warka/database'
-import { createNotifications, hasOrganizationAdminRole } from '@warka/database'
+import {
+  createNotifications,
+  effectiveMembershipWhere,
+  hasOrganizationAdminRole,
+} from '@warka/database'
 import { z } from 'zod'
 import {
   eligibleParentChildren,
@@ -47,7 +51,10 @@ export function prismaFamilyConversationService(database: PrismaClient) {
     )
       return 'leadership' as const
     const member = await database.schoolMembership.findUnique({
-      where: { userId_schoolId: { userId: actorId, schoolId } },
+      where: {
+        ...effectiveMembershipWhere(),
+        userId_schoolId: { userId: actorId, schoolId },
+      },
     })
     return member?.role ?? null
   }
@@ -135,7 +142,11 @@ export function prismaFamilyConversationService(database: PrismaClient) {
           schoolClassId: target.schoolClassId,
           user: {
             schoolMemberships: {
-              some: { schoolId: target.schoolId, role: 'teacher' },
+              some: {
+                schoolId: target.schoolId,
+                role: 'teacher',
+                ...effectiveMembershipWhere(),
+              },
             },
           },
         },
@@ -322,6 +333,7 @@ export function prismaFamilyConversationService(database: PrismaClient) {
                     where: {
                       schoolId: conversation.schoolId,
                       role: { in: ['administrator', 'registrar'] },
+                      ...effectiveMembershipWhere(),
                     },
                     select: { userId: true },
                   })

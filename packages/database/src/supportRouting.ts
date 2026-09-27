@@ -1,3 +1,4 @@
+import { effectiveMembershipWhere } from './membershipPeriods.js'
 import type { PrismaClient } from '@prisma/client'
 import { z } from 'zod'
 import { checkSupportAccess } from './supportAccess.js'
@@ -10,7 +11,10 @@ import { createNotification } from './notifications.js'
 
 async function role(database: PrismaClient, actorId: string, schoolId: string) {
   const membership = await database.schoolMembership.findUnique({
-    where: { userId_schoolId: { userId: actorId, schoolId } },
+    where: {
+      ...effectiveMembershipWhere(),
+      userId_schoolId: { userId: actorId, schoolId },
+    },
   })
   if (membership) return 'school' as const
   const identity = await database.supportIdentity.findUnique({
@@ -162,7 +166,10 @@ export async function closeSupportRequest(
   requestId: string,
 ) {
   const membership = await database.schoolMembership.findUnique({
-    where: { userId_schoolId: { userId: actorId, schoolId } },
+    where: {
+      ...effectiveMembershipWhere(),
+      userId_schoolId: { userId: actorId, schoolId },
+    },
   })
   if (!membership) throw new SupportRequestPermissionError()
   const request = await database.supportRequest.findFirst({

@@ -1,3 +1,4 @@
+import { effectiveMembershipWhere } from './membershipPeriods.js'
 import type { PrismaClient } from '@prisma/client'
 import { z } from 'zod'
 import { recordAuditEvent } from './auditEvents.js'
@@ -34,7 +35,10 @@ async function requireSchoolAdministrator(
   const [organizationAdministrator, membership] = await Promise.all([
     hasOrganizationAdminRole(database, actorUserId, school.organizationId),
     database.schoolMembership.findUnique({
-      where: { userId_schoolId: { userId: actorUserId, schoolId } },
+      where: {
+        ...effectiveMembershipWhere(),
+        userId_schoolId: { userId: actorUserId, schoolId },
+      },
     }),
   ])
   if (!organizationAdministrator && membership?.role !== 'administrator')

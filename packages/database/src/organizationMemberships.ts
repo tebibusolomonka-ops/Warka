@@ -7,6 +7,10 @@ import {
 } from '@prisma/client'
 import { z } from 'zod'
 import { recordAuditEvent } from './auditEvents.js'
+import {
+  effectiveMembershipWhere,
+  isMembershipEffective,
+} from './membershipPeriods.js'
 
 export const OrganizationRoleSchema = z.enum(['owner', 'administrator'])
 
@@ -14,6 +18,8 @@ export type CreateOrganizationMembership = {
   userId: string
   organizationId: string
   role: OrganizationRole
+  startsAt?: Date
+  endsAt?: Date | null
 }
 
 export type OrganizationAccess = {
@@ -33,6 +39,8 @@ export async function createOrganizationMembership(
   actorUserId?: string,
 ): Promise<OrganizationMembership> {
   const role = OrganizationRoleSchema.parse(data.role)
+  if (data.endsAt && data.endsAt <= (data.startsAt ?? new Date()))
+    throw new Error('Membership end must follow its start')
   try {
     if (!actorUserId)
       return await database.organizationMembership.create({
@@ -63,14 +71,15 @@ export async function createOrganizationMembership(
   }
 }
 
-export function findOrganizationMembership(
+export async function findOrganizationMembership(
   database: PrismaClient,
   userId: string,
   organizationId: string,
 ): Promise<OrganizationMembership | null> {
-  return database.organizationMembership.findUnique({
+  const membership = await database.organizationMembership.findUnique({
     where: { userId_organizationId: { userId, organizationId } },
   })
+  return isMembershipEffective(membership) ? membership : null
 }
 
 export async function listOrganizationsForUser(
@@ -78,7 +87,7 @@ export async function listOrganizationsForUser(
   userId: string,
 ): Promise<OrganizationAccess[]> {
   const memberships = await database.organizationMembership.findMany({
-    where: { userId },
+    where: { userId, ...effectiveMembershipWhere() },
     include: { organization: true },
     orderBy: [{ organization: { name: 'asc' } }, { organizationId: 'asc' }],
   })

@@ -1,3 +1,4 @@
+import { effectiveMembershipWhere } from './membershipPeriods.js'
 import type { PrismaClient } from '@prisma/client'
 import { z } from 'zod'
 import { requireAcademicYearAdmin } from './academicYearClosing.js'
@@ -38,7 +39,10 @@ export async function assignTrainingRecord(
   await requireAcademicYearAdmin(database, actorId, schoolId)
   const type = TrainingTypeSchema.parse(trainingType)
   const member = await database.schoolMembership.findUnique({
-    where: { userId_schoolId: { userId: z.uuid().parse(userId), schoolId } },
+    where: {
+      ...effectiveMembershipWhere(),
+      userId_schoolId: { userId: z.uuid().parse(userId), schoolId },
+    },
   })
   if (!member) throw new TrainingRecordStateError()
   return database.$transaction(async (transaction) => {

@@ -1,3 +1,4 @@
+import { effectiveMembershipWhere } from './membershipPeriods.js'
 import type { ImportIssueSeverity, PrismaClient } from '@prisma/client'
 import { z } from 'zod'
 import { hasOrganizationAdminRole } from './organizationMemberships.js'
@@ -80,7 +81,10 @@ export async function requireSchoolImportPermission(
   )
     return
   const membership = await database.schoolMembership.findUnique({
-    where: { userId_schoolId: { userId: actorUserId, schoolId } },
+    where: {
+      ...effectiveMembershipWhere(),
+      userId_schoolId: { userId: actorUserId, schoolId },
+    },
   })
   if (!membership || !['administrator', 'registrar'].includes(membership.role))
     throw new ImportPermissionError()

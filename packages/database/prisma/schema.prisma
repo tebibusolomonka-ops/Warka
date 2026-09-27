@@ -338,6 +338,8 @@ model OrganizationMembership {
   userId         String
   organizationId String
   role           OrganizationRole
+  startsAt       DateTime         @default(now())
+  endsAt         DateTime?
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
   user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -351,6 +353,8 @@ model SchoolMembership {
   userId    String
   schoolId  String
   role      SchoolRole
+  startsAt  DateTime   @default(now())
+  endsAt    DateTime?
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
   user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)

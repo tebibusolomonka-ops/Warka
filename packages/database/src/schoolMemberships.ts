@@ -8,6 +8,10 @@ import {
 } from '@prisma/client'
 import { z } from 'zod'
 import { recordAuditEvent } from './auditEvents.js'
+import {
+  effectiveMembershipWhere,
+  isMembershipEffective,
+} from './membershipPeriods.js'
 
 export const SchoolRoleSchema = z.enum([
   'administrator',
@@ -20,6 +24,8 @@ export type CreateSchoolMembership = {
   userId: string
   schoolId: string
   role: SchoolRole
+  startsAt?: Date
+  endsAt?: Date | null
 }
 
 export type SchoolAssignment = {
@@ -44,6 +50,8 @@ export async function assignUserToSchool(
   actorUserId?: string,
 ): Promise<SchoolMembership> {
   const role = SchoolRoleSchema.parse(data.role)
+  if (data.endsAt && data.endsAt <= (data.startsAt ?? new Date()))
+    throw new Error('Membership end must follow its start')
   try {
     if (!actorUserId)
       return await database.schoolMembership.create({
@@ -74,14 +82,15 @@ export async function assignUserToSchool(
   }
 }
 
-export function findSchoolMembership(
+export async function findSchoolMembership(
   database: PrismaClient,
   userId: string,
   schoolId: string,
 ): Promise<SchoolMembership | null> {
-  return database.schoolMembership.findUnique({
+  const membership = await database.schoolMembership.findUnique({
     where: { userId_schoolId: { userId, schoolId } },
   })
+  return isMembershipEffective(membership) ? membership : null
 }
 
 export async function listSchoolAssignmentsForUser(
@@ -89,7 +98,7 @@ export async function listSchoolAssignmentsForUser(
   userId: string,
 ): Promise<SchoolAssignment[]> {
   const memberships = await database.schoolMembership.findMany({
-    where: { userId },
+    where: { userId, ...effectiveMembershipWhere() },
     include: { school: true },
     orderBy: [{ school: { name: 'asc' } }, { schoolId: 'asc' }],
   })
@@ -101,7 +110,7 @@ export async function listStaffAssignmentsForSchool(
   schoolId: string,
 ): Promise<StaffAssignment[]> {
   const memberships = await database.schoolMembership.findMany({
-    where: { schoolId },
+    where: { schoolId, ...effectiveMembershipWhere() },
     include: { user: true },
     orderBy: [{ user: { email: 'asc' } }, { userId: 'asc' }],
   })

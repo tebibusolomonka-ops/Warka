@@ -1,0 +1,10 @@
+ALTER TABLE "OrganizationMembership" ADD COLUMN "startsAt" TIMESTAMP(3);
+ALTER TABLE "OrganizationMembership" ADD COLUMN "endsAt" TIMESTAMP(3);
+UPDATE "OrganizationMembership" SET "startsAt" = "createdAt";
+ALTER TABLE "OrganizationMembership" ALTER COLUMN "startsAt" SET NOT NULL;
+ALTER TABLE "OrganizationMembership" ALTER COLUMN "startsAt" SET DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE "SchoolMembership" ADD COLUMN "startsAt" TIMESTAMP(3);
+ALTER TABLE "SchoolMembership" ADD COLUMN "endsAt" TIMESTAMP(3);
+UPDATE "SchoolMembership" SET "startsAt" = "createdAt";
+ALTER TABLE "SchoolMembership" ALTER COLUMN "startsAt" SET NOT NULL;
+ALTER TABLE "SchoolMembership" ALTER COLUMN "startsAt" SET DEFAULT CURRENT_TIMESTAMP;

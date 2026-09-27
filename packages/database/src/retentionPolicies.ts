@@ -1,3 +1,4 @@
+import { effectiveMembershipWhere } from './membershipPeriods.js'
 import type { PrismaClient, RetentionCategory } from '@prisma/client'
 import { z } from 'zod'
 import { recordAuditEvent } from './auditEvents.js'
@@ -35,6 +36,7 @@ async function requireRetentionAdministrator(
 ) {
   const membership = await database.organizationMembership.findUnique({
     where: {
+      ...effectiveMembershipWhere(),
       userId_organizationId: { userId: actorUserId, organizationId },
     },
   })

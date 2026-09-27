@@ -1,5 +1,6 @@
 import type { FastifyInstance, preHandlerHookHandler } from 'fastify'
 import {
+  effectiveMembershipWhere,
   hasOrganizationAdminRole,
   revokeGuardianRelationship,
   verifyGuardianRelationship,
@@ -32,7 +33,10 @@ export function registerGuardianRelationshipRoutes(
         where: { id: schoolId },
       })
       const member = await database.schoolMembership.findUnique({
-        where: { userId_schoolId: { userId: actorId, schoolId } },
+        where: {
+          ...effectiveMembershipWhere(),
+          userId_schoolId: { userId: actorId, schoolId },
+        },
       })
       const authorized =
         school &&
