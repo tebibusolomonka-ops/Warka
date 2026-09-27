@@ -722,3 +722,8 @@ export {
   isMembershipEffective,
   effectiveMembershipWhere,
 } from './membershipPeriods.js'
+
+export {
+  offboardStaff,
+  StaffOffboardingPermissionError,
+} from './staffOffboarding.js'

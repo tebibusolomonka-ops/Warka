@@ -24,6 +24,7 @@ export const AuditActionSchema = z.enum([
   'guardianAccount.provisioned',
   'membership.changed',
   'schoolStaff.assigned',
+  'schoolStaff.offboarded',
   'guardianRelationship.verified',
   'guardianRelationship.revoked',
   'result.published',
