@@ -64,6 +64,8 @@ export const AuditActionSchema = z.enum([
   'schoolData.exported',
   'schoolDocumentProfile.updated',
   'fileAsset.quarantined',
+  'fileAsset.rescanRequested',
+  'fileAsset.quarantineRemoved',
   'documentRequest.processing',
   'documentRequest.issued',
   'documentRequest.rejected',
