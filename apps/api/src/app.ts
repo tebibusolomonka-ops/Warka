@@ -92,6 +92,7 @@ import { registerOperationsRoutes } from './operationsRoutes.js'
 import { registerQuarantineRoutes } from './quarantineRoutes.js'
 import { registerEmailAdministrationRoutes } from './emailAdministrationRoutes.js'
 import { registerCommunicationPreferenceRoutes } from './communicationPreferenceRoutes.js'
+import { registerCommunicationDeliveryRoutes } from './communicationDeliveryRoutes.js'
 import { registerSearchRoutes } from './searchRoutes.js'
 import { registerResponseCompression } from './responseCompression.js'
 import { installDefaultCachePolicy } from './cachePolicy.js'
@@ -368,6 +369,7 @@ export function buildApp(
     registerQuarantineRoutes(app, getDatabase, authenticate)
     registerEmailAdministrationRoutes(app, getDatabase, authenticate)
     registerCommunicationPreferenceRoutes(app, getDatabase, authenticate)
+    registerCommunicationDeliveryRoutes(app, getDatabase, authenticate)
     registerSearchRoutes(app, getDatabase, authenticate)
     registerSchedulerRoutes(app, getDatabase, authenticate)
     registerSupportRequestRoutes(app, getDatabase, authenticate)
