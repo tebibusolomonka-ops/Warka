@@ -12,15 +12,13 @@ function fixture(owner: boolean) {
       findFirst: vi.fn().mockResolvedValue(owner ? { userId: actorId } : null),
     },
     backupRecord: {
-      findFirst: vi
-        .fn()
-        .mockResolvedValue({
-          id: 'backup',
-          status: 'verified',
-          createdAt: new Date(),
-          verifiedAt: new Date(),
-          verificationResult: 'passed',
-        }),
+      findFirst: vi.fn().mockResolvedValue({
+        id: 'backup',
+        status: 'verified',
+        createdAt: new Date(),
+        verifiedAt: new Date(),
+        verificationResult: 'passed',
+      }),
     },
     restoreRehearsal: { findFirst: vi.fn().mockResolvedValue(null) },
     operationalIncident: { findMany: vi.fn().mockResolvedValue([]) },

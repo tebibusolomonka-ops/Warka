@@ -89,6 +89,7 @@ import { checkReadiness } from './readiness.js'
 import { installRequestLogging, writeRequestLog } from './requestLogging.js'
 import { ServiceMetrics, registerMetricsRoutes } from './serviceMetrics.js'
 import { registerOperationsRoutes } from './operationsRoutes.js'
+import { operationsTestActions } from './operationsTestAdapter.js'
 import { OperationsPermissionError } from './operationsAccess.js'
 import { registerSchoolContactRoutes } from './schoolContactRoutes.js'
 import { registerSupportRequestRoutes } from './supportRequestRoutes.js'
@@ -302,7 +303,9 @@ export function buildApp(
   app.get('/health', async () => HealthResponseSchema.parse({ status: 'ok' }))
   app.get('/ready', async (_request, reply) => {
     const readiness = await checkReadiness({ database: getDatabase() })
-    return reply.code(readiness.status === 'ready' ? 200 : 503).send(readiness)
+    return reply
+      .code(readiness.status === 'ready' ? 200 : 503)
+      .send({ status: readiness.status })
   })
   if (testRecoveryEnabled)
     app.get('/__test/recovery-token/:email', async (request, reply) => {
@@ -338,7 +341,7 @@ export function buildApp(
   registerPrivacyRoutes(app, getDatabase, authenticate)
   registerDataGovernanceRoutes(app, getDatabase, authenticate)
   registerStaffAccessRoutes(app, getDatabase, authenticate)
-  registerBackupRoutes(app, getDatabase, authenticate)
+  registerBackupRoutes(app, getDatabase, authenticate, operationsTestActions())
   registerMetricsRoutes(app, getDatabase, authenticate, metrics)
   registerOperationsRoutes(app, getDatabase, authenticate, metrics)
   registerSupportRequestRoutes(app, getDatabase, authenticate)

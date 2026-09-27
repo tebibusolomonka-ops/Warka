@@ -96,18 +96,22 @@ test('student requests access, administrator fulfills, and teacher cannot review
     await expect(
       page
         .getByLabel('My data requests')
-        .getByText('submitted', { exact: true }),
+        .locator('li')
+        .filter({ hasText: 'access · submitted' }),
     ).toBeVisible()
     const request = await database.privacyRequest.findFirstOrThrow({
       where: { requesterUserId: studentUser.id },
     })
     await page.getByRole('button', { name: 'Sign out' }).click()
+    await expect(page.getByRole('button', { name: 'Sign in' })).toBeVisible()
     await signIn(teacherEmail)
+    await expect(page.getByText('Signed in as Privacy Teacher')).toBeVisible()
     const denied = await context.request.get(
       `/api/schools/${schoolId}/privacy/requests`,
     )
     expect(denied.status()).toBe(403)
     await page.getByRole('button', { name: 'Sign out' }).click()
+    await expect(page.getByRole('button', { name: 'Sign in' })).toBeVisible()
     await signIn(adminEmail)
     await page
       .getByLabel('Privacy request review')
@@ -130,6 +134,7 @@ test('student requests access, administrator fulfills, and teacher cannot review
       )
       .toBe('fulfilled')
     await page.getByRole('button', { name: 'Sign out' }).click()
+    await expect(page.getByRole('button', { name: 'Sign in' })).toBeVisible()
     await signIn(studentEmail)
     await page.getByRole('button', { name: 'View access package' }).click()
     await expect(page.getByLabel('Access package')).toContainText('Hana')
@@ -147,11 +152,22 @@ test('student requests access, administrator fulfills, and teacher cannot review
       )
       .not.toBeNull()
     await page.getByRole('button', { name: 'Sign out' }).click()
+    await expect(page.getByRole('button', { name: 'Sign in' })).toBeVisible()
     await signIn(adminEmail)
     await page
       .getByLabel('Privacy request review')
       .getByRole('button', { name: 'Approve' })
       .click()
+    await expect
+      .poll(
+        async () =>
+          (
+            await database.privacyRequest.findFirstOrThrow({
+              where: { requesterUserId: studentUser.id, type: 'correction' },
+            })
+          ).officialCorrectionRequestId,
+      )
+      .not.toBeNull()
     const routed = await database.privacyRequest.findFirstOrThrow({
       where: { requesterUserId: studentUser.id, type: 'correction' },
     })
@@ -190,6 +206,7 @@ test('student requests access, administrator fulfills, and teacher cannot review
       ).status,
     ).toBe('approved')
     await page.getByRole('button', { name: 'Sign out' }).click()
+    await expect(page.getByRole('button', { name: 'Sign in' })).toBeVisible()
     await signIn(studentEmail)
     await expect(page.getByLabel('My data requests')).toContainText(
       `Official correction request ${routed.officialCorrectionRequestId}`,

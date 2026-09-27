@@ -27,6 +27,9 @@ export default defineConfig({
         NODE_ENV: 'test',
         RECOVERY_TEST_DELIVERY: 'enabled',
         PUBLIC_BASE_URL: 'http://127.0.0.1:4173/api',
+        BACKUP_STORAGE_DIR: '.backups/e2e',
+        WARKA_OPERATOR_USER_IDS: '717ac602-fd66-4400-9116-13a79b8cc3da',
+        OPERATIONS_TEST_ADAPTER: 'enabled',
       },
     },
     {

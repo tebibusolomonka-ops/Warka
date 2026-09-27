@@ -207,7 +207,9 @@ test('staff provisions student portal access with official records', async ({
     await expect(
       page.getByRole('heading', { name: 'Student portal' }),
     ).toBeVisible()
-    await expect(page.getByText('BROWSER-' + suffix)).toBeVisible()
+    await expect(
+      page.getByText('Student reference: BROWSER-' + suffix),
+    ).toBeVisible()
     await expect(
       page.getByRole('button', { name: 'Staff workspace' }),
     ).toHaveCount(0)

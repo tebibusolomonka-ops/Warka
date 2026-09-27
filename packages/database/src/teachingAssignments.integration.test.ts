@@ -130,6 +130,7 @@ describe.skipIf(!database)('teaching assignments in PostgreSQL', () => {
         academicYearId: firstYear.id,
         schoolClassId: schoolClass.id,
         subjectId: subject.id,
+        endsAt: new Date(Date.now() + 12 * 60 * 60 * 1000),
       }
       const assignment = await assignTeacher(database!, input)
       expect(
@@ -152,6 +153,7 @@ describe.skipIf(!database)('teaching assignments in PostgreSQL', () => {
       const future = await assignTeacher(database!, {
         ...input,
         startsAt: new Date(Date.now() + 86400000),
+        endsAt: null,
       })
       expect(future.id).not.toBe(assignment.id)
       expect(

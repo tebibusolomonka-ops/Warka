@@ -7,5 +7,6 @@
 - Student and guardian portals use their own relationship checks. Bureau access has dedicated authorization. Support access is temporary and school-scoped.
 - Notifications are persisted and scoped to recipients. Documents and published results use issued snapshots. Reporting uses named exports and scoped views. Governance includes review workflows, privacy requests, correction routing, retention holds, and non-destructive evaluation.
 - Whole-database backup metadata lives in PostgreSQL; archive bytes live behind a storage adapter. The local adapter uses a configured filesystem directory. Backup, verification, and isolated restore rehearsal run through PostgreSQL native tools with controlled arguments.
+- `/health` is liveness; `/ready` exposes only a readiness result. Detailed dependency state, backup and rehearsal summaries, incidents, maintenance, and HTTP metrics are available through operator-only APIs and the React Operations workspace. Request logs record route patterns and bounded correlation IDs without headers or bodies.
 
 See [[DomainModel]], [[Decisions]], and [[Security]].

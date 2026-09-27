@@ -201,7 +201,9 @@ test('guardian portal and school office conversation', async ({ page }) => {
     await expect(
       page.getByRole('heading', { name: 'Parent portal' }),
     ).toBeVisible()
-    await expect(page.getByText(student.studentReference)).toBeVisible()
+    await expect(
+      page.getByText(`Warka reference: ${student.studentReference}`),
+    ).toBeVisible()
     expect(
       (
         await page.request.get(
