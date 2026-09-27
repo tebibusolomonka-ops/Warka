@@ -133,6 +133,67 @@ test('student requests access, administrator fulfills, and teacher cannot review
     await signIn(studentEmail)
     await page.getByRole('button', { name: 'View access package' }).click()
     await expect(page.getByLabel('Access package')).toContainText('Hana')
+    const form = page.getByRole('form', { name: 'Submit data request' })
+    await form.getByLabel('Request type').selectOption('correction')
+    await form.getByLabel('Official field').selectOption('givenName')
+    await form.getByLabel('Proposed value').fill('Hanna')
+    await form.getByLabel('Details').fill('Correct the spelling of my name')
+    await form.getByRole('button', { name: 'Submit request' }).click()
+    await expect
+      .poll(async () =>
+        database.privacyRequest.findFirst({
+          where: { requesterUserId: studentUser.id, type: 'correction' },
+        }),
+      )
+      .not.toBeNull()
+    await page.getByRole('button', { name: 'Sign out' }).click()
+    await signIn(adminEmail)
+    await page
+      .getByLabel('Privacy request review')
+      .getByRole('button', { name: 'Approve' })
+      .click()
+    const routed = await database.privacyRequest.findFirstOrThrow({
+      where: { requesterUserId: studentUser.id, type: 'correction' },
+    })
+    expect(routed.officialCorrectionRequestId).toBeTruthy()
+    expect(
+      (await database.student.findUniqueOrThrow({ where: { id: studentId } }))
+        .givenName,
+    ).toBe('Hana')
+    expect(
+      (
+        await database.studentCorrectionRequest.findUniqueOrThrow({
+          where: { id: routed.officialCorrectionRequestId! },
+        })
+      ).status,
+    ).toBe('pending')
+    await page.getByRole('button', { name: 'Correction review' }).click()
+    await page
+      .getByLabel('Correction review queue')
+      .getByRole('button', { name: 'Approve' })
+      .click()
+    await expect
+      .poll(
+        async () =>
+          (
+            await database.student.findUniqueOrThrow({
+              where: { id: studentId },
+            })
+          ).givenName,
+      )
+      .toBe('Hanna')
+    expect(
+      (
+        await database.studentCorrectionRequest.findUniqueOrThrow({
+          where: { id: routed.officialCorrectionRequestId! },
+        })
+      ).status,
+    ).toBe('approved')
+    await page.getByRole('button', { name: 'Sign out' }).click()
+    await signIn(studentEmail)
+    await expect(page.getByLabel('My data requests')).toContainText(
+      `Official correction request ${routed.officialCorrectionRequestId}`,
+    )
   } finally {
     if (schoolId) {
       await database.auditEvent.deleteMany({ where: { schoolId } })
@@ -140,6 +201,9 @@ test('student requests access, administrator fulfills, and teacher cannot review
         where: { userId: { in: users } },
       })
       await database.privacyRequest.deleteMany({ where: { schoolId } })
+      await database.studentCorrectionRequest.deleteMany({
+        where: { schoolId },
+      })
       await database.studentAccess.deleteMany({ where: { studentId } })
       await database.enrollment.deleteMany({ where: { schoolId } })
       await database.gradeLevel.deleteMany({ where: { schoolId } })

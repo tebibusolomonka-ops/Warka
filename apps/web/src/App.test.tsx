@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -126,7 +127,9 @@ describe('authenticated web shell', () => {
     vi.mocked(getCurrentUser).mockResolvedValue(user)
     vi.mocked(getOrganizations).mockResolvedValue([])
     vi.mocked(getParentIdentity).mockResolvedValue({ displayName: 'Martha' })
-    render(<App />)
+    await act(async () => {
+      render(<App />)
+    })
     await screen.findByRole('heading', { name: 'Parent portal' })
     expect(screen.queryByRole('button', { name: 'Staff workspace' })).toBeNull()
   })

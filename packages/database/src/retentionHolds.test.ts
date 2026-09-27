@@ -18,14 +18,12 @@ function store() {
     issuedDocument: { findFirst: vi.fn() },
     retentionHold: {
       findFirst: vi.fn().mockResolvedValue(null),
-      findUnique: vi
-        .fn()
-        .mockResolvedValue({
-          id,
-          organizationId: id,
-          scope: 'student',
-          releasedAt: null,
-        }),
+      findUnique: vi.fn().mockResolvedValue({
+        id,
+        organizationId: id,
+        scope: 'student',
+        releasedAt: null,
+      }),
       create: vi.fn().mockResolvedValue({ id }),
       update: vi.fn().mockResolvedValue({ id, releasedAt: new Date() }),
     },

@@ -30,22 +30,18 @@ describe('enrollment placement correction requests', () => {
       },
       organizationMembership: { findUnique: vi.fn().mockResolvedValue(null) },
       schoolMembership: {
-        findUnique: vi
-          .fn()
-          .mockResolvedValue({
-            role: 'registrar',
-            startsAt: new Date(0),
-            endsAt: null,
-          }),
+        findUnique: vi.fn().mockResolvedValue({
+          role: 'registrar',
+          startsAt: new Date(0),
+          endsAt: null,
+        }),
       },
       enrollment: {
-        findFirst: vi
-          .fn()
-          .mockResolvedValue({
-            academicYearId: yearId,
-            gradeLevelId: randomUUID(),
-            schoolClassId: null,
-          }),
+        findFirst: vi.fn().mockResolvedValue({
+          academicYearId: yearId,
+          gradeLevelId: randomUUID(),
+          schoolClassId: null,
+        }),
         update: vi.fn(),
       },
       gradeLevel: { findFirst: vi.fn().mockResolvedValue({ id: gradeId }) },

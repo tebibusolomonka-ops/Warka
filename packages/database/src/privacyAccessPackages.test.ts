@@ -10,34 +10,30 @@ const requesterId = '123e4567-e89b-42d3-a456-426614174004'
 function store() {
   const data = {
     privacyRequest: {
-      findUnique: vi
-        .fn()
-        .mockResolvedValue({
-          id,
-          schoolId,
-          studentId,
-          requesterUserId: requesterId,
-          requesterKind: 'student',
-          type: 'access',
-          status: 'approved',
-          school: { organizationId: id },
-        }),
+      findUnique: vi.fn().mockResolvedValue({
+        id,
+        schoolId,
+        studentId,
+        requesterUserId: requesterId,
+        requesterKind: 'student',
+        type: 'access',
+        status: 'approved',
+        school: { organizationId: id },
+      }),
       update: vi.fn(),
     },
     user: {
-      findUnique: vi
-        .fn()
-        .mockImplementation(({ where }) =>
-          Promise.resolve(
-            where.id === requesterId
-              ? {
-                  displayName: 'Student',
-                  email: 'student@example.test',
-                  passwordHash: 'private',
-                }
-              : { accountStatus: 'active' },
-          ),
+      findUnique: vi.fn().mockImplementation(({ where }) =>
+        Promise.resolve(
+          where.id === requesterId
+            ? {
+                displayName: 'Student',
+                email: 'student@example.test',
+                passwordHash: 'private',
+              }
+            : { accountStatus: 'active' },
         ),
+      ),
     },
     organizationMembership: {
       findUnique: vi.fn().mockResolvedValue({ role: 'administrator' }),
@@ -45,15 +41,13 @@ function store() {
     schoolMembership: { findUnique: vi.fn().mockResolvedValue(null) },
     student: {
       findFirst: vi.fn().mockResolvedValue({ id: studentId }),
-      findUnique: vi
-        .fn()
-        .mockResolvedValue({
-          studentReference: 'WKA-1',
-          givenName: 'Hana',
-          familyName: 'Bekele',
-          dateOfBirth: null,
-          passwordHash: 'private',
-        }),
+      findUnique: vi.fn().mockResolvedValue({
+        studentReference: 'WKA-1',
+        givenName: 'Hana',
+        familyName: 'Bekele',
+        dateOfBirth: null,
+        passwordHash: 'private',
+      }),
     },
     studentAccess: { findUnique: vi.fn().mockResolvedValue({ studentId }) },
     guardianAccess: { findUnique: vi.fn() },

@@ -30,13 +30,11 @@ const database = {
   user: { findUnique: vi.fn().mockResolvedValue({ accountStatus: 'active' }) },
   organizationMembership: { findUnique: vi.fn().mockResolvedValue(null) },
   schoolMembership: {
-    findUnique: vi
-      .fn()
-      .mockImplementation(async () => ({
-        role,
-        startsAt: new Date(0),
-        endsAt: null,
-      })),
+    findUnique: vi.fn().mockImplementation(async () => ({
+      role,
+      startsAt: new Date(0),
+      endsAt: null,
+    })),
   },
   studentCorrectionRequest: {
     count: vi.fn().mockResolvedValue(0),
