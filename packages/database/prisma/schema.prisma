@@ -306,6 +306,18 @@ enum BackupFrequency {
   weekly
 }
 
+enum ScheduledTaskType {
+  backup
+}
+
+enum ScheduledTaskStatus {
+  pending
+  running
+  completed
+  failed
+  skipped
+}
+
 enum OperationalIncidentSeverity {
   low
   medium
@@ -504,6 +516,23 @@ model BackupPolicy {
   updatedById String
   updatedAt DateTime @updatedAt
   updatedBy User @relation("BackupPolicyUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
+}
+
+model ScheduledTaskExecution {
+  id String @id @default(uuid())
+  taskType ScheduledTaskType
+  scope String
+  resourceId String?
+  scheduledFor DateTime
+  startedAt DateTime?
+  completedAt DateTime?
+  status ScheduledTaskStatus @default(pending)
+  attempt Int @default(1)
+  failureCode String?
+  createdAt DateTime @default(now())
+
+  @@index([taskType, scope, scheduledFor])
+  @@index([status, createdAt])
 }
 
 model BackupRecord {

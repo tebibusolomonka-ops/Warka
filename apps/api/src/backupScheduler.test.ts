@@ -37,6 +37,10 @@ function fixture(policyEnabled = true, latest?: Date) {
         .fn()
         .mockResolvedValue(latest ? { createdAt: latest } : null),
     },
+    scheduledTaskExecution: {
+      create: vi.fn().mockResolvedValue({ id: 'execution-id' }),
+      updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+    },
   } as unknown as PrismaClient
   const lock: SchedulerLock = { run: async (work) => work() }
   const scheduler = new BackupScheduler(
@@ -80,6 +84,10 @@ describe('backup scheduler', () => {
           .mockResolvedValue({ enabled: true, frequency: 'daily' }),
       },
       backupRecord: { findFirst: vi.fn().mockResolvedValue(null) },
+      scheduledTaskExecution: {
+        create: vi.fn().mockResolvedValue({ id: 'execution-id' }),
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+      },
     } as unknown as PrismaClient
     const scheduler = new BackupScheduler(
       database,
@@ -107,6 +115,10 @@ describe('backup scheduler', () => {
           .mockResolvedValue({ enabled: true, frequency: 'daily' }),
       },
       backupRecord: { findFirst: vi.fn().mockResolvedValue(null) },
+      scheduledTaskExecution: {
+        create: vi.fn().mockResolvedValue({ id: 'execution-id' }),
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+      },
     } as unknown as PrismaClient
     const scheduler = new BackupScheduler(
       database,
@@ -133,7 +145,7 @@ describe('backup scheduler', () => {
       { run: async (work) => work() },
       backup as unknown as typeof executeBackup,
     )
-    await expect(failed.tick(now)).rejects.toThrow('Backup execution failed')
+    await expect(failed.tick(now)).rejects.toThrow('Scheduled backup failed')
   })
 
   it('does not execute when another instance holds the database lock', async () => {

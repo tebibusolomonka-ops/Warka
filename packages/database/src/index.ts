@@ -38,6 +38,11 @@ export {
   updateBackupPolicy,
 } from './backupPolicy.js'
 export {
+  startScheduledTask,
+  completeScheduledTask,
+  failScheduledTask,
+} from './scheduledTaskExecutions.js'
+export {
   createPendingBackup,
   startBackup,
   completeBackup,

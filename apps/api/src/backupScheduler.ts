@@ -1,6 +1,11 @@
 import { Client } from 'pg'
 import type { PrismaClient } from '@warka/database'
-import { backupDue } from '@warka/database'
+import {
+  backupDue,
+  startScheduledTask,
+  completeScheduledTask,
+  failScheduledTask,
+} from '@warka/database'
 import { executeBackup, LocalBackupStorage } from './backupService.js'
 import { sendOperationsAlert } from './operationsAlerts.js'
 import { requireOperator } from './operationsAccess.js'
@@ -99,16 +104,28 @@ export class BackupScheduler {
       })
       if (!backupDue(policy, latest?.createdAt ?? null, now)) return
       await requireOperator(this.database, this.config.actorId)
-      await this.backup({
-        database: this.database,
-        actorId: this.config.actorId,
-        databaseUrl: this.config.databaseUrl,
-        storage: new LocalBackupStorage(this.config.storageDirectory),
-        onFailure: (recordId) =>
-          sendOperationsAlert(this.database, 'backupFailed', recordId).then(
-            () => undefined,
-          ),
-      })
+      const execution = await startScheduledTask(
+        this.database,
+        'backup',
+        'database',
+        now,
+      )
+      try {
+        const recordId = await this.backup({
+          database: this.database,
+          actorId: this.config.actorId,
+          databaseUrl: this.config.databaseUrl,
+          storage: new LocalBackupStorage(this.config.storageDirectory),
+          onFailure: (recordId) =>
+            sendOperationsAlert(this.database, 'backupFailed', recordId).then(
+              () => undefined,
+            ),
+        })
+        await completeScheduledTask(this.database, execution.id, recordId)
+      } catch {
+        await failScheduledTask(this.database, execution.id, 'BACKUP_FAILED')
+        throw new Error('Scheduled backup failed')
+      }
     })
     this.running = work.then(() => undefined)
     try {
