@@ -295,6 +295,12 @@ enum BackupVerificationResult {
   failed
 }
 
+enum RestoreRehearsalStatus {
+  running
+  succeeded
+  failed
+}
+
 model School {
   resultSets                    ResultSet[]
   publishedResults              PublishedResult[]
@@ -344,6 +350,7 @@ model School {
 
 model User {
   createdBackups               BackupRecord[] @relation("BackupCreatedBy")
+  performedRestoreRehearsals RestoreRehearsal[] @relation("RestoreRehearsalPerformedBy")
   submittedResultSets          ResultSet[]              @relation("ResultSetSubmittedBy")
   issuedDocuments              IssuedDocument[]
   requestedTransfers           TransferRequest[]
@@ -428,9 +435,25 @@ model BackupRecord {
   verificationResult BackupVerificationResult?
   verificationReason String?
   createdBy        User         @relation("BackupCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  rehearsals       RestoreRehearsal[]
 
   @@index([createdAt])
   @@index([status, createdAt])
+}
+
+model RestoreRehearsal {
+  id String @id @default(uuid())
+  backupId String
+  startedAt DateTime @default(now())
+  completedAt DateTime?
+  status RestoreRehearsalStatus @default(running)
+  failureReason String?
+  performedById String
+  backup BackupRecord @relation(fields: [backupId], references: [id], onDelete: Restrict)
+  performedBy User @relation("RestoreRehearsalPerformedBy", fields: [performedById], references: [id], onDelete: Restrict)
+
+  @@index([backupId, startedAt])
+  @@index([status, startedAt])
 }
 
 model OrganizationMembership {
