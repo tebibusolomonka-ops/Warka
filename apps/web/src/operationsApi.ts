@@ -63,6 +63,13 @@ const status = z.object({
       counts: z.record(z.string(), z.number()),
     })
     .optional(),
+  emailDelivery: z
+    .object({
+      provider: z.enum(['available', 'unavailable', 'degraded', 'disabled']),
+      counts: z.record(z.string(), z.number()),
+      retryCount: z.number(),
+    })
+    .optional(),
 })
 const timeline = incident.extend({
   updates: z.array(
@@ -139,6 +146,29 @@ const fileScan = z.object({
   }),
 })
 export type FileSecurityScan = z.infer<typeof fileScan>
+const emailDelivery = z.object({
+  id: z.uuid(),
+  recipient: z.string(),
+  templateKey: z.string(),
+  status: z.enum(['queued', 'sending', 'sent', 'failed', 'cancelled']),
+  createdAt: date,
+  scheduledAt: date,
+  attemptCount: z.number(),
+  failureCode: z.string().nullable(),
+  retryEligible: z.boolean(),
+})
+export type EmailDeliverySummary = z.infer<typeof emailDelivery>
+export const listEmailDeliveries = async (baseUrl: string) =>
+  z
+    .object({ deliveries: z.array(emailDelivery) })
+    .parse(await requestJson(baseUrl, '/operations/email/deliveries'))
+    .deliveries
+export const retryEmailDelivery = (baseUrl: string, id: string) =>
+  requestJson(
+    baseUrl,
+    `/operations/email/deliveries/${encodeURIComponent(id)}/retry`,
+    { method: 'POST' },
+  )
 export const listFileSecurityScans = async (baseUrl: string) =>
   z
     .object({ scans: z.array(fileScan) })

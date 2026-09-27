@@ -6,7 +6,7 @@ Core school, academic, student, guardian, document, reporting, transfer, privacy
 
 ## Current
 
-Deployment validation for the scheduler, private file storage, ClamAV adapter, PostgreSQL search indexes, and caching behavior. Full offline synchronization remains separate future work and is not implemented.
+Notification delivery preferences, safe notification email routing, digest scheduling, and communication journeys follow the transactional email foundation through commit 230. Deployment validation is still needed for SMTP, the scheduler, private file storage, ClamAV, PostgreSQL search indexes, and caching. Full offline synchronization remains separate future work and is not implemented.
 
 ## Later
 

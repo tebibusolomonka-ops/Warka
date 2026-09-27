@@ -11,3 +11,5 @@ Backup records track archive metadata, integrity verification, and isolated rest
 `FileScan` records controlled status, result, timestamps, and failure code for an asset. Required uploads begin pending; a clean result permits availability, infection quarantines the asset, and scanner failure leaves it unavailable. Rescans create new scan records and scheduled work.
 
 Search results are derived summaries, not a new durable identity or access grant. They contain a type, safe title and subtitle, a domain reference, and school scope; opening a result checks current authorization again.
+
+`EmailDelivery` records recipient, template, status, schedule, attempts, and safe provider outcome. A scheduled execution tracks asynchronous delivery and bounded retry. Recovery delivery references an expiring `AccountRecoveryRequest`; it never stores the raw token or rendered message.
