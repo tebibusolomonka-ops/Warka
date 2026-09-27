@@ -6,7 +6,7 @@ Core school, academic, student, guardian, document, reporting, transfer, privacy
 
 ## Current
 
-Deployment validation for the scheduler and private file storage adapters.
+Deployment validation for the scheduler, private file storage, and ClamAV adapter. The next phase adds authorization-aware PostgreSQL search and low-bandwidth response behavior.
 
 ## Later
 

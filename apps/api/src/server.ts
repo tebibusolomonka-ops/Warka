@@ -39,11 +39,7 @@ try {
       schedulerConfig.intervalMs,
     )
   else scheduler?.start(() => app.log.error('Backup scheduler poll failed'))
-  if (!(
-    process.env.NODE_ENV === 'test' &&
-    process.env.WARKA_FILE_SCAN_CONTROLLED_TEST === 'enabled'
-  ))
-    scanScheduler?.start(() => app.log.error('File scan scheduler poll failed'))
+  scanScheduler?.start(() => app.log.error('File scan scheduler poll failed'))
 } catch (error) {
   app.log.error(error)
   await app.close()

@@ -4,6 +4,7 @@ import {
   type FileScanner,
   type ScanOutcome,
 } from './fileScanner.js'
+import { Buffer } from 'node:buffer'
 
 export function configuredFileScanner(
   env: NodeJS.ProcessEnv = process.env,
@@ -13,6 +14,27 @@ export function configuredFileScanner(
     env.NODE_ENV === 'test' &&
     env.WARKA_FILE_SCAN_CONTROLLED_TEST === 'enabled'
   ) {
+    if (env.FILE_SCANNER_TEST_OUTCOME === 'fixture')
+      return {
+        name: 'test',
+        health: async () => 'available' as const,
+        scanBuffer: async (bytes: Uint8Array) =>
+          Buffer.from(bytes).includes('WARKA_CONTROLLED_INFECTED_FIXTURE')
+            ? { status: 'infected' as const }
+            : { status: 'clean' as const },
+        scanStream: async (stream: AsyncIterable<Uint8Array>) => {
+          let marker = ''
+          let infected = false
+          for await (const chunk of stream) {
+            marker = (marker + Buffer.from(chunk).toString('utf8')).slice(-128)
+            if (marker.includes('WARKA_CONTROLLED_INFECTED_FIXTURE'))
+              infected = true
+          }
+          return infected
+            ? { status: 'infected' as const }
+            : { status: 'clean' as const }
+        },
+      }
     const outcome: ScanOutcome =
       env.FILE_SCANNER_TEST_OUTCOME === 'infected'
         ? { status: 'infected' }

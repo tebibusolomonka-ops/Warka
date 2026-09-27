@@ -9,3 +9,5 @@ The operations browser journey uses a test-only adapter behind `NODE_ENV=test` a
 The scheduler browser journey uses an explicit test-only tick and failure adapter. It exercises database-coordinated execution, verification, retry history, and authorization without wall-clock waiting. Native backup processes remain a separate boundary.
 
 File tests cover storage key confinement, object adapter calls, signature validation, scoped authorization, upload failures, document checksums, and private delivery headers. Browser journeys cover teacher upload, student download, unrelated-student denial, branding, and issued document delivery with a dedicated local test storage root. Live PostgreSQL browser execution remains CI dependent.
+
+Scan tests use a fake scanner for controlled clean, infected, failed, and unavailable results. Browser tests use a synthetic marker fixture and test-only scanner configuration; no real malware or ClamAV daemon is required. PostgreSQL-backed scan journeys remain CI dependent locally.

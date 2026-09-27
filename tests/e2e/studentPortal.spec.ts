@@ -3,6 +3,8 @@ import { test, expect } from '@playwright/test'
 import { createDatabaseClient } from '../../packages/database/dist/index.js'
 import { hashPassword } from '../../packages/auth/dist/index.js'
 
+const operatorId = '717ac602-fd66-4400-9116-13a79b8cc3da'
+
 test('staff provisions student portal access with official records', async ({
   page,
 }) => {
@@ -15,6 +17,7 @@ test('staff provisions student portal access with official records', async ({
   const schoolName = 'Browser School ' + suffix
   const receivingSchoolName = 'Receiving School ' + suffix
   const staffEmail = 'staff-' + suffix + '@example.test'
+  const operatorEmail = 'scanner-operator-' + suffix + '@example.test'
   const teacherEmail = 'teacher-' + suffix + '@example.test'
   const otherEmail = 'other-' + suffix + '@example.test'
   const studentEmail = 'student-' + suffix + '@example.test'
@@ -35,6 +38,17 @@ test('staff provisions student portal access with official records', async ({
       data: { name: 'Browser Organization ' + suffix },
     })
     organizationId = organization.id
+    await database.user.create({
+      data: {
+        id: operatorId,
+        email: operatorEmail,
+        displayName: 'Scanner Operator',
+        passwordCredential: {
+          create: { passwordHash: await hashPassword(staffPassword) },
+        },
+        organizationMemberships: { create: { organizationId, role: 'owner' } },
+      },
+    })
     const school = await database.school.create({
       data: { organizationId, name: schoolName },
     })
@@ -231,10 +245,65 @@ test('staff provisions student portal access with official records', async ({
       buffer: Buffer.from('%PDF-1.7\nsynthetic worksheet'),
     })
     await page.getByRole('button', { name: 'Publish material' }).click()
-    await expect(page.getByText('Material published.')).toBeVisible()
+    await expect(page.getByText(/Material processing/)).toBeVisible()
     const uploaded = await database.learningMaterial.findFirstOrThrow({
       where: { schoolId, title: 'Browser PDF Worksheet' },
     })
+    await expect
+      .poll(
+        async () =>
+          (
+            await database.fileAsset.findUnique({
+              where: { learningMaterialId: uploaded.id },
+            })
+          )?.status,
+      )
+      .toBe('available')
+    await page
+      .getByRole('heading', { name: 'Publish learning material' })
+      .locator('..')
+      .getByLabel('Title')
+      .fill('Controlled rejected worksheet')
+    await page.getByLabel('PDF, text, PNG, or JPEG file').setInputFiles({
+      name: 'rejected.pdf',
+      mimeType: 'application/pdf',
+      buffer: Buffer.from('%PDF-1.7\nWARKA_CONTROLLED_INFECTED_FIXTURE\n'),
+    })
+    await page.getByRole('button', { name: 'Publish material' }).click()
+    await expect(page.getByText(/Material processing/)).toBeVisible()
+    const rejected = await database.learningMaterial.findFirstOrThrow({
+      where: { schoolId, title: 'Controlled rejected worksheet' },
+    })
+    const rejectedAsset = await database.fileAsset.findUniqueOrThrow({
+      where: { learningMaterialId: rejected.id },
+    })
+    await expect
+      .poll(
+        async () =>
+          (
+            await database.fileAsset.findUnique({
+              where: { id: rejectedAsset.id },
+            })
+          )?.status,
+      )
+      .toBe('quarantined')
+    expect(
+      (
+        await page.request.post(
+          `/api/operations/file-security/assets/${rejectedAsset.id}/rescan`,
+        )
+      ).status(),
+    ).toBe(403)
+    await page.getByRole('button', { name: 'Sign out' }).click()
+
+    await page.goto('/')
+    await page.getByLabel('Email', { exact: true }).fill(operatorEmail)
+    await page.getByLabel('Password', { exact: true }).fill(staffPassword)
+    await page.getByRole('button', { name: 'Sign in' }).click()
+    await expect(
+      page.getByRole('heading', { name: 'File security' }),
+    ).toBeVisible()
+    await expect(page.getByText(/rejected.pdf/)).toBeVisible()
     await page.getByRole('button', { name: 'Sign out' }).click()
 
     await page.goto('/')
@@ -292,6 +361,14 @@ test('staff provisions student portal access with official records', async ({
     await page.getByRole('button', { name: 'Materials' }).click()
     await expect(page.getByText('Browser Algebra Guide')).toBeVisible()
     await expect(page.getByText('Browser PDF Worksheet')).toBeVisible()
+    await expect(page.getByText('Controlled rejected worksheet')).toHaveCount(0)
+    expect(
+      (
+        await page.request.get(
+          `/api/schools/${schoolId}/materials/${rejected.id}/download`,
+        )
+      ).status(),
+    ).toBe(404)
     const fileDownload = page.waitForEvent('download')
     await page.getByRole('link', { name: 'Download file' }).click()
     expect((await fileDownload).suggestedFilename()).toBe('worksheet.pdf')
@@ -431,6 +508,20 @@ test('staff provisions student portal access with official records', async ({
       await database.user.delete({ where: { id: studentUserId } })
     }
     if (schoolId) {
+      await database.scheduledTaskExecution.deleteMany({
+        where: {
+          taskType: 'fileScan',
+          resourceId: {
+            in: (
+              await database.fileScan.findMany({
+                where: { fileAsset: { schoolId } },
+                select: { id: true },
+              })
+            ).map((scan) => scan.id),
+          },
+        },
+      })
+      await database.fileScan.deleteMany({ where: { fileAsset: { schoolId } } })
       await database.session.deleteMany({
         where: { userId: { in: [teacherId, otherUserId] } },
       })
@@ -480,6 +571,20 @@ test('staff provisions student portal access with official records', async ({
     if (studentId) await database.student.delete({ where: { id: studentId } })
     if (otherStudentId)
       await database.student.delete({ where: { id: otherStudentId } })
+    if (organizationId)
+      await database.session.deleteMany({ where: { userId: operatorId } })
+    if (organizationId)
+      await database.notification.deleteMany({ where: { userId: operatorId } })
+    if (organizationId)
+      await database.organizationMembership.deleteMany({
+        where: { userId: operatorId },
+      })
+    if (organizationId)
+      await database.passwordCredential.deleteMany({
+        where: { userId: operatorId },
+      })
+    if (organizationId)
+      await database.user.deleteMany({ where: { id: operatorId } })
     if (organizationId)
       await database.organization.delete({ where: { id: organizationId } })
     await database.$disconnect()
