@@ -9,3 +9,5 @@ coverage/
 *.log
 playwright-report/
 test-results/
+.obsidian/
+knowledge/.obsidian/
