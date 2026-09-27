@@ -38,6 +38,7 @@ import { YearRolloverWorkspace } from './YearRolloverWorkspace'
 import { SchoolOnboardingWorkspace } from './SchoolOnboardingWorkspace'
 import { StaffLifecycleWorkspace } from './StaffLifecycleWorkspace'
 import { PrivacyWorkspace } from './PrivacyWorkspace'
+import { DataGovernanceWorkspace } from './DataGovernanceWorkspace'
 import { SupportWorkspace } from './SupportWorkspace'
 import { AccountSecurity, AdminRecovery } from './AccountSecurity'
 import { PublicRecovery } from './PublicRecovery'
@@ -462,12 +463,14 @@ function SignedInShell({
                     schoolId={selectedSchool.school.id}
                     currentUserId={user.id}
                   />
-                  <PrivacyWorkspace
-                    baseUrl={baseUrl}
-                    mode="staff"
-                    schoolId={selectedSchool.school.id}
-                    onSessionExpired={sessionExpired}
-                  />
+                  <div id="privacy-review">
+                    <PrivacyWorkspace
+                      baseUrl={baseUrl}
+                      mode="staff"
+                      schoolId={selectedSchool.school.id}
+                      onSessionExpired={sessionExpired}
+                    />
+                  </div>
                   <YearRolloverWorkspace
                     baseUrl={baseUrl}
                     schoolId={selectedSchool.school.id}
@@ -579,6 +582,13 @@ function SignedInShell({
                   ? { schoolId: selectedSchool.school.id }
                   : {})}
               />
+              {selectedSchool && (
+                <DataGovernanceWorkspace
+                  baseUrl={baseUrl}
+                  organizationId={selected.organization.id}
+                  schoolId={selectedSchool.school.id}
+                />
+              )}
             </>
           )}
         </>

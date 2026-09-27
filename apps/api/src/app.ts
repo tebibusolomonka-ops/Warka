@@ -82,6 +82,7 @@ import { createAuthService, type AuthService } from './authService.js'
 import { registerAuthRoutes } from './authRoutes.js'
 import { registerCorrectionRoutes } from './correctionRoutes.js'
 import { registerPrivacyRoutes } from './privacyRoutes.js'
+import { registerDataGovernanceRoutes } from './dataGovernanceRoutes.js'
 import { registerStaffAccessRoutes } from './staffAccessRoutes.js'
 import { registerSchoolContactRoutes } from './schoolContactRoutes.js'
 import { registerSupportRequestRoutes } from './supportRequestRoutes.js'
@@ -320,6 +321,7 @@ export function buildApp(
   )
   registerCorrectionRoutes(app, getDatabase, authenticate)
   registerPrivacyRoutes(app, getDatabase, authenticate)
+  registerDataGovernanceRoutes(app, getDatabase, authenticate)
   registerStaffAccessRoutes(app, getDatabase, authenticate)
   registerSupportRequestRoutes(app, getDatabase, authenticate)
   registerSchoolContactRoutes(app, getDatabase, authenticate)
