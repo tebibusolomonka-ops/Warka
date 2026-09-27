@@ -7,6 +7,7 @@ const actorId = '3e480e62-47d7-4525-9d88-b8891e56fac0'
 const deliveryId = '123e4567-e89b-42d3-a456-426614174001'
 
 function fixture(owner: boolean) {
+  const auditCreate = vi.fn().mockResolvedValue({})
   const database = {
     organizationMembership: {
       findFirst: vi.fn().mockResolvedValue(owner ? { userId: actorId } : null),
@@ -31,6 +32,7 @@ function fixture(owner: boolean) {
     },
     $transaction: (work: (transaction: unknown) => Promise<unknown>) =>
       work({
+        auditEvent: { create: auditCreate },
         emailDelivery: {
           findUnique: vi.fn().mockResolvedValue({
             status: 'failed',
@@ -61,7 +63,7 @@ function fixture(owner: boolean) {
     },
   )
   app.setErrorHandler((_error, _request, reply) => reply.code(403).send())
-  return app
+  return { app, auditCreate }
 }
 
 afterEach(() => vi.unstubAllEnvs())
@@ -69,7 +71,7 @@ afterEach(() => vi.unstubAllEnvs())
 describe('email administration routes', () => {
   it('denies anonymous and non-operator access', async () => {
     vi.stubEnv('WARKA_OPERATOR_USER_IDS', actorId)
-    const app = fixture(false)
+    const { app } = fixture(false)
     try {
       expect(
         (await app.inject('/operations/email/deliveries')).statusCode,
@@ -89,7 +91,7 @@ describe('email administration routes', () => {
 
   it('shows safe metadata without message bodies or recovery tokens', async () => {
     vi.stubEnv('WARKA_OPERATOR_USER_IDS', actorId)
-    const app = fixture(true)
+    const { app, auditCreate } = fixture(true)
     try {
       const response = await app.inject({
         url: '/operations/email/deliveries',
@@ -109,6 +111,15 @@ describe('email administration routes', () => {
         headers: { 'x-user': actorId },
       })
       expect(retry.statusCode).toBe(202)
+      expect(auditCreate).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          action: 'emailDelivery.retryRequested',
+          actorUserId: actorId,
+          resourceId: deliveryId,
+          metadata: { attempt: 2 },
+        }),
+      })
+      expect(JSON.stringify(auditCreate.mock.calls)).not.toContain('token')
     } finally {
       await app.close()
     }

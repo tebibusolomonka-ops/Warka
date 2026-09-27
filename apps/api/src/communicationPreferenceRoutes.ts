@@ -6,6 +6,7 @@ import {
   digestCategories,
   getNotificationPreferences,
   setNotificationPreference,
+  recordAuditEvent,
   type PrismaClient,
 } from '@warka/database'
 import { authenticatedUser } from './authenticateRequest.js'
@@ -54,12 +55,21 @@ export function registerCommunicationPreferenceRoutes(
             message: 'This notification setting is not supported',
           },
         })
-      await setNotificationPreference(
-        getDatabase(),
-        authenticatedUser(request).id,
-        category,
-        input,
-      )
+      const actorId = authenticatedUser(request).id
+      await getDatabase().$transaction(async (transaction) => {
+        await setNotificationPreference(transaction, actorId, category, input)
+        await recordAuditEvent(transaction, {
+          actorUserId: actorId,
+          action: 'notificationPreference.updated',
+          resourceType: 'notificationPreference',
+          resourceId: category,
+          metadata: {
+            category,
+            emailEnabled: input.emailEnabled,
+            digestCadence: input.digestCadence,
+          },
+        })
+      })
       return {
         preferences: await getNotificationPreferences(
           getDatabase(),

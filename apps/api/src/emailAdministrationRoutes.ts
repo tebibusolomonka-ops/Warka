@@ -1,6 +1,6 @@
 import type { FastifyInstance, preHandlerHookHandler } from 'fastify'
 import { z } from 'zod'
-import type { PrismaClient } from '@warka/database'
+import { recordAuditEvent, type PrismaClient } from '@warka/database'
 import { authenticatedUser } from './authenticateRequest.js'
 import { requireOperator } from './operationsAccess.js'
 import { maxEmailDeliveryAttempts } from './emailOutboxScheduler.js'
@@ -138,6 +138,13 @@ export function registerEmailAdministrationRoutes(
             seriesId: latest.seriesId,
             attempt: latest.attempt + 1,
           },
+        })
+        await recordAuditEvent(transaction, {
+          actorUserId: authenticatedUser(request).id,
+          action: 'emailDelivery.retryRequested',
+          resourceType: 'emailDelivery',
+          resourceId: id,
+          metadata: { attempt: latest.attempt + 1 },
         })
         return true
       })

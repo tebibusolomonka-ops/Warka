@@ -10,8 +10,15 @@ const otherId = '9d113102-69c3-436b-ab9b-45f65f47ed4a'
 function fixture() {
   const upsert = vi.fn().mockResolvedValue({})
   const findMany = vi.fn().mockResolvedValue([])
+  const auditCreate = vi.fn().mockResolvedValue({})
   const database = {
     notificationPreference: { upsert, findMany },
+    auditEvent: { create: auditCreate },
+    $transaction: (work: (transaction: unknown) => Promise<unknown>) =>
+      work({
+        notificationPreference: { upsert, findMany },
+        auditEvent: { create: auditCreate },
+      }),
   } as unknown as PrismaClient
   const app = Fastify()
   app.decorateRequest('currentUser', null)
@@ -26,7 +33,7 @@ function fixture() {
   app.setErrorHandler((error, _request, reply) =>
     reply.code(error instanceof ZodError ? 400 : 500).send(),
   )
-  return { app, upsert, findMany }
+  return { app, upsert, findMany, auditCreate }
 }
 
 describe('communication preference routes', () => {
@@ -82,7 +89,7 @@ describe('communication preference routes', () => {
   })
 
   it('validates email and digest combinations for own settings', async () => {
-    const { app, upsert } = fixture()
+    const { app, upsert, auditCreate } = fixture()
     try {
       const put = (category: string, emailEnabled: boolean) =>
         app.inject({
@@ -106,6 +113,15 @@ describe('communication preference routes', () => {
           create: expect.objectContaining({ digestCadence: 'daily' }),
         }),
       )
+      expect(auditCreate).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          action: 'notificationPreference.updated',
+          actorUserId: userId,
+          resourceId: 'schoolAnnouncements',
+        }),
+      })
+      expect(JSON.stringify(auditCreate.mock.calls)).not.toContain('token')
+      expect(JSON.stringify(auditCreate.mock.calls)).not.toContain('password')
     } finally {
       await app.close()
     }
