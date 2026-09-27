@@ -82,6 +82,7 @@ export function prismaFamilyConversationService(database: PrismaClient) {
         schoolId: conversation.schoolId,
         academicYearId: enrollment.academicYearId,
         schoolClassId: enrollment.schoolClassId,
+        ...effectiveMembershipWhere(),
       },
     }))
   }
@@ -140,6 +141,7 @@ export function prismaFamilyConversationService(database: PrismaClient) {
           schoolId: target.schoolId,
           academicYearId: target.academicYearId,
           schoolClassId: target.schoolClassId,
+          ...effectiveMembershipWhere(),
           user: {
             schoolMemberships: {
               some: {

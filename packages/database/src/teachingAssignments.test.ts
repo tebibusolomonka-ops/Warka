@@ -20,7 +20,9 @@ const input = { schoolId, userId, academicYearId, schoolClassId, subjectId }
 function fixture(role = 'teacher') {
   const database = {
     schoolMembership: {
-      findUnique: vi.fn().mockResolvedValue({ role }),
+      findUnique: vi
+        .fn()
+        .mockResolvedValue({ role, startsAt: new Date(0), endsAt: null }),
     },
     academicYear: {
       findFirst: vi.fn().mockResolvedValue({ id: academicYearId }),
@@ -36,8 +38,12 @@ function fixture(role = 'teacher') {
     teachingAssignment: {
       create: vi.fn().mockImplementation(async ({ data }) => data),
       findMany: vi.fn().mockResolvedValue([]),
-      findFirst: vi.fn().mockResolvedValue({ id: randomUUID() }),
-      deleteMany: vi.fn().mockResolvedValue({ count: 1 }),
+      findFirst: vi
+        .fn()
+        .mockImplementation(async ({ select }) =>
+          select ? { id: randomUUID() } : null,
+        ),
+      updateMany: vi.fn().mockResolvedValue({ count: 1 }),
     },
   } as unknown as PrismaClient
   return database
@@ -61,7 +67,7 @@ describe('teaching assignments', () => {
       ),
     ).toBe(true)
     expect(database.teachingAssignment.findFirst).toHaveBeenCalledWith({
-      where: input,
+      where: expect.objectContaining(input),
       select: { id: true },
     })
     await listTeacherAssignments(database, schoolId, userId)
@@ -73,11 +79,18 @@ describe('teaching assignments', () => {
       subjectId,
     )
     expect(database.teachingAssignment.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { schoolId, userId } }),
+      expect.objectContaining({
+        where: expect.objectContaining({ schoolId, userId }),
+      }),
     )
     expect(database.teachingAssignment.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { schoolId, academicYearId, schoolClassId, subjectId },
+        where: expect.objectContaining({
+          schoolId,
+          academicYearId,
+          schoolClassId,
+          subjectId,
+        }),
       }),
     )
     expect(

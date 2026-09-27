@@ -8,6 +8,7 @@ import { findSchoolMembership } from './schoolMemberships.js'
 import { findAcademicYearById } from './academicYears.js'
 import { findSchoolClassById } from './schoolClasses.js'
 import { findSubjectById } from './subjects.js'
+import { effectiveMembershipWhere } from './membershipPeriods.js'
 
 export const AssignTeacherSchema = z.object({
   schoolId: z.uuid(),
@@ -15,6 +16,8 @@ export const AssignTeacherSchema = z.object({
   academicYearId: z.uuid(),
   schoolClassId: z.uuid(),
   subjectId: z.uuid(),
+  startsAt: z.date().optional(),
+  endsAt: z.date().nullable().optional(),
 })
 
 export type AssignTeacher = z.input<typeof AssignTeacherSchema>
@@ -36,6 +39,8 @@ export async function assignTeacher(
   input: AssignTeacher,
 ): Promise<TeachingAssignment> {
   const data = AssignTeacherSchema.parse(input)
+  if (data.endsAt && data.endsAt <= (data.startsAt ?? new Date()))
+    throw new InvalidTeachingAssignmentError()
   const [membership, year, schoolClass, subject] = await Promise.all([
     findSchoolMembership(database, data.userId, data.schoolId),
     findAcademicYearById(database, data.schoolId, data.academicYearId),
@@ -52,8 +57,27 @@ export async function assignTeacher(
   ) {
     throw new InvalidTeachingAssignmentError()
   }
+  const startsAt = data.startsAt ?? new Date()
+  const overlap = await database.teachingAssignment.findFirst({
+    where: {
+      userId: data.userId,
+      schoolClassId: data.schoolClassId,
+      subjectId: data.subjectId,
+      academicYearId: data.academicYearId,
+      ...(data.endsAt ? { startsAt: { lt: data.endsAt } } : {}),
+      OR: [{ endsAt: null }, { endsAt: { gt: startsAt } }],
+    },
+  })
+  if (overlap) throw new DuplicateTeachingAssignmentError()
   try {
-    return await database.teachingAssignment.create({ data })
+    const { startsAt: requestedStart, endsAt, ...base } = data
+    return await database.teachingAssignment.create({
+      data: {
+        ...base,
+        ...(requestedStart ? { startsAt: requestedStart } : {}),
+        ...(endsAt !== undefined ? { endsAt } : {}),
+      },
+    })
   } catch (error) {
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -76,8 +100,13 @@ export async function removeTeachingAssignment(
   schoolId: string,
   id: string,
 ): Promise<boolean> {
-  const result = await database.teachingAssignment.deleteMany({
-    where: { id, schoolId },
+  const result = await database.teachingAssignment.updateMany({
+    where: {
+      id,
+      schoolId,
+      OR: [{ endsAt: null }, { endsAt: { gt: new Date() } }],
+    },
+    data: { endsAt: new Date() },
   })
   return result.count === 1
 }
@@ -88,7 +117,7 @@ export function listTeacherAssignments(
   userId: string,
 ): Promise<TeachingAssignment[]> {
   return database.teachingAssignment.findMany({
-    where: { schoolId, userId },
+    where: { schoolId, userId, ...effectiveMembershipWhere() },
     orderBy: [
       { academicYearId: 'asc' },
       { schoolClassId: 'asc' },
@@ -105,7 +134,13 @@ export function listClassSubjectAssignments(
   subjectId: string,
 ): Promise<TeachingAssignment[]> {
   return database.teachingAssignment.findMany({
-    where: { schoolId, academicYearId, schoolClassId, subjectId },
+    where: {
+      schoolId,
+      academicYearId,
+      schoolClassId,
+      subjectId,
+      ...effectiveMembershipWhere(),
+    },
     orderBy: [{ userId: 'asc' }, { id: 'asc' }],
   })
 }
@@ -123,7 +158,14 @@ export async function mayManageClassSubject(
     return false
   }
   const assignment = await database.teachingAssignment.findFirst({
-    where: { userId, schoolId, academicYearId, schoolClassId, subjectId },
+    where: {
+      userId,
+      schoolId,
+      academicYearId,
+      schoolClassId,
+      subjectId,
+      ...effectiveMembershipWhere(),
+    },
     select: { id: true },
   })
   return assignment !== null

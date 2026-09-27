@@ -1,4 +1,5 @@
 import {
+  effectiveMembershipWhere,
   createNotifications,
   findSchoolMembership,
   findStudentAccessForUser,
@@ -92,6 +93,7 @@ export function prismaAnnouncementService(
         schoolId,
         schoolClassId,
         academicYearId: schoolClass.academicYearId,
+        ...effectiveMembershipWhere(now),
       },
       select: { id: true },
     })

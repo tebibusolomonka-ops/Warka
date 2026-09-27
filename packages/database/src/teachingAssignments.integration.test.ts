@@ -143,6 +143,18 @@ describe.skipIf(!database)('teaching assignments in PostgreSQL', () => {
         ),
       ).toBe(true)
       expect(
+        (
+          await database!.teachingAssignment.findUniqueOrThrow({
+            where: { id: assignment.id },
+          })
+        ).endsAt,
+      ).not.toBeNull()
+      const future = await assignTeacher(database!, {
+        ...input,
+        startsAt: new Date(Date.now() + 86400000),
+      })
+      expect(future.id).not.toBe(assignment.id)
+      expect(
         await mayManageClassSubject(
           database!,
           teacher.id,

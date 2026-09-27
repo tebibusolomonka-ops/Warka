@@ -971,6 +971,7 @@ model TeachingAssignment {
   academicYearId String
   schoolClassId  String
   subjectId      String
+  startsAt       DateTime     @default(now())
   endsAt         DateTime?
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
@@ -980,7 +981,6 @@ model TeachingAssignment {
   schoolClass    SchoolClass  @relation(fields: [schoolClassId, schoolId, academicYearId], references: [id, schoolId, academicYearId], onDelete: Restrict)
   subject        Subject      @relation(fields: [subjectId, schoolId], references: [id, schoolId], onDelete: Restrict)
 
-  @@unique([userId, schoolClassId, subjectId, academicYearId])
   @@index([schoolId, academicYearId, userId])
   @@index([schoolId, schoolClassId, subjectId])
 }

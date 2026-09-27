@@ -18,7 +18,11 @@ function store(role: string | null, assigned = true) {
     },
     organizationMembership: { findUnique: vi.fn().mockResolvedValue(null) },
     schoolMembership: {
-      findUnique: vi.fn().mockResolvedValue(role ? { role } : null),
+      findUnique: vi
+        .fn()
+        .mockResolvedValue(
+          role ? { role, startsAt: new Date(0), endsAt: null } : null,
+        ),
     },
     schoolClass: {
       findFirst: vi

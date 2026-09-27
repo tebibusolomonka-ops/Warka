@@ -68,7 +68,9 @@ export async function listOnboardingChecklist(
     database.schoolClass.count({ where: { schoolId } }),
     database.subject.count({ where: { schoolId } }),
     database.gradingScheme.count({ where: { schoolId } }),
-    database.teachingAssignment.count({ where: { schoolId } }),
+    database.teachingAssignment.count({
+      where: { schoolId, ...effectiveMembershipWhere() },
+    }),
     database.schoolOnboarding.findUnique({
       where: { schoolId },
       include: { checklistItems: true },
