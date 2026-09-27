@@ -39,6 +39,13 @@ function fixture(owner: boolean) {
         .fn()
         .mockResolvedValue([{ status: 'infected', _count: { id: 1 } }]),
     },
+    emailDelivery: {
+      groupBy: vi.fn().mockResolvedValue([
+        { status: 'queued', _count: { id: 2 } },
+        { status: 'sent', _count: { id: 5 } },
+      ]),
+    },
+    scheduledTaskExecution: { count: vi.fn().mockResolvedValue(1) },
   } as unknown as PrismaClient
   const app = Fastify()
   app.decorateRequest('currentUser', null)
@@ -57,6 +64,7 @@ function fixture(owner: boolean) {
         documentRenderer: 'ready',
         backupStorage: 'ready',
       },
+      email: 'disabled',
     }),
   )
   app.setErrorHandler((_error, _request, reply) => reply.code(403).send())
@@ -114,6 +122,11 @@ describe('operations status API', () => {
     expect(response.statusCode).toBe(200)
     expect(response.json().recentBackup.status).toBe('verified')
     expect(response.json().fileSecurity.counts.infected).toBe(1)
+    expect(response.json().emailDelivery).toEqual({
+      provider: 'disabled',
+      counts: { queued: 2, sent: 5 },
+      retryCount: 1,
+    })
     expect(response.body).not.toContain('storageReference')
     expect(response.body).not.toContain('DATABASE_URL')
     const storage = await app.inject({

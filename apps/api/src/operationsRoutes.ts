@@ -71,58 +71,73 @@ export function registerOperationsRoutes(
     async (request) => {
       await operator(request)
       const database = getDatabase()
-      const [health, backup, rehearsal, incidents, maintenance, scanCounts] =
-        await Promise.all([
-          readiness(database),
-          database.backupRecord.findFirst({
-            orderBy: { createdAt: 'desc' },
-            select: {
-              id: true,
-              status: true,
-              createdAt: true,
-              verifiedAt: true,
-              verificationResult: true,
-            },
-          }),
-          database.restoreRehearsal.findFirst({
-            orderBy: { startedAt: 'desc' },
-            select: {
-              id: true,
-              backupId: true,
-              status: true,
-              startedAt: true,
-              completedAt: true,
-            },
-          }),
-          database.operationalIncident.findMany({
-            where: { status: { not: 'resolved' } },
-            orderBy: { startedAt: 'desc' },
-            take: 20,
-            select: {
-              id: true,
-              severity: true,
-              title: true,
-              status: true,
-              startedAt: true,
-            },
-          }),
-          database.maintenanceWindow.findMany({
-            where: { status: { in: ['scheduled', 'inProgress'] } },
-            orderBy: { startsAt: 'asc' },
-            take: 20,
-            select: {
-              id: true,
-              title: true,
-              startsAt: true,
-              endsAt: true,
-              status: true,
-            },
-          }),
-          database.fileScan.groupBy({
-            by: ['status'],
-            _count: { id: true },
-          }),
-        ])
+      const [
+        health,
+        backup,
+        rehearsal,
+        incidents,
+        maintenance,
+        scanCounts,
+        emailCounts,
+        emailRetries,
+      ] = await Promise.all([
+        readiness(database),
+        database.backupRecord.findFirst({
+          orderBy: { createdAt: 'desc' },
+          select: {
+            id: true,
+            status: true,
+            createdAt: true,
+            verifiedAt: true,
+            verificationResult: true,
+          },
+        }),
+        database.restoreRehearsal.findFirst({
+          orderBy: { startedAt: 'desc' },
+          select: {
+            id: true,
+            backupId: true,
+            status: true,
+            startedAt: true,
+            completedAt: true,
+          },
+        }),
+        database.operationalIncident.findMany({
+          where: { status: { not: 'resolved' } },
+          orderBy: { startedAt: 'desc' },
+          take: 20,
+          select: {
+            id: true,
+            severity: true,
+            title: true,
+            status: true,
+            startedAt: true,
+          },
+        }),
+        database.maintenanceWindow.findMany({
+          where: { status: { in: ['scheduled', 'inProgress'] } },
+          orderBy: { startsAt: 'asc' },
+          take: 20,
+          select: {
+            id: true,
+            title: true,
+            startsAt: true,
+            endsAt: true,
+            status: true,
+          },
+        }),
+        database.fileScan.groupBy({
+          by: ['status'],
+          _count: { id: true },
+        }),
+        database.emailDelivery.groupBy({
+          by: ['status'],
+          _count: { id: true },
+        }),
+        database.scheduledTaskExecution.count({
+          where: { taskType: 'emailDelivery', attempt: { gt: 1 } },
+        }),
+      ])
       return {
         readiness: health,
         recentBackup: backup,
@@ -135,6 +150,13 @@ export function registerOperationsRoutes(
           counts: Object.fromEntries(
             scanCounts.map((item) => [item.status, item._count.id]),
           ),
+        },
+        emailDelivery: {
+          provider: health.email,
+          counts: Object.fromEntries(
+            emailCounts.map((item) => [item.status, item._count.id]),
+          ),
+          retryCount: emailRetries,
         },
       }
     },

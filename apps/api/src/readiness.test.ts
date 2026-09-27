@@ -23,6 +23,7 @@ describe('dependency readiness', () => {
         documentRenderer: 'ready',
         backupStorage: 'ready',
       },
+      email: 'disabled',
     })
     expect(JSON.stringify(ready)).not.toContain('private')
     const failed = await checkReadiness({
@@ -71,5 +72,23 @@ describe('dependency readiness', () => {
     expect(result.status).toBe('degraded')
     expect(result.scanner).toBe('unavailable')
     expect(JSON.stringify(result)).not.toContain('CLAMAV_HOST')
+  })
+  it('reports email degradation without exposing SMTP configuration', async () => {
+    const result = await checkReadiness({
+      database: {
+        $queryRaw: vi.fn().mockResolvedValue([]),
+      } as unknown as PrismaClient,
+      env: {
+        PUBLIC_BASE_URL: 'https://example.test',
+        BACKUP_STORAGE_DIR: 'private',
+        WARKA_EMAIL_OUTBOX_ENABLED: 'true',
+        SMTP_HOST: 'private-smtp-host',
+      },
+      checkPath: vi.fn().mockResolvedValue(undefined),
+      checkEmail: vi.fn().mockResolvedValue('unavailable'),
+    })
+    expect(result.status).toBe('degraded')
+    expect(result.email).toBe('unavailable')
+    expect(JSON.stringify(result)).not.toContain('private-smtp-host')
   })
 })

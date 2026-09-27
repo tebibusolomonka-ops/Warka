@@ -4,6 +4,8 @@ import type { PrismaClient } from '@warka/database'
 import { schedulerHealth } from './schedulerHealth.js'
 import { configuredFileScanner } from './fileScannerConfig.js'
 import type { ScannerHealth } from './fileScanner.js'
+import { configuredEmailProvider } from './emailOutboxScheduler.js'
+import type { EmailProviderHealth } from './emailProvider.js'
 
 export type DependencyState = 'ready' | 'unavailable'
 export type Readiness = {
@@ -15,6 +17,7 @@ export type Readiness = {
   }
   scheduler?: Awaited<ReturnType<typeof schedulerHealth.snapshot>>
   scanner?: ScannerHealth
+  email: EmailProviderHealth | 'disabled'
 }
 
 export async function checkReadiness(input: {
@@ -22,6 +25,7 @@ export async function checkReadiness(input: {
   env?: NodeJS.ProcessEnv
   checkPath?: (path: string) => Promise<void>
   checkScanner?: () => Promise<ScannerHealth>
+  checkEmail?: () => Promise<EmailProviderHealth>
 }): Promise<Readiness> {
   const env = input.env ?? process.env
   const checkPath =
@@ -73,9 +77,20 @@ export async function checkReadiness(input: {
       scanner = 'unavailable'
     }
   }
+  let email: Readiness['email'] = 'disabled'
+  if (env.WARKA_EMAIL_OUTBOX_ENABLED === 'true') {
+    try {
+      email = await (
+        input.checkEmail ?? (() => configuredEmailProvider(env).health())
+      )()
+    } catch {
+      email = 'unavailable'
+    }
+  }
   const status = Object.values(dependencies).every((state) => state === 'ready')
     ? scheduler?.status === 'degraded' ||
-      (scanner !== undefined && scanner !== 'available')
+      (scanner !== undefined && scanner !== 'available') ||
+      (email !== 'disabled' && email !== 'available')
       ? 'degraded'
       : 'ready'
     : 'unavailable'
@@ -84,5 +99,6 @@ export async function checkReadiness(input: {
     dependencies,
     ...(scheduler ? { scheduler } : {}),
     ...(scanner ? { scanner } : {}),
+    email,
   }
 }
