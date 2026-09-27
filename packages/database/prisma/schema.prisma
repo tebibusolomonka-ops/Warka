@@ -862,6 +862,7 @@ model StudentCorrectionRequest {
   school         School                  @relation(fields: [schoolId], references: [id], onDelete: Restrict)
   requestedBy    User                    @relation("StudentCorrectionRequestedBy", fields: [requestedById], references: [id], onDelete: Restrict)
   reviewedBy     User?                   @relation("StudentCorrectionReviewedBy", fields: [reviewedById], references: [id], onDelete: Restrict)
+  privacyRequests PrivacyRequest[]
 
   @@index([schoolId, status, requestedAt])
   @@index([studentId, requestedAt])
@@ -1570,6 +1571,8 @@ model PrivacyRequest {
   reviewReason        String?
   fulfilledAt         DateTime?
   accessPackage       Json?
+  officialCorrectionRequestId String?
+  officialCorrectionRequest StudentCorrectionRequest? @relation(fields: [officialCorrectionRequestId], references: [id], onDelete: Restrict)
   school              School @relation(fields: [schoolId], references: [id], onDelete: Restrict)
   student             Student @relation(fields: [studentId], references: [id], onDelete: Restrict)
   requester           User @relation("PrivacyRequestRequester", fields: [requesterUserId], references: [id], onDelete: Restrict)

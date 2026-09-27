@@ -774,3 +774,9 @@ export {
   generatePrivacyAccessPackage,
   PrivacyPackageStateError,
 } from './privacyAccessPackages.js'
+
+export { requirePrivacyReviewer } from './privacyReviewAccess.js'
+export {
+  routePrivacyCorrection,
+  PrivacyCorrectionStateError,
+} from './privacyCorrectionRouting.js'

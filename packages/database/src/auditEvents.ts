@@ -67,6 +67,7 @@ export const AuditActionSchema = z.enum([
   'documentRequest.issued',
   'documentRequest.rejected',
   'privacyPackage.generated',
+  'privacyCorrection.routed',
 ])
 
 export const AuditResourceTypeSchema = z.enum([
