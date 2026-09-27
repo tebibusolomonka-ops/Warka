@@ -36,6 +36,7 @@ import { SchoolOperationsWorkspace } from './SchoolOperationsWorkspace'
 import { SchoolDocuments } from './SchoolDocuments'
 import { YearRolloverWorkspace } from './YearRolloverWorkspace'
 import { SchoolOnboardingWorkspace } from './SchoolOnboardingWorkspace'
+import { StaffLifecycleWorkspace } from './StaffLifecycleWorkspace'
 import { SupportWorkspace } from './SupportWorkspace'
 import { AccountSecurity, AdminRecovery } from './AccountSecurity'
 import { PublicRecovery } from './PublicRecovery'
@@ -444,6 +445,11 @@ function SignedInShell({
                   <SchoolOnboardingWorkspace
                     baseUrl={baseUrl}
                     schoolId={selectedSchool.school.id}
+                  />
+                  <StaffLifecycleWorkspace
+                    baseUrl={baseUrl}
+                    schoolId={selectedSchool.school.id}
+                    currentUserId={user.id}
                   />
                   <YearRolloverWorkspace
                     baseUrl={baseUrl}

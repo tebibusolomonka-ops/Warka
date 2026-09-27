@@ -102,6 +102,7 @@ export async function listStaffAccess(
     }),
   ])
   return {
+    canManageOrganization: organizationAdmin,
     total,
     take,
     skip,
