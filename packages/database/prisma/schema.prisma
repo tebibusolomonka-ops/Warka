@@ -284,6 +284,7 @@ model School {
   contacts                     SchoolContact[]
   trainingRecords              TrainingRecord[]
   correctionRequests           StudentCorrectionRequest[]
+  enrollmentCorrectionRequests EnrollmentCorrectionRequest[]
   supportRequests              SupportRequest[]
 
   @@index([organizationId])
@@ -347,6 +348,8 @@ model User {
   teachingAssignments          TeachingAssignment[]
   requestedStudentCorrections  StudentCorrectionRequest[] @relation("StudentCorrectionRequestedBy")
   reviewedStudentCorrections   StudentCorrectionRequest[] @relation("StudentCorrectionReviewedBy")
+  requestedEnrollmentCorrections EnrollmentCorrectionRequest[] @relation("EnrollmentCorrectionRequestedBy")
+  reviewedEnrollmentCorrections  EnrollmentCorrectionRequest[] @relation("EnrollmentCorrectionReviewedBy")
   marks                        Mark[]
 }
 
@@ -910,6 +913,7 @@ model Enrollment {
   withdrawnBy       User?             @relation("EnrollmentWithdrawnBy", fields: [withdrawnById], references: [id], onDelete: Restrict)
   marks             Mark[]
   historyEvents     EnrollmentHistoryEvent[]
+  correctionRequests EnrollmentCorrectionRequest[]
   progressionEntries ProgressionEntry[]
 
   @@unique([studentId, schoolId, academicYearId])
@@ -918,6 +922,30 @@ model Enrollment {
   @@index([schoolId, gradeLevelId])
   @@index([approvedById])
   @@index([withdrawnById])
+}
+
+model EnrollmentCorrectionRequest {
+  id                        String                  @id @default(uuid())
+  enrollmentId              String
+  schoolId                  String
+  academicYearId            String
+  previousGradeLevelId      String
+  previousSchoolClassId     String?
+  proposedGradeLevelId      String
+  proposedSchoolClassId     String?
+  reason                    String
+  status                    CorrectionRequestStatus @default(pending)
+  requestedById             String
+  requestedAt               DateTime                @default(now())
+  reviewedAt                DateTime?
+  reviewedById              String?
+  enrollment                Enrollment              @relation(fields: [enrollmentId], references: [id], onDelete: Restrict)
+  school                    School                  @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  requestedBy               User                    @relation("EnrollmentCorrectionRequestedBy", fields: [requestedById], references: [id], onDelete: Restrict)
+  reviewedBy                User?                   @relation("EnrollmentCorrectionReviewedBy", fields: [reviewedById], references: [id], onDelete: Restrict)
+
+  @@index([schoolId, status, requestedAt])
+  @@index([enrollmentId, requestedAt])
 }
 
 model EnrollmentHistoryEvent {

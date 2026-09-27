@@ -745,3 +745,11 @@ export type {
   StudentCorrectionField,
   CorrectionRequestStatus,
 } from '@prisma/client'
+
+export {
+  EnrollmentCorrectionInputSchema,
+  EnrollmentCorrectionPermissionError,
+  EnrollmentCorrectionStateError,
+  createEnrollmentCorrectionRequest,
+} from './enrollmentCorrectionRequests.js'
+export type { EnrollmentCorrectionRequest } from '@prisma/client'
