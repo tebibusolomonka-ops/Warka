@@ -86,6 +86,7 @@ import { registerDataGovernanceRoutes } from './dataGovernanceRoutes.js'
 import { registerStaffAccessRoutes } from './staffAccessRoutes.js'
 import { registerBackupRoutes } from './backupRoutes.js'
 import { checkReadiness } from './readiness.js'
+import { installRequestLogging } from './requestLogging.js'
 import { OperationsPermissionError } from './operationsAccess.js'
 import { registerSchoolContactRoutes } from './schoolContactRoutes.js'
 import { registerSupportRequestRoutes } from './supportRequestRoutes.js'
@@ -291,6 +292,7 @@ export function buildApp(
 
   app.register(cookie)
   app.decorateRequest('currentUser', null)
+  installRequestLogging(app)
   app.get('/health', async () => HealthResponseSchema.parse({ status: 'ok' }))
   app.get('/ready', async (_request, reply) => {
     const readiness = await checkReadiness({ database: getDatabase() })
