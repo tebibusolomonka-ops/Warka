@@ -10,6 +10,7 @@ const knownTemplates = new Set([
   'accountSuspended',
   'accountReactivated',
   'notificationUpdate',
+  'notificationDigest',
 ])
 
 export async function enqueueTransactionalEmail(
@@ -18,6 +19,7 @@ export async function enqueueTransactionalEmail(
     recipientUserId?: string
     recoveryRequestId?: string
     notificationId?: string
+    digestId?: string
     recipientAddress: string
     templateKey: string
     scheduledAt?: Date
@@ -32,12 +34,15 @@ export async function enqueueTransactionalEmail(
     )
   if ((data.templateKey === 'notificationUpdate') !== !!data.notificationId)
     throw new Error('Notification reference required only for update email')
+  if ((data.templateKey === 'notificationDigest') !== !!data.digestId)
+    throw new Error('Digest reference required only for digest email')
   return database.$transaction(async (transaction) => {
     const delivery = await transaction.emailDelivery.create({
       data: {
         recipientUserId: data.recipientUserId ?? null,
         recoveryRequestId: data.recoveryRequestId ?? null,
         notificationId: data.notificationId ?? null,
+        digestId: data.digestId ?? null,
         recipientAddress: data.recipientAddress,
         templateKey: data.templateKey,
         ...(data.scheduledAt ? { scheduledAt: data.scheduledAt } : {}),
@@ -81,6 +86,7 @@ export async function processQueuedEmailDelivery(
         select: { id: true, status: true, expiresAt: true },
       },
       notification: { select: { type: true } },
+      digest: { select: { id: true, status: true, itemCount: true } },
     },
   })
   const templateKey = delivery.templateKey
@@ -129,6 +135,23 @@ export async function processQueuedEmailDelivery(
           delivery.notification.type,
         ),
       })
+    } else if (templateKey === 'notificationDigest') {
+      if (!recovery || !delivery.digest || delivery.digest.status !== 'queued')
+        throw new Error('Digest is unavailable')
+      const digestClaim = await database.emailDigest.updateMany({
+        where: { id: delivery.digest.id, status: 'queued' },
+        data: { status: 'sending' },
+      })
+      if (digestClaim.count !== 1) throw new Error('Digest is unavailable')
+      message = renderTransactionalEmail({
+        templateKey,
+        ...common,
+        itemCount: delivery.digest.itemCount,
+        applicationUrl: applicationLinkForNotification(
+          recovery.publicAppUrl,
+          'notification.digest',
+        ),
+      })
     } else throw new Error('Unknown transactional email template')
     result = await provider.send(message)
   } catch {
@@ -144,6 +167,11 @@ export async function processQueuedEmailDelivery(
         providerMessageId: result.providerMessageId ?? null,
       },
     })
+    if (delivery.digest)
+      await database.emailDigest.updateMany({
+        where: { id: delivery.digest.id, status: 'sending' },
+        data: { status: 'sent', sentAt: now },
+      })
   } else {
     await database.emailDelivery.update({
       where: { id },
@@ -153,6 +181,11 @@ export async function processQueuedEmailDelivery(
         failureCode: result.failureCode,
       },
     })
+    if (delivery.digest)
+      await database.emailDigest.updateMany({
+        where: { id: delivery.digest.id, status: 'sending' },
+        data: { status: 'failed' },
+      })
   }
   return result
 }

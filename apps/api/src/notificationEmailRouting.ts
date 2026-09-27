@@ -57,9 +57,10 @@ export async function routePendingNotificationEmails(
             category,
           },
         },
-        select: { emailEnabled: true },
+        select: { emailEnabled: true, digestCadence: true },
       })
-      if (!preference?.emailEnabled) return false
+      if (!preference?.emailEnabled || preference.digestCadence !== 'off')
+        return false
       const delivery = await transaction.emailDelivery.create({
         data: {
           recipientUserId: notification.userId,

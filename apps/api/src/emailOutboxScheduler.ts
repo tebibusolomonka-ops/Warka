@@ -7,6 +7,7 @@ import { SmtpEmailProvider, smtpConfiguration } from './smtpEmailProvider.js'
 import { retryDelayMs } from './schedulerRetry.js'
 import { sendOperationsAlert } from './operationsAlerts.js'
 import { routePendingNotificationEmails } from './notificationEmailRouting.js'
+import { scheduleDueEmailDigests } from './emailDigestScheduler.js'
 
 export const maxEmailDeliveryAttempts = 3
 
@@ -142,6 +143,10 @@ export class EmailOutboxScheduler {
           select: { id: true },
         })
         if (later) return
+        const delivery = await transaction.emailDelivery.findUnique({
+          where: { id: failure.resourceId! },
+          select: { digestId: true },
+        })
         const reset = await transaction.emailDelivery.updateMany({
           where: {
             id: failure.resourceId!,
@@ -157,6 +162,14 @@ export class EmailOutboxScheduler {
           },
         })
         if (reset.count !== 1) return
+        if (delivery?.digestId) {
+          const digestReset = await transaction.emailDigest.updateMany({
+            where: { id: delivery.digestId, status: 'failed' },
+            data: { status: 'queued' },
+          })
+          if (digestReset.count !== 1)
+            throw new Error('Digest retry state is unavailable')
+        }
         await transaction.scheduledTaskExecution.create({
           data: {
             taskType: 'emailDelivery',
@@ -176,6 +189,7 @@ export class EmailOutboxScheduler {
     if (!this.config.enabled || this.stopped || this.running) return
     const work = this.lock.run(async () => {
       await routePendingNotificationEmails(this.database, now)
+      await scheduleDueEmailDigests(this.database, now)
       await this.retry(now)
       const queued = await this.database.scheduledTaskExecution.findMany({
         where: {

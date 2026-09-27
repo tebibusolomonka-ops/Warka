@@ -567,6 +567,8 @@ export {
 export type { QueueEmailDelivery } from './emailDeliveries.js'
 export {
   NotificationCategorySchema,
+  DigestCadenceSchema,
+  digestCategories,
   notificationCategories,
   getNotificationPreferences,
   setNotificationPreference,

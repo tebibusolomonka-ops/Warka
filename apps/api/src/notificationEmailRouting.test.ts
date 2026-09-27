@@ -23,8 +23,8 @@ describe('notification email routing', () => {
     const deliveryCreate = vi.fn().mockResolvedValue({ id: 'delivery-id' })
     const preference = vi
       .fn()
-      .mockResolvedValueOnce({ emailEnabled: true })
-      .mockResolvedValueOnce({ emailEnabled: false })
+      .mockResolvedValueOnce({ emailEnabled: true, digestCadence: 'off' })
+      .mockResolvedValueOnce({ emailEnabled: true, digestCadence: 'daily' })
     const transaction = {
       notification: {
         updateMany: vi.fn().mockResolvedValue({ count: 1 }),

@@ -29,6 +29,13 @@ export type TransactionalEmailInput =
       displayName: string
       applicationUrl: string
     }
+  | {
+      templateKey: 'notificationDigest'
+      to: string
+      displayName: string
+      itemCount: number
+      applicationUrl: string
+    }
 
 function escapeHtml(value: string) {
   return value.replace(/[&<>"']/g, (character) => {
@@ -86,6 +93,19 @@ export function renderTransactionalEmail(
       subject = 'An update is available in Warka'
       text = `${greeting}\n\nAn update is available in Warka. Sign in to view the details: ${applicationUrl}`
       html = `<p>Hello ${safeName},</p><p>An update is available in Warka. <a href="${escapeHtml(applicationUrl)}">Sign in to view the details</a>.</p>`
+      break
+    }
+    case 'notificationDigest': {
+      const applicationUrl = RecoveryUrlSchema.parse(input.applicationUrl)
+      const itemCount = z
+        .number()
+        .int()
+        .positive()
+        .max(10_000)
+        .parse(input.itemCount)
+      subject = 'Your Warka update digest'
+      text = `${greeting}\n\n${itemCount} updates are available in Warka. Sign in to view them: ${applicationUrl}`
+      html = `<p>Hello ${safeName},</p><p>${itemCount} updates are available in Warka. <a href="${escapeHtml(applicationUrl)}">Sign in to view them</a>.</p>`
       break
     }
   }

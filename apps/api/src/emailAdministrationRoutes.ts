@@ -86,6 +86,7 @@ export function registerEmailAdministrationRoutes(
             recoveryRequest: {
               select: { status: true, expiresAt: true },
             },
+            digestId: true,
           },
         })
         if (
@@ -119,6 +120,14 @@ export function registerEmailAdministrationRoutes(
           },
         })
         if (changed.count !== 1) return false
+        if (delivery.digestId) {
+          const digestReset = await transaction.emailDigest.updateMany({
+            where: { id: delivery.digestId, status: 'failed' },
+            data: { status: 'queued' },
+          })
+          if (digestReset.count !== 1)
+            throw new Error('Digest retry state is unavailable')
+        }
         await transaction.scheduledTaskExecution.create({
           data: {
             taskType: 'emailDelivery',

@@ -19,6 +19,7 @@ describe('notification preferences', () => {
     expect(preferences).toHaveLength(notificationCategories.length)
     expect(preferences.every((item) => item.inAppEnabled)).toBe(true)
     expect(preferences.every((item) => !item.emailEnabled)).toBe(true)
+    expect(preferences.every((item) => item.digestCadence === 'off')).toBe(true)
   })
 
   it('does not allow mandatory security in-app notifications to be disabled', async () => {
@@ -36,5 +37,12 @@ describe('notification preferences', () => {
       emailEnabled: true,
     })
     expect(upsert).toHaveBeenCalledOnce()
+    await expect(
+      setNotificationPreference(database as never, userId, 'support', {
+        inAppEnabled: true,
+        emailEnabled: true,
+        digestCadence: 'daily',
+      }),
+    ).rejects.toThrow('Digest cadence')
   })
 })

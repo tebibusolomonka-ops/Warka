@@ -200,4 +200,55 @@ describe('email outbox', () => {
     )
     expect(provider.messages[0]?.text).not.toContain('delivery-id')
   })
+
+  it('sends one digest summary and marks its metadata sent', async () => {
+    const deliveryClaim = vi
+      .fn()
+      .mockResolvedValueOnce({ count: 1 })
+      .mockResolvedValueOnce({ count: 0 })
+    const digestUpdate = vi.fn().mockResolvedValue({ count: 1 })
+    const database = {
+      emailDelivery: {
+        updateMany: deliveryClaim,
+        findUniqueOrThrow: vi.fn().mockResolvedValue({
+          recipientAddress: 'recipient@example.test',
+          templateKey: 'notificationDigest',
+          recipientUser: { displayName: 'Recipient' },
+          digest: { id: 'digest-id', status: 'queued', itemCount: 3 },
+        }),
+        update: vi.fn(),
+      },
+      emailDigest: { updateMany: digestUpdate },
+    }
+    const provider = new FakeEmailProvider()
+    const config = {
+      tokenKey: Buffer.alloc(32).toString('base64url'),
+      publicAppUrl: 'https://warka.example.test/',
+    }
+    expect(
+      await processQueuedEmailDelivery(
+        database as never,
+        provider,
+        'delivery-id',
+        new Date(),
+        config,
+      ),
+    ).toEqual({ status: 'sent' })
+    expect(
+      await processQueuedEmailDelivery(
+        database as never,
+        provider,
+        'delivery-id',
+        new Date(),
+        config,
+      ),
+    ).toEqual({ status: 'notClaimed' })
+    expect(provider.messages).toHaveLength(1)
+    expect(provider.messages[0]?.text).toContain('3 updates')
+    expect(provider.messages[0]?.text).not.toContain('message body')
+    expect(digestUpdate).toHaveBeenCalledWith({
+      where: { id: 'digest-id', status: 'sending' },
+      data: expect.objectContaining({ status: 'sent' }),
+    })
+  })
 })
