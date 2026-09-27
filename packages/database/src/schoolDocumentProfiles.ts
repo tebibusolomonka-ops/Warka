@@ -64,6 +64,14 @@ async function requirePermission(
     throw new SchoolDocumentProfilePermissionError()
 }
 
+export async function requireSchoolDocumentProfileManager(
+  database: PrismaClient,
+  actorId: string,
+  schoolId: string,
+) {
+  await requirePermission(database, actorId, schoolId, true)
+}
+
 export async function getSchoolDocumentProfile(
   database: PrismaClient,
   actorId: string,

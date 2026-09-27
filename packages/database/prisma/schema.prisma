@@ -503,6 +503,7 @@ model FileAsset {
   createdBy User @relation("FileAssetCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
   learningMaterial LearningMaterial? @relation(fields: [learningMaterialId], references: [id], onDelete: Restrict)
   issuedDocument IssuedDocument? @relation(fields: [issuedDocumentId], references: [id], onDelete: Restrict)
+  activeLogoFor SchoolDocumentProfile? @relation("ActiveSchoolLogo")
 
   @@index([schoolId, purpose, status])
   @@index([ownerUserId, purpose, status])
@@ -1704,8 +1705,10 @@ model SchoolDocumentProfile {
   email          String?
   website        String?
   documentFooter String?
+  logoAssetId String? @unique
   updatedAt      DateTime @updatedAt
   school         School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  logoAsset FileAsset? @relation("ActiveSchoolLogo", fields: [logoAssetId], references: [id], onDelete: Restrict)
 }
 model DocumentRequest {
   id               String                @id @default(uuid())

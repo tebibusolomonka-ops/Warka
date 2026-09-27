@@ -556,6 +556,7 @@ export {
   SchoolDocumentProfilePermissionError,
   getSchoolDocumentProfile,
   saveSchoolDocumentProfile,
+  requireSchoolDocumentProfileManager,
 } from './schoolDocumentProfiles.js'
 export type { SchoolDocumentProfile } from '@prisma/client'
 
