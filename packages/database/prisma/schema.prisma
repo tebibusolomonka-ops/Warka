@@ -373,6 +373,7 @@ model User {
   updatedBackupPolicies BackupPolicy[] @relation("BackupPolicyUpdatedBy")
   createdOperationalIncidents OperationalIncident[] @relation("OperationalIncidentCreatedBy")
   resolvedOperationalIncidents OperationalIncident[] @relation("OperationalIncidentResolvedBy")
+  operationalIncidentUpdates OperationalIncidentUpdate[]
   submittedResultSets          ResultSet[]              @relation("ResultSetSubmittedBy")
   issuedDocuments              IssuedDocument[]
   requestedTransfers           TransferRequest[]
@@ -453,9 +454,23 @@ model OperationalIncident {
   resolvedById String?
   createdBy User @relation("OperationalIncidentCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
   resolvedBy User? @relation("OperationalIncidentResolvedBy", fields: [resolvedById], references: [id], onDelete: Restrict)
+  updates OperationalIncidentUpdate[]
 
   @@index([status, startedAt])
   @@index([severity, startedAt])
+}
+
+model OperationalIncidentUpdate {
+  id String @id @default(uuid())
+  incidentId String
+  status OperationalIncidentStatus
+  message String
+  createdById String
+  createdAt DateTime @default(now())
+  incident OperationalIncident @relation(fields: [incidentId], references: [id], onDelete: Restrict)
+  createdBy User @relation(fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@index([incidentId, createdAt])
 }
 
 model BackupPolicy {

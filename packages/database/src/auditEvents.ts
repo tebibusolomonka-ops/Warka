@@ -80,6 +80,9 @@ export const AuditActionSchema = z.enum([
   'backup.requested',
   'backup.verified',
   'backup.rehearsed',
+  'operationalIncident.created',
+  'operationalIncident.updated',
+  'operationalIncident.resolved',
 ])
 
 export const AuditResourceTypeSchema = z.enum([
@@ -115,6 +118,7 @@ export const AuditResourceTypeSchema = z.enum([
   'backupPolicy',
   'backupRecord',
   'restoreRehearsal',
+  'operationalIncident',
 ])
 
 const metadataValue = z.union([

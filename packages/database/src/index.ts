@@ -22,6 +22,12 @@ export function createDatabaseClient(
 
 export type { PrismaClient }
 export {
+  createOperationalIncident,
+  postOperationalIncidentUpdate,
+  changeOperationalIncidentStatus,
+  resolveOperationalIncident,
+} from './operationalIncidents.js'
+export {
   backupDue,
   cleanupEligible,
   updateBackupPolicy,

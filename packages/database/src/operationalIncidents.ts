@@ -1,0 +1,132 @@
+import type { PrismaClient, OperationalIncidentStatus } from '@prisma/client'
+import { z } from 'zod'
+import { OperationalIncidentInputSchema } from './operationalIncidentInput.js'
+import { recordAuditEvent } from './auditEvents.js'
+
+const messageSchema = z
+  .string()
+  .trim()
+  .min(3)
+  .max(500)
+  .refine(
+    (value) => !/[<>\r\n]/.test(value) && !/[\w.+-]+@[\w.-]+/.test(value),
+    'Use plain operational text',
+  )
+
+const transitions: Record<
+  OperationalIncidentStatus,
+  OperationalIncidentStatus[]
+> = {
+  open: ['investigating', 'monitoring', 'resolved'],
+  investigating: ['monitoring', 'resolved'],
+  monitoring: ['investigating', 'resolved'],
+  resolved: [],
+}
+
+export async function createOperationalIncident(
+  database: PrismaClient,
+  actorId: string,
+  input: unknown,
+) {
+  const data = OperationalIncidentInputSchema.parse(input)
+  return database.$transaction(async (tx) => {
+    const incident = await tx.operationalIncident.create({
+      data: { ...data, createdById: actorId },
+    })
+    await tx.operationalIncidentUpdate.create({
+      data: {
+        incidentId: incident.id,
+        status: 'open',
+        message: data.summary,
+        createdById: actorId,
+      },
+    })
+    await recordAuditEvent(tx, {
+      actorUserId: actorId,
+      action: 'operationalIncident.created',
+      resourceType: 'operationalIncident',
+      resourceId: incident.id,
+      metadata: { severity: data.severity },
+    })
+    return incident
+  })
+}
+
+export async function postOperationalIncidentUpdate(
+  database: PrismaClient,
+  incidentId: string,
+  actorId: string,
+  message: string,
+) {
+  const text = messageSchema.parse(message)
+  return database.$transaction(async (tx) => {
+    const incident = await tx.operationalIncident.findUnique({
+      where: { id: incidentId },
+    })
+    if (!incident || incident.status === 'resolved')
+      throw new Error('Incident is not open')
+    return tx.operationalIncidentUpdate.create({
+      data: {
+        incidentId,
+        status: incident.status,
+        message: text,
+        createdById: actorId,
+      },
+    })
+  })
+}
+
+export async function changeOperationalIncidentStatus(
+  database: PrismaClient,
+  incidentId: string,
+  actorId: string,
+  status: OperationalIncidentStatus,
+  message: string,
+) {
+  const text = messageSchema.parse(message)
+  return database.$transaction(async (tx) => {
+    const incident = await tx.operationalIncident.findUnique({
+      where: { id: incidentId },
+    })
+    if (!incident || !transitions[incident.status].includes(status))
+      throw new Error('Invalid incident status transition')
+    const updated = await tx.operationalIncident.update({
+      where: { id: incidentId },
+      data: {
+        status,
+        ...(status === 'resolved'
+          ? { resolvedAt: new Date(), resolvedById: actorId }
+          : {}),
+      },
+    })
+    await tx.operationalIncidentUpdate.create({
+      data: { incidentId, status, message: text, createdById: actorId },
+    })
+    await recordAuditEvent(tx, {
+      actorUserId: actorId,
+      action:
+        status === 'resolved'
+          ? 'operationalIncident.resolved'
+          : 'operationalIncident.updated',
+      resourceType: 'operationalIncident',
+      resourceId: incidentId,
+      metadata: { status },
+    })
+    return updated
+  })
+}
+
+export function resolveOperationalIncident(
+  database: PrismaClient,
+  incidentId: string,
+  actorId: string,
+  message: string,
+) {
+  return changeOperationalIncidentStatus(
+    database,
+    incidentId,
+    actorId,
+    'resolved',
+    message,
+  )
+}
