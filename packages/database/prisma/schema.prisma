@@ -320,6 +320,13 @@ enum OperationalIncidentStatus {
   resolved
 }
 
+enum MaintenanceWindowStatus {
+  scheduled
+  inProgress
+  completed
+  cancelled
+}
+
 model School {
   resultSets                    ResultSet[]
   publishedResults              PublishedResult[]
@@ -374,6 +381,7 @@ model User {
   createdOperationalIncidents OperationalIncident[] @relation("OperationalIncidentCreatedBy")
   resolvedOperationalIncidents OperationalIncident[] @relation("OperationalIncidentResolvedBy")
   operationalIncidentUpdates OperationalIncidentUpdate[]
+  createdMaintenanceWindows MaintenanceWindow[]
   submittedResultSets          ResultSet[]              @relation("ResultSetSubmittedBy")
   issuedDocuments              IssuedDocument[]
   requestedTransfers           TransferRequest[]
@@ -440,6 +448,20 @@ model User {
   createdRetentionHolds         RetentionHold[] @relation("RetentionHoldCreatedBy")
   releasedRetentionHolds        RetentionHold[] @relation("RetentionHoldReleasedBy")
   marks                        Mark[]
+}
+
+model MaintenanceWindow {
+  id String @id @default(uuid())
+  title String
+  reason String
+  startsAt DateTime
+  endsAt DateTime
+  status MaintenanceWindowStatus @default(scheduled)
+  createdById String
+  createdAt DateTime @default(now())
+  createdBy User @relation(fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@index([status, startsAt])
 }
 
 model OperationalIncident {

@@ -22,6 +22,11 @@ export function createDatabaseClient(
 
 export type { PrismaClient }
 export {
+  MaintenanceWindowInputSchema,
+  createMaintenanceWindow,
+  changeMaintenanceWindowStatus,
+} from './maintenanceWindows.js'
+export {
   createOperationalIncident,
   postOperationalIncidentUpdate,
   changeOperationalIncidentStatus,
