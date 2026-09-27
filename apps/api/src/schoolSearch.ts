@@ -100,3 +100,42 @@ export function validatedSearchInput(input: SearchInput) {
     ],
   }
 }
+
+export function literalSearchTerm(query: string) {
+  return query.replace(/[\\%_]/g, (character) => `\\${character}`)
+}
+
+export async function searchStudents(
+  database: PrismaClient,
+  input: SearchInput,
+): Promise<SchoolSearchResult[]> {
+  const search = validatedSearchInput(input)
+  const scope = await searchSchoolScope(
+    database,
+    search.actorId,
+    search.schoolId,
+  )
+  if (!scope.allowedTypes.includes('student')) throw new SearchAccessError()
+  const term = literalSearchTerm(search.query)
+  const students = await database.student.findMany({
+    where: {
+      enrollments: { some: { schoolId: search.schoolId } },
+      OR: [
+        { studentReference: { contains: term, mode: 'insensitive' } },
+        { givenName: { contains: term, mode: 'insensitive' } },
+        { familyName: { contains: term, mode: 'insensitive' } },
+      ],
+    },
+    orderBy: [{ studentReference: 'asc' }, { id: 'asc' }],
+    skip: search.offset,
+    take: search.limit,
+    select: { studentReference: true, givenName: true, familyName: true },
+  })
+  return students.map((student) => ({
+    type: 'student',
+    title: [student.givenName, student.familyName].filter(Boolean).join(' '),
+    subtitle: student.studentReference,
+    reference: student.studentReference,
+    schoolId: search.schoolId,
+  }))
+}
