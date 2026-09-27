@@ -780,3 +780,10 @@ export {
   routePrivacyCorrection,
   PrivacyCorrectionStateError,
 } from './privacyCorrectionRouting.js'
+
+export {
+  applyProcessingRestriction,
+  endProcessingRestriction,
+  isParentPortalSharingRestricted,
+  ProcessingRestrictionStateError,
+} from './processingRestrictions.js'

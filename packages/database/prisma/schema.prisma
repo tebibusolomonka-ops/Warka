@@ -36,6 +36,7 @@ enum PrivacyRestrictionCategory {
 enum PrivacyRestrictionState {
   active
   ended
+  reviewRequired
 }
 
 enum CorrectionRequestStatus {
@@ -317,6 +318,7 @@ model School {
   correctionRequests           StudentCorrectionRequest[]
   enrollmentCorrectionRequests EnrollmentCorrectionRequest[]
   privacyRequests              PrivacyRequest[]
+  processingRestrictions       ProcessingRestriction[]
   supportRequests              SupportRequest[]
 
   @@index([organizationId])
@@ -384,6 +386,8 @@ model User {
   reviewedEnrollmentCorrections  EnrollmentCorrectionRequest[] @relation("EnrollmentCorrectionReviewedBy")
   privacyRequests              PrivacyRequest[] @relation("PrivacyRequestRequester")
   reviewedPrivacyRequests      PrivacyRequest[] @relation("PrivacyRequestReviewer")
+  approvedRestrictions         ProcessingRestriction[] @relation("RestrictionApprovedBy")
+  endedRestrictions            ProcessingRestriction[] @relation("RestrictionEndedBy")
   marks                        Mark[]
 }
 
@@ -841,6 +845,7 @@ model Student {
   marks               Mark[]
   correctionRequests  StudentCorrectionRequest[]
   privacyRequests     PrivacyRequest[]
+  processingRestrictions ProcessingRestriction[]
 }
 
 model StudentCorrectionRequest {
@@ -1573,6 +1578,7 @@ model PrivacyRequest {
   accessPackage       Json?
   officialCorrectionRequestId String?
   officialCorrectionRequest StudentCorrectionRequest? @relation(fields: [officialCorrectionRequestId], references: [id], onDelete: Restrict)
+  processingRestrictions ProcessingRestriction[]
   school              School @relation(fields: [schoolId], references: [id], onDelete: Restrict)
   student             Student @relation(fields: [studentId], references: [id], onDelete: Restrict)
   requester           User @relation("PrivacyRequestRequester", fields: [requesterUserId], references: [id], onDelete: Restrict)
@@ -1581,4 +1587,26 @@ model PrivacyRequest {
   @@index([schoolId, status, createdAt])
   @@index([requesterUserId, createdAt])
   @@index([studentId, createdAt])
+}
+
+model ProcessingRestriction {
+  id String @id @default(uuid())
+  schoolId String
+  studentId String
+  privacyRequestId String
+  category PrivacyRestrictionCategory
+  status PrivacyRestrictionState
+  effectiveAt DateTime?
+  endedAt DateTime?
+  approvedById String
+  endedById String?
+  createdAt DateTime @default(now())
+  school School @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  student Student @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  privacyRequest PrivacyRequest @relation(fields: [privacyRequestId], references: [id], onDelete: Restrict)
+  approvedBy User @relation("RestrictionApprovedBy", fields: [approvedById], references: [id], onDelete: Restrict)
+  endedBy User? @relation("RestrictionEndedBy", fields: [endedById], references: [id], onDelete: Restrict)
+
+  @@unique([privacyRequestId, category])
+  @@index([schoolId, studentId, category, status])
 }

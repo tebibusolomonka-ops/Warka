@@ -1,4 +1,5 @@
 import type { PrismaClient } from '@warka/database'
+import { isParentPortalSharingRestricted } from '@warka/database'
 
 export class ParentPortalAccessError extends Error {
   constructor() {
@@ -54,7 +55,7 @@ export async function eligibleParentChildren(
   const children = await Promise.all(
     links.map(async (link) => {
       const schoolId = link.verificationSchoolId!
-      const [setting, enrollment] = await Promise.all([
+      const [setting, enrollment, restricted] = await Promise.all([
         database.schoolServiceAccess.findUnique({ where: { schoolId } }),
         database.enrollment.findFirst({
           where: {
@@ -74,8 +75,10 @@ export async function eligibleParentChildren(
           },
           orderBy: [{ approvedAt: 'desc' }, { id: 'desc' }],
         }),
+        isParentPortalSharingRestricted(database, schoolId, link.studentId),
       ])
-      if (!setting?.parentPortalEnabled || !enrollment) return null
+      if (!setting?.parentPortalEnabled || !enrollment || restricted)
+        return null
       return {
         studentId: link.studentId,
         guardianId: guardian.id,
