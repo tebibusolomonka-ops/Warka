@@ -306,6 +306,20 @@ enum BackupFrequency {
   weekly
 }
 
+enum OperationalIncidentSeverity {
+  low
+  medium
+  high
+  critical
+}
+
+enum OperationalIncidentStatus {
+  open
+  investigating
+  monitoring
+  resolved
+}
+
 model School {
   resultSets                    ResultSet[]
   publishedResults              PublishedResult[]
@@ -357,6 +371,8 @@ model User {
   createdBackups               BackupRecord[] @relation("BackupCreatedBy")
   performedRestoreRehearsals RestoreRehearsal[] @relation("RestoreRehearsalPerformedBy")
   updatedBackupPolicies BackupPolicy[] @relation("BackupPolicyUpdatedBy")
+  createdOperationalIncidents OperationalIncident[] @relation("OperationalIncidentCreatedBy")
+  resolvedOperationalIncidents OperationalIncident[] @relation("OperationalIncidentResolvedBy")
   submittedResultSets          ResultSet[]              @relation("ResultSetSubmittedBy")
   issuedDocuments              IssuedDocument[]
   requestedTransfers           TransferRequest[]
@@ -423,6 +439,23 @@ model User {
   createdRetentionHolds         RetentionHold[] @relation("RetentionHoldCreatedBy")
   releasedRetentionHolds        RetentionHold[] @relation("RetentionHoldReleasedBy")
   marks                        Mark[]
+}
+
+model OperationalIncident {
+  id String @id @default(uuid())
+  severity OperationalIncidentSeverity
+  title String
+  summary String
+  status OperationalIncidentStatus @default(open)
+  startedAt DateTime @default(now())
+  resolvedAt DateTime?
+  createdById String
+  resolvedById String?
+  createdBy User @relation("OperationalIncidentCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  resolvedBy User? @relation("OperationalIncidentResolvedBy", fields: [resolvedById], references: [id], onDelete: Restrict)
+
+  @@index([status, startedAt])
+  @@index([severity, startedAt])
 }
 
 model BackupPolicy {
