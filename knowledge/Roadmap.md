@@ -2,11 +2,11 @@
 
 ## Completed
 
-Core school, academic, student, guardian, document, reporting, transfer, privacy, governance, and lifecycle workflows. Operator-controlled backup, verification, restore rehearsal, service status, incidents, maintenance, metrics, and alerts through commit 180.
+Core school, academic, student, guardian, document, reporting, transfer, privacy, governance, and lifecycle workflows. Operator-controlled backup, verification, restore rehearsal, service status, incidents, maintenance, metrics, and alerts through commit 180. Database-coordinated scheduling, bounded retries, scheduled verification, and operational artifact cleanup through commit 190.
 
 ## Current
 
-Validation of the 161–180 batch in the final CI run.
+Secure file and object storage for the 191–200 batch.
 
 ## Later
 

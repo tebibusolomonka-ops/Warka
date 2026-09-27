@@ -16,12 +16,18 @@ test('operator verifies a backup, rehearses restore, resolves an incident, and t
     DATABASE_URL: process.env.TEST_DATABASE_URL,
   } as NodeJS.ProcessEnv)
   const suffix = randomUUID()
+  const journeyStart = new Date()
   const password = 'OperationsJourney123!'
   const ownerEmail = `operator-${suffix}@example.test`
   const teacherEmail = `operations-teacher-${suffix}@example.test`
+  const schoolAdminEmail = `operations-admin-${suffix}@example.test`
   let organizationId = ''
   let schoolId = ''
   let teacherId = ''
+  let schoolAdminId = ''
+  let priorPolicy: Awaited<
+    ReturnType<typeof database.backupPolicy.findUnique>
+  > = null
   let ownerCreated = false
   const signIn = async (email: string) => {
     await page.goto('/')
@@ -63,6 +69,15 @@ test('operator verifies a backup, rehearses restore, resolves an incident, and t
       },
     })
     teacherId = teacher.id
+    const schoolAdmin = await database.user.create({
+      data: {
+        email: schoolAdminEmail,
+        displayName: 'Operations School Administrator',
+        passwordCredential: { create: { passwordHash } },
+        schoolMemberships: { create: { schoolId, role: 'administrator' } },
+      },
+    })
+    schoolAdminId = schoolAdmin.id
 
     await test.step('backup verification and isolated rehearsal', async () => {
       await signIn(ownerEmail)
@@ -75,6 +90,97 @@ test('operator verifies a backup, rehearses restore, resolves an incident, and t
       await expect(page.getByText('Latest: succeeded')).toBeVisible({
         timeout: 15_000,
       })
+    })
+
+    await test.step('controlled scheduling, verification, failure, and retry', async () => {
+      priorPolicy = await database.backupPolicy.findUnique({
+        where: { id: 'database' },
+      })
+      await database.backupPolicy.upsert({
+        where: { id: 'database' },
+        create: {
+          id: 'database',
+          enabled: true,
+          frequency: 'daily',
+          retentionCount: 7,
+          verificationRequired: true,
+          updatedById: operatorId,
+        },
+        update: {
+          enabled: true,
+          frequency: 'daily',
+          retentionCount: 7,
+          verificationRequired: true,
+          updatedById: operatorId,
+        },
+      })
+      await database.backupRecord.updateMany({
+        where: { createdById: operatorId },
+        data: { createdAt: new Date(Date.now() - 172_800_000) },
+      })
+      expect(
+        (await page.request.post('/api/__test/scheduler/tick')).status(),
+      ).toBe(200)
+      const scheduled = await database.scheduledTaskExecution.findFirstOrThrow({
+        where: { taskType: 'backup', status: 'completed' },
+        orderBy: { createdAt: 'desc' },
+      })
+      expect(scheduled.resourceId).toBeTruthy()
+      expect(
+        await database.scheduledTaskExecution.count({
+          where: {
+            taskType: 'backupVerification',
+            status: 'completed',
+            resourceId: scheduled.resourceId,
+          },
+        }),
+      ).toBe(1)
+      await page.reload()
+      await expect(page.getByLabel('Scheduled tasks')).toContainText(
+        'backupVerification',
+      )
+
+      await database.backupRecord.updateMany({
+        where: { createdById: operatorId },
+        data: { createdAt: new Date(Date.now() - 172_800_000) },
+      })
+      expect(
+        (await page.request.post('/api/__test/scheduler/fail-next')).status(),
+      ).toBe(200)
+      expect(
+        (await page.request.post('/api/__test/scheduler/tick')).status(),
+      ).toBe(500)
+      const failed = await database.scheduledTaskExecution.findFirstOrThrow({
+        where: { taskType: 'backup', status: 'failed' },
+        orderBy: { createdAt: 'desc' },
+      })
+      await database.scheduledTaskExecution.update({
+        where: { id: failed.id },
+        data: { completedAt: new Date(Date.now() - 120_000) },
+      })
+      await page.reload()
+      await expect(
+        page.getByRole('button', { name: 'Retry scheduled task' }),
+      ).toBeVisible()
+      await page.getByRole('button', { name: 'Retry scheduled task' }).click()
+      await expect
+        .poll(async () =>
+          database.scheduledTaskExecution.count({
+            where: {
+              seriesId: failed.seriesId,
+              attempt: 2,
+              status: 'completed',
+            },
+          }),
+        )
+        .toBe(1)
+      expect(
+        (await page.request.post('/api/__test/scheduler/tick')).status(),
+      ).toBe(200)
+      await page.reload()
+      await expect(page.getByLabel('Scheduled tasks')).toContainText(
+        'attempt 2',
+      )
     })
 
     await test.step('incident timeline', async () => {
@@ -124,11 +230,47 @@ test('operator verifies a backup, rehearses restore, resolves an incident, and t
       const denied = await page.request.post('/api/operations/backups')
       expect(denied.status()).toBe(403)
     })
+    await test.step('school administrator cannot retry scheduled tasks', async () => {
+      await context.clearCookies()
+      await signIn(schoolAdminEmail)
+      await expect(
+        page.getByText('Signed in as Operations School Administrator'),
+      ).toBeVisible()
+      const execution = await database.scheduledTaskExecution.findFirstOrThrow({
+        where: { taskType: 'backup' },
+        orderBy: { createdAt: 'desc' },
+      })
+      const denied = await page.request.post(
+        `/api/operations/scheduler/executions/${execution.id}/retry`,
+      )
+      expect(denied.status()).toBe(403)
+    })
   } finally {
     if (organizationId) {
-      const createdUserIds = [ownerCreated ? operatorId : '', teacherId].filter(
-        Boolean,
-      )
+      const createdUserIds = [
+        ownerCreated ? operatorId : '',
+        teacherId,
+        schoolAdminId,
+      ].filter(Boolean)
+      await database.scheduledTaskExecution.deleteMany({
+        where: { scope: 'database', createdAt: { gte: journeyStart } },
+      })
+      if (priorPolicy) {
+        await database.backupPolicy.update({
+          where: { id: 'database' },
+          data: {
+            enabled: priorPolicy.enabled,
+            frequency: priorPolicy.frequency,
+            retentionCount: priorPolicy.retentionCount,
+            verificationRequired: priorPolicy.verificationRequired,
+            updatedById: priorPolicy.updatedById,
+          },
+        })
+      } else {
+        await database.backupPolicy.deleteMany({
+          where: { id: 'database', updatedById: operatorId },
+        })
+      }
       const backups = ownerCreated
         ? await database.backupRecord.findMany({
             where: { createdById: operatorId },

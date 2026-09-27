@@ -9,5 +9,6 @@
 - Account, membership, and teaching assignment lifecycle periods all affect current access.
 - Infrastructure operations require both an explicit operator allowlist and current organization owner access. Backup artifacts stay outside PostgreSQL, and restore rehearsals use generated isolated databases.
 - Production backup and restore use native PostgreSQL processes with fixed arguments. Browser tests use an explicit test-only adapter; this is not evidence of a native restore. Operational metrics use route patterns without person or request identifiers as labels.
+- Scheduled operations use a PostgreSQL advisory lock and unique retry series. Retries have a fixed attempt cap and backoff. Backup artifact retention is operational storage cleanup with preserved record history; it is separate from personal-data retention evaluation, which never deletes records.
 
 See [[Security]] for the resulting invariants.

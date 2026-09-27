@@ -7,6 +7,12 @@ import { requireOperator } from './operationsAccess.js'
 import { BackupScheduler, schedulerConfiguration } from './backupScheduler.js'
 import { schedulerHealth } from './schedulerHealth.js'
 import { retryEligible } from './schedulerRetry.js'
+import {
+  failNextSchedulerBackup,
+  schedulerTestActions,
+} from './operationsTestAdapter.js'
+import { executeBackup } from './backupService.js'
+import { verifyBackup } from './backupVerification.js'
 
 const idParams = z.strictObject({ id: z.uuid() })
 
@@ -18,6 +24,9 @@ export function registerSchedulerRoutes(
     new BackupScheduler(
       getDatabase(),
       schedulerConfiguration(process.env),
+      undefined,
+      schedulerTestActions()?.backup ?? executeBackup,
+      schedulerTestActions()?.verify ?? verifyBackup,
     ).retryExecution(id),
 ) {
   const operator = async (request: Parameters<preHandlerHookHandler>[0]) =>
@@ -42,6 +51,7 @@ export function registerSchedulerRoutes(
         take: 50,
         select: {
           id: true,
+          seriesId: true,
           taskType: true,
           scope: true,
           scheduledFor: true,
@@ -54,9 +64,17 @@ export function registerSchedulerRoutes(
           oldestEligibleAt: true,
         },
       })
-      return records.map((record) => ({
+      const latestAttempt = new Map<string, number>()
+      for (const record of records)
+        latestAttempt.set(
+          record.seriesId,
+          Math.max(latestAttempt.get(record.seriesId) ?? 0, record.attempt),
+        )
+      return records.map(({ seriesId, ...record }) => ({
         ...record,
-        retryEligible: retryEligible(record),
+        retryEligible:
+          retryEligible(record) &&
+          latestAttempt.get(seriesId) === record.attempt,
       }))
     },
   )
@@ -152,4 +170,35 @@ export function registerSchedulerRoutes(
       return { retried: true }
     },
   )
+
+  if (
+    process.env.NODE_ENV === 'test' &&
+    process.env.WARKA_SCHEDULER_CONTROLLED_TEST === 'enabled'
+  ) {
+    app.post(
+      '/__test/scheduler/fail-next',
+      { preHandler: authenticate },
+      async (request) => {
+        await operator(request)
+        failNextSchedulerBackup()
+        return { ready: true }
+      },
+    )
+    app.post(
+      '/__test/scheduler/tick',
+      { preHandler: authenticate },
+      async (request) => {
+        await operator(request)
+        const actions = schedulerTestActions()!
+        await new BackupScheduler(
+          getDatabase(),
+          schedulerConfiguration(process.env),
+          undefined,
+          actions.backup,
+          actions.verify,
+        ).tick()
+        return { ticked: true }
+      },
+    )
+  }
 }
