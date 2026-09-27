@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { describe, expect, it, vi } from 'vitest'
 import type { PrismaClient } from '@warka/database'
+import type { FileStorage } from './fileStorage.js'
 import {
   LearningMaterialAccessError,
   LearningMaterialInputSchema,
@@ -50,6 +51,24 @@ function store(role: string | null, assigned = true) {
     learningMaterial: {
       create: vi.fn().mockImplementation(async ({ data }) => data),
       findMany: vi.fn().mockResolvedValue([]),
+      findFirst: vi.fn().mockResolvedValue({
+        id: randomUUID(),
+        schoolId,
+        academicYearId,
+        schoolClassId,
+        subjectId,
+        resourceType: 'file',
+        fileAsset: null,
+      }),
+    },
+    fileAsset: {
+      create: vi.fn().mockResolvedValue({
+        id: randomUUID(),
+        status: 'available',
+        originalFileName: 'lesson.pdf',
+        sizeBytes: 32n,
+      }),
+      findUnique: vi.fn().mockResolvedValue({ status: 'available' }),
     },
     studentAccess: { findUnique: vi.fn().mockResolvedValue(null) },
     enrollment: { findFirst: vi.fn() },
@@ -161,4 +180,51 @@ describe('learning materials', () => {
     ).rejects.toBeInstanceOf(LearningMaterialAccessError)
     expect(database.learningMaterial.findMany).not.toHaveBeenCalled()
   })
+})
+
+it('stores a validated uploaded material only after storage succeeds and cleans an orphan on database failure', async () => {
+  const database = store('teacher')
+  const storage = {
+    put: vi
+      .fn()
+      .mockResolvedValue({
+        key: 'asset_11111111-1111-4111-8111-111111111111',
+        sizeBytes: 32,
+      }),
+    delete: vi.fn().mockResolvedValue(undefined),
+  } as unknown as FileStorage
+  const file = {
+    bytes: Buffer.from('%PDF-1.7\n1 0 obj\n<<>>\nendobj\n%%EOF\n'),
+    originalFileName: 'lesson.pdf',
+    claimedContentType: 'application/pdf',
+  }
+  const service = prismaLearningMaterialService(
+    database as unknown as PrismaClient,
+    storage,
+  )
+  await service.upload(actorId, schoolId, randomUUID(), file)
+  expect(storage.put).toHaveBeenCalledOnce()
+  expect(database.fileAsset.create).toHaveBeenCalledWith(
+    expect.objectContaining({
+      data: expect.objectContaining({
+        status: 'available',
+        purpose: 'learningMaterial',
+      }),
+    }),
+  )
+  database.fileAsset.create.mockRejectedValueOnce(
+    new Error('database unavailable'),
+  )
+  await expect(
+    service.upload(actorId, schoolId, randomUUID(), file),
+  ).rejects.toThrow('could not be recorded')
+  expect(storage.delete).toHaveBeenCalledOnce()
+  const unassigned = store('teacher', false)
+  await expect(
+    prismaLearningMaterialService(
+      unassigned as unknown as PrismaClient,
+      storage,
+    ).upload(actorId, schoolId, randomUUID(), file),
+  ).rejects.toBeInstanceOf(LearningMaterialAccessError)
+  expect(unassigned.fileAsset.create).not.toHaveBeenCalled()
 })

@@ -6,22 +6,38 @@ import {
   type PrismaClient,
 } from '@warka/database'
 import { z } from 'zod'
+import { validateUpload } from './fileValidation.js'
+import { configuredFileStorage } from './objectFileStorage.js'
+import type { FileStorage } from './fileStorage.js'
 
-export const LearningMaterialInputSchema = z.strictObject({
+const materialContext = {
   academicYearId: z.uuid(),
   schoolClassId: z.uuid(),
   subjectId: z.uuid(),
   title: z.string().trim().min(1).max(200),
   description: z.string().trim().max(2000).optional(),
-  resourceType: z.literal('link'),
-  resourceLocation: z
-    .url()
-    .refine(
-      (value) => new URL(value).protocol === 'https:',
-      'Resource URL must use HTTPS',
-    ),
-  publish: z.boolean().default(true),
-})
+}
+export const LearningMaterialInputSchema = z.discriminatedUnion(
+  'resourceType',
+  [
+    z.strictObject({
+      ...materialContext,
+      resourceType: z.literal('link'),
+      resourceLocation: z
+        .url()
+        .refine(
+          (value) => new URL(value).protocol === 'https:',
+          'Resource URL must use HTTPS',
+        ),
+      publish: z.boolean().default(true),
+    }),
+    z.strictObject({
+      ...materialContext,
+      resourceType: z.literal('file'),
+      publish: z.literal(false).default(false),
+    }),
+  ],
+)
 export type LearningMaterialInput = z.input<typeof LearningMaterialInputSchema>
 
 export class LearningMaterialAccessError extends Error {
@@ -42,11 +58,22 @@ export type LearningMaterialService = {
     schoolId: string,
     materialId: string,
   ): Promise<unknown>
+  upload(
+    actorId: string,
+    schoolId: string,
+    materialId: string,
+    file: {
+      bytes: Uint8Array
+      originalFileName: string
+      claimedContentType: string
+    },
+  ): Promise<unknown>
   studentList(userId: string, now?: Date): Promise<unknown>
 }
 
 export function prismaLearningMaterialService(
   database: PrismaClient,
+  storage?: FileStorage,
 ): LearningMaterialService {
   async function role(
     actorId: string,
@@ -124,11 +151,54 @@ export function prismaLearningMaterialService(
           title: data.title,
           description: data.description ?? null,
           resourceType: data.resourceType,
-          resourceLocation: data.resourceLocation,
-          publishedAt: data.publish ? new Date() : null,
+          resourceLocation:
+            data.resourceType === 'link' ? data.resourceLocation : '',
+          publishedAt:
+            data.resourceType === 'link' && data.publish ? new Date() : null,
           createdById: actorId,
         },
       })
+    },
+    async upload(actorId, schoolId, materialId, file) {
+      const material = await database.learningMaterial.findFirst({
+        where: { id: materialId, schoolId },
+        include: { fileAsset: { select: { id: true } } },
+      })
+      if (!material || material.resourceType !== 'file' || material.fileAsset)
+        throw new LearningMaterialAccessError()
+      await canManage(actorId, schoolId, material)
+      const checked = await validateUpload({
+        ...file,
+        purpose: 'learningMaterial',
+      })
+      const targetStorage = storage ?? configuredFileStorage()
+      const stored = await targetStorage.put(file.bytes)
+      try {
+        const asset = await database.fileAsset.create({
+          data: {
+            schoolId,
+            learningMaterialId: material.id,
+            createdById: actorId,
+            purpose: 'learningMaterial',
+            status: 'available',
+            storageKey: stored.key,
+            originalFileName: checked.originalFileName,
+            contentType: checked.contentType,
+            sizeBytes: BigInt(checked.sizeBytes),
+            checksum: checked.checksum,
+          },
+          select: {
+            id: true,
+            status: true,
+            originalFileName: true,
+            sizeBytes: true,
+          },
+        })
+        return { ...asset, sizeBytes: asset.sizeBytes.toString() }
+      } catch {
+        await targetStorage.delete(stored.key).catch(() => undefined)
+        throw new Error('Learning material file could not be recorded')
+      }
     },
     async staffList(actorId, schoolId) {
       const currentRole = await role(actorId, schoolId)
@@ -151,6 +221,14 @@ export function prismaLearningMaterialService(
       })
       if (!item) throw new LearningMaterialAccessError()
       await canManage(actorId, schoolId, item)
+      if (item.resourceType === 'file') {
+        const asset = await database.fileAsset.findUnique({
+          where: { learningMaterialId: item.id },
+          select: { status: true },
+        })
+        if (asset?.status !== 'available')
+          throw new LearningMaterialAccessError()
+      }
       return database.learningMaterial.update({
         where: { id: item.id },
         data: { publishedAt: item.publishedAt ?? new Date() },
@@ -183,6 +261,7 @@ export function prismaLearningMaterialService(
         include: {
           subject: { select: { name: true } },
           academicYear: { select: { name: true } },
+          fileAsset: { select: { id: true, status: true } },
         },
         orderBy: [{ publishedAt: 'desc' }, { id: 'desc' }],
       })
@@ -192,6 +271,8 @@ export function prismaLearningMaterialService(
         description: item.description,
         resourceType: item.resourceType,
         resourceLocation: item.resourceLocation,
+        assetId:
+          item.fileAsset?.status === 'available' ? item.fileAsset.id : null,
         subject: item.subject.name,
         academicYear: item.academicYear.name,
         publishedAt: item.publishedAt!.toISOString(),
