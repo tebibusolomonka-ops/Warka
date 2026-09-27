@@ -39,7 +39,7 @@ export function AccountSecurity({ baseUrl }: { baseUrl: string }) {
     }
   }
   return (
-    <section aria-label="Account security">
+    <section id="account-security" aria-label="Account security">
       <button type="button" aria-expanded={open} onClick={() => setOpen(!open)}>
         Account security
       </button>

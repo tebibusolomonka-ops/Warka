@@ -87,7 +87,10 @@ export function SupportWorkspace({
   }
   if (!schoolId && schools.length === 0) return null
   return (
-    <section aria-label={schoolId ? 'School support' : 'Warka support'}>
+    <section
+      id="support"
+      aria-label={schoolId ? 'School support' : 'Warka support'}
+    >
       <button type="button" aria-expanded={open} onClick={() => setOpen(!open)}>
         {schoolId ? 'School support' : 'Warka support'}
       </button>

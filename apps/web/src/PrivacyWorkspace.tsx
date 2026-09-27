@@ -145,6 +145,7 @@ export function PrivacyWorkspace({
   )
   return (
     <section
+      id="privacy"
       aria-label={
         mode === 'staff' ? 'Privacy request review' : 'My data requests'
       }

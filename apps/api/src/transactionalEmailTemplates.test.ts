@@ -30,7 +30,6 @@ describe('transactional email templates', () => {
     'passwordChanged',
     'accountSuspended',
     'accountReactivated',
-    'notificationUpdate',
   ] as const)('renders %s as text and safe HTML', (templateKey) => {
     const email = renderTransactionalEmail({
       templateKey,

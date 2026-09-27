@@ -96,7 +96,11 @@ export function NotificationCenter({ baseUrl }: { baseUrl: string }) {
   }
 
   return (
-    <section className="notification-center" aria-label="Notifications">
+    <section
+      className="notification-center"
+      aria-label="Notifications"
+      id="notifications"
+    >
       <button
         type="button"
         aria-expanded={open}

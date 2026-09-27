@@ -27,6 +27,7 @@ export type TransactionalEmailInput =
       templateKey: 'notificationUpdate'
       to: string
       displayName: string
+      applicationUrl: string
     }
 
 function escapeHtml(value: string) {
@@ -80,11 +81,13 @@ export function renderTransactionalEmail(
       text = `${greeting}\n\nYour Warka account was reactivated. You may sign in again.`
       html = `<p>Hello ${safeName},</p><p>Your Warka account was reactivated. You may sign in again.</p>`
       break
-    case 'notificationUpdate':
+    case 'notificationUpdate': {
+      const applicationUrl = RecoveryUrlSchema.parse(input.applicationUrl)
       subject = 'An update is available in Warka'
-      text = `${greeting}\n\nAn update is available in Warka. Sign in to view the details.`
-      html = `<p>Hello ${safeName},</p><p>An update is available in Warka. Sign in to view the details.</p>`
+      text = `${greeting}\n\nAn update is available in Warka. Sign in to view the details: ${applicationUrl}`
+      html = `<p>Hello ${safeName},</p><p>An update is available in Warka. <a href="${escapeHtml(applicationUrl)}">Sign in to view the details</a>.</p>`
       break
+    }
   }
   return { to, subject, text, html }
 }

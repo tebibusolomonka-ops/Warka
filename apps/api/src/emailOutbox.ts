@@ -2,6 +2,7 @@ import type { PrismaClient } from '@warka/database'
 import { QueueEmailDeliverySchema, deriveRecoveryToken } from '@warka/database'
 import type { EmailProvider } from './emailProvider.js'
 import { renderTransactionalEmail } from './transactionalEmailTemplates.js'
+import { applicationLinkForNotification } from './notificationLinks.js'
 
 const knownTemplates = new Set([
   'accountRecovery',
@@ -79,6 +80,7 @@ export async function processQueuedEmailDelivery(
       recoveryRequest: {
         select: { id: true, status: true, expiresAt: true },
       },
+      notification: { select: { type: true } },
     },
   })
   const templateKey = delivery.templateKey
@@ -113,10 +115,20 @@ export async function processQueuedEmailDelivery(
     } else if (
       templateKey === 'passwordChanged' ||
       templateKey === 'accountSuspended' ||
-      templateKey === 'accountReactivated' ||
-      templateKey === 'notificationUpdate'
+      templateKey === 'accountReactivated'
     ) {
       message = renderTransactionalEmail({ templateKey, ...common })
+    } else if (templateKey === 'notificationUpdate') {
+      if (!recovery || !delivery.notification)
+        throw new Error('Notification link is unavailable')
+      message = renderTransactionalEmail({
+        templateKey,
+        ...common,
+        applicationUrl: applicationLinkForNotification(
+          recovery.publicAppUrl,
+          delivery.notification.type,
+        ),
+      })
     } else throw new Error('Unknown transactional email template')
     result = await provider.send(message)
   } catch {

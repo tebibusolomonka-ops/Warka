@@ -170,4 +170,34 @@ describe('email outbox', () => {
       deriveRecoveryToken(requestId, key),
     )
   })
+
+  it('sends a brief notification link without its private resource reference', async () => {
+    const database = {
+      emailDelivery: {
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+        findUniqueOrThrow: vi.fn().mockResolvedValue({
+          recipientAddress: 'recipient@example.test',
+          templateKey: 'notificationUpdate',
+          recipientUser: { displayName: 'Recipient' },
+          notification: { type: 'support.response' },
+        }),
+        update: vi.fn(),
+      },
+    }
+    const provider = new FakeEmailProvider()
+    await processQueuedEmailDelivery(
+      database as never,
+      provider,
+      'delivery-id',
+      new Date(),
+      {
+        tokenKey: Buffer.alloc(32).toString('base64url'),
+        publicAppUrl: 'https://warka.example.test/',
+      },
+    )
+    expect(provider.messages[0]?.text).toContain(
+      'https://warka.example.test/#support',
+    )
+    expect(provider.messages[0]?.text).not.toContain('delivery-id')
+  })
 })
