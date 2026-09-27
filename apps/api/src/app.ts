@@ -171,6 +171,8 @@ import { ImportPayloadError, registerImportRoutes } from './importRoutes.js'
 import { registerSchoolExportRoutes } from './schoolExportRoutes.js'
 import { registerNotificationRoutes } from './notificationRoutes.js'
 import { registerSchoolDocumentProfileRoutes } from './schoolDocumentProfileRoutes.js'
+import { registerFileDeliveryRoutes } from './fileDeliveryRoutes.js'
+import { FileAssetAccessError } from './fileAssetAccess.js'
 import {
   GovernancePermissionError,
   registerGovernanceRoutes,
@@ -367,6 +369,7 @@ export function buildApp(
   registerSchoolExportRoutes(app, getDatabase, authenticate)
   registerNotificationRoutes(app, getDatabase, authenticate)
   registerSchoolDocumentProfileRoutes(app, getDatabase, authenticate)
+  registerFileDeliveryRoutes(app, getDatabase, authenticate)
   registerGovernanceRoutes(app, getDatabase, authenticate)
   registerGuardianRelationshipRoutes(app, getDatabase, authenticate)
   registerFamilyConversationRoutes(
@@ -433,6 +436,12 @@ export function buildApp(
   )
 
   app.setErrorHandler((error, _request, reply) => {
+    if (error instanceof FileAssetAccessError)
+      return reply
+        .code(404)
+        .send({
+          error: { code: 'FILE_NOT_FOUND', message: 'File not available' },
+        })
     if (
       typeof error === 'object' &&
       error !== null &&
