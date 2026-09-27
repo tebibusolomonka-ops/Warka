@@ -12,6 +12,11 @@ import {
 vi.mock('./operationsAccess.js', () => ({
   requireOperator: vi.fn().mockResolvedValue(undefined),
 }))
+vi.mock('./backupRetention.js', () => ({
+  cleanupBackupArtifacts: vi
+    .fn()
+    .mockResolvedValue({ deleted: [], failed: [] }),
+}))
 
 const now = new Date('2026-09-27T12:00:00Z')
 const config: SchedulerConfiguration = {

@@ -288,6 +288,8 @@ enum BackupStatus {
   completed
   failed
   verified
+  deleting
+  deleted
 }
 
 enum BackupVerificationResult {
@@ -551,6 +553,7 @@ model BackupRecord {
   verifiedAt       DateTime?
   verificationResult BackupVerificationResult?
   verificationReason String?
+  deletedAt DateTime?
   createdBy        User         @relation("BackupCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
   rehearsals       RestoreRehearsal[]
 

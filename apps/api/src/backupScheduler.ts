@@ -10,6 +10,7 @@ import { executeBackup, LocalBackupStorage } from './backupService.js'
 import { verifyBackup } from './backupVerification.js'
 import { sendOperationsAlert } from './operationsAlerts.js'
 import { requireOperator } from './operationsAccess.js'
+import { cleanupBackupArtifacts } from './backupRetention.js'
 
 const lockKey = 8_246_181
 
@@ -100,12 +101,12 @@ export class BackupScheduler {
         where: { id: 'database' },
       })
       if (!policy?.enabled) return
+      await requireOperator(this.database, this.config.actorId)
       const latest = await this.database.backupRecord.findFirst({
         orderBy: { createdAt: 'desc' },
         select: { createdAt: true },
       })
       if (backupDue(policy, latest?.createdAt ?? null, now)) {
-        await requireOperator(this.database, this.config.actorId)
         const execution = await startScheduledTask(
           this.database,
           'backup',
@@ -166,6 +167,11 @@ export class BackupScheduler {
           }
         }
       }
+      await cleanupBackupArtifacts({
+        database: this.database,
+        storage: new LocalBackupStorage(this.config.storageDirectory),
+        actorId: this.config.actorId,
+      })
     })
     this.running = work.then(() => undefined)
     try {
