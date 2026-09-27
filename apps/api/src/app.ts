@@ -13,6 +13,11 @@ import {
   CorrectionStateError,
   StudentCorrectionStateError,
   EnrollmentCorrectionStateError,
+  PrivacyPermissionError,
+  PrivacyReviewStateError,
+  PrivacyCorrectionStateError,
+  PrivacyPackageStateError,
+  ProcessingRestrictionStateError,
   SchoolOnboardingStateError,
   OnboardingChecklistStateError,
   TrainingRecordStateError,
@@ -76,6 +81,7 @@ import { ZodError } from 'zod'
 import { createAuthService, type AuthService } from './authService.js'
 import { registerAuthRoutes } from './authRoutes.js'
 import { registerCorrectionRoutes } from './correctionRoutes.js'
+import { registerPrivacyRoutes } from './privacyRoutes.js'
 import { registerStaffAccessRoutes } from './staffAccessRoutes.js'
 import { registerSchoolContactRoutes } from './schoolContactRoutes.js'
 import { registerSupportRequestRoutes } from './supportRequestRoutes.js'
@@ -313,6 +319,7 @@ export function buildApp(
     authenticate,
   )
   registerCorrectionRoutes(app, getDatabase, authenticate)
+  registerPrivacyRoutes(app, getDatabase, authenticate)
   registerStaffAccessRoutes(app, getDatabase, authenticate)
   registerSupportRequestRoutes(app, getDatabase, authenticate)
   registerSchoolContactRoutes(app, getDatabase, authenticate)
@@ -443,7 +450,8 @@ export function buildApp(
       error instanceof StudentCorrectionPermissionError ||
       error instanceof EnrollmentCorrectionPermissionError ||
       error instanceof CorrectionPermissionError ||
-      error instanceof RetentionPermissionError
+      error instanceof RetentionPermissionError ||
+      error instanceof PrivacyPermissionError
     ) {
       return reply.code(403).send({
         error: { code: 'GOVERNANCE_ACCESS_DENIED', message: error.message },
@@ -464,6 +472,16 @@ export function buildApp(
     ) {
       return reply.code(409).send({
         error: { code: 'CORRECTION_STATE_CONFLICT', message: error.message },
+      })
+    }
+    if (
+      error instanceof PrivacyReviewStateError ||
+      error instanceof PrivacyCorrectionStateError ||
+      error instanceof PrivacyPackageStateError ||
+      error instanceof ProcessingRestrictionStateError
+    ) {
+      return reply.code(409).send({
+        error: { code: 'PRIVACY_STATE_CONFLICT', message: error.message },
       })
     }
     if (error instanceof RetentionPolicyNotFoundError) {
