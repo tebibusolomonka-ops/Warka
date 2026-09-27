@@ -16,10 +16,13 @@ export function safeCorrelationId(value: unknown) {
     : randomUUID()
 }
 
+export function writeRequestLog(entry: RequestLog) {
+  process.stdout.write(`${JSON.stringify(entry)}\n`)
+}
+
 export function installRequestLogging(
   app: FastifyInstance,
-  write: (entry: RequestLog) => void = (entry) =>
-    process.stdout.write(`${JSON.stringify(entry)}\n`),
+  write: (entry: RequestLog) => void = writeRequestLog,
 ) {
   const started = new WeakMap<object, number>()
   const ids = new WeakMap<object, string>()
