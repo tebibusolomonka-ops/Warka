@@ -11,6 +11,10 @@ import {
   listBackups,
   listIncidents,
   listMaintenance,
+  getSchedulerState,
+  listScheduledExecutions,
+  listDueBackupPolicies,
+  retryScheduledExecution,
   rehearseBackup,
   requestBackup,
   verifyBackup,
@@ -19,6 +23,9 @@ import {
   type IncidentTimeline,
   type Maintenance,
   type OperationsStatus,
+  type SchedulerState,
+  type ScheduledExecution,
+  type DueBackupPolicy,
 } from './operationsApi'
 
 export function OperationsWorkspace({ baseUrl }: { baseUrl: string }) {
@@ -27,6 +34,9 @@ export function OperationsWorkspace({ baseUrl }: { baseUrl: string }) {
   const [backups, setBackups] = useState<Backup[]>([])
   const [incidents, setIncidents] = useState<Incident[]>([])
   const [maintenance, setMaintenance] = useState<Maintenance[]>([])
+  const [scheduler, setScheduler] = useState<SchedulerState>()
+  const [executions, setExecutions] = useState<ScheduledExecution[]>([])
+  const [duePolicies, setDuePolicies] = useState<DueBackupPolicy[]>([])
   const [timeline, setTimeline] = useState<IncidentTimeline>()
   const [incidentTitle, setIncidentTitle] = useState('')
   const [incidentSummary, setIncidentSummary] = useState('')
@@ -47,15 +57,31 @@ export function OperationsWorkspace({ baseUrl }: { baseUrl: string }) {
       listBackups(baseUrl),
       listIncidents(baseUrl),
       listMaintenance(baseUrl),
+      getSchedulerState(baseUrl),
+      listScheduledExecutions(baseUrl),
+      listDueBackupPolicies(baseUrl),
     ])
-      .then(([nextStatus, nextBackups, nextIncidents, nextMaintenance]) => {
-        if (!active) return
-        setAvailable(true)
-        setStatus(nextStatus)
-        setBackups(nextBackups)
-        setIncidents(nextIncidents)
-        setMaintenance(nextMaintenance)
-      })
+      .then(
+        ([
+          nextStatus,
+          nextBackups,
+          nextIncidents,
+          nextMaintenance,
+          nextScheduler,
+          nextExecutions,
+          nextDuePolicies,
+        ]) => {
+          if (!active) return
+          setAvailable(true)
+          setStatus(nextStatus)
+          setBackups(nextBackups)
+          setIncidents(nextIncidents)
+          setMaintenance(nextMaintenance)
+          setScheduler(nextScheduler)
+          setExecutions(nextExecutions)
+          setDuePolicies(nextDuePolicies)
+        },
+      )
       .catch((caught: unknown) => {
         if (!active) return
         if (caught instanceof ApiError && [401, 403].includes(caught.status))
@@ -124,6 +150,7 @@ export function OperationsWorkspace({ baseUrl }: { baseUrl: string }) {
         <a href="#operations-status">System status</a>{' '}
         <a href="#operations-backups">Backups</a>{' '}
         <a href="#operations-rehearsals">Restore rehearsals</a>{' '}
+        <a href="#operations-scheduled">Scheduled tasks</a>{' '}
         <a href="#operations-incidents">Incidents</a>{' '}
         <a href="#operations-maintenance">Maintenance</a>{' '}
         <a href="#operations-metrics">Metrics</a>
@@ -183,6 +210,56 @@ export function OperationsWorkspace({ baseUrl }: { baseUrl: string }) {
       <section id="operations-rehearsals">
         <h3>Restore rehearsals</h3>
         <p>Latest: {status?.latestRehearsal?.status ?? 'None'}</p>
+      </section>
+      <section id="operations-scheduled" aria-label="Scheduled tasks">
+        <h3>Scheduled tasks</h3>
+        <p>Automatic scheduled execution: {scheduler?.status ?? 'Unknown'}</p>
+        <p>Last poll: {scheduler?.lastPollAt ?? 'Never'}</p>
+        <p>
+          Last successful task: {scheduler?.lastSuccessfulTaskAt ?? 'Never'}
+        </p>
+        <p>Running tasks: {scheduler?.runningTaskCount ?? 0}</p>
+        <p>Recent failed tasks: {scheduler?.recentFailedTaskCount ?? 0}</p>
+        <h4>Backup policy</h4>
+        <ul>
+          {duePolicies.map((policy) => (
+            <li key={policy.scope}>
+              {policy.scope}: {policy.enabled ? 'enabled' : 'disabled'} ·{' '}
+              {policy.frequency} · verification{' '}
+              {policy.verificationRequired ? 'required' : 'optional'} · retain{' '}
+              {policy.retentionCount} · {policy.due ? 'due' : 'not due'}
+            </li>
+          ))}
+        </ul>
+        <h4>Recent executions</h4>
+        <ul>
+          {executions.map((execution) => (
+            <li key={execution.id}>
+              {execution.taskType} · {execution.status} · attempt{' '}
+              {execution.attempt} · scheduled {execution.scheduledFor} · started{' '}
+              {execution.startedAt ?? 'pending'} · ended{' '}
+              {execution.completedAt ?? 'pending'}
+              {execution.failureCode && <> · {execution.failureCode}</>}
+              {execution.eligibleCount !== null && (
+                <> · eligible records {execution.eligibleCount}</>
+              )}
+              {execution.retryEligible && (
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() =>
+                    run(() => retryScheduledExecution(baseUrl, execution.id))
+                  }
+                >
+                  Retry scheduled task
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+        <p>
+          Manual operator actions use the buttons in Backups and Maintenance.
+        </p>
       </section>
       <section id="operations-incidents">
         <h3>Incidents</h3>

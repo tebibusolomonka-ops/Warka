@@ -68,12 +68,45 @@ const timeline = incident.extend({
     }),
   ),
 })
+const schedulerState = z.object({
+  status: z.enum(['healthy', 'degraded', 'disabled']),
+  enabled: z.boolean(),
+  lastPollAt: date.nullable(),
+  lastSuccessfulTaskAt: date.nullable(),
+  runningTaskCount: z.number(),
+  recentFailedTaskCount: z.number(),
+})
+const scheduledExecution = z.object({
+  id: z.uuid(),
+  taskType: z.string(),
+  scope: z.string(),
+  scheduledFor: date,
+  startedAt: date.nullable(),
+  completedAt: date.nullable(),
+  status: z.string(),
+  attempt: z.number(),
+  failureCode: z.string().nullable(),
+  eligibleCount: z.number().nullable(),
+  oldestEligibleAt: date.nullable(),
+  retryEligible: z.boolean(),
+})
+const dueBackupPolicy = z.object({
+  scope: z.string(),
+  enabled: z.boolean(),
+  frequency: z.string(),
+  verificationRequired: z.boolean(),
+  retentionCount: z.number(),
+  due: z.boolean(),
+})
 
 export type Backup = z.infer<typeof backup>
 export type Incident = z.infer<typeof incident>
 export type Maintenance = z.infer<typeof maintenance>
 export type OperationsStatus = z.infer<typeof status>
 export type IncidentTimeline = z.infer<typeof timeline>
+export type SchedulerState = z.infer<typeof schedulerState>
+export type ScheduledExecution = z.infer<typeof scheduledExecution>
+export type DueBackupPolicy = z.infer<typeof dueBackupPolicy>
 
 export const getOperationsStatus = async (baseUrl: string) =>
   status.parse(await requestJson(baseUrl, '/operations/status'))
@@ -92,6 +125,16 @@ export const listMaintenance = async (baseUrl: string) =>
   z
     .array(maintenance)
     .parse(await requestJson(baseUrl, '/operations/maintenance'))
+export const getSchedulerState = async (baseUrl: string) =>
+  schedulerState.parse(await requestJson(baseUrl, '/operations/scheduler'))
+export const listScheduledExecutions = async (baseUrl: string) =>
+  z
+    .array(scheduledExecution)
+    .parse(await requestJson(baseUrl, '/operations/scheduler/executions'))
+export const listDueBackupPolicies = async (baseUrl: string) =>
+  z
+    .array(dueBackupPolicy)
+    .parse(await requestJson(baseUrl, '/operations/scheduler/due-backups'))
 
 async function post(baseUrl: string, path: string, body: unknown = {}) {
   return requestJson(baseUrl, path, {
@@ -100,6 +143,12 @@ async function post(baseUrl: string, path: string, body: unknown = {}) {
     body: JSON.stringify(body),
   })
 }
+
+export const retryScheduledExecution = (baseUrl: string, id: string) =>
+  post(
+    baseUrl,
+    `/operations/scheduler/executions/${encodeURIComponent(id)}/retry`,
+  )
 
 export const requestBackup = (baseUrl: string) =>
   post(baseUrl, '/operations/backups')

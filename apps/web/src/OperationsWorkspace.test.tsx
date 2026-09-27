@@ -15,6 +15,10 @@ import {
   requestBackup,
   verifyBackup,
   rehearseBackup,
+  getSchedulerState,
+  listScheduledExecutions,
+  listDueBackupPolicies,
+  retryScheduledExecution,
 } from './operationsApi'
 
 vi.mock('./operationsApi', () => ({
@@ -31,6 +35,10 @@ vi.mock('./operationsApi', () => ({
   getIncident: vi.fn(),
   createMaintenance: vi.fn(),
   changeMaintenanceStatus: vi.fn(),
+  getSchedulerState: vi.fn(),
+  listScheduledExecutions: vi.fn(),
+  listDueBackupPolicies: vi.fn(),
+  retryScheduledExecution: vi.fn(),
 }))
 
 const id = '123e4567-e89b-42d3-a456-426614174001'
@@ -64,12 +72,58 @@ it('shows safe operational sections and runs backup, verification, and rehearsal
   ])
   vi.mocked(listIncidents).mockResolvedValue([])
   vi.mocked(listMaintenance).mockResolvedValue([])
+  vi.mocked(getSchedulerState).mockResolvedValue({
+    status: 'healthy',
+    enabled: true,
+    lastPollAt: '2026-01-01T00:00:00.000Z',
+    lastSuccessfulTaskAt: '2026-01-01T00:00:00.000Z',
+    runningTaskCount: 0,
+    recentFailedTaskCount: 0,
+  })
+  vi.mocked(listScheduledExecutions).mockResolvedValue([
+    {
+      id,
+      taskType: 'backup',
+      scope: 'database',
+      status: 'failed',
+      attempt: 1,
+      scheduledFor: '2026-01-01T00:00:00.000Z',
+      startedAt: '2026-01-01T00:00:00.000Z',
+      completedAt: '2026-01-01T00:00:01.000Z',
+      failureCode: 'BACKUP_FAILED',
+      eligibleCount: null,
+      oldestEligibleAt: null,
+      retryEligible: true,
+    },
+  ])
+  vi.mocked(listDueBackupPolicies).mockResolvedValue([
+    {
+      scope: 'database',
+      enabled: true,
+      frequency: 'daily',
+      verificationRequired: true,
+      retentionCount: 7,
+      due: true,
+    },
+  ])
+  vi.mocked(retryScheduledExecution).mockResolvedValue({})
   vi.mocked(requestBackup).mockResolvedValue({})
   vi.mocked(verifyBackup).mockResolvedValue({})
   vi.mocked(rehearseBackup).mockResolvedValue({})
   render(<OperationsWorkspace baseUrl="http://localhost:3000/api" />)
   await screen.findByRole('heading', { name: 'Operations' })
   expect(screen.getByText('Latest: succeeded')).toBeTruthy()
+  expect(
+    screen.getByText('Automatic scheduled execution: healthy'),
+  ).toBeTruthy()
+  expect(screen.getByText(/BACKUP_FAILED/)).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: 'Retry scheduled task' }))
+  await waitFor(() =>
+    expect(retryScheduledExecution).toHaveBeenCalledWith(
+      'http://localhost:3000/api',
+      id,
+    ),
+  )
   expect(screen.getByText(/GET \/health: 2 requests/)).toBeTruthy()
   fireEvent.click(screen.getByRole('button', { name: 'Run backup' }))
   await waitFor(() => expect(requestBackup).toHaveBeenCalled())
