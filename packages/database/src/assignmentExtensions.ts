@@ -5,6 +5,7 @@ import {
   mayManageCourseworkAssignment,
 } from './courseworkAudience.js'
 import { findStudentAccessForUser } from './studentAccess.js'
+import { notifyCoursework } from './courseworkNotifications.js'
 
 export class AssignmentExtensionError extends Error {}
 export const GrantAssignmentExtensionSchema = z.strictObject({
@@ -70,16 +71,31 @@ export async function grantAssignmentExtension(
     throw new AssignmentExtensionError(
       'Extension must be later than current effective due time',
     )
-  return database.assignmentExtension.create({
-    data: {
-      schoolId,
-      assignmentId,
-      studentId: value.studentId,
-      enrollmentId: enrollment.id,
-      originalDueAt: assignment.dueAt,
-      extendedDueAt,
-      reason: value.reason,
-      createdById: actorId,
-    },
+  return database.$transaction(async (transaction) => {
+    const extension = await transaction.assignmentExtension.create({
+      data: {
+        schoolId,
+        assignmentId,
+        studentId: value.studentId,
+        enrollmentId: enrollment.id,
+        originalDueAt: assignment.dueAt,
+        extendedDueAt,
+        reason: value.reason,
+        createdById: actorId,
+      },
+    })
+    const access = await transaction.studentAccess.findUnique({
+      where: { studentId: value.studentId },
+      select: { userId: true },
+    })
+    if (access)
+      await notifyCoursework(
+        transaction,
+        [access.userId],
+        'coursework.extensionGranted',
+        'Coursework extension granted',
+        assignmentId,
+      )
+    return extension
   })
 }

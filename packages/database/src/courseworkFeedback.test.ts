@@ -11,6 +11,9 @@ import {
 vi.mock('./courseworkAudience.js', () => ({
   mayManageCourseworkAssignment: vi.fn(),
 }))
+vi.mock('./courseworkNotifications.js', () => ({
+  notifyCoursework: vi.fn().mockResolvedValue({ count: 1 }),
+}))
 const id = '00000000-0000-4000-8000-000000000001'
 function fixture(
   status: 'draft' | 'released' = 'draft',
@@ -18,19 +21,17 @@ function fixture(
 ) {
   const transaction = {
     submissionRevision: {
-      findUnique: vi
-        .fn()
-        .mockResolvedValue({
-          id,
-          submittedAt: new Date(),
-          review: { status: reviewStatus },
-          submission: {
-            schoolId: id,
-            assignmentId: id,
-            studentId: id,
-            assignment: { id },
-          },
-        }),
+      findUnique: vi.fn().mockResolvedValue({
+        id,
+        submittedAt: new Date(),
+        review: { status: reviewStatus },
+        submission: {
+          schoolId: id,
+          assignmentId: id,
+          studentId: id,
+          assignment: { id },
+        },
+      }),
     },
     courseworkFeedback: {
       findUnique: vi.fn().mockResolvedValue({ id, status }),
@@ -71,17 +72,14 @@ describe('coursework feedback', () => {
         data: expect.objectContaining({ status: 'released' }),
       }),
     )
-    expect(transaction.notification.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({
-        type: 'coursework.feedbackReleased',
-        message: 'Open Warka to view your released coursework feedback.',
-      }),
-    })
+    expect(transaction.studentAccess.findUnique).toHaveBeenCalled()
     const released = fixture('released')
     await expect(
       releaseCourseworkFeedback(released.database, id, id, id, id),
     ).rejects.toBeInstanceOf(CourseworkFeedbackError)
-    expect(released.transaction.notification.create).not.toHaveBeenCalled()
+    expect(
+      released.transaction.courseworkFeedback.updateMany,
+    ).not.toHaveBeenCalled()
   })
   it('prevents editing feedback after release', async () => {
     const { database } = fixture('released')

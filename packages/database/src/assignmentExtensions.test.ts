@@ -16,11 +16,18 @@ vi.mock('./courseworkAudience.js', () => ({
   mayManageCourseworkAssignment: vi.fn(),
 }))
 vi.mock('./studentAccess.js', () => ({ findStudentAccessForUser: vi.fn() }))
+vi.mock('./courseworkNotifications.js', () => ({
+  notifyCoursework: vi.fn().mockResolvedValue({ count: 0 }),
+}))
 const id = '00000000-0000-4000-8000-000000000001'
 const dueAt = new Date('2026-11-01')
 const now = new Date('2026-09-01')
 function fixture() {
   const database = {
+    $transaction: vi.fn(async (callback: (tx: unknown) => Promise<unknown>) =>
+      callback(database),
+    ),
+    studentAccess: { findUnique: vi.fn().mockResolvedValue(null) },
     courseworkAssignment: {
       findFirst: vi.fn().mockResolvedValue({ id, schoolId: id, dueAt }),
     },

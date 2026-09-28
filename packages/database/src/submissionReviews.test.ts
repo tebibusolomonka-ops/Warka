@@ -10,6 +10,9 @@ import {
 vi.mock('./courseworkAudience.js', () => ({
   mayManageCourseworkAssignment: vi.fn(),
 }))
+vi.mock('./courseworkNotifications.js', () => ({
+  notifyCoursework: vi.fn().mockResolvedValue({ count: 0 }),
+}))
 vi.mock('./assignmentExtensions.js', () => ({
   effectiveCourseworkDueAt: vi.fn().mockResolvedValue(new Date('2026-09-01')),
 }))
@@ -42,6 +45,7 @@ function fixture(
       updateMany: vi.fn().mockResolvedValue({ count: 1 }),
       findUniqueOrThrow: vi.fn().mockResolvedValue(review),
     },
+    studentAccess: { findUnique: vi.fn().mockResolvedValue(null) },
   } as unknown as PrismaClient
   return database
 }

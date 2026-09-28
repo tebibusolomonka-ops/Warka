@@ -2,6 +2,10 @@ import { type PrismaClient } from '@prisma/client'
 import { z } from 'zod'
 import { mayManageCourseworkAssignment } from './courseworkAudience.js'
 import { recordAuditEvent } from './auditEvents.js'
+import {
+  notifyCoursework,
+  studentCourseworkRecipients,
+} from './courseworkNotifications.js'
 
 export class CourseworkLifecycleError extends Error {}
 
@@ -112,6 +116,13 @@ export async function publishCourseworkAssignment(
         resourceType: 'courseworkAssignment',
         resourceId: assignmentId,
       })
+      await notifyCoursework(
+        transaction,
+        await studentCourseworkRecipients(transaction, assignment),
+        'coursework.published',
+        'New coursework assignment',
+        assignmentId,
+      )
       return transaction.courseworkAssignment.findUniqueOrThrow({
         where: { id: assignmentId },
       })
@@ -224,6 +235,13 @@ export async function changePublishedCourseworkDueDate(
           reason,
         },
       })
+      await notifyCoursework(
+        transaction,
+        await studentCourseworkRecipients(transaction, assignment),
+        'coursework.dueDateChanged',
+        'Coursework due date changed',
+        assignmentId,
+      )
       return transaction.courseworkAssignment.findUniqueOrThrow({
         where: { id: assignmentId },
       })

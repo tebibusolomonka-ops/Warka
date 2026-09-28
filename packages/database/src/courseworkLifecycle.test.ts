@@ -11,6 +11,10 @@ import {
 vi.mock('./courseworkAudience.js', () => ({
   mayManageCourseworkAssignment: vi.fn().mockResolvedValue(true),
 }))
+vi.mock('./courseworkNotifications.js', () => ({
+  studentCourseworkRecipients: vi.fn().mockResolvedValue([]),
+  notifyCoursework: vi.fn().mockResolvedValue({ count: 0 }),
+}))
 
 const id = '00000000-0000-4000-8000-000000000001'
 const dueAt = new Date('2026-12-01T00:00:00.000Z')

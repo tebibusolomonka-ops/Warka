@@ -13,6 +13,9 @@ import {
 vi.mock('./courseworkAudience.js', () => ({
   visibleCourseworkAssignmentForStudent: vi.fn(),
 }))
+vi.mock('./courseworkNotifications.js', () => ({
+  notifyCoursework: vi.fn().mockResolvedValue({ count: 0 }),
+}))
 vi.mock('./assignmentExtensions.js', () => ({
   effectiveCourseworkDueAt: vi.fn().mockResolvedValue(new Date('2026-12-01')),
 }))
@@ -26,6 +29,9 @@ function fixture(
   } | null = null,
 ) {
   const transaction = {
+    courseworkAssignment: {
+      findUniqueOrThrow: vi.fn().mockResolvedValue({ createdById: id }),
+    },
     courseworkSubmission: {
       findUnique: vi.fn().mockResolvedValue({ id, status: 'submitted' }),
       update: vi.fn().mockResolvedValue({}),

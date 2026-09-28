@@ -1074,3 +1074,7 @@ export {
   CourseworkMarkTransferError,
   transferCourseworkMark,
 } from './courseworkMarkTransfers.js'
+export {
+  notifyCoursework,
+  studentCourseworkRecipients,
+} from './courseworkNotifications.js'

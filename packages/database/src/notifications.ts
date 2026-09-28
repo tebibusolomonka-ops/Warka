@@ -26,6 +26,20 @@ export type CreateNotification = z.infer<typeof CreateNotificationSchema>
 
 type NotificationStore = Pick<PrismaClient, 'notification'>
 
+async function courseworkFilter(
+  database: NotificationStore &
+    Partial<Pick<PrismaClient, 'notificationPreference'>>,
+  userId: string,
+) {
+  const preference = await database.notificationPreference?.findUnique({
+    where: { userId_category: { userId, category: 'learningMaterials' } },
+    select: { inAppEnabled: true },
+  })
+  return preference?.inAppEnabled === false
+    ? { NOT: { type: { startsWith: 'coursework.' } } }
+    : {}
+}
+
 export function createNotification(
   database: NotificationStore,
   input: unknown,
@@ -67,7 +81,7 @@ export function createNotifications(
   })
 }
 
-export function listNotifications(
+export async function listNotifications(
   database: NotificationStore,
   userId: string,
   options: { unread?: boolean; take?: number; cursor?: string } = {},
@@ -81,19 +95,29 @@ export function listNotifications(
     .parse(options.take ?? 20)
   const cursor = options.cursor ? z.uuid().parse(options.cursor) : undefined
   return database.notification.findMany({
-    where: { userId, ...(options.unread ? { readAt: null } : {}) },
+    where: {
+      userId,
+      ...(options.unread ? { readAt: null } : {}),
+      ...(await courseworkFilter(database, userId)),
+    },
     orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
     take,
     ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
   })
 }
 
-export function unreadNotificationCount(
+export async function unreadNotificationCount(
   database: NotificationStore,
   userId: string,
 ) {
   z.uuid().parse(userId)
-  return database.notification.count({ where: { userId, readAt: null } })
+  return database.notification.count({
+    where: {
+      userId,
+      readAt: null,
+      ...(await courseworkFilter(database, userId)),
+    },
+  })
 }
 
 export async function markNotificationRead(

@@ -2,6 +2,7 @@ import type { CourseworkAssignment, PrismaClient } from '@prisma/client'
 import { z } from 'zod'
 import { mayManageCourseworkAssignment } from './courseworkAudience.js'
 import { effectiveCourseworkDueAt } from './assignmentExtensions.js'
+import { notifyCoursework } from './courseworkNotifications.js'
 
 export class SubmissionReviewError extends Error {}
 export const CompleteSubmissionReviewSchema = z.discriminatedUnion('status', [
@@ -93,6 +94,20 @@ export async function completeSubmissionReview(
     },
   })
   if (!changed.count) throw new SubmissionReviewError('Review state changed')
+  if (value.status === 'returned') {
+    const access = await database.studentAccess.findUnique({
+      where: { studentId: revision.submission.studentId },
+      select: { userId: true },
+    })
+    if (access)
+      await notifyCoursework(
+        database,
+        [access.userId],
+        'coursework.submissionReturned',
+        'Coursework returned for revision',
+        assignmentId,
+      )
+  }
   return database.submissionReview.findUniqueOrThrow({
     where: { id: revision.review.id },
   })

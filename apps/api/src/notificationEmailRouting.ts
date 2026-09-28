@@ -6,6 +6,7 @@ export function emailCategoryForNotification(
 ): z.infer<typeof NotificationCategorySchema> | null {
   if (type === 'result.published') return 'academicResults'
   if (type === 'announcement.published') return 'schoolAnnouncements'
+  if (type.startsWith('coursework.')) return 'learningMaterials'
   if (type === 'familyMessage.reply') return 'familyCommunication'
   if (['support.response', 'support.resolved', 'support.closed'].includes(type))
     return 'support'

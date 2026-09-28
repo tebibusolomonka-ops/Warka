@@ -9,6 +9,9 @@ describe('notification email routing', () => {
     expect(emailCategoryForNotification('result.published')).toBe(
       'academicResults',
     )
+    expect(emailCategoryForNotification('coursework.feedbackReleased')).toBe(
+      'learningMaterials',
+    )
     expect(emailCategoryForNotification('familyMessage.reply')).toBe(
       'familyCommunication',
     )

@@ -2,6 +2,7 @@ import { type PrismaClient } from '@prisma/client'
 import { z } from 'zod'
 import { visibleCourseworkAssignmentForStudent } from './courseworkAudience.js'
 import { editableCourseworkDueAt } from './submissionReviews.js'
+import { notifyCoursework } from './courseworkNotifications.js'
 
 export class SubmissionRevisionError extends Error {}
 export const SubmissionTextSchema = z
@@ -114,6 +115,18 @@ export async function submitCourseworkRevision(
       await transaction.submissionReview.create({
         data: { revisionId: latest.id },
       })
+      const assignment =
+        await transaction.courseworkAssignment.findUniqueOrThrow({
+          where: { id: assignmentId },
+          select: { createdById: true },
+        })
+      await notifyCoursework(
+        transaction,
+        [assignment.createdById],
+        'coursework.submissionReceived',
+        'Coursework submission received',
+        assignmentId,
+      )
       return transaction.submissionRevision.findUniqueOrThrow({
         where: { id: latest.id },
       })

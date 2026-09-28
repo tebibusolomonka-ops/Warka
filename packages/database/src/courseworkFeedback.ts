@@ -1,7 +1,7 @@
 import type { PrismaClient } from '@prisma/client'
 import { z } from 'zod'
 import { mayManageCourseworkAssignment } from './courseworkAudience.js'
-import { createNotification } from './notifications.js'
+import { notifyCoursework } from './courseworkNotifications.js'
 
 export class CourseworkFeedbackError extends Error {}
 export const CourseworkFeedbackTextSchema = z
@@ -102,14 +102,13 @@ export async function releaseCourseworkFeedback(
         select: { userId: true },
       })
       if (access)
-        await createNotification(transaction, {
-          userId: access.userId,
-          type: 'coursework.feedbackReleased',
-          title: 'Coursework feedback available',
-          message: 'Open Warka to view your released coursework feedback.',
-          resourceType: 'courseworkAssignment',
-          resourceId: assignmentId,
-        })
+        await notifyCoursework(
+          transaction,
+          [access.userId],
+          'coursework.feedbackReleased',
+          'Coursework feedback available',
+          assignmentId,
+        )
       return transaction.courseworkFeedback.findUniqueOrThrow({
         where: { id: feedback.id },
       })

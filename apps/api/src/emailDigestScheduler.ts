@@ -4,7 +4,15 @@ import { z } from 'zod'
 const typesByCategory = {
   academicResults: ['result.published'],
   schoolAnnouncements: ['announcement.published'],
-  learningMaterials: ['learningMaterial.published'],
+  learningMaterials: [
+    'learningMaterial.published',
+    'coursework.published',
+    'coursework.dueDateChanged',
+    'coursework.extensionGranted',
+    'coursework.submissionReceived',
+    'coursework.submissionReturned',
+    'coursework.feedbackReleased',
+  ],
 } as const
 
 export function digestWindow(cadence: 'daily' | 'weekly', now = new Date()) {
