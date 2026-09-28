@@ -93,6 +93,12 @@ import {
   ProgressionValidationError,
   ProgressionExceptionStateError,
   type PrismaClient,
+  CourseworkAssignmentAccessError,
+  CourseworkAssignmentContextError,
+  CourseworkLifecycleError,
+  CourseworkSubmissionAccessError,
+  SubmissionRevisionError,
+  AssignmentExtensionError,
 } from '@warka/database'
 import { ErrorResponseSchema, HealthResponseSchema } from '@warka/shared'
 import { ZodError } from 'zod'
@@ -151,6 +157,12 @@ import {
   type LearningMaterialService,
 } from './learningMaterialService.js'
 import { registerLearningMaterialRoutes } from './learningMaterialRoutes.js'
+import {
+  CourseworkRouteAccessError,
+  registerCourseworkRoutes,
+} from './courseworkRoutes.js'
+import { CourseworkAttachmentError } from './courseworkAttachmentService.js'
+import { SubmissionAttachmentError } from './submissionAttachmentService.js'
 import {
   prismaAnnouncementService,
   AnnouncementAccessError,
@@ -439,6 +451,7 @@ export function buildApp(
     )
     registerStudentPortalRoutes(app, getStudentPortal, authenticate)
     registerLearningMaterialRoutes(app, getMaterials, authenticate)
+    registerCourseworkRoutes(app, getDatabase, authenticate)
     registerAnnouncementRoutes(app, getAnnouncements, authenticate)
     registerParentServiceRoutes(app, getDatabase, authenticate)
     registerBureauRoutes(app, getDatabase, authenticate)
@@ -521,6 +534,30 @@ export function buildApp(
   )
 
   app.setErrorHandler((error, _request, reply) => {
+    if (
+      error instanceof CourseworkRouteAccessError ||
+      error instanceof CourseworkAssignmentAccessError ||
+      error instanceof CourseworkSubmissionAccessError
+    )
+      return reply
+        .code(404)
+        .send({
+          error: {
+            code: 'COURSEWORK_NOT_FOUND',
+            message: 'Coursework not available',
+          },
+        })
+    if (
+      error instanceof CourseworkAssignmentContextError ||
+      error instanceof CourseworkLifecycleError ||
+      error instanceof SubmissionRevisionError ||
+      error instanceof AssignmentExtensionError ||
+      error instanceof CourseworkAttachmentError ||
+      error instanceof SubmissionAttachmentError
+    )
+      return reply
+        .code(409)
+        .send({ error: { code: 'COURSEWORK_STATE', message: error.message } })
     if (error instanceof AssessmentScheduleConflictError)
       return reply.code(409).send({
         error: {
