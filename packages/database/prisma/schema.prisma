@@ -433,6 +433,7 @@ enum MaintenanceWindowStatus {
 }
 
 model School {
+  assessmentRooms AssessmentRoom[]
   calendarDays SchoolCalendarDay[]
   timetablePeriods TimetablePeriod[]
   timetableEntries ClassTimetableEntry[]
@@ -1671,6 +1672,23 @@ model Assessment {
   @@unique([schoolId, academicYearId, gradingPeriodId, schoolClassId, subjectId, name], map: "Assessment_context_name_key")
   @@unique([schoolId, academicYearId, gradingPeriodId, schoolClassId, subjectId, position], map: "Assessment_context_position_key")
   @@index([schoolId, academicYearId, gradingPeriodId, schoolClassId, subjectId])
+}
+
+model AssessmentRoom {
+  id        String   @id @default(uuid())
+  schoolId  String
+  name      String
+  code      String
+  capacity  Int?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  school    School   @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+
+  @@unique([schoolId, name])
+  @@unique([schoolId, code])
+  @@unique([id, schoolId])
+  @@index([schoolId, active])
 }
 
 model Mark {

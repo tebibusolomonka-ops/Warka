@@ -925,3 +925,11 @@ export {
   releaseRetentionHold,
   listRetentionHolds,
 } from './retentionHolds.js'
+
+export {
+  AssessmentRoomInputSchema,
+  AssessmentRoomConflictError,
+  createAssessmentRoom,
+  setAssessmentRoomActive,
+  listAssessmentRooms,
+} from './assessmentRooms.js'
