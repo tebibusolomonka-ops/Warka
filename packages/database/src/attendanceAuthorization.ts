@@ -10,8 +10,8 @@ export type AttendanceScope = {
   schoolId: string
   academicYearId: string
   schoolClassId: string
-  subjectId?: string | null
-  teachingAssignmentId?: string | null
+  subjectId?: string | null | undefined
+  teachingAssignmentId?: string | null | undefined
 }
 
 export async function mayManageAttendance(
@@ -34,12 +34,14 @@ export async function mayManageAttendance(
   return Boolean(
     await database.teachingAssignment.findFirst({
       where: {
-        id: scope.teachingAssignmentId ?? undefined,
+        ...(scope.teachingAssignmentId
+          ? { id: scope.teachingAssignmentId }
+          : {}),
         userId: actorId,
         schoolId: scope.schoolId,
         academicYearId: scope.academicYearId,
         schoolClassId: scope.schoolClassId,
-        subjectId: scope.subjectId ?? undefined,
+        ...(scope.subjectId ? { subjectId: scope.subjectId } : {}),
         startsAt: { lte: at },
         OR: [{ endsAt: null }, { endsAt: { gt: at } }],
       },

@@ -22,6 +22,13 @@ export function createDatabaseClient(
 
 export type { PrismaClient }
 export {
+  AttendanceBulkInputSchema,
+  AttendanceCaptureError,
+  getAttendanceRoster,
+  saveBulkAttendance,
+  submitAttendanceSession,
+} from './attendanceCapture.js'
+export {
   AttendancePermissionError,
   mayManageAttendance,
   assertAttendanceManager,
