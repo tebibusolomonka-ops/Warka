@@ -158,6 +158,13 @@ enum GradebookLockAction {
   unlocked
 }
 
+enum CourseworkAssignmentStatus {
+  draft
+  published
+  closed
+  cancelled
+}
+
 enum StudentAttendanceStatus {
   present
   absent
@@ -480,6 +487,7 @@ enum MaintenanceWindowStatus {
 }
 
 model School {
+  courseworkAssignments CourseworkAssignment[]
   gradebookLocks GradebookLock[]
   markCorrections MarkCorrection[]
   markModerationRequests MarkModerationRequest[]
@@ -543,6 +551,7 @@ model School {
 }
 
 model User {
+  courseworkAssignmentsCreated CourseworkAssignment[] @relation("CourseworkAssignmentCreator")
   gradebookLockActors GradebookLockEvent[]
   reviewedMarkCorrections MarkCorrection[]
   requestedMarkModerations MarkModerationRequest[] @relation("ModerationRequester")
@@ -1190,6 +1199,7 @@ model EmailDelivery {
 }
 
 model AcademicYear {
+  courseworkAssignments CourseworkAssignment[]
   gradebookLocks GradebookLock[]
   assessmentSchedules AssessmentSchedule[]
   calendarDays SchoolCalendarDay[]
@@ -1278,6 +1288,7 @@ model GradeLevel {
 }
 
 model SchoolClass {
+  courseworkAssignments CourseworkAssignment[]
   gradebookLocks GradebookLock[]
   assessmentSchedules AssessmentSchedule[]
   assessmentSessions AssessmentSession[]
@@ -1504,6 +1515,7 @@ model EnrollmentHistoryEvent {
 }
 
 model Subject {
+  courseworkAssignments CourseworkAssignment[]
   gradebookLocks GradebookLock[]
   assessmentSchedules AssessmentSchedule[]
   timetableEntries ClassTimetableEntry[]
@@ -1571,6 +1583,7 @@ model Announcement {
 }
 
 model TeachingAssignment {
+  courseworkAssignments CourseworkAssignment[]
   timetableEntries ClassTimetableEntry[]
   attendanceSessions AttendanceSession[]
   id             String       @id @default(uuid())
@@ -1706,6 +1719,7 @@ model AttendanceCorrection {
 }
 
 model GradingPeriod {
+  courseworkAssignments CourseworkAssignment[]
   gradebookLocks GradebookLock[]
   assessmentSchedules AssessmentSchedule[]
   resultSets     ResultSet[]
@@ -1727,6 +1741,7 @@ model GradingPeriod {
 }
 
 model Assessment {
+  courseworkAssignments CourseworkAssignment[]
   markEntryWindow MarkEntryWindow?
   schedules AssessmentSchedule[]
   id              String        @id @default(uuid())
@@ -1752,6 +1767,40 @@ model Assessment {
   @@unique([schoolId, academicYearId, gradingPeriodId, schoolClassId, subjectId, name], map: "Assessment_context_name_key")
   @@unique([schoolId, academicYearId, gradingPeriodId, schoolClassId, subjectId, position], map: "Assessment_context_position_key")
   @@index([schoolId, academicYearId, gradingPeriodId, schoolClassId, subjectId])
+}
+
+model CourseworkAssignment {
+  id String @id @default(uuid())
+  schoolId String
+  academicYearId String
+  gradingPeriodId String?
+  schoolClassId String
+  subjectId String
+  teachingAssignmentId String
+  assessmentId String?
+  createdById String
+  title String @db.VarChar(200)
+  instructions String @db.Text
+  assignedAt DateTime?
+  dueAt DateTime
+  status CourseworkAssignmentStatus @default(draft)
+  publishedAt DateTime?
+  closedAt DateTime?
+  cancelledAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  school School @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  academicYear AcademicYear @relation(fields: [academicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  gradingPeriod GradingPeriod? @relation(fields: [gradingPeriodId, schoolId, academicYearId], references: [id, schoolId, academicYearId], onDelete: Restrict)
+  schoolClass SchoolClass @relation(fields: [schoolClassId, schoolId, academicYearId], references: [id, schoolId, academicYearId], onDelete: Restrict)
+  subject Subject @relation(fields: [subjectId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  teachingAssignment TeachingAssignment @relation(fields: [teachingAssignmentId, schoolId, academicYearId, schoolClassId, subjectId], references: [id, schoolId, academicYearId, schoolClassId, subjectId], onDelete: Restrict)
+  assessment Assessment? @relation(fields: [assessmentId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  createdBy User @relation("CourseworkAssignmentCreator", fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@unique([id, schoolId])
+  @@index([schoolId, academicYearId, schoolClassId, subjectId, status])
+  @@index([teachingAssignmentId, status])
 }
 
 model MarkEntryWindow {

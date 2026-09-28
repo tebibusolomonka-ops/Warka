@@ -1004,3 +1004,9 @@ export {
 } from './gradebookLocks.js'
 
 export { getResultPublicationReadiness } from './resultPublicationReadiness.js'
+export {
+  CreateCourseworkAssignmentSchema,
+  CourseworkAssignmentAccessError,
+  CourseworkAssignmentContextError,
+  createCourseworkAssignment,
+} from './courseworkAssignments.js'
