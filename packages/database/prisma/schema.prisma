@@ -1817,6 +1817,7 @@ model CourseworkAssignment {
 }
 
 model CourseworkSubmission {
+  revisions SubmissionRevision[]
   id String @id @default(uuid())
   schoolId String
   assignmentId String
@@ -1834,6 +1835,19 @@ model CourseworkSubmission {
   @@unique([assignmentId, studentId])
   @@index([schoolId, assignmentId, status])
   @@index([studentId, status])
+}
+
+model SubmissionRevision {
+  id String @id @default(uuid())
+  submissionId String
+  revisionNumber Int
+  textResponse String @db.Text
+  submittedAt DateTime?
+  createdAt DateTime @default(now())
+  submission CourseworkSubmission @relation(fields: [submissionId], references: [id], onDelete: Restrict)
+
+  @@unique([submissionId, revisionNumber])
+  @@index([submissionId, submittedAt])
 }
 
 model CourseworkAttachment {

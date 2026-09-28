@@ -1030,3 +1030,11 @@ export {
   ownCourseworkSubmission,
   listCourseworkSubmissionsForStaff,
 } from './courseworkSubmissions.js'
+export {
+  SubmissionRevisionError,
+  SubmissionTextSchema,
+  saveDraftSubmissionRevision,
+  submitCourseworkRevision,
+  withdrawCourseworkSubmission,
+  listOwnSubmissionRevisions,
+} from './submissionRevisions.js'
