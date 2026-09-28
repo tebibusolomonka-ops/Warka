@@ -146,6 +146,13 @@ enum MarkEntryWindowStatus {
   closed
 }
 
+enum MarkModerationStatus {
+  pending
+  approved
+  rejected
+  cancelled
+}
+
 enum StudentAttendanceStatus {
   present
   absent
@@ -468,6 +475,7 @@ enum MaintenanceWindowStatus {
 }
 
 model School {
+  markModerationRequests MarkModerationRequest[]
   markEntryWindows MarkEntryWindow[]
   assessmentInvigilations AssessmentInvigilation[]
   makeUpAssessments MakeUpAssessment[]
@@ -528,6 +536,8 @@ model School {
 }
 
 model User {
+  requestedMarkModerations MarkModerationRequest[] @relation("ModerationRequester")
+  reviewedMarkModerations MarkModerationRequest[] @relation("ModerationReviewer")
   createdMarkEntryWindows MarkEntryWindow[]
   assessmentInvigilations AssessmentInvigilation[]
   assignedInvigilations AssessmentInvigilation[] @relation("InvigilationAssigner")
@@ -1891,6 +1901,7 @@ model MakeUpAssessment {
 }
 
 model Mark {
+  moderationRequests MarkModerationRequest[]
   id           String     @id @default(uuid())
   schoolId     String
   studentId    String
@@ -1909,6 +1920,28 @@ model Mark {
   @@unique([enrollmentId, assessmentId])
   @@index([schoolId, assessmentId])
   @@index([schoolId, studentId])
+}
+
+model MarkModerationRequest {
+  id String @id @default(uuid())
+  schoolId String
+  markId String
+  originalScore Decimal @db.Decimal(8, 2)
+  proposedScore Decimal @db.Decimal(8, 2)
+  reason String
+  status MarkModerationStatus @default(pending)
+  requestedById String
+  reviewedAt DateTime?
+  reviewedById String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  school School @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  mark Mark @relation(fields: [markId], references: [id], onDelete: Restrict)
+  requestedBy User @relation("ModerationRequester", fields: [requestedById], references: [id], onDelete: Restrict)
+  reviewedBy User? @relation("ModerationReviewer", fields: [reviewedById], references: [id], onDelete: Restrict)
+
+  @@index([schoolId, status])
+  @@index([markId, createdAt])
 }
 
 model GradingScheme {

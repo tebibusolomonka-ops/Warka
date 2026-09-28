@@ -987,3 +987,9 @@ export {
   GradebookContextError,
   getGradebookCompleteness,
 } from './gradebookCompleteness.js'
+
+export {
+  MarkModerationRequestSchema,
+  MarkModerationStateError,
+  requestMarkModeration,
+} from './markModerationRequests.js'
