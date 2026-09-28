@@ -219,6 +219,18 @@ enum ReportingSubmissionStatus {
   returned
 }
 
+enum DataQualitySeverity {
+  info
+  warning
+  blocking
+}
+
+enum DataQualityIssueStatus {
+  open
+  resolved
+  dismissed
+}
+
 enum VerificationResultStatus {
   active
   corrected
@@ -507,6 +519,7 @@ enum MaintenanceWindowStatus {
 }
 
 model School {
+  dataQualityIssues DataQualityIssue[]
   events SchoolEvent[]
   meetingAvailability TeacherMeetingAvailability[]
   meetingRequests ParentTeacherMeetingRequest[]
@@ -574,6 +587,8 @@ model School {
 }
 
 model User {
+  dismissedDataQualityIssues DataQualityIssue[] @relation("DataQualityIssueDismisser")
+  resolvedDataQualityIssues DataQualityIssue[] @relation("DataQualityIssueResolver")
   eventResponses EventResponse[]
   eventResponseHistory EventResponseHistory[]
   eventAttachmentsCreated EventAttachment[]
@@ -944,6 +959,30 @@ model ReportingSubmission {
   @@unique([reportingPeriodId, schoolId])
   @@index([schoolId, status])
   @@index([reportingPeriodId, status])
+}
+
+model DataQualityIssue {
+  id String @id @default(uuid())
+  schoolId String
+  category String @db.VarChar(40)
+  severity DataQualitySeverity
+  code String @db.VarChar(80)
+  status DataQualityIssueStatus @default(open)
+  entityType String? @db.VarChar(40)
+  entityId String?
+  summary String @db.VarChar(240)
+  detectedAt DateTime @default(now())
+  resolvedAt DateTime?
+  resolvedById String?
+  dismissedAt DateTime?
+  dismissedById String?
+  dismissalReason String? @db.VarChar(500)
+  school School @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  resolvedBy User? @relation("DataQualityIssueResolver", fields: [resolvedById], references: [id], onDelete: Restrict)
+  dismissedBy User? @relation("DataQualityIssueDismisser", fields: [dismissedById], references: [id], onDelete: Restrict)
+
+  @@index([schoolId, status, severity, detectedAt])
+  @@index([schoolId, category, code])
 }
 
 model AuditEvent {

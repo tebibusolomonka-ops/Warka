@@ -1128,3 +1128,10 @@ export {
   respondToSchoolEvent,
   eventResponseCounts,
 } from './eventResponses.js'
+export {
+  DismissDataQualityIssueSchema,
+  DataQualityIssueAccessError,
+  DataQualityIssueStateError,
+  requireDataQualityAdministrator,
+  dismissDataQualityIssue,
+} from './dataQualityIssues.js'
