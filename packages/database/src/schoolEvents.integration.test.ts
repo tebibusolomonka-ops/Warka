@@ -8,6 +8,7 @@ import {
   SchoolEventStateError,
   transitionSchoolEvent,
 } from './schoolEvents.js'
+import { mayViewSchoolEvent, setSchoolEventAudience } from './eventAudiences.js'
 
 const testUrl = process.env.TEST_DATABASE_URL ?? process.env.DATABASE_URL
 const database = testUrl
@@ -69,6 +70,24 @@ describe.skipIf(!database)('school events in PostgreSQL', () => {
       ).rejects.toThrow()
       const event = await createSchoolEvent(db, admin.id, input)
       expect(event.status).toBe('draft')
+      expect(
+        await mayViewSchoolEvent(db, outsider.id, school.id, event.id),
+      ).toBe(false)
+      await expect(
+        transitionSchoolEvent(db, admin.id, school.id, event.id, 'publish'),
+      ).rejects.toBeInstanceOf(SchoolEventStateError)
+      const foreignGrade = await db.gradeLevel.create({
+        data: { schoolId: otherSchool.id, name: 'Foreign grade' },
+      })
+      await expect(
+        setSchoolEventAudience(db, admin.id, school.id, event.id, {
+          scope: 'grade',
+          gradeLevelId: foreignGrade.id,
+        }),
+      ).rejects.toBeInstanceOf(SchoolEventStateError)
+      await setSchoolEventAudience(db, admin.id, school.id, event.id, {
+        scope: 'wholeSchool',
+      })
       await expect(
         editDraftSchoolEvent(db, admin.id, otherSchool.id, event.id, {
           ...input,
@@ -90,6 +109,12 @@ describe.skipIf(!database)('school events in PostgreSQL', () => {
           )
         ).status,
       ).toBe('published')
+      expect(
+        await mayViewSchoolEvent(db, outsider.id, otherSchool.id, event.id),
+      ).toBe(false)
+      expect(
+        await mayViewSchoolEvent(db, outsider.id, school.id, event.id),
+      ).toBe(false)
       await expect(
         editDraftSchoolEvent(db, admin.id, school.id, event.id, input),
       ).rejects.toBeInstanceOf(SchoolEventStateError)
@@ -108,7 +133,11 @@ describe.skipIf(!database)('school events in PostgreSQL', () => {
         transitionSchoolEvent(db, admin.id, school.id, event.id, 'cancel'),
       ).rejects.toBeInstanceOf(SchoolEventStateError)
     } finally {
+      await db.schoolEventAudience.deleteMany({
+        where: { schoolId: school.id },
+      })
       await db.schoolEvent.deleteMany({ where: { schoolId: school.id } })
+      await db.gradeLevel.deleteMany({ where: { schoolId: otherSchool.id } })
       await db.schoolMembership.deleteMany({ where: { schoolId: school.id } })
       await db.user.deleteMany({
         where: { id: { in: [admin.id, outsider.id] } },

@@ -1310,6 +1310,7 @@ model TimetablePeriod {
 }
 
 model GradeLevel {
+  eventAudiences SchoolEventAudience[]
   id          String        @id @default(uuid())
   schoolId    String
   name        String
@@ -1324,6 +1325,7 @@ model GradeLevel {
 }
 
 model SchoolClass {
+  eventAudiences SchoolEventAudience[]
   courseworkAssignments CourseworkAssignment[]
   gradebookLocks GradebookLock[]
   assessmentSchedules AssessmentSchedule[]
@@ -1726,6 +1728,7 @@ enum SchoolEventStatus {
 }
 
 model SchoolEvent {
+  audience SchoolEventAudience?
   id String @id @default(uuid())
   schoolId String
   createdById String
@@ -1745,6 +1748,30 @@ model SchoolEvent {
 
   @@unique([id, schoolId])
   @@index([schoolId, status, startsAt])
+}
+
+enum SchoolEventAudienceScope {
+  wholeSchool
+  students
+  guardians
+  staff
+  grade
+  class
+}
+
+model SchoolEventAudience {
+  id String @id @default(uuid())
+  eventId String @unique
+  schoolId String
+  scope SchoolEventAudienceScope
+  gradeLevelId String?
+  schoolClassId String?
+  event SchoolEvent @relation(fields: [eventId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  gradeLevel GradeLevel? @relation(fields: [gradeLevelId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  schoolClass SchoolClass? @relation(fields: [schoolClassId, schoolId], references: [id, schoolId], onDelete: Restrict)
+
+  @@index([schoolId, scope])
+  @@unique([eventId, schoolId])
 }
 
 model MeetingEvent {

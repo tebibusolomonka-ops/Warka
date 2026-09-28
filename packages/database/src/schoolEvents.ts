@@ -87,6 +87,13 @@ export async function transitionSchoolEvent(
   action: 'publish' | 'cancel' | 'complete',
 ) {
   await requireSchoolEventManager(database, actorId, schoolId)
+  if (
+    action === 'publish' &&
+    !(await database.schoolEventAudience.findUnique({ where: { eventId: id } }))
+  )
+    throw new SchoolEventStateError(
+      'Event audience required before publication',
+    )
   const previous = action === 'publish' ? 'draft' : 'published'
   const status =
     action === 'publish'

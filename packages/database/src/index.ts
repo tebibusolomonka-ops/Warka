@@ -1116,3 +1116,4 @@ export {
   editDraftSchoolEvent,
   transitionSchoolEvent,
 } from './schoolEvents.js'
+export { EventAudienceSchema, setSchoolEventAudience, mayViewSchoolEvent } from './eventAudiences.js'
