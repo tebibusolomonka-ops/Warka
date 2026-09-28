@@ -9,8 +9,11 @@ import {
   getTeacherCourseworkCounts,
   grantTeacherCourseworkExtension,
   getTeacherSubmission,
+  getTeacherRubric,
   listTeacherSubmissions,
   reviewTeacherRevision,
+  saveTeacherRubric,
+  scoreTeacherRevision,
   listTeacherCoursework,
   transitionTeacherCoursework,
   uploadTeacherCoursework,
@@ -20,6 +23,7 @@ import {
   type CourseworkCounts,
   type StaffCourseworkDetail,
   type StaffCourseworkSubmission,
+  type CourseworkRubric,
 } from './courseworkApi'
 
 export function TeacherCourseworkWorkspace({
@@ -462,6 +466,13 @@ export function TeacherCourseworkWorkspace({
             assignmentId={current.id}
             onSessionExpired={onSessionExpired}
           />
+          <TeacherRubricPanel
+            baseUrl={baseUrl}
+            schoolId={schoolId}
+            assignmentId={current.id}
+            assignmentStatus={current.status}
+            onSessionExpired={onSessionExpired}
+          />
         </div>
       )}
     </section>
@@ -485,8 +496,23 @@ function TeacherSubmissionReview({
   const [selectedId, setSelectedId] = useState('')
   const [detail, setDetail] = useState<StaffCourseworkDetail | null>(null)
   const [returnDue, setReturnDue] = useState('')
+  const [rubric, setRubric] = useState<CourseworkRubric | null>(null)
+  const [scores, setScores] = useState<Record<string, string>>({})
   const [refresh, setRefresh] = useState(0)
   const [error, setError] = useState('')
+  useEffect(() => {
+    let active = true
+    getTeacherRubric(baseUrl, schoolId, assignmentId)
+      .then((result) => {
+        if (active) setRubric(result.rubric)
+      })
+      .catch(() => {
+        if (active) setRubric(null)
+      })
+    return () => {
+      active = false
+    }
+  }, [baseUrl, schoolId, assignmentId, refresh])
   useEffect(() => {
     let active = true
     listTeacherSubmissions(baseUrl, schoolId, assignmentId)
@@ -543,6 +569,26 @@ function TeacherSubmissionReview({
       else setError(cause instanceof Error ? cause.message : 'Review failed.')
     }
   }
+  async function score(revisionId: string) {
+    if (!rubric) return
+    setError('')
+    try {
+      await scoreTeacherRevision(
+        baseUrl,
+        schoolId,
+        assignmentId,
+        revisionId,
+        rubric.criteria.map((criterion) => ({
+          criterionId: criterion.id,
+          points: scores[criterion.id] ?? '',
+        })),
+      )
+      setRefresh((value) => value + 1)
+    } catch (cause) {
+      if (cause instanceof ApiError && cause.status === 401) onSessionExpired()
+      else setError(cause instanceof Error ? cause.message : 'Scoring failed.')
+    }
+  }
   return (
     <section aria-label="Submission review">
       <h5>Submission review</h5>
@@ -572,6 +618,46 @@ function TeacherSubmissionReview({
             · Review {item.review?.status ?? 'pending'}
           </p>
           <p>{item.textResponse}</p>
+          {item.rubricScores?.[0] && (
+            <p>
+              Coursework score: {item.rubricScores[0].totalPoints} · Version{' '}
+              {item.rubricScores[0].version}. This is not an official mark.
+            </p>
+          )}
+          {rubric && (
+            <div>
+              <p>
+                Rubric: {rubric.title} · Maximum {rubric.totalPoints}
+              </p>
+              {rubric.criteria.map((criterion) => (
+                <label key={criterion.id}>
+                  {criterion.title} (0–{criterion.maxPoints}){' '}
+                  <input
+                    type="number"
+                    min="0"
+                    max={criterion.maxPoints}
+                    step="0.01"
+                    value={scores[criterion.id] ?? ''}
+                    onChange={(event) =>
+                      setScores((current) => ({
+                        ...current,
+                        [criterion.id]: event.target.value,
+                      }))
+                    }
+                  />
+                </label>
+              ))}
+              <button
+                type="button"
+                disabled={rubric.criteria.some(
+                  (criterion) => !scores[criterion.id],
+                )}
+                onClick={() => void score(item.id)}
+              >
+                Save rubric score
+              </button>
+            </div>
+          )}
           {item.review?.status === 'pending' && (
             <>
               <button
@@ -599,6 +685,191 @@ function TeacherSubmissionReview({
           )}
         </div>
       ))}
+    </section>
+  )
+}
+
+function TeacherRubricPanel({
+  baseUrl,
+  schoolId,
+  assignmentId,
+  assignmentStatus,
+  onSessionExpired,
+}: {
+  baseUrl: string
+  schoolId: string
+  assignmentId: string
+  assignmentStatus: CourseworkAssignment['status']
+  onSessionExpired: () => void
+}) {
+  const [rubric, setRubric] = useState<CourseworkRubric | null>(null)
+  const [title, setTitle] = useState('')
+  const [criteria, setCriteria] = useState([
+    { title: '', description: '', maxPoints: '' },
+  ])
+  const [refresh, setRefresh] = useState(0)
+  const [error, setError] = useState('')
+  useEffect(() => {
+    let active = true
+    getTeacherRubric(baseUrl, schoolId, assignmentId)
+      .then((result) => {
+        if (!active) return
+        setRubric(result.rubric)
+        if (result.rubric) {
+          setTitle(result.rubric.title)
+          setCriteria(
+            result.rubric.criteria.map((item) => ({
+              title: item.title,
+              description: item.description,
+              maxPoints: item.maxPoints,
+            })),
+          )
+        }
+      })
+      .catch((cause: unknown) => {
+        if (active) {
+          if (cause instanceof ApiError && cause.status === 401)
+            onSessionExpired()
+          else setError('Could not load rubric.')
+        }
+      })
+    return () => {
+      active = false
+    }
+  }, [baseUrl, schoolId, assignmentId, refresh, onSessionExpired])
+  async function save() {
+    setError('')
+    try {
+      await saveTeacherRubric(
+        baseUrl,
+        schoolId,
+        assignmentId,
+        { title, criteria },
+        Boolean(rubric),
+      )
+      setRefresh((value) => value + 1)
+    } catch (cause) {
+      if (cause instanceof ApiError && cause.status === 401) onSessionExpired()
+      else
+        setError(
+          cause instanceof Error ? cause.message : 'Could not save rubric.',
+        )
+    }
+  }
+  const editable =
+    !rubric?.frozenAt &&
+    (assignmentStatus === 'draft' || assignmentStatus === 'published')
+  return (
+    <section aria-label="Assignment rubric">
+      <h5>Assignment rubric</h5>
+      {error && <p role="alert">{error}</p>}
+      {rubric && (
+        <p>
+          Maximum {rubric.totalPoints} points ·{' '}
+          {rubric.frozenAt
+            ? 'Frozen after scoring'
+            : 'Editable until scoring begins'}
+        </p>
+      )}
+      {editable && (
+        <form
+          onSubmit={(event) => {
+            event.preventDefault()
+            void save()
+          }}
+        >
+          <label>
+            Rubric title{' '}
+            <input
+              value={title}
+              required
+              maxLength={200}
+              onChange={(event) => setTitle(event.target.value)}
+            />
+          </label>
+          {criteria.map((criterion, index) => (
+            <fieldset key={index}>
+              <legend>Criterion {index + 1}</legend>
+              <label>
+                Title{' '}
+                <input
+                  value={criterion.title}
+                  required
+                  maxLength={200}
+                  onChange={(event) =>
+                    setCriteria((rows) =>
+                      rows.map((row, position) =>
+                        position === index
+                          ? { ...row, title: event.target.value }
+                          : row,
+                      ),
+                    )
+                  }
+                />
+              </label>
+              <label>
+                Description{' '}
+                <input
+                  value={criterion.description}
+                  required
+                  maxLength={1000}
+                  onChange={(event) =>
+                    setCriteria((rows) =>
+                      rows.map((row, position) =>
+                        position === index
+                          ? { ...row, description: event.target.value }
+                          : row,
+                      ),
+                    )
+                  }
+                />
+              </label>
+              <label>
+                Maximum points{' '}
+                <input
+                  type="number"
+                  min="0.01"
+                  max="100"
+                  step="0.01"
+                  value={criterion.maxPoints}
+                  required
+                  onChange={(event) =>
+                    setCriteria((rows) =>
+                      rows.map((row, position) =>
+                        position === index
+                          ? { ...row, maxPoints: event.target.value }
+                          : row,
+                      ),
+                    )
+                  }
+                />
+              </label>
+            </fieldset>
+          ))}
+          <button
+            type="button"
+            disabled={criteria.length >= 20}
+            onClick={() =>
+              setCriteria((rows) => [
+                ...rows,
+                { title: '', description: '', maxPoints: '' },
+              ])
+            }
+          >
+            Add criterion
+          </button>
+          <button type="submit">Save rubric</button>
+        </form>
+      )}
+      {rubric?.frozenAt && (
+        <ul>
+          {rubric.criteria.map((criterion) => (
+            <li key={criterion.id}>
+              {criterion.title} · {criterion.maxPoints} points
+            </li>
+          ))}
+        </ul>
+      )}
     </section>
   )
 }

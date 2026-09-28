@@ -1058,3 +1058,9 @@ export {
   cloneCourseworkRubric,
   getCourseworkRubric,
 } from './courseworkRubrics.js'
+export {
+  RubricScoringError,
+  ScoreSubmissionRubricSchema,
+  scoreSubmissionRubric,
+  latestRubricScore,
+} from './rubricScoring.js'

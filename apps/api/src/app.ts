@@ -101,6 +101,7 @@ import {
   AssignmentExtensionError,
   SubmissionReviewError,
   CourseworkRubricError,
+  RubricScoringError,
 } from '@warka/database'
 import { ErrorResponseSchema, HealthResponseSchema } from '@warka/shared'
 import { ZodError } from 'zod'
@@ -554,6 +555,7 @@ export function buildApp(
       error instanceof AssignmentExtensionError ||
       error instanceof SubmissionReviewError ||
       error instanceof CourseworkRubricError ||
+      error instanceof RubricScoringError ||
       error instanceof CourseworkAttachmentError ||
       error instanceof SubmissionAttachmentError
     )

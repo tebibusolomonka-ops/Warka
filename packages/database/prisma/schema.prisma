@@ -565,6 +565,7 @@ model School {
 }
 
 model User {
+  courseworkScoresCreated RubricScore[] @relation("RubricScorer")
   courseworkRubricsCreated CourseworkRubric[] @relation("CourseworkRubricCreator")
   submissionReviewsCompleted SubmissionReview[] @relation("SubmissionReviewer")
   assignmentExtensionsCreated AssignmentExtension[] @relation("AssignmentExtensionCreator")
@@ -1832,6 +1833,7 @@ model CourseworkAssignment {
 }
 
 model CourseworkRubric {
+  scores RubricScore[]
   id String @id @default(uuid())
   schoolId String
   assignmentId String
@@ -1849,6 +1851,7 @@ model CourseworkRubric {
 }
 
 model RubricCriterion {
+  scores RubricCriterionScore[]
   id String @id @default(uuid())
   rubricId String
   title String @db.VarChar(200)
@@ -1858,6 +1861,34 @@ model RubricCriterion {
   rubric CourseworkRubric @relation(fields: [rubricId], references: [id], onDelete: Restrict)
 
   @@unique([rubricId, sortOrder])
+}
+
+model RubricScore {
+  id String @id @default(uuid())
+  revisionId String
+  rubricId String
+  version Int
+  totalPoints Decimal @db.Decimal(9, 2)
+  scoredById String
+  createdAt DateTime @default(now())
+  revision SubmissionRevision @relation(fields: [revisionId], references: [id], onDelete: Restrict)
+  rubric CourseworkRubric @relation(fields: [rubricId], references: [id], onDelete: Restrict)
+  scoredBy User @relation("RubricScorer", fields: [scoredById], references: [id], onDelete: Restrict)
+  criteria RubricCriterionScore[]
+
+  @@unique([revisionId, version])
+  @@index([rubricId, createdAt])
+}
+
+model RubricCriterionScore {
+  id String @id @default(uuid())
+  scoreId String
+  criterionId String
+  points Decimal @db.Decimal(7, 2)
+  score RubricScore @relation(fields: [scoreId], references: [id], onDelete: Restrict)
+  criterion RubricCriterion @relation(fields: [criterionId], references: [id], onDelete: Restrict)
+
+  @@unique([scoreId, criterionId])
 }
 
 model AssignmentExtension {
@@ -1902,6 +1933,7 @@ model CourseworkSubmission {
 }
 
 model SubmissionRevision {
+  rubricScores RubricScore[]
   review SubmissionReview?
   attachments SubmissionAttachment[]
   id String @id @default(uuid())

@@ -171,12 +171,65 @@ export type StaffCourseworkSubmission = {
 }
 export type StaffCourseworkDetail = StaffCourseworkSubmission & {
   revisions: (CourseworkRevision & {
+    rubricScores?: { id: string; version: number; totalPoints: string }[]
     review: {
       status: 'pending' | 'reviewed' | 'returned'
       resubmissionAllowed: boolean
       resubmissionDueAt: string | null
     } | null
   })[]
+}
+export type CourseworkRubric = {
+  id: string
+  title: string
+  frozenAt: string | null
+  totalPoints: string
+  criteria: {
+    id: string
+    title: string
+    description: string
+    maxPoints: string
+    sortOrder: number
+  }[]
+}
+export async function getTeacherRubric(
+  baseUrl: string,
+  schoolId: string,
+  assignmentId: string,
+) {
+  return (await requestJson(
+    baseUrl,
+    `${item(schoolId, assignmentId)}/rubric`,
+  )) as { rubric: CourseworkRubric | null }
+}
+export async function saveTeacherRubric(
+  baseUrl: string,
+  schoolId: string,
+  assignmentId: string,
+  input: {
+    title: string
+    criteria: { title: string; description: string; maxPoints: string }[]
+  },
+  replace: boolean,
+) {
+  return requestJson(
+    baseUrl,
+    `${item(schoolId, assignmentId)}/rubric`,
+    json(replace ? 'PUT' : 'POST', input),
+  )
+}
+export async function scoreTeacherRevision(
+  baseUrl: string,
+  schoolId: string,
+  assignmentId: string,
+  revisionId: string,
+  criteria: { criterionId: string; points: string }[],
+) {
+  return requestJson(
+    baseUrl,
+    `${item(schoolId, assignmentId)}/revisions/${encodeURIComponent(revisionId)}/rubric-scores`,
+    json('POST', { criteria }),
+  )
 }
 export async function listTeacherSubmissions(
   baseUrl: string,

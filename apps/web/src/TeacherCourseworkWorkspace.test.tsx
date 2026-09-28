@@ -13,8 +13,11 @@ import {
   getTeacherCourseworkAudience,
   getTeacherCourseworkCounts,
   getTeacherSubmission,
+  getTeacherRubric,
   listTeacherSubmissions,
   reviewTeacherRevision,
+  saveTeacherRubric,
+  scoreTeacherRevision,
   listTeacherCoursework,
   transitionTeacherCoursework,
 } from './courseworkApi'
@@ -27,8 +30,11 @@ vi.mock('./courseworkApi', async (importOriginal) => ({
   getTeacherCourseworkAudience: vi.fn(),
   getTeacherCourseworkCounts: vi.fn(),
   getTeacherSubmission: vi.fn(),
+  getTeacherRubric: vi.fn(),
   listTeacherSubmissions: vi.fn(),
   reviewTeacherRevision: vi.fn(),
+  saveTeacherRubric: vi.fn(),
+  scoreTeacherRevision: vi.fn(),
   listTeacherCoursework: vi.fn(),
   transitionTeacherCoursework: vi.fn(),
 }))
@@ -98,6 +104,9 @@ beforeEach(() => {
     .mockResolvedValue({ submissions: [] })
   vi.mocked(getTeacherSubmission).mockReset()
   vi.mocked(reviewTeacherRevision).mockReset().mockResolvedValue({})
+  vi.mocked(getTeacherRubric).mockReset().mockResolvedValue({ rubric: null })
+  vi.mocked(saveTeacherRubric).mockReset().mockResolvedValue({})
+  vi.mocked(scoreTeacherRevision).mockReset().mockResolvedValue({})
   vi.mocked(getTeacherCourseworkAudience)
     .mockReset()
     .mockResolvedValue({

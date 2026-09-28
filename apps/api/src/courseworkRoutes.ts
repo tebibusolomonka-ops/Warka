@@ -18,6 +18,7 @@ import {
   replaceCourseworkRubric,
   cloneCourseworkRubric,
   getCourseworkRubric,
+  scoreSubmissionRubric,
   startCourseworkSubmission,
   ownCourseworkSubmission,
   saveDraftSubmissionRevision,
@@ -296,6 +297,11 @@ export function registerCourseworkRoutes(
             orderBy: { revisionNumber: 'desc' },
             include: {
               review: true,
+              rubricScores: {
+                orderBy: { version: 'desc' },
+                take: 1,
+                include: { criteria: true },
+              },
               attachments: {
                 where: { removedAt: null },
                 select: {
@@ -328,6 +334,27 @@ export function registerCourseworkRoutes(
         revisionId,
         request.body,
       )
+    },
+  )
+  app.post(
+    '/schools/:schoolId/coursework/:assignmentId/revisions/:revisionId/rubric-scores',
+    { preHandler: authenticate },
+    async (request, reply) => {
+      const { schoolId, assignmentId, revisionId } = staffRevision.parse(
+        request.params,
+      )
+      return reply
+        .code(201)
+        .send(
+          await scoreSubmissionRubric(
+            db(),
+            actor(request),
+            schoolId,
+            assignmentId,
+            revisionId,
+            request.body,
+          ),
+        )
     },
   )
   app.get(
