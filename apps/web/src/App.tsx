@@ -38,6 +38,7 @@ import { YearRolloverWorkspace } from './YearRolloverWorkspace'
 import { TimetableAdminWorkspace } from './TimetableAdminWorkspace'
 import { AssessmentCalendarWorkspace } from './AssessmentCalendarWorkspace'
 import { SchoolEventWorkspace } from './SchoolEventWorkspace'
+import { DataQualityWorkspace } from './DataQualityWorkspace'
 import { TeacherTimetableWorkspace } from './TeacherTimetableWorkspace'
 import { TeacherAttendanceWorkspace } from './TeacherAttendanceWorkspace'
 import { SchoolOnboardingWorkspace } from './SchoolOnboardingWorkspace'
@@ -517,6 +518,10 @@ function SignedInShell({
                     schoolId={selectedSchool.school.id}
                   />
                   <SchoolEventWorkspace
+                    baseUrl={baseUrl}
+                    schoolId={selectedSchool.school.id}
+                  />
+                  <DataQualityWorkspace
                     baseUrl={baseUrl}
                     schoolId={selectedSchool.school.id}
                   />
