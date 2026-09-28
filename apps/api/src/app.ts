@@ -15,6 +15,7 @@ import {
   AssessmentParticipationContextError,
   MakeUpAssessmentStateError,
   AssessmentInvigilationError,
+  MarkEntryWindowStateError,
   AdministratorRecoveryPermissionError,
   AccountLifecyclePermissionError,
   StaffOffboardingPermissionError,
@@ -528,7 +529,8 @@ export function buildApp(
       error instanceof AssessmentSessionStateError ||
       error instanceof AssessmentParticipationContextError ||
       error instanceof MakeUpAssessmentStateError ||
-      error instanceof AssessmentInvigilationError
+      error instanceof AssessmentInvigilationError ||
+      error instanceof MarkEntryWindowStateError
     )
       return reply.code(409).send({
         error: { code: 'ASSESSMENT_STATE', message: error.message },

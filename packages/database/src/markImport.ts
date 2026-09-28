@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { CsvFormatError, parseCsv, type CsvRow } from './csv.js'
 import { findAssessmentById } from './assessments.js'
 import { assertResultSetDraft } from './results.js'
+import { assertMarkEntryWindow } from './markEntryWindows.js'
 import {
   canRecordAssessment,
   InvalidMarkContextError,
@@ -71,6 +72,7 @@ export async function validateMarkImport(
     throw new MarkPermissionError()
   }
   await assertResultSetDraft(database, assessment)
+  await assertMarkEntryWindow(database, actorId, assessment)
   let csvRows: CsvRow[]
   try {
     csvRows = parseCsv(csv.replace(/^\uFEFF/, ''))

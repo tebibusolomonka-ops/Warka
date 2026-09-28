@@ -12,12 +12,15 @@ import { hasOrganizationAdminRole } from './organizationMemberships.js'
 import { findSchoolMembership } from './schoolMemberships.js'
 import { mayManageClassSubject } from './teachingAssignments.js'
 import { assertResultSetDraft } from './results.js'
+import { assertMarkEntryWindow } from './markEntryWindows.js'
+import { recordAuditEvent } from './auditEvents.js'
 
 export const RecordMarkSchema = z.object({
   schoolId: z.uuid(),
   enrollmentId: z.uuid(),
   assessmentId: z.uuid(),
   score: z.string().regex(/^\d{1,6}(\.\d{1,2})?$/),
+  overrideReason: z.string().trim().min(5).max(200).optional(),
 })
 
 export type RecordMark = z.input<typeof RecordMarkSchema>
@@ -92,6 +95,7 @@ async function validMarkContext(
   assessment: Assessment
   enrollment: Enrollment
   score: Prisma.Decimal
+  usedOverride: boolean
 }> {
   const data = RecordMarkSchema.parse(input)
   z.uuid().parse(actorId)
@@ -112,11 +116,17 @@ async function validMarkContext(
     throw new MarkPermissionError()
   }
   await assertResultSetDraft(database, assessment)
+  const usedOverride = await assertMarkEntryWindow(
+    database,
+    actorId,
+    assessment,
+    data.overrideReason,
+  )
   const score = new Prisma.Decimal(data.score)
   if (score.lt(0) || score.gt(assessment.maximumScore)) {
     throw new InvalidMarkScoreError()
   }
-  return { assessment, enrollment, score }
+  return { assessment, enrollment, score, usedOverride }
 }
 
 export async function recordMark(
@@ -124,21 +134,32 @@ export async function recordMark(
   actorId: string,
   input: RecordMark,
 ): Promise<Mark> {
-  const { assessment, enrollment, score } = await validMarkContext(
-    database,
-    actorId,
-    input,
-  )
+  const { assessment, enrollment, score, usedOverride } =
+    await validMarkContext(database, actorId, input)
   try {
-    return await database.mark.create({
-      data: {
+    const create = (client: PrismaClient | Prisma.TransactionClient) =>
+      client.mark.create({
+        data: {
+          schoolId: assessment.schoolId,
+          studentId: enrollment.studentId,
+          enrollmentId: enrollment.id,
+          assessmentId: assessment.id,
+          score,
+          recordedById: actorId,
+        },
+      })
+    if (!usedOverride) return await create(database)
+    return await database.$transaction(async (transaction) => {
+      const mark = await create(transaction)
+      await recordAuditEvent(transaction, {
         schoolId: assessment.schoolId,
-        studentId: enrollment.studentId,
-        enrollmentId: enrollment.id,
-        assessmentId: assessment.id,
-        score,
-        recordedById: actorId,
-      },
+        actorUserId: actorId,
+        action: 'mark.windowOverridden',
+        resourceType: 'mark',
+        resourceId: mark.id,
+        metadata: { reason: input.overrideReason ?? '' },
+      })
+      return mark
     })
   } catch (error) {
     if (
@@ -163,6 +184,7 @@ export async function updateDraftMark(
   schoolId: string,
   markId: string,
   score: string,
+  overrideReason?: string,
 ): Promise<Mark> {
   const mark = await database.mark.findFirst({
     where: { id: markId, schoolId },
@@ -173,10 +195,27 @@ export async function updateDraftMark(
     enrollmentId: mark.enrollmentId,
     assessmentId: mark.assessmentId,
     score,
+    ...(overrideReason ? { overrideReason } : {}),
   })
-  return database.mark.update({
-    where: { id: mark.id },
-    data: { score: checked.score, recordedById: actorId },
+  if (!checked.usedOverride)
+    return database.mark.update({
+      where: { id: mark.id },
+      data: { score: checked.score, recordedById: actorId },
+    })
+  return database.$transaction(async (transaction) => {
+    const updated = await transaction.mark.update({
+      where: { id: mark.id },
+      data: { score: checked.score, recordedById: actorId },
+    })
+    await recordAuditEvent(transaction, {
+      schoolId,
+      actorUserId: actorId,
+      action: 'mark.windowOverridden',
+      resourceType: 'mark',
+      resourceId: updated.id,
+      metadata: { reason: overrideReason ?? '' },
+    })
+    return updated
   })
 }
 

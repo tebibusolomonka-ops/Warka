@@ -62,6 +62,7 @@ function fixture(role = 'teacher') {
         .mockResolvedValue({ role, startsAt: new Date(0), endsAt: null }),
     },
     resultSet: { findFirst: vi.fn().mockResolvedValue(null) },
+    markEntryWindow: { findUnique: vi.fn().mockResolvedValue(null) },
     teachingAssignment: {
       findFirst: vi.fn().mockResolvedValue({ id: randomUUID() }),
     },

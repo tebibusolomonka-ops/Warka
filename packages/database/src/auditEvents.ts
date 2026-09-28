@@ -94,6 +94,7 @@ export const AuditActionSchema = z.enum([
   'notificationPreference.updated',
   'timetable.published',
   'timetable.archived',
+  'mark.windowOverridden',
 ])
 
 export const AuditResourceTypeSchema = z.enum([
@@ -104,6 +105,7 @@ export const AuditResourceTypeSchema = z.enum([
   'guardian',
   'membership',
   'resultSet',
+  'mark',
   'publishedResult',
   'issuedDocument',
   'transferRequest',

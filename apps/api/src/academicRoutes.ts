@@ -210,14 +210,16 @@ export function registerAcademicRoutes(
     { preHandler: authenticate },
     async (request) => {
       const { schoolId, markId } = markParams.parse(request.params)
-      const { score } = RecordMarkSchema.pick({ score: true }).parse(
-        request.body,
-      )
+      const { score, overrideReason } = RecordMarkSchema.pick({
+        score: true,
+        overrideReason: true,
+      }).parse(request.body)
       return getAcademic().updateMark(
         authenticatedUser(request).id,
         schoolId,
         markId,
         score,
+        overrideReason,
       )
     },
   )

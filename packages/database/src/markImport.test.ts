@@ -48,6 +48,7 @@ function fixture(role = 'teacher') {
       }),
     },
     resultSet: { findFirst: vi.fn().mockResolvedValue(null) },
+    markEntryWindow: { findUnique: vi.fn().mockResolvedValue(null) },
     teachingAssignment: {
       findFirst: vi.fn().mockResolvedValue({ id: randomUUID() }),
     },

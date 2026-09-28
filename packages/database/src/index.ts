@@ -973,3 +973,12 @@ export {
   AssessmentInvigilationError,
   assignAssessmentInvigilator,
 } from './assessmentInvigilation.js'
+
+export {
+  MarkEntryWindowInputSchema,
+  MarkEntryOverrideReasonSchema,
+  MarkEntryWindowStateError,
+  createMarkEntryWindow,
+  transitionMarkEntryWindow,
+  assertMarkEntryWindow,
+} from './markEntryWindows.js'

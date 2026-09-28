@@ -184,8 +184,16 @@ export function prismaAcademicService(database: PrismaClient) {
       schoolId: string,
       markId: string,
       score: string,
+      overrideReason?: string,
     ) {
-      return updateDraftMark(database, actorId, schoolId, markId, score)
+      return updateDraftMark(
+        database,
+        actorId,
+        schoolId,
+        markId,
+        score,
+        overrideReason,
+      )
     },
     validateImport(
       actorId: string,

@@ -140,6 +140,12 @@ enum MakeUpAssessmentStatus {
   cancelled
 }
 
+enum MarkEntryWindowStatus {
+  scheduled
+  open
+  closed
+}
+
 enum StudentAttendanceStatus {
   present
   absent
@@ -462,6 +468,7 @@ enum MaintenanceWindowStatus {
 }
 
 model School {
+  markEntryWindows MarkEntryWindow[]
   assessmentInvigilations AssessmentInvigilation[]
   makeUpAssessments MakeUpAssessment[]
   assessmentParticipations AssessmentParticipation[]
@@ -521,6 +528,7 @@ model School {
 }
 
 model User {
+  createdMarkEntryWindows MarkEntryWindow[]
   assessmentInvigilations AssessmentInvigilation[]
   assignedInvigilations AssessmentInvigilation[] @relation("InvigilationAssigner")
   makeUpCreated MakeUpAssessment[] @relation("MakeUpCreator")
@@ -1696,6 +1704,7 @@ model GradingPeriod {
 }
 
 model Assessment {
+  markEntryWindow MarkEntryWindow?
   schedules AssessmentSchedule[]
   id              String        @id @default(uuid())
   schoolId        String
@@ -1720,6 +1729,26 @@ model Assessment {
   @@unique([schoolId, academicYearId, gradingPeriodId, schoolClassId, subjectId, name], map: "Assessment_context_name_key")
   @@unique([schoolId, academicYearId, gradingPeriodId, schoolClassId, subjectId, position], map: "Assessment_context_position_key")
   @@index([schoolId, academicYearId, gradingPeriodId, schoolClassId, subjectId])
+}
+
+model MarkEntryWindow {
+  id String @id @default(uuid())
+  schoolId String
+  academicYearId String
+  gradingPeriodId String
+  assessmentId String @unique
+  opensAt DateTime
+  closesAt DateTime
+  status MarkEntryWindowStatus @default(scheduled)
+  createdById String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  school School @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  assessment Assessment @relation(fields: [assessmentId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  createdBy User @relation(fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@index([schoolId, academicYearId, gradingPeriodId])
+  @@unique([assessmentId, schoolId])
 }
 
 model AssessmentRoom {
