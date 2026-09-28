@@ -111,6 +111,13 @@ enum AttendanceSessionStatus {
   cancelled
 }
 
+enum StudentAttendanceStatus {
+  present
+  absent
+  late
+  excused
+}
+
 enum OrganizationRole {
   owner
   administrator
@@ -480,6 +487,7 @@ model School {
 
 model User {
   openedAttendanceSessions AttendanceSession[]
+  recordedAttendance StudentAttendanceRecord[]
   createdFileAssets FileAsset[] @relation("FileAssetCreatedBy")
   ownedFileAssets FileAsset[] @relation("FileAssetOwner")
   createdBackups               BackupRecord[] @relation("BackupCreatedBy")
@@ -1226,6 +1234,7 @@ model SchoolClass {
 }
 
 model Student {
+  attendanceRecords StudentAttendanceRecord[]
   transferRequests    TransferRequest[]
   issuedDocuments     IssuedDocument[]
   documentRequests    DocumentRequest[]
@@ -1331,6 +1340,7 @@ model StudentGuardian {
 }
 
 model Enrollment {
+  attendanceRecords StudentAttendanceRecord[]
   receivingTransfer TransferRequest?  @relation("TransferDestination")
   sourceTransfers   TransferRequest[] @relation("TransferSource")
   publishedResults  PublishedResult[]
@@ -1362,6 +1372,7 @@ model Enrollment {
 
   @@unique([studentId, schoolId, academicYearId])
   @@unique([id, schoolId, studentId])
+  @@unique([id, schoolId, academicYearId, schoolClassId, studentId], map: "Enrollment_attendance_scope_key")
   @@index([schoolId, academicYearId, status])
   @@index([schoolId, gradeLevelId])
   @@index([approvedById])
@@ -1569,9 +1580,33 @@ model AttendanceSession {
   subject Subject? @relation(fields: [subjectId, schoolId], references: [id, schoolId], onDelete: Restrict)
   teachingAssignment TeachingAssignment? @relation(fields: [teachingAssignmentId, schoolId, academicYearId, schoolClassId, subjectId], references: [id, schoolId, academicYearId, schoolClassId, subjectId], onDelete: Restrict, map: "AttendanceSession_assignment_scope_fkey")
   createdBy User @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  records StudentAttendanceRecord[]
 
+  @@unique([id, schoolId, academicYearId, schoolClassId], map: "AttendanceSession_record_scope_key")
   @@index([schoolId, academicYearId, schoolClassId, date])
   @@index([teachingAssignmentId, date])
+}
+
+model StudentAttendanceRecord {
+  id String @id @default(uuid())
+  sessionId String
+  schoolId String
+  academicYearId String
+  schoolClassId String
+  studentId String
+  enrollmentId String
+  status StudentAttendanceStatus
+  note String?
+  recordedById String
+  recordedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  session AttendanceSession @relation(fields: [sessionId, schoolId, academicYearId, schoolClassId], references: [id, schoolId, academicYearId, schoolClassId], onDelete: Restrict, map: "StudentAttendanceRecord_session_scope_fkey")
+  student Student @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  enrollment Enrollment @relation(fields: [enrollmentId, schoolId, academicYearId, schoolClassId, studentId], references: [id, schoolId, academicYearId, schoolClassId, studentId], onDelete: Restrict, map: "StudentAttendanceRecord_enrollment_scope_fkey")
+  recordedBy User @relation(fields: [recordedById], references: [id], onDelete: Restrict)
+
+  @@unique([sessionId, studentId])
+  @@index([schoolId, studentId, recordedAt])
 }
 
 model GradingPeriod {
