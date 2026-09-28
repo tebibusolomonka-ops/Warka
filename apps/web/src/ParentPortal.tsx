@@ -11,6 +11,7 @@ import type {
 } from '@warka/shared'
 import { ApiError } from './api'
 import { AttendanceHistoryView } from './AttendanceHistoryView'
+import { AcademicProgressSummary } from './AcademicProgressSummary'
 import { getLinkedChildAttendance } from './attendanceApi'
 import {
   getParentChildren,
@@ -326,6 +327,10 @@ export function ParentPortal({
                 <dt>Relationship</dt>
                 <dd>{selected.relationship}</dd>
               </dl>
+              <AcademicProgressSummary
+                baseUrl={baseUrl}
+                path={`/parent/children/${encodeURIComponent(selected.studentReference)}/progress`}
+              />
             </div>
           )}
           {selected && section === 'Attendance' && (

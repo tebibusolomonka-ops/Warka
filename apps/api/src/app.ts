@@ -181,6 +181,7 @@ import { registerTimetableRoutes } from './timetableRoutes.js'
 import { registerAttendanceRoutes } from './attendanceRoutes.js'
 import { registerAssessmentScheduleRoutes } from './assessmentScheduleRoutes.js'
 import { registerGradebookRoutes } from './gradebookRoutes.js'
+import { registerAcademicProgressRoutes } from './academicProgressRoutes.js'
 import {
   prismaAcademicRolloverService,
   type AcademicRolloverService,
@@ -501,6 +502,7 @@ export function buildApp(
     registerAttendanceRoutes(app, getDatabase, authenticate)
     registerAssessmentScheduleRoutes(app, getDatabase, authenticate)
     registerGradebookRoutes(app, getDatabase, authenticate)
+    registerAcademicProgressRoutes(app, getDatabase, authenticate)
     registerEnrollmentRoutes(
       app,
       getStore,

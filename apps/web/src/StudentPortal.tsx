@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { StudentDocuments } from './StudentDocuments'
+import { AcademicProgressSummary } from './AcademicProgressSummary'
 import { AttendanceHistoryView } from './AttendanceHistoryView'
 import { getOwnStudentAttendance } from './attendanceApi'
 import type {
@@ -191,6 +192,7 @@ export function StudentPortal({
           ) : (
             <p>No current approved enrollment.</p>
           )}
+          <AcademicProgressSummary baseUrl={baseUrl} path="/student/progress" />
         </div>
       )}
       {section === 'Results' && (
