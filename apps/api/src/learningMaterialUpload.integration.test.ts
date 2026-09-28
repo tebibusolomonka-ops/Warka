@@ -96,8 +96,28 @@ describe.skipIf(!database)('learning material file in PostgreSQL', () => {
       await new LocalFileStorage(root).delete(asset.storageKey)
     } finally {
       if (materialId) {
-        await database!.fileAsset.deleteMany({
-          where: { learningMaterialId: materialId },
+        await database!.$transaction(async (transaction) => {
+          const assets = await transaction.fileAsset.findMany({
+            where: { learningMaterialId: materialId },
+            select: { id: true },
+          })
+          const assetIds = assets.map((asset) => asset.id)
+          const scans = await transaction.fileScan.findMany({
+            where: { fileAssetId: { in: assetIds } },
+            select: { id: true },
+          })
+          await transaction.scheduledTaskExecution.deleteMany({
+            where: { resourceId: { in: scans.map((scan) => scan.id) } },
+          })
+          await transaction.notification.deleteMany({
+            where: { resourceType: 'fileAsset', resourceId: { in: assetIds } },
+          })
+          await transaction.fileScan.deleteMany({
+            where: { fileAssetId: { in: assetIds } },
+          })
+          await transaction.fileAsset.deleteMany({
+            where: { id: { in: assetIds } },
+          })
         })
         await database!.learningMaterial.delete({ where: { id: materialId } })
       }
