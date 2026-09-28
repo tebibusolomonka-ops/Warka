@@ -414,6 +414,7 @@ enum MaintenanceWindowStatus {
 
 model School {
   calendarDays SchoolCalendarDay[]
+  timetablePeriods TimetablePeriod[]
   fileAssets FileAsset[]
   resultSets                    ResultSet[]
   publishedResults              PublishedResult[]
@@ -1141,6 +1142,24 @@ model SchoolCalendarDay {
 
   @@unique([schoolId, date])
   @@index([schoolId, academicYearId, date])
+}
+
+model TimetablePeriod {
+  id String @id @default(uuid())
+  schoolId String
+  name String
+  startTime String @db.VarChar(5)
+  endTime String @db.VarChar(5)
+  sortOrder Int
+  instructional Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  school School @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+
+  @@unique([schoolId, name])
+  @@unique([schoolId, sortOrder])
+  @@unique([id, schoolId])
+  @@index([schoolId, startTime])
 }
 
 model GradeLevel {

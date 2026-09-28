@@ -22,6 +22,12 @@ export function createDatabaseClient(
 
 export type { PrismaClient }
 export {
+  TimetablePeriodInputSchema,
+  TimetablePeriodConflictError,
+  createTimetablePeriod,
+  listTimetablePeriods,
+} from './timetablePeriods.js'
+export {
   SchoolCalendarDayInputSchema,
   SchoolCalendarDayError,
   createSchoolCalendarDay,
