@@ -1010,3 +1010,9 @@ export {
   CourseworkAssignmentContextError,
   createCourseworkAssignment,
 } from './courseworkAssignments.js'
+export {
+  eligibleCourseworkEnrollment,
+  visibleCourseworkAssignmentForStudent,
+  listVisibleCourseworkAssignments,
+  mayManageCourseworkAssignment,
+} from './courseworkAudience.js'
