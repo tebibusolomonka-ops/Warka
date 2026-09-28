@@ -16,6 +16,7 @@ test('coursework submission, feedback, explicit mark transfer and access boundar
   const userIds: string[] = []
   const studentIds: string[] = []
   const year = new Date().getUTCFullYear()
+  const yearEnd = year + 1
   const password = 'CourseworkPassphrase123!'
   const teacherEmail = `coursework-teacher-${suffix}@example.test`
   const studentEmail = `coursework-student-${suffix}@example.test`
@@ -78,7 +79,7 @@ test('coursework submission, feedback, explicit mark transfer and access boundar
         schoolId,
         name: 'Coursework year',
         startsOn: new Date(`${year}-01-01`),
-        endsOn: new Date(`${year}-12-31`),
+        endsOn: new Date(`${yearEnd}-12-31`),
       },
     })
     const grade = await database.gradeLevel.create({
@@ -109,7 +110,7 @@ test('coursework submission, feedback, explicit mark transfer and access boundar
         academicYearId: academicYear.id,
         name: 'Term',
         startsOn: new Date(`${year}-01-01`),
-        endsOn: new Date(`${year}-12-31`),
+        endsOn: new Date(`${yearEnd}-12-31`),
       },
     })
     await database.teachingAssignment.create({
@@ -210,6 +211,16 @@ test('coursework submission, feedback, explicit mark transfer and access boundar
     expect(rubric.status()).toBe(201)
     const rubricValue = (await rubric.json()) as { criteria: { id: string }[] }
     expect((await post(`${path}/publish`)).status()).toBe(200)
+    await expect
+      .poll(
+        async () =>
+          (
+            await database.courseworkAssignment.findUnique({
+              where: { id: assignment.id },
+            })
+          )?.status,
+      )
+      .toBe('published')
     await signOut()
     await signIn(otherEmail)
     expect(
@@ -295,7 +306,7 @@ test('coursework submission, feedback, explicit mark transfer and access boundar
           status: 'reviewed',
         })
       ).status(),
-    ).toBeGreaterThanOrEqual(400)
+    ).toBe(404)
     await signOut()
     await signIn(teacherEmail)
     const reviewPath = `${path}/revisions/${revision.id}`
