@@ -922,6 +922,9 @@ model BureauAccess {
 }
 
 model ReportingPeriod {
+  opensAt DateTime?
+  dueAt DateTime?
+  closesAt DateTime?
   id              String                 @id @default(uuid())
   organizationId  String
   name            String

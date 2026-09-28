@@ -481,6 +481,7 @@ export {
   ReportingRequirementStateError,
   listReportingPeriods,
 } from './reportingPeriods.js'
+export { reportingWindowState } from './reportingPeriods.js'
 export type {
   ReportingPeriod,
   ReportingPeriodStatus,

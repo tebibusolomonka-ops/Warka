@@ -88,6 +88,9 @@ export function registerBureauRoutes(
               startsOn: z.string(),
               endsOn: z.string(),
               submissionDueOn: z.string(),
+              opensAt: z.string().optional(),
+              dueAt: z.string().optional(),
+              closesAt: z.string().optional(),
             })
             .parse(request.body),
           organizationId,

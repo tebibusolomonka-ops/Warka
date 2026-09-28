@@ -11,6 +11,9 @@ export const CreateReportingPeriodSchema = z
     startsOn: z.coerce.date(),
     endsOn: z.coerce.date(),
     submissionDueOn: z.coerce.date(),
+    opensAt: z.coerce.date().optional(),
+    dueAt: z.coerce.date().optional(),
+    closesAt: z.coerce.date().optional(),
   })
   .refine((value) => value.startsOn < value.endsOn, {
     message: 'Reporting period must end after it starts',
@@ -18,6 +21,38 @@ export const CreateReportingPeriodSchema = z
   .refine((value) => value.submissionDueOn >= value.endsOn, {
     message: 'Submission due date cannot precede the period end',
   })
+  .refine(
+    (value) => !value.opensAt || !value.dueAt || value.opensAt < value.dueAt,
+    { message: 'Submission window must open before due time' },
+  )
+  .refine(
+    (value) => !value.closesAt || !value.dueAt || value.dueAt < value.closesAt,
+    { message: 'Submission window must close after due time' },
+  )
+  .refine(
+    (value) =>
+      !value.closesAt || !value.opensAt || value.opensAt < value.closesAt,
+    { message: 'Submission window order is invalid' },
+  )
+  .refine((value) => Boolean(value.opensAt) === Boolean(value.dueAt), {
+    message: 'Submission window open and due times must be provided together',
+  })
+
+export function reportingWindowState(
+  period: {
+    opensAt: Date | null
+    dueAt: Date | null
+    closesAt: Date | null
+    submissionDueOn: Date
+  },
+  now = new Date(),
+) {
+  if (period.opensAt && now < period.opensAt) return 'notOpen' as const
+  if (period.closesAt && now >= period.closesAt) return 'closed' as const
+  return now > (period.dueAt ?? period.submissionDueOn)
+    ? ('pastDue' as const)
+    : ('open' as const)
+}
 
 type ReportingPeriodStore = Pick<
   PrismaClient,
@@ -40,7 +75,18 @@ export async function createReportingPeriod(
     value.organizationId,
     'manage',
   )
-  return database.reportingPeriod.create({ data: value })
+  return database.reportingPeriod.create({
+    data: {
+      organizationId: value.organizationId,
+      name: value.name,
+      startsOn: value.startsOn,
+      endsOn: value.endsOn,
+      submissionDueOn: value.submissionDueOn,
+      ...(value.opensAt ? { opensAt: value.opensAt } : {}),
+      ...(value.dueAt ? { dueAt: value.dueAt } : {}),
+      ...(value.closesAt ? { closesAt: value.closesAt } : {}),
+    },
+  })
 }
 
 async function changeReportingPeriodStatus(

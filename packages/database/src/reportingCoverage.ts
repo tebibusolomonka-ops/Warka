@@ -70,7 +70,7 @@ export async function getReportingCoverage(
         submission,
         freshness: calculateFreshness(
           submission?.status,
-          period.submissionDueOn,
+          period.dueAt ?? period.submissionDueOn,
           now,
         ),
       }
