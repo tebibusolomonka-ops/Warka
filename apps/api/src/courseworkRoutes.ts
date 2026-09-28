@@ -14,6 +14,10 @@ import {
   effectiveCourseworkDueAt,
   editableCourseworkDueAt,
   completeSubmissionReview,
+  createCourseworkRubric,
+  replaceCourseworkRubric,
+  cloneCourseworkRubric,
+  getCourseworkRubric,
   startCourseworkSubmission,
   ownCourseworkSubmission,
   saveDraftSubmissionRevision,
@@ -426,6 +430,68 @@ export function registerCourseworkRoutes(
         )
     },
   )
+  app.get(
+    '/schools/:schoolId/coursework/:assignmentId/rubric',
+    { preHandler: authenticate },
+    async (request) => {
+      const { schoolId, assignmentId } = assignment.parse(request.params)
+      await staffAssignment(actor(request), schoolId, assignmentId)
+      return { rubric: await getCourseworkRubric(db(), assignmentId) }
+    },
+  )
+  app.post(
+    '/schools/:schoolId/coursework/:assignmentId/rubric',
+    { preHandler: authenticate },
+    async (request, reply) => {
+      const { schoolId, assignmentId } = assignment.parse(request.params)
+      return reply
+        .code(201)
+        .send(
+          await createCourseworkRubric(
+            db(),
+            actor(request),
+            schoolId,
+            assignmentId,
+            request.body,
+          ),
+        )
+    },
+  )
+  app.put(
+    '/schools/:schoolId/coursework/:assignmentId/rubric',
+    { preHandler: authenticate },
+    async (request) => {
+      const { schoolId, assignmentId } = assignment.parse(request.params)
+      return replaceCourseworkRubric(
+        db(),
+        actor(request),
+        schoolId,
+        assignmentId,
+        request.body,
+      )
+    },
+  )
+  app.post(
+    '/schools/:schoolId/coursework/:assignmentId/rubric/clone',
+    { preHandler: authenticate },
+    async (request, reply) => {
+      const { schoolId, assignmentId } = assignment.parse(request.params)
+      const { sourceAssignmentId } = z
+        .strictObject({ sourceAssignmentId: z.uuid() })
+        .parse(request.body)
+      return reply
+        .code(201)
+        .send(
+          await cloneCourseworkRubric(
+            db(),
+            actor(request),
+            schoolId,
+            sourceAssignmentId,
+            assignmentId,
+          ),
+        )
+    },
+  )
 
   app.get(
     '/student/coursework',
@@ -519,6 +585,7 @@ export function registerCourseworkRoutes(
           status: item.fileAsset.status,
         })),
         submission,
+        rubric: await getCourseworkRubric(db(), assignmentId),
       }
     },
   )

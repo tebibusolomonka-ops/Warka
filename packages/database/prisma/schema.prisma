@@ -565,6 +565,7 @@ model School {
 }
 
 model User {
+  courseworkRubricsCreated CourseworkRubric[] @relation("CourseworkRubricCreator")
   submissionReviewsCompleted SubmissionReview[] @relation("SubmissionReviewer")
   assignmentExtensionsCreated AssignmentExtension[] @relation("AssignmentExtensionCreator")
   courseworkAttachmentsCreated CourseworkAttachment[] @relation("CourseworkAttachmentCreator")
@@ -1793,6 +1794,7 @@ model Assessment {
 }
 
 model CourseworkAssignment {
+  rubric CourseworkRubric?
   extensions AssignmentExtension[]
   attachments CourseworkAttachment[]
   submissions CourseworkSubmission[]
@@ -1827,6 +1829,35 @@ model CourseworkAssignment {
   @@unique([id, schoolId])
   @@index([schoolId, academicYearId, schoolClassId, subjectId, status])
   @@index([teachingAssignmentId, status])
+}
+
+model CourseworkRubric {
+  id String @id @default(uuid())
+  schoolId String
+  assignmentId String
+  title String @db.VarChar(200)
+  createdById String
+  frozenAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  assignment CourseworkAssignment @relation(fields: [assignmentId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  createdBy User @relation("CourseworkRubricCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  criteria RubricCriterion[]
+
+  @@unique([assignmentId, schoolId])
+  @@index([schoolId, createdAt])
+}
+
+model RubricCriterion {
+  id String @id @default(uuid())
+  rubricId String
+  title String @db.VarChar(200)
+  description String @db.VarChar(1000)
+  maxPoints Decimal @db.Decimal(7, 2)
+  sortOrder Int
+  rubric CourseworkRubric @relation(fields: [rubricId], references: [id], onDelete: Restrict)
+
+  @@unique([rubricId, sortOrder])
 }
 
 model AssignmentExtension {

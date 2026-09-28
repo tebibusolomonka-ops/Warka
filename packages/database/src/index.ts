@@ -1050,3 +1050,11 @@ export {
   editableCourseworkDueAt,
   completeSubmissionReview,
 } from './submissionReviews.js'
+export {
+  CourseworkRubricError,
+  CourseworkRubricInputSchema,
+  createCourseworkRubric,
+  replaceCourseworkRubric,
+  cloneCourseworkRubric,
+  getCourseworkRubric,
+} from './courseworkRubrics.js'
