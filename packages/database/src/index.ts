@@ -1107,3 +1107,12 @@ export {
   listMeetingHistory,
 } from './meetingHistory.js'
 export { notifyMeeting } from './meetingNotifications.js'
+export {
+  SchoolEventInputSchema,
+  SchoolEventAccessError,
+  SchoolEventStateError,
+  requireSchoolEventManager,
+  createSchoolEvent,
+  editDraftSchoolEvent,
+  transitionSchoolEvent,
+} from './schoolEvents.js'

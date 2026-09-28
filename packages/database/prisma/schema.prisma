@@ -506,6 +506,7 @@ enum MaintenanceWindowStatus {
 }
 
 model School {
+  events SchoolEvent[]
   meetingAvailability TeacherMeetingAvailability[]
   meetingRequests ParentTeacherMeetingRequest[]
   courseworkAssignments CourseworkAssignment[]
@@ -572,6 +573,7 @@ model School {
 }
 
 model User {
+  schoolEventsCreated SchoolEvent[]
   meetingEvents MeetingEvent[]
   meetingAvailability TeacherMeetingAvailability[]
   meetingRequestsMade ParentTeacherMeetingRequest[] @relation("MeetingGuardianUser")
@@ -1714,6 +1716,35 @@ enum MeetingEventKind {
   declined
   cancelled
   completed
+}
+
+enum SchoolEventStatus {
+  draft
+  published
+  cancelled
+  completed
+}
+
+model SchoolEvent {
+  id String @id @default(uuid())
+  schoolId String
+  createdById String
+  title String @db.VarChar(200)
+  description String @db.Text
+  startsAt DateTime
+  endsAt DateTime
+  schoolLocation String? @db.VarChar(200)
+  status SchoolEventStatus @default(draft)
+  publishedAt DateTime?
+  cancelledAt DateTime?
+  completedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  school School @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  createdBy User @relation(fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@unique([id, schoolId])
+  @@index([schoolId, status, startsAt])
 }
 
 model MeetingEvent {
