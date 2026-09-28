@@ -1,5 +1,7 @@
 # Testing
 
+The final family meeting journey checks guardian request, teacher scheduling, guardian status/history, and unrelated guardian rejection. The school event journey checks administrator publication, guardian visibility, RSVP aggregate, cross-school denial, and that RSVP does not create attendance. Coursework browser coverage remains in `tests/e2e/courseworkJourney.spec.ts`. Live execution of these journeys requires PostgreSQL; Playwright discovery by itself is not a pass.
+
 Coursework mark transfer now has a PostgreSQL integration test for successful official mark creation, conversion provenance, closed entry windows, gradebook locks, duplicate marks, school and teacher boundaries, published results, and transaction rollback after a fault at transfer persistence. This test skips locally without PostgreSQL. Family meeting database tests cover verified guardian requests, class assignment scope, scheduling conflict, and retained reschedule history. API tests cover signed-in identity, teacher-scoped lists, and rejection of guardian ID spoofing; React tests cover teacher meeting controls. `pnpm metrics:code` is the canonical implementation count.
 
 Vitest covers web, API, authentication, database services, and permission boundaries. PostgreSQL integration tests require a disposable database. Playwright covers synthetic browser journeys with cleanup. CI runs the database-backed checks that this local environment cannot run.

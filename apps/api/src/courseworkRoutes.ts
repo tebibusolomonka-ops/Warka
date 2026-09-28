@@ -334,6 +334,7 @@ export function registerCourseworkRoutes(
       const { schoolId, assignmentId, revisionId } = staffRevision.parse(
         request.params,
       )
+      await staffAssignment(actor(request), schoolId, assignmentId)
       return completeSubmissionReview(
         db(),
         actor(request),

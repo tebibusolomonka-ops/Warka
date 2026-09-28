@@ -1,6 +1,6 @@
 # Roadmap
 
-Commits 301–310 stabilize coursework formatting and browser discovery, add PostgreSQL mark-transfer coverage, establish canonical tracked-file metrics, and build the family meeting request, teacher availability, scheduling, history, API, and teacher workspace. Guardian UI, notifications, and school events follow in 311–320.
+Commits 301–320 complete coursework stabilization, canonical code metrics, family meeting workflows, and audience-scoped school events with RSVP. Database-backed integration and browser journeys still require final CI validation where local PostgreSQL is unavailable.
 
 ## Completed
 

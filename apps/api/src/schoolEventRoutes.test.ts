@@ -41,6 +41,7 @@ function fixture() {
         .fn()
         .mockResolvedValue({ id: eventId, schoolId, attachments: [] }),
     },
+    eventResponse: { findUnique: vi.fn().mockResolvedValue(null) },
   } as unknown as PrismaClient
   const app = Fastify()
   app.decorateRequest('currentUser', null)

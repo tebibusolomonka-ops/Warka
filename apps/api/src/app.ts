@@ -561,11 +561,9 @@ export function buildApp(
       error instanceof SchoolEventRouteAccessError ||
       error instanceof SchoolEventAccessError
     )
-      return reply
-        .code(404)
-        .send({
-          error: { code: 'EVENT_NOT_FOUND', message: 'Event unavailable' },
-        })
+      return reply.code(404).send({
+        error: { code: 'EVENT_NOT_FOUND', message: 'Event unavailable' },
+      })
     if (
       error instanceof SchoolEventStateError ||
       error instanceof EventResponseError ||

@@ -1,5 +1,7 @@
 # Decisions
 
+- School events use current school relationships for audience resolution; drafts stay private. Attachments require a clean current scan before publication or download. RSVP is an expressed intention, never evidence of attendance or a student engagement measure. Event location is a school label, with no participant location tracking.
+
 - Family meeting requests require an authenticated guardian with a verified, unrevoked relationship to a currently enrolled child and an active teacher assignment for that child's class. Teacher availability contains school meeting windows only; it never reads a private calendar, personal contact details, or participant locations. Scheduling uses a serializable transaction and rejects overlapping teacher bookings. Rescheduling appends history instead of replacing prior times.
 
 - Authentication uses HttpOnly database sessions, with no localStorage authentication token.

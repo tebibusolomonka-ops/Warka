@@ -1,5 +1,7 @@
 # Architecture
 
+School events use a separate draft/published/completed lifecycle from announcements. Fastify event routes derive school, audience, student, and verified guardian scope from current relationships. School administrators manage events in React; student and guardian portals show only eligible published events. Event attachments reuse FileAsset storage, scanning, quarantine, and private delivery. RSVP persistence and aggregate counts are separate from attendance.
+
 Family meetings use PostgreSQL requests, school-only teacher availability, scheduled slots, and append-only events. Guardian and teacher routes recheck current relationships; the teacher workspace sits with academic tools. No personal calendar service or location tracking is connected.
 
 - `apps/web`: React workspaces and typed API clients; controls aid users but do not grant access.

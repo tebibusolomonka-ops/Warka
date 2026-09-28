@@ -83,6 +83,7 @@ export async function mayViewSchoolEvent(
   eventId: string,
   guardianStudentId?: string,
 ) {
+  const day = new Date(new Date().toISOString().slice(0, 10) + 'T00:00:00.000Z')
   const event = await database.schoolEvent.findFirst({
     where: {
       id: eventId,
@@ -109,8 +110,8 @@ export async function mayViewSchoolEvent(
         status: 'approved',
         withdrawnAt: null,
         academicYear: {
-          startsOn: { lte: new Date() },
-          endsOn: { gte: new Date() },
+          startsOn: { lte: day },
+          endsOn: { gte: day },
         },
       },
     })
@@ -146,8 +147,8 @@ export async function mayViewSchoolEvent(
         status: 'approved',
         withdrawnAt: null,
         academicYear: {
-          startsOn: { lte: new Date() },
-          endsOn: { gte: new Date() },
+          startsOn: { lte: day },
+          endsOn: { gte: day },
         },
       },
     })

@@ -161,7 +161,7 @@ test('guardian requests a school meeting and sees the teacher schedule', async (
       page.getByRole('heading', { name: 'Family meetings for Sample' }),
     ).toBeVisible()
     await page.getByLabel('Current teacher').selectOption(assignment.id)
-    await expect(page.getByRole('option', { name: /Science/ })).toBeVisible()
+    await expect(page.getByRole('option', { name: /Science/ })).toHaveCount(1)
     await page.getByLabel('Topic').fill('Discuss classroom learning')
     await page.getByRole('button', { name: 'Request meeting' }).click()
     await expect(page.getByText('Meeting requested.')).toBeVisible()

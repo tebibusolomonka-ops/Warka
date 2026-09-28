@@ -94,6 +94,16 @@ describe('coursework API authorization', () => {
       expect(
         (
           await app.inject({
+            method: 'POST',
+            url: `/schools/${schoolId}/coursework/${assignmentId}/revisions/${assignmentId}/review`,
+            headers: { 'x-user': actorId },
+            payload: { status: 'reviewed' },
+          })
+        ).statusCode,
+      ).toBe(404)
+      expect(
+        (
+          await app.inject({
             url: `/schools/${schoolId}/coursework`,
             headers: { 'x-user': actorId },
           })

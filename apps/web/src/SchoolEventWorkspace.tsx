@@ -20,8 +20,13 @@ const empty = {
   endsAt: '',
   schoolLocation: '',
 }
-const dateInput = (value: string) =>
-  value ? new Date(value).toISOString().slice(0, 16) : ''
+const dateInput = (value: string) => {
+  if (!value) return ''
+  const date = new Date(value)
+  return new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+    .toISOString()
+    .slice(0, 16)
+}
 
 export function SchoolEventWorkspace({
   baseUrl,

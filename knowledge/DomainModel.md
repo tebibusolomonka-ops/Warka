@@ -1,5 +1,7 @@
 # Domain model
 
+`SchoolEvent` records school, creator, plain-text content, dates, safe school location, lifecycle, and optional RSVP setting. `SchoolEventAudience` stores one scope and optional class or grade reference; eligibility resolves current enrollment, verified guardian relationship, or effective staff membership. `EventAttachment` points to a purpose-bound `FileAsset`. `EventResponse` stores one latest going/notGoing response per user and child context with `EventResponseHistory`; it never creates an attendance record.
+
 `ParentTeacherMeetingRequest` joins a school, student, verified guardian identity, teacher, and exact teaching assignment. It has a controlled lifecycle. `TeacherMeetingAvailability` stores only voluntary school meeting windows and method. A scheduled request stores the chosen time; `MeetingEvent` preserves requests, schedules, reschedules, declines, cancellations, and completions with previous and new times.
 
 An organization contains schools, academic years, classes, memberships, and teaching assignments. Membership and assignment periods determine current authority; account lifecycle also gates access. A `Student` is distinct from a login `User`; a `Guardian` is likewise distinct, with explicit student relationships. School staff, bureau operators, and support users obtain different scoped capabilities.

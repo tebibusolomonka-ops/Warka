@@ -1,5 +1,7 @@
 # Security
 
+Event management requires school administrator membership. Student, staff, and guardian event reads recheck audience against current school relationships; guardian writes require the verified linked child. Event detail exposes attachment availability only after a clean scan, and the download gateway rechecks asset and audience. RSVPs use authenticated identity, expose counts to school administration, and never create attendance or ranking records. No GPS or participant location tracking is present.
+
 Guardian meeting requests derive guardian identity from the session and require a verified linked child plus a current teacher assignment for that child's class. Teacher availability is school-only. Meeting actions recheck teacher membership, schedule conflicts, and guardian relationship. History retains prior times and safe reasons; no personal calendar, phone number, private email, location tracking, or student engagement score is introduced.
 
 Authorize every API and domain operation by actor and resource scope. Current account, membership, and assignment periods gate access. Student and guardian visibility follows explicit relationships; bureau and support access have separate boundaries.
