@@ -1024,3 +1024,9 @@ export {
   endCourseworkAssignment,
   changePublishedCourseworkDueDate,
 } from './courseworkLifecycle.js'
+export {
+  CourseworkSubmissionAccessError,
+  startCourseworkSubmission,
+  ownCourseworkSubmission,
+  listCourseworkSubmissionsForStaff,
+} from './courseworkSubmissions.js'

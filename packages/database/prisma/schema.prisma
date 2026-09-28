@@ -165,6 +165,12 @@ enum CourseworkAssignmentStatus {
   cancelled
 }
 
+enum CourseworkSubmissionStatus {
+  draft
+  submitted
+  withdrawn
+}
+
 enum StudentAttendanceStatus {
   present
   absent
@@ -1322,6 +1328,7 @@ model SchoolClass {
 }
 
 model Student {
+  courseworkSubmissions CourseworkSubmission[]
   makeUpAssessments MakeUpAssessment[]
   assessmentParticipations AssessmentParticipation[]
   attendanceRecords StudentAttendanceRecord[]
@@ -1430,6 +1437,7 @@ model StudentGuardian {
 }
 
 model Enrollment {
+  courseworkSubmissions CourseworkSubmission[]
   assessmentParticipations AssessmentParticipation[]
   attendanceRecords StudentAttendanceRecord[]
   receivingTransfer TransferRequest?  @relation("TransferDestination")
@@ -1774,6 +1782,7 @@ model Assessment {
 
 model CourseworkAssignment {
   attachments CourseworkAttachment[]
+  submissions CourseworkSubmission[]
   id String @id @default(uuid())
   schoolId String
   academicYearId String
@@ -1805,6 +1814,26 @@ model CourseworkAssignment {
   @@unique([id, schoolId])
   @@index([schoolId, academicYearId, schoolClassId, subjectId, status])
   @@index([teachingAssignmentId, status])
+}
+
+model CourseworkSubmission {
+  id String @id @default(uuid())
+  schoolId String
+  assignmentId String
+  studentId String
+  enrollmentId String
+  status CourseworkSubmissionStatus @default(draft)
+  startedAt DateTime @default(now())
+  submittedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  assignment CourseworkAssignment @relation(fields: [assignmentId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  student Student @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  enrollment Enrollment @relation(fields: [enrollmentId, schoolId, studentId], references: [id, schoolId, studentId], onDelete: Restrict)
+
+  @@unique([assignmentId, studentId])
+  @@index([schoolId, assignmentId, status])
+  @@index([studentId, status])
 }
 
 model CourseworkAttachment {
