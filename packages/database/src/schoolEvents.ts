@@ -94,6 +94,29 @@ export async function transitionSchoolEvent(
     throw new SchoolEventStateError(
       'Event audience required before publication',
     )
+  if (action === 'publish') {
+    const attachments = await database.eventAttachment.findMany({
+      where: { eventId: id, schoolId, removedAt: null },
+      include: {
+        fileAsset: {
+          include: {
+            scans: {
+              orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+              take: 1,
+            },
+          },
+        },
+      },
+    })
+    if (
+      attachments.some(
+        ({ fileAsset }) =>
+          fileAsset.status !== 'available' ||
+          fileAsset.scans[0]?.result !== 'clean',
+      )
+    )
+      throw new SchoolEventStateError('Event attachments must pass scanning')
+  }
   const previous = action === 'publish' ? 'draft' : 'published'
   const status =
     action === 'publish'

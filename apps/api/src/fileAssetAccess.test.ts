@@ -6,6 +6,7 @@ import {
   hasOrganizationAdminRole,
   mayManageClassSubject,
   mayManageCourseworkAssignment,
+  mayViewSchoolEvent,
   visibleCourseworkAssignmentForStudent,
 } from '@warka/database'
 import { eligibleParentChildren } from './parentPortalService.js'
@@ -24,6 +25,7 @@ vi.mock('@warka/database', async (importOriginal) => {
     hasOrganizationAdminRole: vi.fn(),
     mayManageClassSubject: vi.fn(),
     mayManageCourseworkAssignment: vi.fn(),
+    mayViewSchoolEvent: vi.fn(),
     visibleCourseworkAssignmentForStudent: vi.fn(),
   }
 })
@@ -43,7 +45,8 @@ function fixture(
     | 'issuedDocument'
     | 'schoolBranding'
     | 'courseworkAssignment'
-    | 'courseworkSubmission' = 'learningMaterial',
+    | 'courseworkSubmission'
+    | 'eventAttachment' = 'learningMaterial',
 ) {
   const asset = {
     id: assetId,
@@ -54,7 +57,9 @@ function fixture(
     issuedDocumentId: purpose === 'issuedDocument' ? materialId : null,
     storageKey: 'asset_private',
     scanRequired:
-      purpose === 'courseworkAssignment' || purpose === 'courseworkSubmission',
+      purpose === 'courseworkAssignment' ||
+      purpose === 'courseworkSubmission' ||
+      purpose === 'eventAttachment',
   }
   const database = {
     user: {
@@ -89,6 +94,14 @@ function fixture(
         },
       }),
     },
+    eventAttachment: {
+      findUnique: vi.fn().mockResolvedValue({
+        schoolId,
+        eventId: materialId,
+        removedAt: null,
+        event: { status: 'published' },
+      }),
+    },
     learningMaterial: {
       findUnique: vi.fn().mockResolvedValue({
         id: materialId,
@@ -114,6 +127,7 @@ beforeEach(() => {
   vi.mocked(hasOrganizationAdminRole).mockReset().mockResolvedValue(false)
   vi.mocked(mayManageClassSubject).mockReset().mockResolvedValue(false)
   vi.mocked(mayManageCourseworkAssignment).mockReset().mockResolvedValue(false)
+  vi.mocked(mayViewSchoolEvent).mockReset().mockResolvedValue(false)
   vi.mocked(visibleCourseworkAssignmentForStudent)
     .mockReset()
     .mockResolvedValue(null)
@@ -126,6 +140,22 @@ beforeEach(() => {
 })
 
 describe('file asset authorization', () => {
+  it('blocks quarantined event files and requires the current event audience', async () => {
+    const { database } = fixture('eventAttachment')
+    await expect(
+      requireFileAssetAccess(database, actorId, assetId, 'read'),
+    ).rejects.toBeInstanceOf(FileAssetAccessError)
+    vi.mocked(mayViewSchoolEvent).mockResolvedValue(true)
+    await expect(
+      requireFileAssetAccess(database, actorId, assetId, 'read'),
+    ).resolves.toMatchObject({ id: assetId })
+    vi.mocked(database.fileAsset.findUnique).mockResolvedValue({
+      status: 'quarantined',
+    } as never)
+    await expect(
+      requireFileAssetAccess(database, actorId, assetId, 'read'),
+    ).rejects.toBeInstanceOf(FileAssetAccessError)
+  })
   it('keeps submission files from teachers until both submission and clean scan', async () => {
     const { database } = fixture('courseworkSubmission')
     vi.mocked(mayManageCourseworkAssignment).mockResolvedValue(true)

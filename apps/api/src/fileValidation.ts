@@ -7,6 +7,7 @@ export type UploadPurpose =
   | 'issuedDocument'
   | 'courseworkAssignment'
   | 'courseworkSubmission'
+  | 'eventAttachment'
 
 export class FileValidationError extends Error {
   readonly status = 'quarantined' as const
@@ -46,6 +47,15 @@ const accepted = {
     },
   },
   courseworkSubmission: {
+    maxBytes: 20 * 1024 * 1024,
+    types: {
+      'application/pdf': ['.pdf'],
+      'text/plain': ['.txt'],
+      'image/png': ['.png'],
+      'image/jpeg': ['.jpg', '.jpeg'],
+    },
+  },
+  eventAttachment: {
     maxBytes: 20 * 1024 * 1024,
     types: {
       'application/pdf': ['.pdf'],

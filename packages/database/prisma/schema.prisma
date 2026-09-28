@@ -461,6 +461,7 @@ enum FileAssetPurpose {
   issuedDocument
   courseworkAssignment
   courseworkSubmission
+  eventAttachment
 }
 
 enum FileAssetStatus {
@@ -573,6 +574,7 @@ model School {
 }
 
 model User {
+  eventAttachmentsCreated EventAttachment[]
   schoolEventsCreated SchoolEvent[]
   meetingEvents MeetingEvent[]
   meetingAvailability TeacherMeetingAvailability[]
@@ -681,6 +683,7 @@ model User {
 }
 
 model FileAsset {
+  eventAttachment EventAttachment?
   courseworkAttachment CourseworkAttachment?
   submissionAttachment SubmissionAttachment?
   id String @id @default(uuid())
@@ -1728,6 +1731,7 @@ enum SchoolEventStatus {
 }
 
 model SchoolEvent {
+  attachments EventAttachment[]
   audience SchoolEventAudience?
   id String @id @default(uuid())
   schoolId String
@@ -1748,6 +1752,21 @@ model SchoolEvent {
 
   @@unique([id, schoolId])
   @@index([schoolId, status, startsAt])
+}
+
+model EventAttachment {
+  id String @id @default(uuid())
+  schoolId String
+  eventId String
+  fileAssetId String @unique
+  createdById String
+  createdAt DateTime @default(now())
+  removedAt DateTime?
+  event SchoolEvent @relation(fields: [eventId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  fileAsset FileAsset @relation(fields: [fileAssetId], references: [id], onDelete: Restrict)
+  createdBy User @relation(fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@index([schoolId, eventId, removedAt])
 }
 
 enum SchoolEventAudienceScope {

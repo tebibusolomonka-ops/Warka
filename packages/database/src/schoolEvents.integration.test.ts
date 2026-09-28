@@ -98,6 +98,53 @@ describe.skipIf(!database)('school events in PostgreSQL', () => {
         ...input,
         title: 'Updated science fair',
       })
+      const asset = await db.fileAsset.create({
+        data: {
+          schoolId: school.id,
+          createdById: admin.id,
+          purpose: 'eventAttachment',
+          originalFileName: 'guide.txt',
+          contentType: 'text/plain',
+          sizeBytes: BigInt(5),
+          checksum: 'a'.repeat(64),
+          storageKey: `event/${randomUUID()}`,
+          status: 'pending',
+          scanRequired: true,
+        },
+      })
+      await db.eventAttachment.create({
+        data: {
+          schoolId: school.id,
+          eventId: event.id,
+          fileAssetId: asset.id,
+          createdById: admin.id,
+        },
+      })
+      const scan = await db.fileScan.create({
+        data: { fileAssetId: asset.id, scanner: 'test', status: 'pending' },
+      })
+      await expect(
+        transitionSchoolEvent(db, admin.id, school.id, event.id, 'publish'),
+      ).rejects.toBeInstanceOf(SchoolEventStateError)
+      await db.fileAsset.update({
+        where: { id: asset.id },
+        data: { status: 'quarantined' },
+      })
+      await db.fileScan.update({
+        where: { id: scan.id },
+        data: { status: 'infected', result: 'infected' },
+      })
+      await expect(
+        transitionSchoolEvent(db, admin.id, school.id, event.id, 'publish'),
+      ).rejects.toBeInstanceOf(SchoolEventStateError)
+      await db.fileAsset.update({
+        where: { id: asset.id },
+        data: { status: 'available' },
+      })
+      await db.fileScan.update({
+        where: { id: scan.id },
+        data: { status: 'clean', result: 'clean' },
+      })
       expect(
         (
           await transitionSchoolEvent(
@@ -133,6 +180,11 @@ describe.skipIf(!database)('school events in PostgreSQL', () => {
         transitionSchoolEvent(db, admin.id, school.id, event.id, 'cancel'),
       ).rejects.toBeInstanceOf(SchoolEventStateError)
     } finally {
+      await db.eventAttachment.deleteMany({ where: { schoolId: school.id } })
+      await db.fileScan.deleteMany({
+        where: { fileAsset: { schoolId: school.id } },
+      })
+      await db.fileAsset.deleteMany({ where: { schoolId: school.id } })
       await db.schoolEventAudience.deleteMany({
         where: { schoolId: school.id },
       })

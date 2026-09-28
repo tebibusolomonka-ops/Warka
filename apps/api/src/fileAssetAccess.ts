@@ -4,6 +4,8 @@ import {
   hasOrganizationAdminRole,
   mayManageClassSubject,
   mayManageCourseworkAssignment,
+  mayViewSchoolEvent,
+  requireSchoolEventManager,
   visibleCourseworkAssignmentForStudent,
   type PrismaClient,
 } from '@warka/database'
@@ -179,6 +181,52 @@ export async function requireFileAssetAccess(
       ))
     )
       return asset
+    throw new FileAssetAccessError()
+  }
+
+  if (asset.purpose === 'eventAttachment') {
+    if (!asset.schoolId) throw new FileAssetAccessError()
+    const attachment = await database.eventAttachment.findUnique({
+      where: { fileAssetId: asset.id },
+      include: { event: true },
+    })
+    if (
+      !attachment ||
+      attachment.removedAt ||
+      attachment.schoolId !== asset.schoolId
+    )
+      throw new FileAssetAccessError()
+    if (action === 'manage') {
+      await requireSchoolEventManager(database, actorId, asset.schoolId)
+      return asset
+    }
+    if (!['published', 'completed'].includes(attachment.event.status))
+      throw new FileAssetAccessError()
+    if (
+      await mayViewSchoolEvent(
+        database,
+        actorId,
+        asset.schoolId,
+        attachment.eventId,
+      )
+    )
+      return asset
+    const children = await eligibleParentChildren(database, actorId, now).catch(
+      () => [],
+    )
+    for (const child of children) {
+      if (
+        child.schoolId === asset.schoolId &&
+        (await mayViewSchoolEvent(
+          database,
+          actorId,
+          asset.schoolId,
+          attachment.eventId,
+          child.studentId,
+        ))
+      )
+        return asset
+    }
     throw new FileAssetAccessError()
   }
 

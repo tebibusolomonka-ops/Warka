@@ -25,6 +25,10 @@ const courseworkParams = schoolParams.extend({
 const submissionAttachmentParams = courseworkParams.extend({
   revisionId: z.uuid(),
 })
+const eventAttachmentParams = schoolParams.extend({
+  eventId: z.uuid(),
+  attachmentId: z.uuid(),
+})
 
 function disposition(name: string) {
   const safe = [...name]
@@ -128,6 +132,27 @@ export function registerFileDeliveryRoutes(
           removedAt: null,
           revision: { submission: { assignmentId } },
         },
+        select: { fileAssetId: true },
+      })
+      if (!attachment) throw new FileAssetAccessError()
+      return deliver(
+        attachment.fileAssetId,
+        authenticatedUser(request).id,
+        schoolId,
+        reply,
+      )
+    },
+  )
+
+  app.get(
+    '/schools/:schoolId/events/:eventId/attachments/:attachmentId/download',
+    { preHandler: authenticate, compress: false },
+    async (request, reply) => {
+      const { schoolId, eventId, attachmentId } = eventAttachmentParams.parse(
+        request.params,
+      )
+      const attachment = await getDatabase().eventAttachment.findFirst({
+        where: { id: attachmentId, eventId, schoolId, removedAt: null },
         select: { fileAssetId: true },
       })
       if (!attachment) throw new FileAssetAccessError()
