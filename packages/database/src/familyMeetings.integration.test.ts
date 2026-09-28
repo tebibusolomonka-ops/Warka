@@ -9,6 +9,11 @@ import {
   MeetingSchedulingError,
   scheduleFamilyMeeting,
 } from './meetingScheduling.js'
+import {
+  cancelFamilyMeeting,
+  completeFamilyMeeting,
+  listMeetingHistory,
+} from './meetingHistory.js'
 
 const testUrl = process.env.TEST_DATABASE_URL ?? process.env.DATABASE_URL
 const database = testUrl
@@ -194,6 +199,49 @@ describe.skipIf(!database)('family meeting requests in PostgreSQL', () => {
           schoolLocation: 'School office',
         }),
       ).rejects.toBeInstanceOf(MeetingSchedulingError)
+      const laterStart = new Date(endsAt.getTime() + 3600000)
+      const laterEnd = new Date(laterStart.getTime() + 1800000)
+      const laterSlot = await db.teacherMeetingAvailability.create({
+        data: {
+          schoolId: school.id,
+          teacherId: teacher.id,
+          startsAt: laterStart,
+          endsAt: laterEnd,
+          method: 'inPerson',
+        },
+      })
+      await scheduleFamilyMeeting(db, teacher.id, {
+        schoolId: school.id,
+        requestId: request.id,
+        availabilityId: laterSlot.id,
+        schoolLocation: 'School library',
+      })
+      const history = await listMeetingHistory(
+        db,
+        guardianUser.id,
+        school.id,
+        request.id,
+      )
+      expect(history.map((event) => event.kind)).toEqual([
+        'requested',
+        'scheduled',
+        'rescheduled',
+      ])
+      expect(history[2]).toMatchObject({
+        previousStartAt: startsAt,
+        newStartAt: laterStart,
+      })
+      await cancelFamilyMeeting(
+        db,
+        guardianUser.id,
+        school.id,
+        second.id,
+        'No longer needed',
+      )
+      await completeFamilyMeeting(db, teacher.id, school.id, request.id)
+      expect(
+        await db.meetingEvent.count({ where: { requestId: request.id } }),
+      ).toBe(4)
       await db.studentGuardian.update({
         where: {
           studentId_guardianId: {
@@ -212,6 +260,9 @@ describe.skipIf(!database)('family meeting requests in PostgreSQL', () => {
         }),
       ).toBe(2)
     } finally {
+      await db.meetingEvent.deleteMany({
+        where: { request: { schoolId: school.id } },
+      })
       await db.parentTeacherMeetingRequest.deleteMany({
         where: { schoolId: school.id },
       })

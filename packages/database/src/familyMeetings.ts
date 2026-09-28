@@ -63,15 +63,25 @@ export async function requestFamilyMeeting(
       ?.role !== 'teacher'
   )
     throw new FamilyMeetingAccessError('Teacher assignment unavailable')
-  return database.parentTeacherMeetingRequest.create({
-    data: {
-      schoolId: value.schoolId,
-      studentId: value.studentId,
-      guardianId: access.guardianId,
-      guardianUserId,
-      teacherId: assignment.userId,
-      teachingAssignmentId: assignment.id,
-      topic: value.topic,
-    },
+  return database.$transaction(async (transaction) => {
+    const request = await transaction.parentTeacherMeetingRequest.create({
+      data: {
+        schoolId: value.schoolId,
+        studentId: value.studentId,
+        guardianId: access.guardianId,
+        guardianUserId,
+        teacherId: assignment.userId,
+        teachingAssignmentId: assignment.id,
+        topic: value.topic,
+      },
+    })
+    await transaction.meetingEvent.create({
+      data: {
+        requestId: request.id,
+        actorId: guardianUserId,
+        kind: 'requested',
+      },
+    })
+    return request
   })
 }

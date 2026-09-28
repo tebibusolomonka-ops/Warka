@@ -1099,3 +1099,10 @@ export {
   MeetingSchedulingError,
   scheduleFamilyMeeting,
 } from './meetingScheduling.js'
+export {
+  MeetingHistoryError,
+  declineFamilyMeeting,
+  cancelFamilyMeeting,
+  completeFamilyMeeting,
+  listMeetingHistory,
+} from './meetingHistory.js'

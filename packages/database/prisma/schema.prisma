@@ -572,6 +572,7 @@ model School {
 }
 
 model User {
+  meetingEvents MeetingEvent[]
   meetingAvailability TeacherMeetingAvailability[]
   meetingRequestsMade ParentTeacherMeetingRequest[] @relation("MeetingGuardianUser")
   meetingRequestsAssigned ParentTeacherMeetingRequest[] @relation("MeetingTeacher")
@@ -1678,6 +1679,7 @@ model TeacherMeetingAvailability {
 }
 
 model ParentTeacherMeetingRequest {
+  events MeetingEvent[]
   id String @id @default(uuid())
   schoolId String
   studentId String
@@ -1703,6 +1705,32 @@ model ParentTeacherMeetingRequest {
   @@index([schoolId, teacherId, status, createdAt])
   @@index([schoolId, teacherId, scheduledStartAt])
   @@index([guardianUserId, studentId, createdAt])
+}
+
+enum MeetingEventKind {
+  requested
+  scheduled
+  rescheduled
+  declined
+  cancelled
+  completed
+}
+
+model MeetingEvent {
+  id String @id @default(uuid())
+  requestId String
+  actorId String
+  kind MeetingEventKind
+  reason String? @db.VarChar(300)
+  previousStartAt DateTime?
+  previousEndAt DateTime?
+  newStartAt DateTime?
+  newEndAt DateTime?
+  createdAt DateTime @default(now())
+  request ParentTeacherMeetingRequest @relation(fields: [requestId], references: [id], onDelete: Restrict)
+  actor User @relation(fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([requestId, createdAt])
 }
 
 model ClassTimetable {

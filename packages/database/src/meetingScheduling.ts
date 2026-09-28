@@ -34,7 +34,7 @@ export async function scheduleFamilyMeeting(
           id: value.requestId,
           schoolId: value.schoolId,
           teacherId,
-          status: 'requested',
+          status: { in: ['requested', 'scheduled'] },
         },
       })
       if (!request)
@@ -80,6 +80,7 @@ export async function scheduleFamilyMeeting(
           schoolId: value.schoolId,
           teacherId,
           status: 'scheduled',
+          id: { not: request.id },
           scheduledStartAt: { lt: slot.endsAt },
           scheduledEndAt: { gt: slot.startsAt },
         },
@@ -92,7 +93,7 @@ export async function scheduleFamilyMeeting(
         throw new MeetingSchedulingError(
           'Location only applies to school meetings',
         )
-      return transaction.parentTeacherMeetingRequest.update({
+      const scheduled = await transaction.parentTeacherMeetingRequest.update({
         where: { id: request.id },
         data: {
           status: 'scheduled',
@@ -102,6 +103,18 @@ export async function scheduleFamilyMeeting(
           schoolLocation: value.schoolLocation ?? null,
         },
       })
+      await transaction.meetingEvent.create({
+        data: {
+          requestId: request.id,
+          actorId: teacherId,
+          kind: request.status === 'scheduled' ? 'rescheduled' : 'scheduled',
+          previousStartAt: request.scheduledStartAt,
+          previousEndAt: request.scheduledEndAt,
+          newStartAt: slot.startsAt,
+          newEndAt: slot.endsAt,
+        },
+      })
+      return scheduled
     },
     { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
   )
