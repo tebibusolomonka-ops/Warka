@@ -108,6 +108,9 @@ import {
   MeetingAvailabilityError,
   MeetingSchedulingError,
   MeetingHistoryError,
+  SchoolEventAccessError,
+  SchoolEventStateError,
+  EventResponseError,
 } from '@warka/database'
 import { ErrorResponseSchema, HealthResponseSchema } from '@warka/shared'
 import { ZodError } from 'zod'
@@ -277,6 +280,11 @@ import {
   FamilyMeetingRouteAccessError,
   registerFamilyMeetingRoutes,
 } from './familyMeetingRoutes.js'
+import {
+  SchoolEventRouteAccessError,
+  registerSchoolEventRoutes,
+} from './schoolEventRoutes.js'
+import { EventAttachmentError } from './eventAttachmentService.js'
 
 export function buildApp(
   options: {
@@ -466,6 +474,7 @@ export function buildApp(
     registerLearningMaterialRoutes(app, getMaterials, authenticate)
     registerCourseworkRoutes(app, getDatabase, authenticate)
     registerFamilyMeetingRoutes(app, getDatabase, authenticate)
+    registerSchoolEventRoutes(app, getDatabase, authenticate)
     registerAnnouncementRoutes(app, getAnnouncements, authenticate)
     registerParentServiceRoutes(app, getDatabase, authenticate)
     registerBureauRoutes(app, getDatabase, authenticate)
@@ -548,6 +557,23 @@ export function buildApp(
   )
 
   app.setErrorHandler((error, _request, reply) => {
+    if (
+      error instanceof SchoolEventRouteAccessError ||
+      error instanceof SchoolEventAccessError
+    )
+      return reply
+        .code(404)
+        .send({
+          error: { code: 'EVENT_NOT_FOUND', message: 'Event unavailable' },
+        })
+    if (
+      error instanceof SchoolEventStateError ||
+      error instanceof EventResponseError ||
+      error instanceof EventAttachmentError
+    )
+      return reply
+        .code(409)
+        .send({ error: { code: 'EVENT_STATE', message: error.message } })
     if (
       error instanceof FamilyMeetingRouteAccessError ||
       error instanceof FamilyMeetingAccessError
