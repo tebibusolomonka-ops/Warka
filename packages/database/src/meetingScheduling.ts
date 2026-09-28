@@ -4,6 +4,7 @@ import { eligibleCourseworkEnrollment } from './courseworkAudience.js'
 import { hasActiveVerifiedGuardianRelationship } from './guardianRelationships.js'
 import { requireMeetingTeacher } from './meetingAvailability.js'
 import { effectiveMembershipWhere } from './membershipPeriods.js'
+import { notifyMeeting } from './meetingNotifications.js'
 
 export const ScheduleFamilyMeetingSchema = z.strictObject({
   schoolId: z.uuid(),
@@ -93,6 +94,14 @@ export async function scheduleFamilyMeeting(
         throw new MeetingSchedulingError(
           'Location only applies to school meetings',
         )
+      if (
+        request.status === 'scheduled' &&
+        request.scheduledStartAt?.getTime() === slot.startsAt.getTime() &&
+        request.scheduledEndAt?.getTime() === slot.endsAt.getTime() &&
+        request.meetingMethod === slot.method &&
+        request.schoolLocation === (value.schoolLocation ?? null)
+      )
+        return request
       const scheduled = await transaction.parentTeacherMeetingRequest.update({
         where: { id: request.id },
         data: {
@@ -114,6 +123,12 @@ export async function scheduleFamilyMeeting(
           newEndAt: slot.endsAt,
         },
       })
+      await notifyMeeting(
+        transaction,
+        [request.guardianUserId],
+        request.status === 'scheduled' ? 'rescheduled' : 'scheduled',
+        request.id,
+      )
       return scheduled
     },
     { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },

@@ -26,18 +26,28 @@ export type CreateNotification = z.infer<typeof CreateNotificationSchema>
 
 type NotificationStore = Pick<PrismaClient, 'notification'>
 
-async function courseworkFilter(
+async function preferenceFilter(
   database: NotificationStore &
     Partial<Pick<PrismaClient, 'notificationPreference'>>,
   userId: string,
 ) {
-  const preference = await database.notificationPreference?.findUnique({
+  const coursework = await database.notificationPreference?.findUnique({
     where: { userId_category: { userId, category: 'learningMaterials' } },
     select: { inAppEnabled: true },
   })
-  return preference?.inAppEnabled === false
-    ? { NOT: { type: { startsWith: 'coursework.' } } }
-    : {}
+  const meetings = await database.notificationPreference?.findUnique({
+    where: { userId_category: { userId, category: 'familyCommunication' } },
+    select: { inAppEnabled: true },
+  })
+  const hidden = [
+    ...(coursework?.inAppEnabled === false
+      ? [{ type: { startsWith: 'coursework.' } }]
+      : []),
+    ...(meetings?.inAppEnabled === false
+      ? [{ type: { startsWith: 'meeting.' } }]
+      : []),
+  ]
+  return hidden.length ? { NOT: hidden } : {}
 }
 
 export function createNotification(
@@ -98,7 +108,7 @@ export async function listNotifications(
     where: {
       userId,
       ...(options.unread ? { readAt: null } : {}),
-      ...(await courseworkFilter(database, userId)),
+      ...(await preferenceFilter(database, userId)),
     },
     orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
     take,
@@ -115,7 +125,7 @@ export async function unreadNotificationCount(
     where: {
       userId,
       readAt: null,
-      ...(await courseworkFilter(database, userId)),
+      ...(await preferenceFilter(database, userId)),
     },
   })
 }

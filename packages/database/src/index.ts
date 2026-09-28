@@ -1106,3 +1106,4 @@ export {
   completeFamilyMeeting,
   listMeetingHistory,
 } from './meetingHistory.js'
+export { notifyMeeting } from './meetingNotifications.js'

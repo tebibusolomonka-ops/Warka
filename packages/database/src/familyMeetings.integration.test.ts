@@ -260,6 +260,11 @@ describe.skipIf(!database)('family meeting requests in PostgreSQL', () => {
         }),
       ).toBe(2)
     } finally {
+      await db.notification.deleteMany({
+        where: {
+          userId: { in: [guardianUser.id, teacher.id, unrelatedTeacher.id] },
+        },
+      })
       await db.meetingEvent.deleteMany({
         where: { request: { schoolId: school.id } },
       })

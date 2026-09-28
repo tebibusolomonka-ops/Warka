@@ -4,6 +4,7 @@ import { effectiveMembershipWhere } from './membershipPeriods.js'
 import { findGuardianAccessForUser } from './guardianAccess.js'
 import { hasActiveVerifiedGuardianRelationship } from './guardianRelationships.js'
 import { findSchoolMembership } from './schoolMemberships.js'
+import { notifyMeeting } from './meetingNotifications.js'
 
 export const MeetingRequestSchema = z.strictObject({
   schoolId: z.uuid(),
@@ -82,6 +83,12 @@ export async function requestFamilyMeeting(
         kind: 'requested',
       },
     })
+    await notifyMeeting(
+      transaction,
+      [assignment.userId],
+      'requested',
+      request.id,
+    )
     return request
   })
 }

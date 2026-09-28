@@ -15,6 +15,9 @@ describe('notification email routing', () => {
     expect(emailCategoryForNotification('familyMessage.reply')).toBe(
       'familyCommunication',
     )
+    expect(emailCategoryForNotification('meeting.scheduled')).toBe(
+      'familyCommunication',
+    )
     expect(emailCategoryForNotification('privacy.fulfilled')).toBe('privacy')
     expect(emailCategoryForNotification('operations.backupFailed')).toBeNull()
     expect(emailCategoryForNotification('familyMessage.body')).toBeNull()

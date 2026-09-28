@@ -1,6 +1,7 @@
 import { Prisma, type PrismaClient } from '@prisma/client'
 import { z } from 'zod'
 import { requireMeetingTeacher } from './meetingAvailability.js'
+import { notifyMeeting } from './meetingNotifications.js'
 
 const ReasonSchema = z
   .string()
@@ -64,6 +65,12 @@ async function transition(
           previousEndAt: request.scheduledEndAt,
         },
       })
+      await notifyMeeting(
+        transaction,
+        [teacher ? request.guardianUserId : request.teacherId],
+        action,
+        request.id,
+      )
       return updated
     },
     { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
