@@ -22,6 +22,12 @@ export function createDatabaseClient(
 
 export type { PrismaClient }
 export {
+  SchoolCalendarDayInputSchema,
+  SchoolCalendarDayError,
+  createSchoolCalendarDay,
+  listSchoolCalendarDays,
+} from './schoolCalendarDays.js'
+export {
   FileScannerSchema,
   createFileScan,
   latestFileScan,

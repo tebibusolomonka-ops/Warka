@@ -90,6 +90,14 @@ enum DigestCadence {
   weekly
 }
 
+enum SchoolCalendarDayType {
+  instructional
+  holiday
+  closure
+  examination
+  staffDay
+}
+
 enum OrganizationRole {
   owner
   administrator
@@ -405,6 +413,7 @@ enum MaintenanceWindowStatus {
 }
 
 model School {
+  calendarDays SchoolCalendarDay[]
   fileAssets FileAsset[]
   resultSets                    ResultSet[]
   publishedResults              PublishedResult[]
@@ -1086,6 +1095,7 @@ model EmailDelivery {
 }
 
 model AcademicYear {
+  calendarDays SchoolCalendarDay[]
   status              AcademicYearStatus @default(active)
   closingStartedAt    DateTime?
   closedAt            DateTime?
@@ -1115,6 +1125,22 @@ model AcademicYear {
   @@unique([id, schoolId])
   @@index([schoolId, startsOn])
   @@index([schoolId, status])
+}
+
+model SchoolCalendarDay {
+  id String @id @default(uuid())
+  schoolId String
+  academicYearId String
+  date DateTime @db.Date
+  dayType SchoolCalendarDayType
+  label String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  school School @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  academicYear AcademicYear @relation(fields: [academicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
+
+  @@unique([schoolId, date])
+  @@index([schoolId, academicYearId, date])
 }
 
 model GradeLevel {
