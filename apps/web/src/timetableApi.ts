@@ -23,6 +23,10 @@ export type ClassTimetable = {
 }
 export type ClassTimetableEntry = {
   id: string
+  schoolClassId: string
+  subjectId: string
+  teachingAssignmentId: string
+  timetablePeriodId: string
   weekday: number
   subject: { id: string; name: string }
   timetablePeriod: TimetablePeriod

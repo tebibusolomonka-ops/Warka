@@ -59,12 +59,34 @@ export function registerAttendanceRoutes(
         },
         new Date(),
       )
+      const membership = await getDatabase().schoolMembership.findUnique({
+        where: { userId_schoolId: { userId: actor(request), schoolId } },
+      })
+      const ownAssignmentIds =
+        membership?.role === 'teacher'
+          ? (
+              await getDatabase().teachingAssignment.findMany({
+                where: {
+                  userId: actor(request),
+                  schoolId,
+                  academicYearId: query.academicYearId,
+                  schoolClassId: query.schoolClassId,
+                  startsAt: { lte: new Date() },
+                  OR: [{ endsAt: null }, { endsAt: { gt: new Date() } }],
+                },
+                select: { id: true },
+              })
+            ).map((assignment) => assignment.id)
+          : null
       return {
         sessions: await getDatabase().attendanceSession.findMany({
           where: {
             schoolId,
             academicYearId: query.academicYearId,
             schoolClassId: query.schoolClassId,
+            ...(ownAssignmentIds
+              ? { teachingAssignmentId: { in: ownAssignmentIds } }
+              : {}),
             ...(query.date
               ? { date: new Date(`${query.date}T00:00:00.000Z`) }
               : {}),

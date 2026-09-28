@@ -37,6 +37,7 @@ import { SchoolDocuments } from './SchoolDocuments'
 import { YearRolloverWorkspace } from './YearRolloverWorkspace'
 import { TimetableAdminWorkspace } from './TimetableAdminWorkspace'
 import { TeacherTimetableWorkspace } from './TeacherTimetableWorkspace'
+import { TeacherAttendanceWorkspace } from './TeacherAttendanceWorkspace'
 import { SchoolOnboardingWorkspace } from './SchoolOnboardingWorkspace'
 import { StaffLifecycleWorkspace } from './StaffLifecycleWorkspace'
 import { PrivacyWorkspace } from './PrivacyWorkspace'
@@ -442,10 +443,16 @@ function SignedInShell({
                   />
                   {!selectedSchool.capabilities.canRegister &&
                     !selectedSchool.capabilities.canApprove && (
-                      <TeacherTimetableWorkspace
-                        baseUrl={baseUrl}
-                        schoolId={selectedSchool.school.id}
-                      />
+                      <>
+                        <TeacherTimetableWorkspace
+                          baseUrl={baseUrl}
+                          schoolId={selectedSchool.school.id}
+                        />
+                        <TeacherAttendanceWorkspace
+                          baseUrl={baseUrl}
+                          schoolId={selectedSchool.school.id}
+                        />
+                      </>
                     )}
                 </>
               )}

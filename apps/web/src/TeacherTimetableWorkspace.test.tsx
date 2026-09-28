@@ -31,6 +31,10 @@ it('shows only API-scoped assigned lessons with today and week views', async () 
   vi.mocked(getOwnTeacherTimetable).mockResolvedValue([
     {
       id: 'lesson',
+      schoolClassId: 'class',
+      subjectId: 'subject',
+      teachingAssignmentId: 'assignment',
+      timetablePeriodId: 'period',
       weekday: 1,
       subject: { id: 'subject', name: 'Mathematics' },
       timetablePeriod: {

@@ -91,6 +91,10 @@ it('shows an accessible weekly grid and blocks publication until validation succ
     entries: [
       {
         id: 'entry',
+        schoolClassId: 'class',
+        subjectId: 'subject',
+        teachingAssignmentId: 'assignment',
+        timetablePeriodId: 'period',
         weekday: 1,
         subject: { id: 'subject', name: 'Mathematics' },
         timetablePeriod: {
