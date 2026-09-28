@@ -108,6 +108,9 @@ import {
   MeetingAvailabilityError,
   MeetingSchedulingError,
   MeetingHistoryError,
+  DataQualityIssueAccessError,
+  DataQualityIssueStateError,
+  DataQualityRunConflictError,
   SchoolEventAccessError,
   SchoolEventStateError,
   EventResponseError,
@@ -119,6 +122,7 @@ import { registerAuthRoutes } from './authRoutes.js'
 import { registerCorrectionRoutes } from './correctionRoutes.js'
 import { registerPrivacyRoutes } from './privacyRoutes.js'
 import { registerDataGovernanceRoutes } from './dataGovernanceRoutes.js'
+import { registerDataQualityRoutes } from './dataQualityRoutes.js'
 import { registerStaffAccessRoutes } from './staffAccessRoutes.js'
 import { registerBackupRoutes } from './backupRoutes.js'
 import { checkReadiness } from './readiness.js'
@@ -443,6 +447,7 @@ export function buildApp(
     registerCorrectionRoutes(app, getDatabase, authenticate)
     registerPrivacyRoutes(app, getDatabase, authenticate)
     registerDataGovernanceRoutes(app, getDatabase, authenticate)
+    registerDataQualityRoutes(app, getDatabase, authenticate)
     registerStaffAccessRoutes(app, getDatabase, authenticate)
     registerBackupRoutes(
       app,
@@ -557,6 +562,22 @@ export function buildApp(
   )
 
   app.setErrorHandler((error, _request, reply) => {
+    if (error instanceof DataQualityIssueAccessError)
+      return reply
+        .code(404)
+        .send({
+          error: {
+            code: 'QUALITY_UNAVAILABLE',
+            message: 'Data quality context unavailable',
+          },
+        })
+    if (
+      error instanceof DataQualityIssueStateError ||
+      error instanceof DataQualityRunConflictError
+    )
+      return reply
+        .code(409)
+        .send({ error: { code: 'QUALITY_STATE', message: error.message } })
     if (
       error instanceof SchoolEventRouteAccessError ||
       error instanceof SchoolEventAccessError
