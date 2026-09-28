@@ -19,7 +19,12 @@ export function registerParentPortalRoutes(
   const childParams = z.strictObject({
     studentReference: z.string().min(1).max(100),
   })
-  for (const resource of ['results', 'announcements', 'materials'] as const) {
+  for (const resource of [
+    'results',
+    'announcements',
+    'materials',
+    'coursework',
+  ] as const) {
     app.get(
       '/parent/children/:studentReference/' + resource,
       { preHandler: authenticate },

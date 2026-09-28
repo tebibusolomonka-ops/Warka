@@ -17,6 +17,75 @@ export function prismaParentAcademicService(database: PrismaClient) {
     return child
   }
   return {
+    async coursework(userId: string, studentReference: string) {
+      const child = await requireChild(userId, studentReference)
+      if (!child.schoolClassId) return []
+      const assignments = await database.courseworkAssignment.findMany({
+        where: {
+          schoolId: child.schoolId,
+          academicYearId: child.academicYearId,
+          schoolClassId: child.schoolClassId,
+          status: { in: ['published', 'closed'] },
+        },
+        select: {
+          id: true,
+          title: true,
+          dueAt: true,
+          status: true,
+          extensions: {
+            where: { studentId: child.studentId },
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+            select: { extendedDueAt: true },
+          },
+          submissions: {
+            where: { studentId: child.studentId },
+            select: {
+              status: true,
+              submittedAt: true,
+              revisions: {
+                where: { submittedAt: { not: null } },
+                orderBy: { revisionNumber: 'desc' },
+                take: 1,
+                select: {
+                  feedback: {
+                    select: { status: true, text: true, releasedAt: true },
+                  },
+                  rubricScores: {
+                    orderBy: { version: 'desc' },
+                    take: 1,
+                    select: { totalPoints: true },
+                  },
+                },
+              },
+            },
+          },
+        },
+        orderBy: [{ dueAt: 'asc' }, { id: 'asc' }],
+        take: 100,
+      })
+      return assignments.map((assignment) => {
+        const submission = assignment.submissions[0]
+        const revision = submission?.revisions[0]
+        const released =
+          revision?.feedback?.status === 'released' &&
+          Boolean(revision.feedback.releasedAt)
+        return {
+          id: assignment.id,
+          title: assignment.title,
+          status: assignment.status,
+          dueAt: (
+            assignment.extensions[0]?.extendedDueAt ?? assignment.dueAt
+          ).toISOString(),
+          submissionStatus: submission?.status ?? 'not_started',
+          submittedAt: submission?.submittedAt?.toISOString() ?? null,
+          feedback: released ? revision!.feedback!.text : null,
+          rubricScore: released
+            ? (revision?.rubricScores[0]?.totalPoints.toString() ?? null)
+            : null,
+        }
+      })
+    },
     async results(userId: string, studentReference: string) {
       const child = await requireChild(userId, studentReference)
       const rows = await database.publishedResult.findMany({

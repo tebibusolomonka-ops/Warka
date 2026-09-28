@@ -18,6 +18,8 @@ import {
   getParentResults,
   getParentMaterials,
   getParentAnnouncements,
+  getParentCoursework,
+  type ParentCoursework,
   getParentConversations,
   getParentConversation,
   getTeacherContacts,
@@ -32,6 +34,7 @@ type Section =
   | 'Results'
   | 'Materials'
   | 'Announcements'
+  | 'Coursework'
   | 'Messages'
   | 'Attendance'
 
@@ -61,7 +64,12 @@ export function ParentPortal({
   const [section, setSection] = useState<Section>('Overview')
   const [contentFor, setContentFor] = useState<Section>('Overview')
   const [content, setContent] = useState<
-    Load<StudentResult[] | StudentMaterial[] | StudentAnnouncement[]>
+    Load<
+      | StudentResult[]
+      | StudentMaterial[]
+      | StudentAnnouncement[]
+      | ParentCoursework[]
+    >
   >({ status: 'loading' })
   const [conversations, setConversations] = useState<
     Load<FamilyConversationSummary[]>
@@ -120,7 +128,7 @@ export function ParentPortal({
   useEffect(() => {
     if (
       !selected ||
-      !['Results', 'Materials', 'Announcements'].includes(section)
+      !['Results', 'Materials', 'Announcements', 'Coursework'].includes(section)
     )
       return
     let active = true
@@ -131,7 +139,9 @@ export function ParentPortal({
         ? getParentResults(baseUrl, selected.studentReference)
         : section === 'Materials'
           ? getParentMaterials(baseUrl, selected.studentReference)
-          : getParentAnnouncements(baseUrl, selected.studentReference)
+          : section === 'Coursework'
+            ? getParentCoursework(baseUrl, selected.studentReference)
+            : getParentAnnouncements(baseUrl, selected.studentReference)
     request
       .then((data) => {
         if (active) setContent({ status: 'loaded', data })
@@ -296,6 +306,7 @@ export function ParentPortal({
                 'Overview',
                 'Results',
                 'Materials',
+                'Coursework',
                 'Announcements',
                 'Messages',
                 'Attendance',
@@ -345,7 +356,9 @@ export function ParentPortal({
               }
             />
           )}
-          {['Results', 'Materials', 'Announcements'].includes(section) && (
+          {['Results', 'Materials', 'Announcements', 'Coursework'].includes(
+            section,
+          ) && (
             <div className="academic-panel">
               <h3>{section === 'Results' ? 'Published results' : section}</h3>
               {visibleContent.status === 'loading' && (
@@ -418,6 +431,24 @@ export function ParentPortal({
                         </li>
                       ),
                     )}
+                  </ul>
+                )}
+              {visibleContent.status === 'loaded' &&
+                section === 'Coursework' && (
+                  <ul>
+                    {(visibleContent.data as ParentCoursework[]).map((item) => (
+                      <li key={item.id}>
+                        <strong>{item.title}</strong> · Due{' '}
+                        {new Date(item.dueAt).toLocaleString()} ·{' '}
+                        {item.submissionStatus}
+                        {item.feedback && (
+                          <p>Teacher feedback: {item.feedback}</p>
+                        )}
+                        {item.rubricScore && (
+                          <p>Released rubric score: {item.rubricScore}</p>
+                        )}
+                      </li>
+                    ))}
                   </ul>
                 )}
             </div>

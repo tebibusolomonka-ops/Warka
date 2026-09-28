@@ -17,6 +17,7 @@ describe('parent academic routes', () => {
       results: vi.fn().mockResolvedValue([{ subject: 'Math' }]),
       announcements: vi.fn().mockResolvedValue([{ title: 'Notice' }]),
       materials: vi.fn().mockResolvedValue([{ title: 'Material' }]),
+      coursework: vi.fn().mockResolvedValue([{ title: 'Assignment' }]),
     } as unknown as ParentAcademicService
     const app = Fastify()
     registerParentPortalRoutes(
@@ -27,7 +28,12 @@ describe('parent academic routes', () => {
         request.currentUser = user
       },
     )
-    for (const resource of ['results', 'announcements', 'materials'] as const) {
+    for (const resource of [
+      'results',
+      'announcements',
+      'materials',
+      'coursework',
+    ] as const) {
       const response = await app.inject({
         method: 'GET',
         url: `/parent/children/WKA-123/${resource}`,

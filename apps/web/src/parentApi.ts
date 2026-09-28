@@ -74,6 +74,25 @@ export async function getParentAnnouncements(
     await requestJson(baseUrl, childPath(reference) + '/announcements'),
   )
 }
+export type ParentCoursework = {
+  id: string
+  title: string
+  status: 'published' | 'closed'
+  dueAt: string
+  submissionStatus: 'not_started' | 'draft' | 'submitted' | 'withdrawn'
+  submittedAt: string | null
+  feedback: string | null
+  rubricScore: string | null
+}
+export async function getParentCoursework(
+  baseUrl: string,
+  reference: string,
+): Promise<ParentCoursework[]> {
+  return (await requestJson(
+    baseUrl,
+    childPath(reference) + '/coursework',
+  )) as ParentCoursework[]
+}
 export async function getTeacherContacts(
   baseUrl: string,
   reference: string,

@@ -25,10 +25,12 @@ const child = {
 const results = vi.fn()
 const announcements = vi.fn()
 const materials = vi.fn()
+const coursework = vi.fn()
 const database = {
   publishedResult: { findMany: results },
   announcement: { findMany: announcements },
   learningMaterial: { findMany: materials },
+  courseworkAssignment: { findMany: coursework },
 } as unknown as PrismaClient
 
 beforeEach(() => {
@@ -37,6 +39,44 @@ beforeEach(() => {
 })
 
 describe('parent academic access', () => {
+  it('shows only released coursework feedback for a verified child', async () => {
+    coursework.mockResolvedValue([
+      {
+        id: 'assignment',
+        title: 'Essay',
+        status: 'published',
+        dueAt: new Date('2026-10-01'),
+        extensions: [],
+        submissions: [
+          {
+            status: 'submitted',
+            submittedAt: new Date('2026-09-28'),
+            revisions: [
+              {
+                feedback: {
+                  status: 'draft',
+                  text: 'Private',
+                  releasedAt: null,
+                },
+                rubricScores: [{ totalPoints: { toString: () => '8' } }],
+              },
+            ],
+          },
+        ],
+      },
+    ])
+    const service = prismaParentAcademicService(database)
+    const [row] = await service.coursework('user-1', child.studentReference)
+    expect(row?.feedback).toBeNull()
+    expect(row?.rubricScore).toBeNull()
+    expect(row).not.toHaveProperty('attachments')
+    expect(coursework.mock.calls[0][0].where).toMatchObject({
+      schoolId: child.schoolId,
+      academicYearId: child.academicYearId,
+      schoolClassId: child.schoolClassId,
+      status: { in: ['published', 'closed'] },
+    })
+  })
   it('returns current published result values for the eligible child and school', async () => {
     results.mockResolvedValue([
       {
@@ -128,8 +168,12 @@ describe('parent academic access', () => {
     await expect(service.materials('user-1', 'OTHER')).rejects.toBeInstanceOf(
       ParentChildNotFoundError,
     )
+    await expect(service.coursework('user-1', 'OTHER')).rejects.toBeInstanceOf(
+      ParentChildNotFoundError,
+    )
     expect(results).not.toHaveBeenCalled()
     expect(announcements).not.toHaveBeenCalled()
     expect(materials).not.toHaveBeenCalled()
+    expect(coursework).not.toHaveBeenCalled()
   })
 })

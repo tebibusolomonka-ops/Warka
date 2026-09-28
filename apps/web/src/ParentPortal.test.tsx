@@ -6,6 +6,7 @@ import {
   getParentResults,
   getParentMaterials,
   getParentAnnouncements,
+  getParentCoursework,
   getParentConversations,
   getTeacherContacts,
 } from './parentApi'
@@ -15,6 +16,7 @@ vi.mock('./parentApi', () => ({
   getParentResults: vi.fn(),
   getParentMaterials: vi.fn(),
   getParentAnnouncements: vi.fn(),
+  getParentCoursework: vi.fn(),
   getParentConversations: vi.fn(),
   getTeacherContacts: vi.fn(),
   getParentConversation: vi.fn(),
@@ -69,6 +71,18 @@ beforeEach(() => {
     },
   ])
   vi.mocked(getParentConversations).mockResolvedValue([])
+  vi.mocked(getParentCoursework).mockResolvedValue([
+    {
+      id: 'assignment-1',
+      title: 'Essay',
+      status: 'published',
+      dueAt: '2026-10-01T00:00:00.000Z',
+      submissionStatus: 'submitted',
+      submittedAt: '2026-09-28T00:00:00.000Z',
+      feedback: 'Good work',
+      rubricScore: '8',
+    },
+  ])
   vi.mocked(getTeacherContacts).mockResolvedValue([])
 })
 afterEach(cleanup)
@@ -95,5 +109,11 @@ describe('parent portal workspace', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Announcements' }))
     await screen.findByText('<script>alert(1)</script>')
     expect(container.querySelector('script')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Coursework' }))
+    await screen.findByText('Essay')
+    expect(screen.getByText(/Good work/)).toBeTruthy()
+    expect(
+      screen.queryByRole('button', { name: /submit|transfer|edit/i }),
+    ).toBeNull()
   })
 })
