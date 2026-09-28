@@ -1002,3 +1002,5 @@ export {
   lockGradebook,
   unlockGradebook,
 } from './gradebookLocks.js'
+
+export { getResultPublicationReadiness } from './resultPublicationReadiness.js'
