@@ -8,6 +8,13 @@ import {
   AttendanceCorrectionError,
   AttendanceSessionContextError,
   StudentAttendanceRecordError,
+  AssessmentRoomConflictError,
+  AssessmentScheduleContextError,
+  AssessmentScheduleConflictError,
+  AssessmentSessionStateError,
+  AssessmentParticipationContextError,
+  MakeUpAssessmentStateError,
+  AssessmentInvigilationError,
   AdministratorRecoveryPermissionError,
   AccountLifecyclePermissionError,
   StaffOffboardingPermissionError,
@@ -169,6 +176,7 @@ import { registerSchoolDocumentRoutes } from './schoolDocumentRoutes.js'
 import { registerAcademicRolloverRoutes } from './academicRolloverRoutes.js'
 import { registerTimetableRoutes } from './timetableRoutes.js'
 import { registerAttendanceRoutes } from './attendanceRoutes.js'
+import { registerAssessmentScheduleRoutes } from './assessmentScheduleRoutes.js'
 import {
   prismaAcademicRolloverService,
   type AcademicRolloverService,
@@ -487,6 +495,7 @@ export function buildApp(
     registerAcademicRoutes(app, getAcademic, authenticate)
     registerTimetableRoutes(app, getDatabase, authenticate)
     registerAttendanceRoutes(app, getDatabase, authenticate)
+    registerAssessmentScheduleRoutes(app, getDatabase, authenticate)
     registerEnrollmentRoutes(
       app,
       getStore,
@@ -505,6 +514,25 @@ export function buildApp(
   )
 
   app.setErrorHandler((error, _request, reply) => {
+    if (error instanceof AssessmentScheduleConflictError)
+      return reply.code(409).send({
+        error: {
+          code: 'ASSESSMENT_CONFLICT',
+          message: error.message,
+          issues: error.issues,
+        },
+      })
+    if (
+      error instanceof AssessmentRoomConflictError ||
+      error instanceof AssessmentScheduleContextError ||
+      error instanceof AssessmentSessionStateError ||
+      error instanceof AssessmentParticipationContextError ||
+      error instanceof MakeUpAssessmentStateError ||
+      error instanceof AssessmentInvigilationError
+    )
+      return reply.code(409).send({
+        error: { code: 'ASSESSMENT_STATE', message: error.message },
+      })
     if (error instanceof AttendancePermissionError)
       return reply.code(403).send({
         error: { code: 'ATTENDANCE_ACCESS_DENIED', message: error.message },
