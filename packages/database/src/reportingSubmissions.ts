@@ -16,6 +16,7 @@ type SubmissionStore = Pick<
   | 'reportingPeriod'
   | 'reportingRequirement'
   | 'reportingSubmission'
+  | 'reportingSubmissionVersion'
   | 'schoolMembership'
   | 'notification'
   | 'dataQualityIssue'
@@ -50,10 +51,21 @@ export async function prepareSchoolReport(
   })
   if (!requirement || requirement.reportingPeriod.status !== 'open')
     throw new ReportingSubmissionError('School is not open for this report')
-  return database.reportingSubmission.upsert({
+  const existing = await database.reportingSubmission.findUnique({
     where: { reportingPeriodId_schoolId: { reportingPeriodId, schoolId } },
-    create: { reportingPeriodId, schoolId, snapshot },
-    update: { snapshot, status: 'draft', returnReason: null },
+  })
+  if (!existing)
+    return database.reportingSubmission.create({
+      data: { reportingPeriodId, schoolId, snapshot },
+    })
+  const changed = await database.reportingSubmission.updateMany({
+    where: { id: existing.id, status: { in: ['draft', 'returned'] } },
+    data: { snapshot },
+  })
+  if (changed.count !== 1)
+    throw new ReportingSubmissionError('Submitted reports cannot be edited')
+  return database.reportingSubmission.findUniqueOrThrow({
+    where: { id: existing.id },
   })
 }
 
@@ -64,26 +76,52 @@ export async function submitSchoolReport(
   schoolId: string,
 ) {
   await requireSchoolSubmitter(database, actorUserId, schoolId)
-  const readiness = await evaluateReportingReadiness(
-    database as PrismaClient,
-    reportingPeriodId,
-    schoolId,
-  )
-  if (!readiness.ready)
-    throw new ReportingSubmissionError(
-      `Report is not ready: ${readiness.blocking.join(', ')}`,
-    )
   return database.$transaction(async (transaction) => {
+    const readiness = await evaluateReportingReadiness(
+      transaction as PrismaClient,
+      reportingPeriodId,
+      schoolId,
+    )
+    if (!readiness.ready)
+      throw new ReportingSubmissionError(
+        `Report is not ready: ${readiness.blocking.join(', ')}`,
+      )
     const period = await transaction.reportingPeriod.findUniqueOrThrow({
       where: { id: reportingPeriodId },
     })
     if (period.status !== 'open')
       throw new ReportingSubmissionError('Reporting period is not open')
-    const submission = await transaction.reportingSubmission.update({
-      where: { reportingPeriodId_schoolId: { reportingPeriodId, schoolId } },
+    const changed = await transaction.reportingSubmission.updateMany({
+      where: {
+        reportingPeriodId,
+        schoolId,
+        status: { in: ['draft', 'returned'] },
+      },
       data: {
         status: 'submitted',
+        currentVersion: { increment: 1 },
         submittedAt: new Date(),
+        submittedById: actorUserId,
+      },
+    })
+    if (changed.count !== 1)
+      throw new ReportingSubmissionError(
+        'Report is not available for submission',
+      )
+    const submission = await transaction.reportingSubmission.findUniqueOrThrow({
+      where: { reportingPeriodId_schoolId: { reportingPeriodId, schoolId } },
+    })
+    await transaction.reportingSubmissionVersion.create({
+      data: {
+        submissionId: submission.id,
+        version: submission.currentVersion,
+        snapshot: submission.snapshot as Prisma.InputJsonValue,
+        validationSummary: {
+          warnings: readiness.warnings,
+          blocking: readiness.blocking,
+        },
+        status: 'submitted',
+        submittedAt: submission.submittedAt!,
         submittedById: actorUserId,
       },
     })

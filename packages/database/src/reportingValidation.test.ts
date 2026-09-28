@@ -63,17 +63,15 @@ describe('reporting readiness', () => {
   it('checks school eligibility and blocking issues without submitting', async () => {
     const database = {
       reportingRequirement: {
-        findUnique: vi
-          .fn()
-          .mockResolvedValue({
-            reportingPeriod: {
-              status: 'open',
-              opensAt: null,
-              dueAt: null,
-              closesAt: null,
-              submissionDueOn: new Date('2026-12-31'),
-            },
-          }),
+        findUnique: vi.fn().mockResolvedValue({
+          reportingPeriod: {
+            status: 'open',
+            opensAt: null,
+            dueAt: null,
+            closesAt: null,
+            submissionDueOn: new Date('2026-12-31'),
+          },
+        }),
       },
       reportingSubmission: {
         findUnique: vi.fn().mockResolvedValue({ snapshot }),

@@ -7,50 +7,44 @@ describe('academic data quality', () => {
   it('reports impossible marks and publication history without creating zeros or changing records', async () => {
     const database = {
       assessment: {
-        findMany: vi
-          .fn()
-          .mockResolvedValue([
-            {
-              id: 'assessment',
-              maximumScore: new Prisma.Decimal(10),
-              weight: new Prisma.Decimal(1),
-              academicYearId: 'year',
-              schoolClass: { academicYearId: 'year' },
-            },
-          ]),
+        findMany: vi.fn().mockResolvedValue([
+          {
+            id: 'assessment',
+            maximumScore: new Prisma.Decimal(10),
+            weight: new Prisma.Decimal(1),
+            academicYearId: 'year',
+            schoolClass: { academicYearId: 'year' },
+          },
+        ]),
       },
       mark: {
-        findMany: vi
-          .fn()
-          .mockResolvedValue([
-            {
-              id: 'mark',
-              score: new Prisma.Decimal(12),
-              assessment: {
-                schoolId,
-                academicYearId: 'year',
-                schoolClassId: 'class',
-                maximumScore: new Prisma.Decimal(10),
-              },
-              enrollment: {
-                schoolId,
-                academicYearId: 'year',
-                schoolClassId: 'class',
-              },
+        findMany: vi.fn().mockResolvedValue([
+          {
+            id: 'mark',
+            score: new Prisma.Decimal(12),
+            assessment: {
+              schoolId,
+              academicYearId: 'year',
+              schoolClassId: 'class',
+              maximumScore: new Prisma.Decimal(10),
             },
-          ]),
+            enrollment: {
+              schoolId,
+              academicYearId: 'year',
+              schoolClassId: 'class',
+            },
+          },
+        ]),
       },
       resultSet: {
-        findMany: vi
-          .fn()
-          .mockResolvedValue([
-            {
-              id: 'result',
-              publishedAt: null,
-              publishedById: null,
-              results: [],
-            },
-          ]),
+        findMany: vi.fn().mockResolvedValue([
+          {
+            id: 'result',
+            publishedAt: null,
+            publishedById: null,
+            results: [],
+          },
+        ]),
       },
       gradebookLock: { findMany: vi.fn().mockResolvedValue([]) },
     } as unknown as PrismaClient

@@ -600,6 +600,7 @@ model School {
 }
 
 model User {
+  reportingVersionsSubmitted ReportingSubmissionVersion[] @relation("ReportingVersionSubmitter")
   dismissedDataQualityIssues DataQualityIssue[] @relation("DataQualityIssueDismisser")
   resolvedDataQualityIssues DataQualityIssue[] @relation("DataQualityIssueResolver")
   eventResponses EventResponse[]
@@ -959,6 +960,7 @@ model ReportingSubmission {
   reportingPeriodId String
   schoolId          String
   status            ReportingSubmissionStatus @default(draft)
+  currentVersion    Int                       @default(0)
   snapshot          Json
   submittedAt       DateTime?
   submittedById     String?
@@ -971,10 +973,27 @@ model ReportingSubmission {
   updatedAt         DateTime                  @updatedAt
   reportingPeriod   ReportingPeriod           @relation(fields: [reportingPeriodId], references: [id], onDelete: Cascade)
   school            School                    @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  versions          ReportingSubmissionVersion[]
 
   @@unique([reportingPeriodId, schoolId])
   @@index([schoolId, status])
   @@index([reportingPeriodId, status])
+}
+
+model ReportingSubmissionVersion {
+  id                String                    @id @default(uuid())
+  submissionId      String
+  version           Int
+  snapshot          Json
+  validationSummary Json
+  status            ReportingSubmissionStatus @default(submitted)
+  submittedAt       DateTime                  @default(now())
+  submittedById     String
+  submission        ReportingSubmission       @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  submittedBy       User                      @relation("ReportingVersionSubmitter", fields: [submittedById], references: [id], onDelete: Restrict)
+
+  @@unique([submissionId, version])
+  @@index([submittedById])
 }
 
 model DataQualityIssue {

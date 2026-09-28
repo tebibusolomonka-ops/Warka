@@ -135,6 +135,25 @@ describe.skipIf(!database)('bureau reporting in PostgreSQL', () => {
         period.id,
         school.id,
       )
+      const firstVersion =
+        await database!.reportingSubmissionVersion.findUniqueOrThrow({
+          where: {
+            submissionId_version: { submissionId: draft.id, version: 1 },
+          },
+        })
+      expect(firstVersion).toMatchObject({
+        submittedById: schoolAdministrator.id,
+        status: 'submitted',
+        validationSummary: { warnings: [], blocking: [] },
+      })
+      await expect(
+        submitSchoolReport(
+          database!,
+          schoolAdministrator.id,
+          period.id,
+          school.id,
+        ),
+      ).rejects.toThrow('not available for submission')
       originalSnapshot.enrollment.total = 99
       expect(
         (
@@ -225,6 +244,13 @@ describe.skipIf(!database)('bureau reporting in PostgreSQL', () => {
         period.id,
         school.id,
       )
+      const versions = await database!.reportingSubmissionVersion.findMany({
+        where: { submissionId: draft.id },
+        orderBy: { version: 'asc' },
+      })
+      expect(versions.map(({ version }) => version)).toEqual([1, 2])
+      expect(versions[0]?.snapshot).toEqual(firstVersion.snapshot)
+      expect(versions[1]?.snapshot).not.toEqual(firstVersion.snapshot)
       await approveSchoolReport(database!, manager.id, draft.id)
       expect(
         await database!.notification.count({

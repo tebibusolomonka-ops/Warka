@@ -563,14 +563,12 @@ export function buildApp(
 
   app.setErrorHandler((error, _request, reply) => {
     if (error instanceof DataQualityIssueAccessError)
-      return reply
-        .code(404)
-        .send({
-          error: {
-            code: 'QUALITY_UNAVAILABLE',
-            message: 'Data quality context unavailable',
-          },
-        })
+      return reply.code(404).send({
+        error: {
+          code: 'QUALITY_UNAVAILABLE',
+          message: 'Data quality context unavailable',
+        },
+      })
     if (
       error instanceof DataQualityIssueStateError ||
       error instanceof DataQualityRunConflictError
