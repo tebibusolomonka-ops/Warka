@@ -982,3 +982,8 @@ export {
   transitionMarkEntryWindow,
   assertMarkEntryWindow,
 } from './markEntryWindows.js'
+
+export {
+  GradebookContextError,
+  getGradebookCompleteness,
+} from './gradebookCompleteness.js'
