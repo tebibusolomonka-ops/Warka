@@ -1,5 +1,6 @@
 import { Prisma, type PrismaClient } from '@prisma/client'
 import { z } from 'zod'
+import { assertAttendanceManager } from './attendanceAuthorization.js'
 
 export const AttendanceSessionInputSchema = z
   .strictObject({
@@ -36,6 +37,7 @@ export async function createAttendanceSession(
   z.uuid().parse(actorId)
   const value = AttendanceSessionInputSchema.parse(input)
   const date = new Date(`${value.date}T00:00:00.000Z`)
+  await assertAttendanceManager(database, actorId, value, date)
   const [year, calendarDay] = await Promise.all([
     database.academicYear.findFirst({
       where: { id: value.academicYearId, schoolId: value.schoolId },

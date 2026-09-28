@@ -37,6 +37,14 @@ describe.skipIf(!database)('student attendance records in PostgreSQL', () => {
     const actor = await database!.user.create({
       data: { email: `record-${suffix}@example.test`, displayName: 'Recorder' },
     })
+    await database!.schoolMembership.create({
+      data: {
+        userId: actor.id,
+        schoolId: school.id,
+        role: 'administrator',
+        startsAt: new Date('2026-01-01'),
+      },
+    })
     const student = await database!.student.create({
       data: { studentReference: `AT-${suffix}`, givenName: 'Synthetic' },
     })
@@ -88,6 +96,9 @@ describe.skipIf(!database)('student attendance records in PostgreSQL', () => {
       await database!.attendanceSession.delete({ where: { id: session.id } })
       await database!.enrollment.delete({ where: { id: enrollment.id } })
       await database!.student.delete({ where: { id: student.id } })
+      await database!.schoolMembership.delete({
+        where: { userId_schoolId: { userId: actor.id, schoolId: school.id } },
+      })
       await database!.user.delete({ where: { id: actor.id } })
       await database!.schoolClass.delete({ where: { id: schoolClass.id } })
       await database!.gradeLevel.delete({ where: { id: grade.id } })

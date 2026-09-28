@@ -1,5 +1,6 @@
 import { Prisma, type PrismaClient } from '@prisma/client'
 import { z } from 'zod'
+import { assertAttendanceManager } from './attendanceAuthorization.js'
 
 export const StudentAttendanceRecordInputSchema = z.strictObject({
   sessionId: z.uuid(),
@@ -23,6 +24,7 @@ export async function createStudentAttendanceRecord(
   })
   if (!session || session.status !== 'open')
     throw new StudentAttendanceRecordError('Open attendance session required')
+  await assertAttendanceManager(database, actorId, session, session.date)
   const enrollment = await database.enrollment.findFirst({
     where: {
       id: value.enrollmentId,

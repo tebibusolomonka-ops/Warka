@@ -40,6 +40,14 @@ describe.skipIf(!database)('attendance sessions in PostgreSQL', () => {
         displayName: 'Attendance administrator',
       },
     })
+    await database!.schoolMembership.create({
+      data: {
+        userId: actor.id,
+        schoolId: school.id,
+        role: 'administrator',
+        startsAt: new Date('2026-01-01'),
+      },
+    })
     await database!.schoolCalendarDay.create({
       data: {
         schoolId: school.id,
@@ -78,6 +86,9 @@ describe.skipIf(!database)('attendance sessions in PostgreSQL', () => {
       })
       await database!.schoolCalendarDay.deleteMany({
         where: { schoolId: school.id },
+      })
+      await database!.schoolMembership.delete({
+        where: { userId_schoolId: { userId: actor.id, schoolId: school.id } },
       })
       await database!.user.delete({ where: { id: actor.id } })
       await database!.schoolClass.delete({ where: { id: schoolClass.id } })

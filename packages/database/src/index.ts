@@ -22,6 +22,11 @@ export function createDatabaseClient(
 
 export type { PrismaClient }
 export {
+  AttendancePermissionError,
+  mayManageAttendance,
+  assertAttendanceManager,
+} from './attendanceAuthorization.js'
+export {
   StudentAttendanceRecordInputSchema,
   StudentAttendanceRecordError,
   createStudentAttendanceRecord,
