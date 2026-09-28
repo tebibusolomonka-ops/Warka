@@ -1087,3 +1087,10 @@ export {
   FamilyMeetingAccessError,
   requestFamilyMeeting,
 } from './familyMeetings.js'
+export {
+  MeetingAvailabilitySchema,
+  MeetingAvailabilityError,
+  requireMeetingTeacher,
+  createMeetingAvailability,
+  closeMeetingAvailability,
+} from './meetingAvailability.js'

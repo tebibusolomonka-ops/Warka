@@ -506,6 +506,7 @@ enum MaintenanceWindowStatus {
 }
 
 model School {
+  meetingAvailability TeacherMeetingAvailability[]
   meetingRequests ParentTeacherMeetingRequest[]
   courseworkAssignments CourseworkAssignment[]
   gradebookLocks GradebookLock[]
@@ -571,6 +572,7 @@ model School {
 }
 
 model User {
+  meetingAvailability TeacherMeetingAvailability[]
   meetingRequestsMade ParentTeacherMeetingRequest[] @relation("MeetingGuardianUser")
   meetingRequestsAssigned ParentTeacherMeetingRequest[] @relation("MeetingTeacher")
   courseworkMarkTransfersCreated CourseworkMarkTransfer[] @relation("CourseworkMarkTransferCreator")
@@ -1651,6 +1653,28 @@ enum ParentTeacherMeetingStatus {
   declined
   cancelled
   completed
+}
+
+enum MeetingMethod {
+  inPerson
+  phone
+  online
+}
+
+model TeacherMeetingAvailability {
+  id String @id @default(uuid())
+  schoolId String
+  teacherId String
+  startsAt DateTime
+  endsAt DateTime
+  method MeetingMethod
+  active Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  school School @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  teacher User @relation(fields: [teacherId], references: [id], onDelete: Restrict)
+
+  @@index([schoolId, teacherId, startsAt])
 }
 
 model ParentTeacherMeetingRequest {
