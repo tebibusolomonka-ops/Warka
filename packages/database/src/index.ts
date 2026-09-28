@@ -933,3 +933,9 @@ export {
   setAssessmentRoomActive,
   listAssessmentRooms,
 } from './assessmentRooms.js'
+
+export {
+  AssessmentScheduleInputSchema,
+  AssessmentScheduleContextError,
+  createAssessmentSchedule,
+} from './assessmentSchedules.js'

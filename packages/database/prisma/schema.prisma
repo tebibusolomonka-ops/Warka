@@ -111,6 +111,13 @@ enum AttendanceSessionStatus {
   cancelled
 }
 
+enum AssessmentScheduleStatus {
+  draft
+  scheduled
+  completed
+  cancelled
+}
+
 enum StudentAttendanceStatus {
   present
   absent
@@ -434,6 +441,7 @@ enum MaintenanceWindowStatus {
 
 model School {
   assessmentRooms AssessmentRoom[]
+  assessmentSchedules AssessmentSchedule[]
   calendarDays SchoolCalendarDay[]
   timetablePeriods TimetablePeriod[]
   timetableEntries ClassTimetableEntry[]
@@ -1124,6 +1132,7 @@ model EmailDelivery {
 }
 
 model AcademicYear {
+  assessmentSchedules AssessmentSchedule[]
   calendarDays SchoolCalendarDay[]
   timetableEntries ClassTimetableEntry[]
   timetables ClassTimetable[]
@@ -1210,6 +1219,7 @@ model GradeLevel {
 }
 
 model SchoolClass {
+  assessmentSchedules AssessmentSchedule[]
   timetableEntries ClassTimetableEntry[]
   timetables ClassTimetable[]
   attendanceSessions AttendanceSession[]
@@ -1430,6 +1440,7 @@ model EnrollmentHistoryEvent {
 }
 
 model Subject {
+  assessmentSchedules AssessmentSchedule[]
   timetableEntries ClassTimetableEntry[]
   attendanceSessions AttendanceSession[]
   resultSets          ResultSet[]
@@ -1630,6 +1641,7 @@ model AttendanceCorrection {
 }
 
 model GradingPeriod {
+  assessmentSchedules AssessmentSchedule[]
   resultSets     ResultSet[]
   id             String       @id @default(uuid())
   schoolId       String
@@ -1649,6 +1661,7 @@ model GradingPeriod {
 }
 
 model Assessment {
+  schedules AssessmentSchedule[]
   id              String        @id @default(uuid())
   schoolId        String
   academicYearId  String
@@ -1675,6 +1688,7 @@ model Assessment {
 }
 
 model AssessmentRoom {
+  schedules AssessmentSchedule[]
   id        String   @id @default(uuid())
   schoolId  String
   name      String
@@ -1689,6 +1703,34 @@ model AssessmentRoom {
   @@unique([schoolId, code])
   @@unique([id, schoolId])
   @@index([schoolId, active])
+}
+
+model AssessmentSchedule {
+  id String @id @default(uuid())
+  schoolId String
+  academicYearId String
+  gradingPeriodId String
+  schoolClassId String
+  subjectId String
+  assessmentId String
+  roomId String?
+  scheduledDate DateTime @db.Date
+  startTime String @db.VarChar(5)
+  endTime String @db.VarChar(5)
+  status AssessmentScheduleStatus @default(draft)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  school School @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  academicYear AcademicYear @relation(fields: [academicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  gradingPeriod GradingPeriod @relation(fields: [gradingPeriodId, schoolId, academicYearId], references: [id, schoolId, academicYearId], onDelete: Restrict)
+  schoolClass SchoolClass @relation(fields: [schoolClassId, schoolId, academicYearId], references: [id, schoolId, academicYearId], onDelete: Restrict)
+  subject Subject @relation(fields: [subjectId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  assessment Assessment @relation(fields: [assessmentId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  room AssessmentRoom? @relation(fields: [roomId, schoolId], references: [id, schoolId], onDelete: Restrict)
+
+  @@unique([id, schoolId])
+  @@index([schoolId, scheduledDate, startTime])
+  @@index([assessmentId, status])
 }
 
 model Mark {
