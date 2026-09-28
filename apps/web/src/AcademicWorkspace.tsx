@@ -21,6 +21,7 @@ import { ApiError } from './api'
 import { AcademicSetup } from './AcademicSetup'
 import { GradebookWorkspace } from './GradebookWorkspace'
 import { TeacherCourseworkWorkspace } from './TeacherCourseworkWorkspace'
+import { TeacherMeetingWorkspace } from './TeacherMeetingWorkspace'
 
 type WorkspaceData = {
   structure: AcademicStructure
@@ -338,6 +339,13 @@ export function AcademicWorkspace({
               schoolId={schoolId}
               structure={data.structure}
               teachingAssignments={data.assignments}
+              onSessionExpired={onSessionExpired}
+            />
+          )}
+          {role === 'teacher' && (
+            <TeacherMeetingWorkspace
+              baseUrl={baseUrl}
+              schoolId={schoolId}
               onSessionExpired={onSessionExpired}
             />
           )}

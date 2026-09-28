@@ -1,5 +1,7 @@
 # Security
 
+Guardian meeting requests derive guardian identity from the session and require a verified linked child plus a current teacher assignment for that child's class. Teacher availability is school-only. Meeting actions recheck teacher membership, schedule conflicts, and guardian relationship. History retains prior times and safe reasons; no personal calendar, phone number, private email, location tracking, or student engagement score is introduced.
+
 Authorize every API and domain operation by actor and resource scope. Current account, membership, and assignment periods gate access. Student and guardian visibility follows explicit relationships; bureau and support access have separate boundaries.
 
 Keep credentials and session tokens out of logs, audit metadata, notifications, and responses. Render user text as text. Do not place private student data in operational metadata. Audit privileged changes. Backup and restore must be operator-controlled and must never target the live database for rehearsal.

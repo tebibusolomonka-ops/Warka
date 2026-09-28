@@ -1,5 +1,7 @@
 # Architecture
 
+Family meetings use PostgreSQL requests, school-only teacher availability, scheduled slots, and append-only events. Guardian and teacher routes recheck current relationships; the teacher workspace sits with academic tools. No personal calendar service or location tracking is connected.
+
 - `apps/web`: React workspaces and typed API clients; controls aid users but do not grant access.
 - `apps/api`: Fastify routes, request validation, application services, audit and notification orchestration.
 - `packages/shared`: cross-boundary contracts. `packages/database`: Prisma schema, migrations, repositories, and transactional domain operations. `packages/auth`: credentials and database-backed sessions.

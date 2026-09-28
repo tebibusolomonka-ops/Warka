@@ -1,5 +1,7 @@
 # Decisions
 
+- Family meeting requests require an authenticated guardian with a verified, unrevoked relationship to a currently enrolled child and an active teacher assignment for that child's class. Teacher availability contains school meeting windows only; it never reads a private calendar, personal contact details, or participant locations. Scheduling uses a serializable transaction and rejects overlapping teacher bookings. Rescheduling appends history instead of replacing prior times.
+
 - Authentication uses HttpOnly database sessions, with no localStorage authentication token.
 - `Student` and `Guardian` are separate from `User`; login access does not replace domain relationships.
 - Published results and issued documents are snapshots. Corrections create traceable transitions rather than silently editing history.

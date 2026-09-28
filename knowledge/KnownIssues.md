@@ -1,5 +1,7 @@
 # Known issues
 
+- Real PostgreSQL coursework mark-transfer and family meeting integration tests are present, but local execution remains unavailable because no PostgreSQL server is listening on `127.0.0.1:5432`. Coursework Playwright discovery passed; live execution remains a final CI check. Teacher meeting windows are school-only and do not integrate with personal calendars or create online meetings.
+
 - Local PostgreSQL and Docker are unavailable in the current development environment. Clean migration deployment and database-backed journeys require CI or another PostgreSQL environment.
 - Native PostgreSQL backup and restore tooling availability must be checked in the deployment environment.
 - Scheduler and backup native-process deployment require an operator identity, configured storage, PostgreSQL connectivity, and PostgreSQL tools. The controlled browser adapter does not prove native dump or restore execution.

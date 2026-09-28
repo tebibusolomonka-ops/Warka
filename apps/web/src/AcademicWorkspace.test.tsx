@@ -11,6 +11,9 @@ vi.mock('./GradebookWorkspace', () => ({ GradebookWorkspace: () => null }))
 vi.mock('./TeacherCourseworkWorkspace', () => ({
   TeacherCourseworkWorkspace: () => null,
 }))
+vi.mock('./TeacherMeetingWorkspace', () => ({
+  TeacherMeetingWorkspace: () => null,
+}))
 import {
   applyAcademicImport,
   correctAcademicResult,
