@@ -1140,3 +1140,4 @@ export {
   type QualityFinding,
 } from './studentDataQuality.js'
 export { checkEnrollmentDataQuality } from './enrollmentDataQuality.js'
+export { checkAcademicDataQuality } from './academicDataQuality.js'
