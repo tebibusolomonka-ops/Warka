@@ -1117,3 +1117,10 @@ export {
   transitionSchoolEvent,
 } from './schoolEvents.js'
 export { EventAudienceSchema, setSchoolEventAudience, mayViewSchoolEvent } from './eventAudiences.js'
+export {
+  EventResponseStatusSchema,
+  EventResponseError,
+  setEventRsvpEnabled,
+  respondToSchoolEvent,
+  eventResponseCounts,
+} from './eventResponses.js'

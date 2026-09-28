@@ -574,6 +574,8 @@ model School {
 }
 
 model User {
+  eventResponses EventResponse[]
+  eventResponseHistory EventResponseHistory[]
   eventAttachmentsCreated EventAttachment[]
   schoolEventsCreated SchoolEvent[]
   meetingEvents MeetingEvent[]
@@ -1360,6 +1362,7 @@ model SchoolClass {
 }
 
 model Student {
+  eventResponses EventResponse[]
   meetingRequests ParentTeacherMeetingRequest[]
   assignmentExtensions AssignmentExtension[]
   courseworkSubmissions CourseworkSubmission[]
@@ -1731,6 +1734,8 @@ enum SchoolEventStatus {
 }
 
 model SchoolEvent {
+  responses EventResponse[]
+  rsvpEnabled Boolean @default(false)
   attachments EventAttachment[]
   audience SchoolEventAudience?
   id String @id @default(uuid())
@@ -1752,6 +1757,43 @@ model SchoolEvent {
 
   @@unique([id, schoolId])
   @@index([schoolId, status, startsAt])
+}
+
+enum EventResponseStatus {
+  going
+  notGoing
+}
+
+model EventResponse {
+  id String @id @default(uuid())
+  eventId String
+  schoolId String
+  respondentUserId String
+  subjectKey String @db.VarChar(100)
+  studentId String?
+  status EventResponseStatus
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  event SchoolEvent @relation(fields: [eventId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  respondent User @relation(fields: [respondentUserId], references: [id], onDelete: Restrict)
+  student Student? @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  history EventResponseHistory[]
+
+  @@unique([eventId, respondentUserId, subjectKey])
+  @@index([schoolId, eventId, status])
+}
+
+model EventResponseHistory {
+  id String @id @default(uuid())
+  responseId String
+  actorId String
+  previousStatus EventResponseStatus?
+  newStatus EventResponseStatus
+  createdAt DateTime @default(now())
+  response EventResponse @relation(fields: [responseId], references: [id], onDelete: Restrict)
+  actor User @relation(fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([responseId, createdAt])
 }
 
 model EventAttachment {
