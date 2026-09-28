@@ -12,3 +12,4 @@ Resolved prior validation failures are recorded in [[Batches/141-160]].
 - Commit 241 corrected the FileScan test teardown order without weakening the production foreign key. Local PostgreSQL remains unavailable, so the live integration test and CI confirmation are pending final validation.
 - Attendance summaries use currently approved class enrollments when calculating unrecorded counts for historical sessions. Enrollment changes can alter that historical denominator; a future roster snapshot would make it immutable.
 - Local PostgreSQL and browser execution remain unavailable for attendance journeys; CI must run migrations and the database-backed tests.
+- Assessment migrations, PostgreSQL integration tests, and the live browser journey require CI because local PostgreSQL is unavailable. Assessment session completion currently records lifecycle state; a separate gradebook workflow controls marks and results.

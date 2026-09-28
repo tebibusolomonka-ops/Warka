@@ -23,3 +23,5 @@ See [[Security]] for the resulting invariants.
 - Attendance does not infer absence from a missing record or a timetable entry. Every status is explicit and scoped to an approved enrollment.
 - Submitted attendance requires every currently eligible student to be recorded. Finalized corrections require a school administrator, preserve the previous status, and create an audit event.
 - Attendance summaries are factual counts only. They do not rank students or produce behavioral risk scores. Family history requires student identity or a verified, unrevoked guardian relationship and omits staff notes and correction reasons.
+- Assessment schedules reuse existing definitions and never create marks. Class and room overlaps, capacity, inactive rooms, and invalid academic dates are blockers. Normal timetable overlap does not automatically block an assessment or move a lesson. Session opening validates the schedule again.
+- Participation and marks are separate: absence and missing participation never imply a zero score. Make-up requests preserve the original participation and require explicit approval. Invigilation is a session duty, not permission to edit marks.
