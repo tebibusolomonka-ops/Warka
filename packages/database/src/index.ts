@@ -1082,3 +1082,8 @@ export {
   summarizePersonalCoursework,
   studentCourseworkSummary,
 } from './courseworkSummaries.js'
+export {
+  MeetingRequestSchema,
+  FamilyMeetingAccessError,
+  requestFamilyMeeting,
+} from './familyMeetings.js'

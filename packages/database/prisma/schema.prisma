@@ -506,6 +506,7 @@ enum MaintenanceWindowStatus {
 }
 
 model School {
+  meetingRequests ParentTeacherMeetingRequest[]
   courseworkAssignments CourseworkAssignment[]
   gradebookLocks GradebookLock[]
   markCorrections MarkCorrection[]
@@ -570,6 +571,8 @@ model School {
 }
 
 model User {
+  meetingRequestsMade ParentTeacherMeetingRequest[] @relation("MeetingGuardianUser")
+  meetingRequestsAssigned ParentTeacherMeetingRequest[] @relation("MeetingTeacher")
   courseworkMarkTransfersCreated CourseworkMarkTransfer[] @relation("CourseworkMarkTransferCreator")
   courseworkFeedbackAuthored CourseworkFeedback[] @relation("CourseworkFeedbackAuthor")
   courseworkScoresCreated RubricScore[] @relation("RubricScorer")
@@ -1347,6 +1350,7 @@ model SchoolClass {
 }
 
 model Student {
+  meetingRequests ParentTeacherMeetingRequest[]
   assignmentExtensions AssignmentExtension[]
   courseworkSubmissions CourseworkSubmission[]
   makeUpAssessments MakeUpAssessment[]
@@ -1411,6 +1415,7 @@ model StudentAccess {
 }
 
 model Guardian {
+  meetingRequests ParentTeacherMeetingRequest[]
   id                  String               @id @default(uuid())
   name                String
   phone               String?
@@ -1615,6 +1620,7 @@ model Announcement {
 }
 
 model TeachingAssignment {
+  meetingRequests ParentTeacherMeetingRequest[]
   courseworkAssignments CourseworkAssignment[]
   timetableEntries ClassTimetableEntry[]
   attendanceSessions AttendanceSession[]
@@ -1637,6 +1643,37 @@ model TeachingAssignment {
   @@index([schoolId, academicYearId, userId])
   @@index([schoolId, schoolClassId, subjectId])
   @@unique([id, schoolId, academicYearId, schoolClassId, subjectId], map: "TeachingAssignment_timetable_scope_key")
+}
+
+enum ParentTeacherMeetingStatus {
+  requested
+  scheduled
+  declined
+  cancelled
+  completed
+}
+
+model ParentTeacherMeetingRequest {
+  id String @id @default(uuid())
+  schoolId String
+  studentId String
+  guardianId String
+  guardianUserId String
+  teacherId String
+  teachingAssignmentId String
+  topic String @db.VarChar(300)
+  status ParentTeacherMeetingStatus @default(requested)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  school School @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  student Student @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  guardian Guardian @relation(fields: [guardianId], references: [id], onDelete: Restrict)
+  guardianUser User @relation("MeetingGuardianUser", fields: [guardianUserId], references: [id], onDelete: Restrict)
+  teacher User @relation("MeetingTeacher", fields: [teacherId], references: [id], onDelete: Restrict)
+  teachingAssignment TeachingAssignment @relation(fields: [teachingAssignmentId], references: [id], onDelete: Restrict)
+
+  @@index([schoolId, teacherId, status, createdAt])
+  @@index([guardianUserId, studentId, createdAt])
 }
 
 model ClassTimetable {
