@@ -3,6 +3,11 @@ import Fastify from 'fastify'
 import cookie from '@fastify/cookie'
 import {
   createDatabaseClient,
+  AttendancePermissionError,
+  AttendanceCaptureError,
+  AttendanceCorrectionError,
+  AttendanceSessionContextError,
+  StudentAttendanceRecordError,
   AdministratorRecoveryPermissionError,
   AccountLifecyclePermissionError,
   StaffOffboardingPermissionError,
@@ -163,6 +168,7 @@ import { registerStudentDocumentRoutes } from './studentDocumentRoutes.js'
 import { registerSchoolDocumentRoutes } from './schoolDocumentRoutes.js'
 import { registerAcademicRolloverRoutes } from './academicRolloverRoutes.js'
 import { registerTimetableRoutes } from './timetableRoutes.js'
+import { registerAttendanceRoutes } from './attendanceRoutes.js'
 import {
   prismaAcademicRolloverService,
   type AcademicRolloverService,
@@ -480,6 +486,7 @@ export function buildApp(
     )
     registerAcademicRoutes(app, getAcademic, authenticate)
     registerTimetableRoutes(app, getDatabase, authenticate)
+    registerAttendanceRoutes(app, getDatabase, authenticate)
     registerEnrollmentRoutes(
       app,
       getStore,
@@ -498,6 +505,23 @@ export function buildApp(
   )
 
   app.setErrorHandler((error, _request, reply) => {
+    if (error instanceof AttendancePermissionError)
+      return reply
+        .code(403)
+        .send({
+          error: { code: 'ATTENDANCE_ACCESS_DENIED', message: error.message },
+        })
+    if (
+      error instanceof AttendanceCaptureError ||
+      error instanceof AttendanceCorrectionError ||
+      error instanceof AttendanceSessionContextError ||
+      error instanceof StudentAttendanceRecordError
+    )
+      return reply
+        .code(409)
+        .send({
+          error: { code: 'ATTENDANCE_STATE_CONFLICT', message: error.message },
+        })
     if (error instanceof ClassTimetableBlockedError)
       return reply.code(409).send({
         error: {
