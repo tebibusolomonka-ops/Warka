@@ -35,6 +35,7 @@ import { NotificationCenter } from './NotificationCenter'
 import { SchoolOperationsWorkspace } from './SchoolOperationsWorkspace'
 import { SchoolDocuments } from './SchoolDocuments'
 import { YearRolloverWorkspace } from './YearRolloverWorkspace'
+import { TimetableAdminWorkspace } from './TimetableAdminWorkspace'
 import { SchoolOnboardingWorkspace } from './SchoolOnboardingWorkspace'
 import { StaffLifecycleWorkspace } from './StaffLifecycleWorkspace'
 import { PrivacyWorkspace } from './PrivacyWorkspace'
@@ -489,6 +490,10 @@ function SignedInShell({
                     baseUrl={baseUrl}
                     schoolId={selectedSchool.school.id}
                     onSessionExpired={sessionExpired}
+                  />
+                  <TimetableAdminWorkspace
+                    baseUrl={baseUrl}
+                    schoolId={selectedSchool.school.id}
                   />
                 </>
               )}
