@@ -15,6 +15,9 @@ vi.mock('./courseworkAudience.js', () => ({
   visibleCourseworkAssignmentForStudent: vi.fn(),
   mayManageCourseworkAssignment: vi.fn(),
 }))
+vi.mock('./assignmentExtensions.js', () => ({
+  effectiveCourseworkDueAt: vi.fn().mockResolvedValue(new Date('2026-12-01')),
+}))
 const id = '00000000-0000-4000-8000-000000000001'
 function fixture() {
   const database = {

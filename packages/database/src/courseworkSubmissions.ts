@@ -4,6 +4,7 @@ import {
   visibleCourseworkAssignmentForStudent,
   mayManageCourseworkAssignment,
 } from './courseworkAudience.js'
+import { effectiveCourseworkDueAt } from './assignmentExtensions.js'
 
 export class CourseworkSubmissionAccessError extends Error {}
 
@@ -21,7 +22,14 @@ export async function startCourseworkSubmission(
     assignmentId,
     now,
   )
-  if (!audience || audience.assignment.dueAt < now)
+  if (
+    !audience ||
+    (await effectiveCourseworkDueAt(
+      database,
+      audience.assignment,
+      audience.studentId,
+    )) < now
+  )
     throw new CourseworkSubmissionAccessError(
       'Assignment is not open to this student',
     )

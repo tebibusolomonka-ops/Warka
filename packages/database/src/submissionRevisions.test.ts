@@ -12,6 +12,9 @@ import {
 vi.mock('./courseworkAudience.js', () => ({
   visibleCourseworkAssignmentForStudent: vi.fn(),
 }))
+vi.mock('./assignmentExtensions.js', () => ({
+  effectiveCourseworkDueAt: vi.fn().mockResolvedValue(new Date('2026-12-01')),
+}))
 const id = '00000000-0000-4000-8000-000000000001'
 const now = new Date('2026-09-01')
 function fixture(
@@ -28,11 +31,9 @@ function fixture(
     },
     submissionRevision: {
       findFirst: vi.fn().mockResolvedValue(latest),
-      create: vi
-        .fn()
-        .mockResolvedValue({
-          revisionNumber: (latest?.revisionNumber ?? 0) + 1,
-        }),
+      create: vi.fn().mockResolvedValue({
+        revisionNumber: (latest?.revisionNumber ?? 0) + 1,
+      }),
       update: vi.fn().mockResolvedValue({}),
       updateMany: vi.fn().mockResolvedValue({ count: 1 }),
       findUniqueOrThrow: vi.fn().mockResolvedValue({ id }),

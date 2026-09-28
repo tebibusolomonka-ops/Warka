@@ -1,6 +1,7 @@
 import { type PrismaClient } from '@prisma/client'
 import { z } from 'zod'
 import { visibleCourseworkAssignmentForStudent } from './courseworkAudience.js'
+import { effectiveCourseworkDueAt } from './assignmentExtensions.js'
 
 export class SubmissionRevisionError extends Error {}
 export const SubmissionTextSchema = z
@@ -20,7 +21,14 @@ async function editableAudience(
     assignmentId,
     now,
   )
-  if (!audience || audience.assignment.dueAt < now)
+  if (
+    !audience ||
+    (await effectiveCourseworkDueAt(
+      database,
+      audience.assignment,
+      audience.studentId,
+    )) < now
+  )
     throw new SubmissionRevisionError('Assignment is not open to this student')
   return audience
 }

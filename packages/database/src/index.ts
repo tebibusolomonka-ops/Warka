@@ -1038,3 +1038,9 @@ export {
   withdrawCourseworkSubmission,
   listOwnSubmissionRevisions,
 } from './submissionRevisions.js'
+export {
+  AssignmentExtensionError,
+  GrantAssignmentExtensionSchema,
+  effectiveCourseworkDueAt,
+  grantAssignmentExtension,
+} from './assignmentExtensions.js'
