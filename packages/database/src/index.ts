@@ -939,3 +939,9 @@ export {
   AssessmentScheduleContextError,
   createAssessmentSchedule,
 } from './assessmentSchedules.js'
+
+export {
+  AssessmentScheduleConflictError,
+  validateAssessmentSchedule,
+  scheduleAssessment,
+} from './assessmentScheduleValidation.js'
