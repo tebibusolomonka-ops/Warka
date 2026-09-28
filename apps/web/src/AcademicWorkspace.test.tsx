@@ -7,6 +7,7 @@ import {
   waitFor,
 } from '@testing-library/react'
 import { AcademicWorkspace } from './AcademicWorkspace'
+vi.mock('./GradebookWorkspace', () => ({ GradebookWorkspace: () => null }))
 import {
   applyAcademicImport,
   correctAcademicResult,

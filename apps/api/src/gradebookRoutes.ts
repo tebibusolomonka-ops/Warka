@@ -145,14 +145,12 @@ export function registerGradebookRoutes(
         .parse(request.body)
       if (!(await assessmentScope(actor(request), schoolId, body.assessmentId)))
         return reply.code(403).send()
-      return reply
-        .code(201)
-        .send(
-          await createMarkEntryWindow(getDatabase(), actor(request), {
-            schoolId,
-            ...body,
-          }),
-        )
+      return reply.code(201).send(
+        await createMarkEntryWindow(getDatabase(), actor(request), {
+          schoolId,
+          ...body,
+        }),
+      )
     },
   )
   app.post(
@@ -208,14 +206,12 @@ export function registerGradebookRoutes(
         !(await assessmentScope(actor(request), schoolId, mark.assessmentId))
       )
         return reply.code(403).send()
-      return reply
-        .code(201)
-        .send(
-          await requestMarkModeration(getDatabase(), actor(request), {
-            schoolId,
-            ...body,
-          }),
-        )
+      return reply.code(201).send(
+        await requestMarkModeration(getDatabase(), actor(request), {
+          schoolId,
+          ...body,
+        }),
+      )
     },
   )
   app.post(
@@ -282,6 +278,21 @@ export function registerGradebookRoutes(
         schoolId,
         ...context,
       })
+    },
+  )
+  app.get(
+    '/schools/:schoolId/gradebook/lock',
+    { preHandler: authenticate },
+    async (request, reply) => {
+      const { schoolId } = school.parse(request.params)
+      const context = contextQuery.parse(request.query)
+      if (!(await scope(actor(request), schoolId, context)))
+        return reply.code(403).send()
+      return {
+        lock: await getDatabase().gradebookLock.findUnique({
+          where: { GradebookLock_context_key: { schoolId, ...context } },
+        }),
+      }
     },
   )
 }

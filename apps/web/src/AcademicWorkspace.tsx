@@ -19,6 +19,7 @@ import {
 } from './academicApi'
 import { ApiError } from './api'
 import { AcademicSetup } from './AcademicSetup'
+import { GradebookWorkspace } from './GradebookWorkspace'
 
 type WorkspaceData = {
   structure: AcademicStructure
@@ -468,6 +469,15 @@ export function AcademicWorkspace({
                 </p>
               )}
             </section>
+          )}
+          {context && loadedPreview && role && (
+            <GradebookWorkspace
+              baseUrl={baseUrl}
+              schoolId={schoolId}
+              context={context}
+              assessments={loadedPreview.assessments}
+              role={role}
+            />
           )}
           {context && (
             <section className="academic-panel" aria-labelledby="marks-heading">
