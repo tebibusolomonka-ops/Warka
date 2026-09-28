@@ -296,6 +296,51 @@ export function registerAssessmentScheduleRoutes(
       })
     },
   )
+  app.get(
+    '/schools/:schoolId/assessment-sessions/:sessionId/roster',
+    { preHandler: authenticate },
+    async (request, reply) => {
+      const { schoolId, sessionId } = sessionParams.parse(request.params)
+      const session = await sessionStaff(actor(request), schoolId, sessionId)
+      if (!session) return reply.code(403).send()
+      const [enrollments, participations] = await Promise.all([
+        getDatabase().enrollment.findMany({
+          where: {
+            schoolId,
+            academicYearId: session.schedule.academicYearId,
+            schoolClassId: session.schoolClassId,
+            status: 'approved',
+          },
+          select: {
+            studentId: true,
+            student: {
+              select: {
+                studentReference: true,
+                givenName: true,
+                familyName: true,
+              },
+            },
+          },
+          orderBy: { student: { studentReference: 'asc' } },
+        }),
+        getDatabase().assessmentParticipation.findMany({
+          where: { schoolId, sessionId },
+          select: { studentId: true, status: true, id: true },
+        }),
+      ])
+      const recorded = new Map(
+        participations.map((item) => [item.studentId, item]),
+      )
+      return {
+        students: enrollments.map((item) => ({
+          studentId: item.studentId,
+          reference: item.student.studentReference,
+          name: `${item.student.givenName} ${item.student.familyName ?? ''}`.trim(),
+          participation: recorded.get(item.studentId) ?? null,
+        })),
+      }
+    },
+  )
   app.post(
     '/schools/:schoolId/assessment-sessions/:sessionId/participation',
     { preHandler: authenticate },

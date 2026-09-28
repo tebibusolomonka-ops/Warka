@@ -36,6 +36,7 @@ import { SchoolOperationsWorkspace } from './SchoolOperationsWorkspace'
 import { SchoolDocuments } from './SchoolDocuments'
 import { YearRolloverWorkspace } from './YearRolloverWorkspace'
 import { TimetableAdminWorkspace } from './TimetableAdminWorkspace'
+import { AssessmentCalendarWorkspace } from './AssessmentCalendarWorkspace'
 import { TeacherTimetableWorkspace } from './TeacherTimetableWorkspace'
 import { TeacherAttendanceWorkspace } from './TeacherAttendanceWorkspace'
 import { SchoolOnboardingWorkspace } from './SchoolOnboardingWorkspace'
@@ -507,6 +508,10 @@ function SignedInShell({
                     onSessionExpired={sessionExpired}
                   />
                   <TimetableAdminWorkspace
+                    baseUrl={baseUrl}
+                    schoolId={selectedSchool.school.id}
+                  />
+                  <AssessmentCalendarWorkspace
                     baseUrl={baseUrl}
                     schoolId={selectedSchool.school.id}
                   />
