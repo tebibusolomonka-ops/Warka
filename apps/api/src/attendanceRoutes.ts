@@ -11,6 +11,7 @@ import {
   createAttendanceSession,
   createStudentAttendanceRecord,
   getAttendanceRoster,
+  getAttendanceSummary,
   saveBulkAttendance,
   submitAttendanceSession,
   type PrismaClient,
@@ -167,6 +168,86 @@ export function registerAttendanceRoutes(
           take: 100,
         }),
       }
+    },
+  )
+
+  app.get(
+    '/schools/:schoolId/attendance/summary',
+    { preHandler: authenticate },
+    async (request) => {
+      const { schoolId } = schoolParams.parse(request.params)
+      const { academicYearId } = z
+        .strictObject({ academicYearId: z.uuid() })
+        .parse(request.query)
+      const now = new Date()
+      const membership = await getDatabase().schoolMembership.findUnique({
+        where: { userId_schoolId: { userId: actor(request), schoolId } },
+      })
+      if (
+        membership?.role !== 'administrator' ||
+        membership.startsAt > now ||
+        (membership.endsAt && membership.endsAt <= now)
+      )
+        throw new AttendancePermissionError()
+      return getAttendanceSummary(getDatabase(), { schoolId, academicYearId })
+    },
+  )
+
+  app.get(
+    '/schools/:schoolId/attendance/classes/:schoolClassId/summary',
+    { preHandler: authenticate },
+    async (request) => {
+      const { schoolId, schoolClassId } = schoolParams
+        .extend({ schoolClassId: z.uuid() })
+        .parse(request.params)
+      const { academicYearId } = z
+        .strictObject({ academicYearId: z.uuid() })
+        .parse(request.query)
+      await assertAttendanceManager(
+        getDatabase(),
+        actor(request),
+        { schoolId, academicYearId, schoolClassId },
+        new Date(),
+      )
+      return getAttendanceSummary(getDatabase(), {
+        schoolId,
+        academicYearId,
+        schoolClassId,
+      })
+    },
+  )
+
+  app.get(
+    '/schools/:schoolId/attendance/students/:studentId/summary',
+    { preHandler: authenticate },
+    async (request, reply) => {
+      const { schoolId, studentId } = studentParams.parse(request.params)
+      const { academicYearId } = z
+        .strictObject({ academicYearId: z.uuid() })
+        .parse(request.query)
+      const enrollment = await getDatabase().enrollment.findFirst({
+        where: {
+          schoolId,
+          academicYearId,
+          studentId,
+          status: 'approved',
+          schoolClassId: { not: null },
+        },
+        select: { schoolClassId: true },
+      })
+      if (!enrollment?.schoolClassId) return reply.code(404).send()
+      await assertAttendanceManager(
+        getDatabase(),
+        actor(request),
+        { schoolId, academicYearId, schoolClassId: enrollment.schoolClassId },
+        new Date(),
+      )
+      return getAttendanceSummary(getDatabase(), {
+        schoolId,
+        academicYearId,
+        schoolClassId: enrollment.schoolClassId,
+        studentId,
+      })
     },
   )
 

@@ -22,6 +22,10 @@ export function createDatabaseClient(
 
 export type { PrismaClient }
 export {
+  AttendanceSummaryInputSchema,
+  getAttendanceSummary,
+} from './attendanceSummaries.js'
+export {
   AttendanceCorrectionInputSchema,
   AttendanceCorrectionError,
   correctAttendance,
