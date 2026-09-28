@@ -570,6 +570,7 @@ model School {
 }
 
 model User {
+  courseworkMarkTransfersCreated CourseworkMarkTransfer[] @relation("CourseworkMarkTransferCreator")
   courseworkFeedbackAuthored CourseworkFeedback[] @relation("CourseworkFeedbackAuthor")
   courseworkScoresCreated RubricScore[] @relation("RubricScorer")
   courseworkRubricsCreated CourseworkRubric[] @relation("CourseworkRubricCreator")
@@ -1801,6 +1802,7 @@ model Assessment {
 }
 
 model CourseworkAssignment {
+  markTransfers CourseworkMarkTransfer[]
   rubric CourseworkRubric?
   extensions AssignmentExtension[]
   attachments CourseworkAttachment[]
@@ -1870,6 +1872,7 @@ model RubricCriterion {
 }
 
 model RubricScore {
+  markTransfers CourseworkMarkTransfer[]
   id String @id @default(uuid())
   revisionId String
   rubricId String
@@ -1895,6 +1898,26 @@ model RubricCriterionScore {
   criterion RubricCriterion @relation(fields: [criterionId], references: [id], onDelete: Restrict)
 
   @@unique([scoreId, criterionId])
+}
+
+model CourseworkMarkTransfer {
+  id String @id @default(uuid())
+  schoolId String
+  assignmentId String
+  revisionId String
+  rubricScoreId String
+  markId String @unique
+  scoreTransferred Decimal @db.Decimal(9, 2)
+  createdById String
+  createdAt DateTime @default(now())
+  assignment CourseworkAssignment @relation(fields: [assignmentId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  revision SubmissionRevision @relation(fields: [revisionId], references: [id], onDelete: Restrict)
+  rubricScore RubricScore @relation(fields: [rubricScoreId], references: [id], onDelete: Restrict)
+  mark Mark @relation(fields: [markId], references: [id], onDelete: Restrict)
+  createdBy User @relation("CourseworkMarkTransferCreator", fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@index([schoolId, assignmentId, createdAt])
+  @@index([revisionId, createdAt])
 }
 
 model AssignmentExtension {
@@ -1939,6 +1962,7 @@ model CourseworkSubmission {
 }
 
 model SubmissionRevision {
+  markTransfers CourseworkMarkTransfer[]
   feedback CourseworkFeedback?
   rubricScores RubricScore[]
   review SubmissionReview?
@@ -2175,6 +2199,7 @@ model MakeUpAssessment {
 }
 
 model Mark {
+  courseworkTransfer CourseworkMarkTransfer?
   moderationRequests MarkModerationRequest[]
   corrections MarkCorrection[]
   id           String     @id @default(uuid())

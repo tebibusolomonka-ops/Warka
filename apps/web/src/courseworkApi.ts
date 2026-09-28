@@ -7,6 +7,7 @@ export type CourseworkAssignment = {
   schoolClassId: string
   subjectId: string
   gradingPeriodId: string | null
+  assessmentId?: string | null
   title: string
   instructions: string
   dueAt: string
@@ -178,12 +179,25 @@ export type StaffCourseworkDetail = StaffCourseworkSubmission & {
   revisions: (Omit<CourseworkRevision, 'feedback' | 'rubricScore'> & {
     feedback?: { text: string; status: 'draft' | 'released' } | null
     rubricScores?: { id: string; version: number; totalPoints: string }[]
+    markTransfers?: { markId: string; scoreTransferred: string }[]
     review: {
       status: 'pending' | 'reviewed' | 'returned'
       resubmissionAllowed: boolean
       resubmissionDueAt: string | null
     } | null
   })[]
+}
+export async function transferTeacherCourseworkMark(
+  baseUrl: string,
+  schoolId: string,
+  assignmentId: string,
+  revisionId: string,
+) {
+  return requestJson(
+    baseUrl,
+    `${item(schoolId, assignmentId)}/revisions/${encodeURIComponent(revisionId)}/transfer-mark`,
+    json('POST'),
+  )
 }
 export async function saveTeacherFeedback(
   baseUrl: string,

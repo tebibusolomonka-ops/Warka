@@ -21,6 +21,7 @@ import {
   scoreSubmissionRubric,
   saveDraftCourseworkFeedback,
   releaseCourseworkFeedback,
+  transferCourseworkMark,
   startCourseworkSubmission,
   ownCourseworkSubmission,
   saveDraftSubmissionRevision,
@@ -305,6 +306,9 @@ export function registerCourseworkRoutes(
                 take: 1,
                 include: { criteria: true },
               },
+              markTransfers: {
+                select: { markId: true, scoreTransferred: true },
+              },
               attachments: {
                 where: { removedAt: null },
                 select: {
@@ -394,6 +398,26 @@ export function registerCourseworkRoutes(
         assignmentId,
         revisionId,
       )
+    },
+  )
+  app.post(
+    '/schools/:schoolId/coursework/:assignmentId/revisions/:revisionId/transfer-mark',
+    { preHandler: authenticate },
+    async (request, reply) => {
+      const { schoolId, assignmentId, revisionId } = staffRevision.parse(
+        request.params,
+      )
+      return reply
+        .code(201)
+        .send(
+          await transferCourseworkMark(
+            db(),
+            actor(request),
+            schoolId,
+            assignmentId,
+            revisionId,
+          ),
+        )
     },
   )
   app.get(

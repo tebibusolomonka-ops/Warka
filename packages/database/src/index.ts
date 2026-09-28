@@ -1070,3 +1070,7 @@ export {
   saveDraftCourseworkFeedback,
   releaseCourseworkFeedback,
 } from './courseworkFeedback.js'
+export {
+  CourseworkMarkTransferError,
+  transferCourseworkMark,
+} from './courseworkMarkTransfers.js'

@@ -16,6 +16,7 @@ import {
   scoreTeacherRevision,
   saveTeacherFeedback,
   releaseTeacherFeedback,
+  transferTeacherCourseworkMark,
   listTeacherCoursework,
   transitionTeacherCoursework,
   uploadTeacherCoursework,
@@ -466,6 +467,7 @@ export function TeacherCourseworkWorkspace({
             baseUrl={baseUrl}
             schoolId={schoolId}
             assignmentId={current.id}
+            assessmentId={current.assessmentId}
             onSessionExpired={onSessionExpired}
           />
           <TeacherRubricPanel
@@ -485,11 +487,13 @@ function TeacherSubmissionReview({
   baseUrl,
   schoolId,
   assignmentId,
+  assessmentId,
   onSessionExpired,
 }: {
   baseUrl: string
   schoolId: string
   assignmentId: string
+  assessmentId?: string | null | undefined
   onSessionExpired: () => void
 }) {
   const [submissions, setSubmissions] = useState<StaffCourseworkSubmission[]>(
@@ -629,6 +633,24 @@ function TeacherSubmissionReview({
         )
     }
   }
+  async function transfer(revisionId: string) {
+    setError('')
+    try {
+      await transferTeacherCourseworkMark(
+        baseUrl,
+        schoolId,
+        assignmentId,
+        revisionId,
+      )
+      setRefresh((value) => value + 1)
+    } catch (cause) {
+      if (cause instanceof ApiError && cause.status === 401) onSessionExpired()
+      else
+        setError(
+          cause instanceof Error ? cause.message : 'Mark transfer failed.',
+        )
+    }
+  }
   return (
     <section aria-label="Submission review">
       <h5>Submission review</h5>
@@ -664,6 +686,20 @@ function TeacherSubmissionReview({
               {item.rubricScores[0].version}. This is not an official mark.
             </p>
           )}
+          {item.markTransfers?.[0] && (
+            <p>
+              Official mark transferred:{' '}
+              {item.markTransfers[0].scoreTransferred}
+            </p>
+          )}
+          {assessmentId &&
+            item.review?.status === 'reviewed' &&
+            item.rubricScores?.[0] &&
+            !item.markTransfers?.length && (
+              <button type="button" onClick={() => void transfer(item.id)}>
+                Transfer to official mark
+              </button>
+            )}
           {rubric && (
             <div>
               <p>
