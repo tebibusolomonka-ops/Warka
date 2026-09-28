@@ -22,6 +22,11 @@ export function createDatabaseClient(
 
 export type { PrismaClient }
 export {
+  AttendanceSessionInputSchema,
+  AttendanceSessionContextError,
+  createAttendanceSession,
+} from './attendanceSessions.js'
+export {
   ClassTimetableStateError,
   ClassTimetableBlockedError,
   createClassTimetableDraft,

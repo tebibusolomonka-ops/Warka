@@ -104,6 +104,13 @@ enum TimetableStatus {
   archived
 }
 
+enum AttendanceSessionStatus {
+  open
+  submitted
+  finalized
+  cancelled
+}
+
 enum OrganizationRole {
   owner
   administrator
@@ -423,6 +430,7 @@ model School {
   timetablePeriods TimetablePeriod[]
   timetableEntries ClassTimetableEntry[]
   timetables ClassTimetable[]
+  attendanceSessions AttendanceSession[]
   fileAssets FileAsset[]
   resultSets                    ResultSet[]
   publishedResults              PublishedResult[]
@@ -471,6 +479,7 @@ model School {
 }
 
 model User {
+  openedAttendanceSessions AttendanceSession[]
   createdFileAssets FileAsset[] @relation("FileAssetCreatedBy")
   ownedFileAssets FileAsset[] @relation("FileAssetOwner")
   createdBackups               BackupRecord[] @relation("BackupCreatedBy")
@@ -1107,6 +1116,7 @@ model AcademicYear {
   calendarDays SchoolCalendarDay[]
   timetableEntries ClassTimetableEntry[]
   timetables ClassTimetable[]
+  attendanceSessions AttendanceSession[]
   status              AcademicYearStatus @default(active)
   closingStartedAt    DateTime?
   closedAt            DateTime?
@@ -1166,6 +1176,7 @@ model TimetablePeriod {
   updatedAt DateTime @updatedAt
   school School @relation(fields: [schoolId], references: [id], onDelete: Restrict)
   timetableEntries ClassTimetableEntry[]
+  attendanceSessions AttendanceSession[]
 
   @@unique([schoolId, name])
   @@unique([schoolId, sortOrder])
@@ -1190,6 +1201,7 @@ model GradeLevel {
 model SchoolClass {
   timetableEntries ClassTimetableEntry[]
   timetables ClassTimetable[]
+  attendanceSessions AttendanceSession[]
   resultSets          ResultSet[]
   learningMaterials   LearningMaterial[]
   announcements       Announcement[]
@@ -1405,6 +1417,7 @@ model EnrollmentHistoryEvent {
 
 model Subject {
   timetableEntries ClassTimetableEntry[]
+  attendanceSessions AttendanceSession[]
   resultSets          ResultSet[]
   learningMaterials   LearningMaterial[]
   id                  String               @id @default(uuid())
@@ -1469,6 +1482,7 @@ model Announcement {
 
 model TeachingAssignment {
   timetableEntries ClassTimetableEntry[]
+  attendanceSessions AttendanceSession[]
   id             String       @id @default(uuid())
   schoolId       String
   userId         String
@@ -1531,6 +1545,33 @@ model ClassTimetableEntry {
   @@unique([timetableId, weekday, timetablePeriodId], map: "ClassTimetableEntry_plan_slot_key")
   @@index([schoolId, academicYearId, weekday])
   @@index([teachingAssignmentId, weekday])
+}
+
+model AttendanceSession {
+  id String @id @default(uuid())
+  schoolId String
+  academicYearId String
+  schoolClassId String
+  date DateTime @db.Date
+  timetablePeriodId String?
+  subjectId String?
+  teachingAssignmentId String?
+  status AttendanceSessionStatus @default(open)
+  createdById String
+  createdAt DateTime @default(now())
+  submittedAt DateTime?
+  finalizedAt DateTime?
+  cancelledAt DateTime?
+  school School @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  academicYear AcademicYear @relation(fields: [academicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  schoolClass SchoolClass @relation(fields: [schoolClassId, schoolId, academicYearId], references: [id, schoolId, academicYearId], onDelete: Restrict)
+  timetablePeriod TimetablePeriod? @relation(fields: [timetablePeriodId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  subject Subject? @relation(fields: [subjectId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  teachingAssignment TeachingAssignment? @relation(fields: [teachingAssignmentId, schoolId, academicYearId, schoolClassId, subjectId], references: [id, schoolId, academicYearId, schoolClassId, subjectId], onDelete: Restrict, map: "AttendanceSession_assignment_scope_fkey")
+  createdBy User @relation(fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@index([schoolId, academicYearId, schoolClassId, date])
+  @@index([teachingAssignmentId, date])
 }
 
 model GradingPeriod {
