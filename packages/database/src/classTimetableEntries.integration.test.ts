@@ -82,7 +82,7 @@ describe.skipIf(!database)('class timetable entries in PostgreSQL', () => {
           timetablePeriodId: period.id,
           weekday: 1,
         }),
-      ).rejects.toThrow('conflicts')
+      ).rejects.toThrow('CLASS_COLLISION')
     } finally {
       await database!.classTimetableEntry.deleteMany({
         where: { schoolId: school.id },

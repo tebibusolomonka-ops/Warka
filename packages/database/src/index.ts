@@ -22,6 +22,11 @@ export function createDatabaseClient(
 
 export type { PrismaClient }
 export {
+  validateClassTimetableEntry,
+  validateSchoolTimetable,
+} from './timetableValidation.js'
+export type { TimetableProblem } from './timetableValidation.js'
+export {
   ClassTimetableEntryInputSchema,
   ClassTimetableEntryError,
   createClassTimetableEntry,

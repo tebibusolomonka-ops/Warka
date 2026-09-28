@@ -1,5 +1,6 @@
 import { Prisma, type PrismaClient } from '@prisma/client'
 import { z } from 'zod'
+import { validateClassTimetableEntry } from './timetableValidation.js'
 
 export const ClassTimetableEntryInputSchema = z.strictObject({
   schoolId: z.uuid(),
@@ -18,18 +19,22 @@ export async function createClassTimetableEntry(
   input: z.input<typeof ClassTimetableEntryInputSchema>,
 ) {
   const value = ClassTimetableEntryInputSchema.parse(input)
-  const period = await database.timetablePeriod.findFirst({
-    where: { id: value.timetablePeriodId, schoolId: value.schoolId },
-    select: { instructional: true },
-  })
-  if (!period?.instructional)
-    throw new ClassTimetableEntryError('Instructional period required')
   try {
-    return await database.classTimetableEntry.create({ data: value })
+    return await database.$transaction(
+      async (transaction) => {
+        const problems = await validateClassTimetableEntry(transaction, value)
+        if (problems.length)
+          throw new ClassTimetableEntryError(
+            problems.map((problem) => problem.code).join(', '),
+          )
+        return transaction.classTimetableEntry.create({ data: value })
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    )
   } catch (error) {
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&
-      ['P2002', 'P2003'].includes(error.code)
+      ['P2002', 'P2003', 'P2034'].includes(error.code)
     )
       throw new ClassTimetableEntryError('Timetable entry conflicts with scope')
     throw error
