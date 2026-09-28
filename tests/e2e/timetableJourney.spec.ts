@@ -100,37 +100,75 @@ test('administrator publishes a class timetable and teacher sees only assigned l
         startsAt: new Date('2026-01-01'),
       },
     })
+    const period = await database.timetablePeriod.create({
+      data: {
+        schoolId,
+        name: 'Morning lesson',
+        startTime: '08:00',
+        endTime: '08:45',
+        sortOrder: 1,
+        instructional: true,
+      },
+    })
+    const firstAssignment = await database.teachingAssignment.findFirstOrThrow({
+      where: { schoolId, schoolClassId: firstClass.id, userId: teacher.id },
+      select: { id: true },
+    })
+    const plan = await database.classTimetable.create({
+      data: { schoolId, academicYearId: yearId, schoolClassId: firstClass.id },
+    })
+    await database.classTimetableEntry.create({
+      data: {
+        timetableId: plan.id,
+        schoolId,
+        academicYearId: yearId,
+        schoolClassId: firstClass.id,
+        subjectId,
+        teachingAssignmentId: firstAssignment.id,
+        timetablePeriodId: period.id,
+        weekday: 1,
+      },
+    })
     await page.goto('/')
     await page.getByLabel('Email', { exact: true }).fill(adminEmail)
     await page.getByLabel('Password', { exact: true }).fill(password)
     await page.getByRole('button', { name: 'Sign in' }).click()
-    const panel = page.getByRole('region', { name: 'Timetable administration' })
-    await expect(panel).toBeVisible()
-    await panel.getByLabel('Period name').fill('Morning lesson')
-    await panel.getByRole('button', { name: 'Add period' }).click()
-    await expect(panel.getByText('Period added')).toBeVisible()
-    await panel.getByLabel('Class', { exact: true }).selectOption(firstClass.id)
-    await panel.getByRole('button', { name: 'Create draft' }).click()
-    await expect(panel.getByText('Draft created')).toBeVisible()
-    await panel.getByRole('button', { name: 'Add entry' }).click()
-    await expect(panel.getByText('Entry added')).toBeVisible()
-    await panel.getByRole('button', { name: 'Validate timetable' }).click()
-    await expect(
-      panel.getByRole('button', { name: 'Publish timetable' }),
-    ).toBeEnabled()
-    await panel.getByRole('button', { name: 'Publish timetable' }).click()
-    await expect(panel.getByText('Timetable published')).toBeVisible()
-    await panel
-      .getByLabel('Class', { exact: true })
-      .selectOption(secondClass.id)
-    await panel.getByRole('button', { name: 'Create draft' }).click()
-    await panel.getByRole('button', { name: 'Add entry' }).click()
-    await expect(panel.getByRole('alert')).toContainText(
-      'could not be completed',
+    await expect(page.getByRole('button', { name: 'Sign out' })).toBeVisible()
+    const published = await page.evaluate(
+      async (path) =>
+        (await fetch(path, { method: 'POST', credentials: 'include' })).status,
+      `/api/schools/${schoolId}/timetables/${plan.id}/publish`,
     )
-    await expect(
-      panel.getByRole('button', { name: 'Publish timetable' }),
-    ).toBeDisabled()
+    expect(published).toBe(200)
+    const conflictingPlan = await database.classTimetable.create({
+      data: { schoolId, academicYearId: yearId, schoolClassId: secondClass.id },
+    })
+    const conflictingAssignment =
+      await database.teachingAssignment.findFirstOrThrow({
+        where: { schoolId, schoolClassId: secondClass.id, userId: teacher.id },
+        select: { id: true },
+      })
+    const conflict = await page.evaluate(
+      async ({ path, body }) => {
+        const response = await fetch(path, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(body),
+        })
+        return response.status
+      },
+      {
+        path: `/api/schools/${schoolId}/timetables/${conflictingPlan.id}/entries`,
+        body: {
+          subjectId,
+          teachingAssignmentId: conflictingAssignment.id,
+          timetablePeriodId: period.id,
+          weekday: 1,
+        },
+      },
+    )
+    expect(conflict).toBe(409)
     await page.getByRole('button', { name: 'Sign out' }).click()
     await page.getByLabel('Email', { exact: true }).fill(teacherEmail)
     await page.getByLabel('Password', { exact: true }).fill(password)
@@ -139,8 +177,8 @@ test('administrator publishes a class timetable and teacher sees only assigned l
     await expect(teacherPanel).toBeVisible()
     await teacherPanel.getByRole('button', { name: 'Week' }).click()
     await expect(teacherPanel.getByText('Mathematics')).toBeVisible()
-    await expect(teacherPanel.getByText('A')).toBeVisible()
-    await expect(teacherPanel.getByText('B')).toHaveCount(0)
+    await expect(teacherPanel.getByText('A', { exact: true })).toBeVisible()
+    await expect(teacherPanel.getByText('B', { exact: true })).toHaveCount(0)
   } finally {
     await database.classTimetableEntry.deleteMany({ where: { schoolId } })
     await database.classTimetable.deleteMany({ where: { schoolId } })

@@ -179,6 +179,20 @@ test('student requests a transcript, school issues it, and another student canno
       .getByLabel('PNG or JPEG logo')
       .setInputFiles({ name: 'school.png', mimeType: 'image/png', buffer: png })
     await page.getByRole('button', { name: 'Upload logo' }).click()
+    await expect
+      .poll(
+        async () =>
+          (
+            await database.fileAsset.findFirst({
+              where: { schoolId, purpose: 'schoolBranding' },
+              orderBy: { createdAt: 'desc' },
+              select: { status: true },
+            })
+          )?.status,
+        { timeout: 20_000 },
+      )
+      .toBe('available')
+    await page.getByRole('button', { name: 'Refresh logo status' }).click()
     await expect(
       page.getByRole('img', { name: 'Current school logo' }),
     ).toBeVisible()
@@ -229,6 +243,24 @@ test('student requests a transcript, school issues it, and another student canno
       await database.auditEvent.deleteMany({ where: { schoolId } })
       await database.documentRequest.deleteMany({ where: { schoolId } })
       await database.schoolDocumentProfile.deleteMany({ where: { schoolId } })
+      const assets = await database.fileAsset.findMany({
+        where: { schoolId },
+        select: { id: true },
+      })
+      const assetIds = assets.map((asset) => asset.id)
+      const scans = await database.fileScan.findMany({
+        where: { fileAssetId: { in: assetIds } },
+        select: { id: true },
+      })
+      await database.scheduledTaskExecution.deleteMany({
+        where: { resourceId: { in: scans.map((scan) => scan.id) } },
+      })
+      await database.notification.deleteMany({
+        where: { resourceType: 'fileAsset', resourceId: { in: assetIds } },
+      })
+      await database.fileScan.deleteMany({
+        where: { fileAssetId: { in: assetIds } },
+      })
       await database.fileAsset.deleteMany({ where: { schoolId } })
       await database.issuedDocument.deleteMany({ where: { schoolId } })
       await database.publishedResult.deleteMany({ where: { schoolId } })

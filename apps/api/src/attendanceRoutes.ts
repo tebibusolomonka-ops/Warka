@@ -30,6 +30,9 @@ const historyQuery = z.strictObject({
   cursor: z.uuid().optional(),
   limit: z.coerce.number().int().min(1).max(100).default(30),
 })
+const sessionBody = z
+  .strictObject(AttendanceSessionInputSchema.shape)
+  .omit({ schoolId: true })
 
 export function registerAttendanceRoutes(
   app: FastifyInstance,
@@ -119,7 +122,7 @@ export function registerAttendanceRoutes(
   app.get(
     '/schools/:schoolId/attendance/sessions',
     { preHandler: authenticate },
-    async (request, reply) => {
+    async (request) => {
       const { schoolId } = schoolParams.parse(request.params)
       const query = listQuery.parse(request.query)
       await assertAttendanceManager(
@@ -256,9 +259,7 @@ export function registerAttendanceRoutes(
     { preHandler: authenticate },
     async (request) => {
       const { schoolId } = schoolParams.parse(request.params)
-      const body = AttendanceSessionInputSchema.omit({ schoolId: true }).parse(
-        request.body,
-      )
+      const body = sessionBody.parse(request.body)
       return createAttendanceSession(getDatabase(), actor(request), {
         ...body,
         schoolId,

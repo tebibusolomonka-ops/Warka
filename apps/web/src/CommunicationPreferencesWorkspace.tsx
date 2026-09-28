@@ -48,11 +48,16 @@ export function CommunicationPreferencesWorkspace({
   }, [baseUrl])
 
   async function update(value: CommunicationPreference) {
+    const previous = preferences
+    setPreferences((current) =>
+      current.map((item) => (item.category === value.category ? value : item)),
+    )
     setBusy(value.category)
     setError('')
     try {
       setPreferences(await putCommunicationPreference(baseUrl, value))
     } catch {
+      setPreferences(previous)
       setError('Could not save communication preferences.')
     } finally {
       setBusy(null)

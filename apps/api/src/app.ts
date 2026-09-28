@@ -506,22 +506,18 @@ export function buildApp(
 
   app.setErrorHandler((error, _request, reply) => {
     if (error instanceof AttendancePermissionError)
-      return reply
-        .code(403)
-        .send({
-          error: { code: 'ATTENDANCE_ACCESS_DENIED', message: error.message },
-        })
+      return reply.code(403).send({
+        error: { code: 'ATTENDANCE_ACCESS_DENIED', message: error.message },
+      })
     if (
       error instanceof AttendanceCaptureError ||
       error instanceof AttendanceCorrectionError ||
       error instanceof AttendanceSessionContextError ||
       error instanceof StudentAttendanceRecordError
     )
-      return reply
-        .code(409)
-        .send({
-          error: { code: 'ATTENDANCE_STATE_CONFLICT', message: error.message },
-        })
+      return reply.code(409).send({
+        error: { code: 'ATTENDANCE_STATE_CONFLICT', message: error.message },
+      })
     if (error instanceof ClassTimetableBlockedError)
       return reply.code(409).send({
         error: {

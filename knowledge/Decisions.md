@@ -19,3 +19,7 @@ See [[Security]] for the resulting invariants.
 - Communication choices are per user and category. Account-security in-app notices cannot be disabled. Immediate email uses only selected event types and minimal template text; daily/weekly digests are opt-in and deduplicated by user/window.
 - Email links use a validated Warka base URL and normal authentication. Self-service delivery history omits addresses, provider IDs, failure internals, and message bodies. Operations is limited to transactional delivery administration; arbitrary bulk sending is out of scope.
 - Timetable conflicts are explicit blockers. Creation and publication do not move lessons automatically. Teacher and class collisions, expired assignments, and cross-school scope are checked before publication; archived versions retain their entries.
+- Timetable conflicts never auto-resolve. Publication validates the draft, and published or archived versions remain historical records.
+- Attendance does not infer absence from a missing record or a timetable entry. Every status is explicit and scoped to an approved enrollment.
+- Submitted attendance requires every currently eligible student to be recorded. Finalized corrections require a school administrator, preserve the previous status, and create an audit event.
+- Attendance summaries are factual counts only. They do not rank students or produce behavioral risk scores. Family history requires student identity or a verified, unrevoked guardian relationship and omits staff notes and correction reasons.

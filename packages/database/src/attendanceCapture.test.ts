@@ -26,13 +26,11 @@ function fixture(records: { studentId: string }[] = []) {
       update,
     },
     schoolMembership: {
-      findUnique: vi
-        .fn()
-        .mockResolvedValue({
-          role: 'administrator',
-          startsAt: new Date('2026-01-01'),
-          endsAt: null,
-        }),
+      findUnique: vi.fn().mockResolvedValue({
+        role: 'administrator',
+        startsAt: new Date('2026-01-01'),
+        endsAt: null,
+      }),
     },
     enrollment: {
       findMany: vi.fn().mockResolvedValue([{ studentId, id: enrollmentId }]),

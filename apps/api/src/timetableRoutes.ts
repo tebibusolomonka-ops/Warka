@@ -29,6 +29,9 @@ const entryParams = planParams.extend({ entryId: z.uuid() })
 const idParams = school.extend({ id: z.uuid() })
 const classParams = school.extend({ schoolClassId: z.uuid() })
 const yearQuery = z.strictObject({ academicYearId: z.uuid() })
+const periodBody = z
+  .strictObject(TimetablePeriodInputSchema.shape)
+  .omit({ schoolId: true })
 const classQuery = yearQuery.extend({ schoolClassId: z.uuid() })
 const entryBody = ClassTimetableEntryInputSchema.omit({
   timetableId: true,
@@ -123,9 +126,7 @@ export function registerTimetableRoutes(
     async (request, reply) => {
       const { schoolId } = school.parse(request.params)
       await admin(authenticatedUser(request).id, schoolId)
-      const body = TimetablePeriodInputSchema.omit({ schoolId: true }).parse(
-        request.body,
-      )
+      const body = periodBody.parse(request.body)
       return reply
         .code(201)
         .send(await createTimetablePeriod(getDatabase(), { schoolId, ...body }))

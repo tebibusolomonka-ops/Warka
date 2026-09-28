@@ -20,30 +20,26 @@ function fixture(
   const update = vi.fn().mockResolvedValue({})
   const transaction = {
     studentAttendanceRecord: {
-      findUnique: vi
-        .fn()
-        .mockResolvedValue({
-          id,
+      findUnique: vi.fn().mockResolvedValue({
+        id,
+        schoolId: id,
+        status: 'absent',
+        session: {
           schoolId: id,
-          status: 'absent',
-          session: {
-            schoolId: id,
-            academicYearId: id,
-            schoolClassId: id,
-            date: new Date('2026-09-28'),
-            status,
-          },
-        }),
+          academicYearId: id,
+          schoolClassId: id,
+          date: new Date('2026-09-28'),
+          status,
+        },
+      }),
       update,
     },
     schoolMembership: {
-      findUnique: vi
-        .fn()
-        .mockResolvedValue({
-          role,
-          startsAt: new Date('2026-01-01'),
-          endsAt: null,
-        }),
+      findUnique: vi.fn().mockResolvedValue({
+        role,
+        startsAt: new Date('2026-01-01'),
+        endsAt: null,
+      }),
     },
     teachingAssignment: { findFirst: vi.fn().mockResolvedValue({ id }) },
     attendanceCorrection: { create },

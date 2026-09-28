@@ -131,10 +131,15 @@ export function SchoolDocuments({
       if (action === 'upload')
         await uploadSchoolLogo(baseUrl, schoolId, logoFile!)
       else await removeSchoolLogo(baseUrl, schoolId)
-      setProfile(await getSchoolDocumentProfile(baseUrl, schoolId))
+      const nextProfile = await getSchoolDocumentProfile(baseUrl, schoolId)
+      setProfile(nextProfile)
       setLogoFile(null)
       setMessage(
-        action === 'upload' ? 'School logo saved' : 'School logo removed',
+        action === 'upload'
+          ? nextProfile?.logoAssetId
+            ? 'School logo saved'
+            : 'School logo is awaiting scan'
+          : 'School logo removed',
       )
     } catch {
       setMessage('Could not update school logo')
@@ -359,6 +364,16 @@ export function SchoolDocuments({
                     Remove logo
                   </button>
                 )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    void getSchoolDocumentProfile(baseUrl, schoolId)
+                      .then(setProfile)
+                      .catch(() => setMessage('Could not refresh school logo'))
+                  }}
+                >
+                  Refresh logo status
+                </button>
               </div>
             </>
           )}

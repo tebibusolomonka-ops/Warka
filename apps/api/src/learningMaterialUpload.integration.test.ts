@@ -5,6 +5,8 @@ import { join, resolve, sep } from 'node:path'
 import { afterAll, describe, expect, it } from 'vitest'
 import { createDatabaseClient } from '@warka/database'
 import { LocalFileStorage } from './fileStorage.js'
+import { FakeFileScanner } from './fileScanner.js'
+import { processPendingFileScan } from './fileScanWorkflow.js'
 import { prismaLearningMaterialService } from './learningMaterialService.js'
 
 const testUrl = process.env.TEST_DATABASE_URL ?? process.env.DATABASE_URL
@@ -80,11 +82,32 @@ describe.skipIf(!database)('learning material file in PostgreSQL', () => {
       const asset = await database!.fileAsset.findUniqueOrThrow({
         where: { id: uploaded.id },
       })
-      expect(asset.status).toBe('available')
+      expect(asset.status).toBe('pending')
       expect(asset.learningMaterialId).toBe(material.id)
       expect(await new LocalFileStorage(root).exists(asset.storageKey)).toBe(
         true,
       )
+      const scan = await database!.fileScan.findFirstOrThrow({
+        where: { fileAssetId: asset.id, status: 'pending' },
+      })
+      await expect(
+        service.publish(actor.id, school.id, material.id),
+      ).rejects.toThrow()
+      expect(
+        await processPendingFileScan({
+          database: database!,
+          storage: new LocalFileStorage(root),
+          scanner: new FakeFileScanner([{ status: 'clean' }]),
+          scanId: scan.id,
+        }),
+      ).toEqual({ status: 'clean' })
+      expect(
+        (
+          await database!.fileAsset.findUniqueOrThrow({
+            where: { id: asset.id },
+          })
+        ).status,
+      ).toBe('available')
       await service.publish(actor.id, school.id, material.id)
       expect(
         (
