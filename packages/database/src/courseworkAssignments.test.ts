@@ -38,13 +38,11 @@ function fixture(assigned = true) {
     .mockResolvedValue({ status: 'draft', assessmentId: null })
   const database = {
     schoolMembership: {
-      findUnique: vi
-        .fn()
-        .mockResolvedValue({
-          role: 'teacher',
-          startsAt: new Date('2026-01-01'),
-          endsAt: null,
-        }),
+      findUnique: vi.fn().mockResolvedValue({
+        role: 'teacher',
+        startsAt: new Date('2026-01-01'),
+        endsAt: null,
+      }),
     },
     teachingAssignment: {
       findFirst: vi.fn().mockResolvedValue(assigned ? { id: actorId } : null),

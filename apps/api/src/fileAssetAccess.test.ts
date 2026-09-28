@@ -75,21 +75,19 @@ function fixture(
       }),
     },
     submissionAttachment: {
-      findUnique: vi
-        .fn()
-        .mockResolvedValue({
-          schoolId,
-          removedAt: null,
-          revision: {
-            submittedAt: null,
-            submission: {
-              schoolId,
-              studentId: materialId,
-              assignmentId: materialId,
-              assignment: { id: materialId },
-            },
+      findUnique: vi.fn().mockResolvedValue({
+        schoolId,
+        removedAt: null,
+        revision: {
+          submittedAt: null,
+          submission: {
+            schoolId,
+            studentId: materialId,
+            assignmentId: materialId,
+            assignment: { id: materialId },
           },
-        }),
+        },
+      }),
     },
     learningMaterial: {
       findUnique: vi.fn().mockResolvedValue({

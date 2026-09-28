@@ -16,18 +16,16 @@ function fixture(frozenAt: Date | null = null) {
   const assignment = { id, schoolId: id }
   const transaction = {
     submissionRevision: {
-      findUnique: vi
-        .fn()
-        .mockResolvedValue({
-          id,
-          submittedAt: new Date(),
-          submission: {
-            schoolId: id,
-            assignmentId: id,
-            studentId: id,
-            assignment,
-          },
-        }),
+      findUnique: vi.fn().mockResolvedValue({
+        id,
+        submittedAt: new Date(),
+        submission: {
+          schoolId: id,
+          assignmentId: id,
+          studentId: id,
+          assignment,
+        },
+      }),
     },
     courseworkRubric: {
       findFirst: vi.fn().mockResolvedValue({
