@@ -3,6 +3,7 @@ import { validateClassTimetableEntry } from './timetableValidation.js'
 
 const now = new Date('2026-09-28T12:00:00.000Z')
 const input = {
+  timetableId: 'd86096e3-d5ad-4c64-9147-48068bd0de3b',
   schoolId: 'a5d6c96b-5da1-4c6e-b918-12f47fc29f0d',
   academicYearId: 'a3b17d3e-26d7-4f2d-9b40-08d2b5ca2dc6',
   schoolClassId: '34b16bc1-1f37-4743-9089-5e872ce6cb82',

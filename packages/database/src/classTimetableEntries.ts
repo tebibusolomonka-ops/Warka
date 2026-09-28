@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { validateClassTimetableEntry } from './timetableValidation.js'
 
 export const ClassTimetableEntryInputSchema = z.strictObject({
+  timetableId: z.uuid(),
   schoolId: z.uuid(),
   academicYearId: z.uuid(),
   schoolClassId: z.uuid(),
@@ -22,6 +23,18 @@ export async function createClassTimetableEntry(
   try {
     return await database.$transaction(
       async (transaction) => {
+        const plan = await transaction.classTimetable.findFirst({
+          where: {
+            id: value.timetableId,
+            schoolId: value.schoolId,
+            academicYearId: value.academicYearId,
+            schoolClassId: value.schoolClassId,
+            status: 'draft',
+          },
+          select: { id: true },
+        })
+        if (!plan)
+          throw new ClassTimetableEntryError('Draft timetable required')
         const problems = await validateClassTimetableEntry(transaction, value)
         if (problems.length)
           throw new ClassTimetableEntryError(
@@ -43,12 +56,10 @@ export async function createClassTimetableEntry(
 
 export async function listClassTimetableEntries(
   database: PrismaClient,
-  schoolId: string,
-  academicYearId: string,
-  schoolClassId: string,
+  timetableId: string,
 ) {
   return database.classTimetableEntry.findMany({
-    where: { schoolId, academicYearId, schoolClassId },
+    where: { timetableId },
     include: { subject: true, timetablePeriod: true, teachingAssignment: true },
     orderBy: [{ weekday: 'asc' }, { timetablePeriod: { sortOrder: 'asc' } }],
   })

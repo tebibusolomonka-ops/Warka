@@ -98,6 +98,12 @@ enum SchoolCalendarDayType {
   staffDay
 }
 
+enum TimetableStatus {
+  draft
+  published
+  archived
+}
+
 enum OrganizationRole {
   owner
   administrator
@@ -416,6 +422,7 @@ model School {
   calendarDays SchoolCalendarDay[]
   timetablePeriods TimetablePeriod[]
   timetableEntries ClassTimetableEntry[]
+  timetables ClassTimetable[]
   fileAssets FileAsset[]
   resultSets                    ResultSet[]
   publishedResults              PublishedResult[]
@@ -1099,6 +1106,7 @@ model EmailDelivery {
 model AcademicYear {
   calendarDays SchoolCalendarDay[]
   timetableEntries ClassTimetableEntry[]
+  timetables ClassTimetable[]
   status              AcademicYearStatus @default(active)
   closingStartedAt    DateTime?
   closedAt            DateTime?
@@ -1181,6 +1189,7 @@ model GradeLevel {
 
 model SchoolClass {
   timetableEntries ClassTimetableEntry[]
+  timetables ClassTimetable[]
   resultSets          ResultSet[]
   learningMaterials   LearningMaterial[]
   announcements       Announcement[]
@@ -1481,8 +1490,27 @@ model TeachingAssignment {
   @@unique([id, schoolId, academicYearId, schoolClassId, subjectId], map: "TeachingAssignment_timetable_scope_key")
 }
 
+model ClassTimetable {
+  id String @id @default(uuid())
+  schoolId String
+  academicYearId String
+  schoolClassId String
+  status TimetableStatus @default(draft)
+  createdAt DateTime @default(now())
+  publishedAt DateTime?
+  archivedAt DateTime?
+  school School @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  academicYear AcademicYear @relation(fields: [academicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  schoolClass SchoolClass @relation(fields: [schoolClassId, schoolId, academicYearId], references: [id, schoolId, academicYearId], onDelete: Restrict)
+  entries ClassTimetableEntry[]
+
+  @@unique([id, schoolId, academicYearId, schoolClassId], map: "ClassTimetable_scope_key")
+  @@index([schoolId, academicYearId, schoolClassId, status])
+}
+
 model ClassTimetableEntry {
   id String @id @default(uuid())
+  timetableId String
   schoolId String
   academicYearId String
   schoolClassId String
@@ -1493,13 +1521,14 @@ model ClassTimetableEntry {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   school School @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  timetable ClassTimetable @relation(fields: [timetableId, schoolId, academicYearId, schoolClassId], references: [id, schoolId, academicYearId, schoolClassId], onDelete: Restrict, map: "ClassTimetableEntry_timetable_scope_fkey")
   academicYear AcademicYear @relation(fields: [academicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
   schoolClass SchoolClass @relation(fields: [schoolClassId, schoolId, academicYearId], references: [id, schoolId, academicYearId], onDelete: Restrict)
   subject Subject @relation(fields: [subjectId, schoolId], references: [id, schoolId], onDelete: Restrict)
   teachingAssignment TeachingAssignment @relation(fields: [teachingAssignmentId, schoolId, academicYearId, schoolClassId, subjectId], references: [id, schoolId, academicYearId, schoolClassId, subjectId], onDelete: Restrict, map: "ClassTimetableEntry_assignment_scope_fkey")
   timetablePeriod TimetablePeriod @relation(fields: [timetablePeriodId, schoolId], references: [id, schoolId], onDelete: Restrict)
 
-  @@unique([schoolClassId, academicYearId, weekday, timetablePeriodId], map: "ClassTimetableEntry_class_slot_key")
+  @@unique([timetableId, weekday, timetablePeriodId], map: "ClassTimetableEntry_plan_slot_key")
   @@index([schoolId, academicYearId, weekday])
   @@index([teachingAssignmentId, weekday])
 }

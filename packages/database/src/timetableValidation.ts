@@ -42,6 +42,7 @@ export async function validateClassTimetableEntry(
     database.classTimetableEntry.findFirst({
       where: {
         schoolId: value.schoolId,
+        timetableId: value.timetableId,
         academicYearId: value.academicYearId,
         schoolClassId: value.schoolClassId,
         timetablePeriodId: value.timetablePeriodId,
@@ -67,8 +68,10 @@ export async function validateClassTimetableEntry(
       where: {
         schoolId: value.schoolId,
         academicYearId: value.academicYearId,
+        schoolClassId: { not: value.schoolClassId },
         timetablePeriodId: value.timetablePeriodId,
         weekday: value.weekday,
+        timetable: { status: { in: ['draft', 'published'] } },
         teachingAssignment: { userId: assignment.userId },
         ...(ignoreEntryId ? { id: { not: ignoreEntryId } } : {}),
       },
@@ -82,19 +85,26 @@ export async function validateClassTimetableEntry(
 
 export async function validateSchoolTimetable(
   database: PrismaClient | Prisma.TransactionClient,
-  schoolId: string,
-  academicYearId: string,
-  schoolClassId: string,
+  timetableId: string,
   now = new Date(),
 ) {
   const entries = await database.classTimetableEntry.findMany({
-    where: { schoolId, academicYearId, schoolClassId },
+    where: { timetableId },
   })
   const problems: Array<TimetableProblem & { entryId: string }> = []
   for (const entry of entries) {
     const found = await validateClassTimetableEntry(
       database,
-      entry,
+      {
+        timetableId: entry.timetableId,
+        schoolId: entry.schoolId,
+        academicYearId: entry.academicYearId,
+        schoolClassId: entry.schoolClassId,
+        subjectId: entry.subjectId,
+        teachingAssignmentId: entry.teachingAssignmentId,
+        timetablePeriodId: entry.timetablePeriodId,
+        weekday: entry.weekday,
+      },
       now,
       entry.id,
     )

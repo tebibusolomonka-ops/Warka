@@ -22,6 +22,14 @@ export function createDatabaseClient(
 
 export type { PrismaClient }
 export {
+  ClassTimetableStateError,
+  ClassTimetableBlockedError,
+  createClassTimetableDraft,
+  publishClassTimetable,
+  archiveClassTimetable,
+  listClassTimetables,
+} from './classTimetables.js'
+export {
   validateClassTimetableEntry,
   validateSchoolTimetable,
 } from './timetableValidation.js'

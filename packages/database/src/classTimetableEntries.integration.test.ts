@@ -1,6 +1,11 @@
 import { randomUUID } from 'node:crypto'
 import { afterAll, describe, expect, it } from 'vitest'
-import { createClassTimetableEntry, createDatabaseClient } from './index.js'
+import {
+  createClassTimetableEntry,
+  createClassTimetableDraft,
+  createDatabaseClient,
+  publishClassTimetable,
+} from './index.js'
 
 const url = process.env.TEST_DATABASE_URL ?? process.env.DATABASE_URL
 const database = url ? createDatabaseClient({ DATABASE_URL: url }) : null
@@ -61,8 +66,16 @@ describe.skipIf(!database)('class timetable entries in PostgreSQL', () => {
         sortOrder: 1,
       },
     })
+    const plan = await database!.classTimetable.create({
+      data: {
+        schoolId: school.id,
+        academicYearId: year.id,
+        schoolClassId: schoolClass.id,
+      },
+    })
     try {
       const entry = await createClassTimetableEntry(database!, {
+        timetableId: plan.id,
         schoolId: school.id,
         academicYearId: year.id,
         schoolClassId: schoolClass.id,
@@ -74,6 +87,7 @@ describe.skipIf(!database)('class timetable entries in PostgreSQL', () => {
       expect(entry.weekday).toBe(1)
       await expect(
         createClassTimetableEntry(database!, {
+          timetableId: plan.id,
           schoolId: school.id,
           academicYearId: year.id,
           schoolClassId: schoolClass.id,
@@ -83,9 +97,49 @@ describe.skipIf(!database)('class timetable entries in PostgreSQL', () => {
           weekday: 1,
         }),
       ).rejects.toThrow('CLASS_COLLISION')
+      const published = await publishClassTimetable(
+        database!,
+        teacher.id,
+        plan.id,
+      )
+      expect(published.status).toBe('published')
+      const replacement = await createClassTimetableDraft(database!, {
+        schoolId: school.id,
+        academicYearId: year.id,
+        schoolClassId: schoolClass.id,
+      })
+      await createClassTimetableEntry(database!, {
+        timetableId: replacement.id,
+        schoolId: school.id,
+        academicYearId: year.id,
+        schoolClassId: schoolClass.id,
+        subjectId: subject.id,
+        teachingAssignmentId: assignment.id,
+        timetablePeriodId: period.id,
+        weekday: 1,
+      })
+      await publishClassTimetable(database!, teacher.id, replacement.id)
+      expect(
+        (
+          await database!.classTimetable.findUniqueOrThrow({
+            where: { id: plan.id },
+          })
+        ).status,
+      ).toBe('archived')
+      expect(
+        await database!.classTimetableEntry.count({
+          where: { timetableId: plan.id },
+        }),
+      ).toBe(1)
     } finally {
       await database!.classTimetableEntry.deleteMany({
         where: { schoolId: school.id },
+      })
+      await database!.classTimetable.deleteMany({
+        where: { schoolId: school.id },
+      })
+      await database!.auditEvent.deleteMany({
+        where: { actorUserId: teacher.id },
       })
       await database!.timetablePeriod.delete({ where: { id: period.id } })
       await database!.teachingAssignment.delete({

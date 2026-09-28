@@ -92,6 +92,8 @@ export const AuditActionSchema = z.enum([
   'maintenanceWindow.changed',
   'emailDelivery.retryRequested',
   'notificationPreference.updated',
+  'timetable.published',
+  'timetable.archived',
 ])
 
 export const AuditResourceTypeSchema = z.enum([
@@ -133,6 +135,7 @@ export const AuditResourceTypeSchema = z.enum([
   'maintenanceWindow',
   'emailDelivery',
   'notificationPreference',
+  'classTimetable',
 ])
 
 const metadataValue = z.union([
