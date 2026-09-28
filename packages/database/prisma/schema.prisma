@@ -177,6 +177,11 @@ enum SubmissionReviewStatus {
   returned
 }
 
+enum CourseworkFeedbackStatus {
+  draft
+  released
+}
+
 enum StudentAttendanceStatus {
   present
   absent
@@ -565,6 +570,7 @@ model School {
 }
 
 model User {
+  courseworkFeedbackAuthored CourseworkFeedback[] @relation("CourseworkFeedbackAuthor")
   courseworkScoresCreated RubricScore[] @relation("RubricScorer")
   courseworkRubricsCreated CourseworkRubric[] @relation("CourseworkRubricCreator")
   submissionReviewsCompleted SubmissionReview[] @relation("SubmissionReviewer")
@@ -1933,6 +1939,7 @@ model CourseworkSubmission {
 }
 
 model SubmissionRevision {
+  feedback CourseworkFeedback?
   rubricScores RubricScore[]
   review SubmissionReview?
   attachments SubmissionAttachment[]
@@ -1946,6 +1953,21 @@ model SubmissionRevision {
 
   @@unique([submissionId, revisionNumber])
   @@index([submissionId, submittedAt])
+}
+
+model CourseworkFeedback {
+  id String @id @default(uuid())
+  revisionId String @unique
+  text String @db.Text
+  status CourseworkFeedbackStatus @default(draft)
+  authorId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  releasedAt DateTime?
+  revision SubmissionRevision @relation(fields: [revisionId], references: [id], onDelete: Restrict)
+  author User @relation("CourseworkFeedbackAuthor", fields: [authorId], references: [id], onDelete: Restrict)
+
+  @@index([status, releasedAt])
 }
 
 model SubmissionReview {

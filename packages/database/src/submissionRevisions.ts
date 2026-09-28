@@ -164,10 +164,16 @@ export async function listOwnSubmissionRevisions(
     },
   })
   if (!submission) return []
-  return database.submissionRevision.findMany({
+  const rows = await database.submissionRevision.findMany({
     where: { submissionId: submission.id },
     orderBy: { revisionNumber: 'desc' },
     include: {
+      feedback: true,
+      rubricScores: {
+        orderBy: { version: 'desc' },
+        take: 1,
+        include: { criteria: { include: { criterion: true } } },
+      },
       attachments: {
         where: { removedAt: null },
         select: {
@@ -177,4 +183,22 @@ export async function listOwnSubmissionRevisions(
       },
     },
   })
+  return rows.map(({ feedback, rubricScores, ...revision }) => ({
+    ...revision,
+    feedback:
+      feedback?.status === 'released'
+        ? { text: feedback.text, releasedAt: feedback.releasedAt }
+        : null,
+    rubricScore:
+      feedback?.status === 'released' && rubricScores[0]
+        ? {
+            totalPoints: rubricScores[0].totalPoints.toString(),
+            criteria: rubricScores[0].criteria.map((item) => ({
+              title: item.criterion.title,
+              points: item.points.toString(),
+              maxPoints: item.criterion.maxPoints.toString(),
+            })),
+          }
+        : null,
+  }))
 }

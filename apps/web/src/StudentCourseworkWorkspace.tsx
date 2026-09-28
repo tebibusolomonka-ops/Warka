@@ -316,6 +316,23 @@ export function StudentCourseworkWorkspace({
                   ? `Submitted ${new Date(item.submittedAt).toLocaleString()}`
                   : 'Draft'}
                 <p>{item.textResponse}</p>
+                {item.feedback && <p>Teacher feedback: {item.feedback.text}</p>}
+                {item.rubricScore && (
+                  <div>
+                    <p>
+                      Released rubric result: {item.rubricScore.totalPoints}{' '}
+                      points. This is not an official mark.
+                    </p>
+                    <ul>
+                      {item.rubricScore.criteria.map((criterion) => (
+                        <li key={criterion.title}>
+                          {criterion.title}: {criterion.points} of{' '}
+                          {criterion.maxPoints}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
                 <ul>
                   {item.attachments.map((file) => (
                     <li key={file.id}>

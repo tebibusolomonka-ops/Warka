@@ -35,6 +35,11 @@ export type CourseworkRevision = {
     id: string
     fileAsset: { originalFileName: string; status: string }
   }[]
+  feedback?: { text: string; releasedAt: string } | null
+  rubricScore?: {
+    totalPoints: string
+    criteria: { title: string; points: string; maxPoints: string }[]
+  } | null
 }
 const studentRoot = '/student/coursework'
 const studentItem = (assignmentId: string) =>
@@ -170,7 +175,8 @@ export type StaffCourseworkSubmission = {
   }
 }
 export type StaffCourseworkDetail = StaffCourseworkSubmission & {
-  revisions: (CourseworkRevision & {
+  revisions: (Omit<CourseworkRevision, 'feedback' | 'rubricScore'> & {
+    feedback?: { text: string; status: 'draft' | 'released' } | null
     rubricScores?: { id: string; version: number; totalPoints: string }[]
     review: {
       status: 'pending' | 'reviewed' | 'returned'
@@ -178,6 +184,31 @@ export type StaffCourseworkDetail = StaffCourseworkSubmission & {
       resubmissionDueAt: string | null
     } | null
   })[]
+}
+export async function saveTeacherFeedback(
+  baseUrl: string,
+  schoolId: string,
+  assignmentId: string,
+  revisionId: string,
+  text: string,
+) {
+  return requestJson(
+    baseUrl,
+    `${item(schoolId, assignmentId)}/revisions/${encodeURIComponent(revisionId)}/feedback`,
+    json('PUT', { text }),
+  )
+}
+export async function releaseTeacherFeedback(
+  baseUrl: string,
+  schoolId: string,
+  assignmentId: string,
+  revisionId: string,
+) {
+  return requestJson(
+    baseUrl,
+    `${item(schoolId, assignmentId)}/revisions/${encodeURIComponent(revisionId)}/feedback/release`,
+    json('POST'),
+  )
 }
 export type CourseworkRubric = {
   id: string

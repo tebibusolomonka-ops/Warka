@@ -7,6 +7,7 @@ import {
   SubmissionRevisionError,
   SubmissionTextSchema,
   withdrawCourseworkSubmission,
+  listOwnSubmissionRevisions,
 } from './submissionRevisions.js'
 
 vi.mock('./courseworkAudience.js', () => ({
@@ -60,6 +61,50 @@ beforeEach(() => {
     } as never)
 })
 describe('submission revisions', () => {
+  it('keeps draft feedback and rubric scores private until release', async () => {
+    const row = {
+      id,
+      revisionNumber: 1,
+      textResponse: 'Answer',
+      submittedAt: now,
+      attachments: [],
+      feedback: {
+        status: 'draft',
+        text: 'Private draft',
+        releasedAt: null as Date | null,
+      },
+      rubricScores: [
+        {
+          totalPoints: { toString: () => '8' },
+          criteria: [
+            {
+              points: { toString: () => '8' },
+              criterion: {
+                title: 'Clarity',
+                maxPoints: { toString: () => '10' },
+              },
+            },
+          ],
+        },
+      ],
+    }
+    const database = {
+      courseworkSubmission: { findUnique: vi.fn().mockResolvedValue({ id }) },
+      submissionRevision: { findMany: vi.fn().mockResolvedValue([row]) },
+    } as unknown as PrismaClient
+    const hidden = await listOwnSubmissionRevisions(database, id, id)
+    expect(hidden[0]).toMatchObject({ feedback: null, rubricScore: null })
+    row.feedback = {
+      status: 'released',
+      text: 'Helpful feedback',
+      releasedAt: now,
+    }
+    const visible = await listOwnSubmissionRevisions(database, id, id)
+    expect(visible[0]).toMatchObject({
+      feedback: { text: 'Helpful feedback' },
+      rubricScore: { totalPoints: '8' },
+    })
+  })
   it('rejects HTML and creates a new revision after a submitted one', async () => {
     expect(() =>
       SubmissionTextSchema.parse('<script>unsafe</script>'),

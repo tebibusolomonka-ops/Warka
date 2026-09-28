@@ -14,6 +14,8 @@ import {
   reviewTeacherRevision,
   saveTeacherRubric,
   scoreTeacherRevision,
+  saveTeacherFeedback,
+  releaseTeacherFeedback,
   listTeacherCoursework,
   transitionTeacherCoursework,
   uploadTeacherCoursework,
@@ -498,6 +500,7 @@ function TeacherSubmissionReview({
   const [returnDue, setReturnDue] = useState('')
   const [rubric, setRubric] = useState<CourseworkRubric | null>(null)
   const [scores, setScores] = useState<Record<string, string>>({})
+  const [feedbackText, setFeedbackText] = useState<Record<string, string>>({})
   const [refresh, setRefresh] = useState(0)
   const [error, setError] = useState('')
   useEffect(() => {
@@ -538,7 +541,17 @@ function TeacherSubmissionReview({
     let active = true
     getTeacherSubmission(baseUrl, schoolId, assignmentId, selectedId)
       .then((result) => {
-        if (active) setDetail(result)
+        if (active) {
+          setDetail(result)
+          setFeedbackText(
+            Object.fromEntries(
+              result.revisions.map((item) => [
+                item.id,
+                item.feedback?.text ?? '',
+              ]),
+            ),
+          )
+        }
       })
       .catch((cause: unknown) => {
         if (active) {
@@ -587,6 +600,33 @@ function TeacherSubmissionReview({
     } catch (cause) {
       if (cause instanceof ApiError && cause.status === 401) onSessionExpired()
       else setError(cause instanceof Error ? cause.message : 'Scoring failed.')
+    }
+  }
+  async function feedback(revisionId: string, action: 'save' | 'release') {
+    setError('')
+    try {
+      if (action === 'save')
+        await saveTeacherFeedback(
+          baseUrl,
+          schoolId,
+          assignmentId,
+          revisionId,
+          feedbackText[revisionId] ?? '',
+        )
+      else
+        await releaseTeacherFeedback(
+          baseUrl,
+          schoolId,
+          assignmentId,
+          revisionId,
+        )
+      setRefresh((value) => value + 1)
+    } catch (cause) {
+      if (cause instanceof ApiError && cause.status === 401) onSessionExpired()
+      else
+        setError(
+          cause instanceof Error ? cause.message : 'Feedback action failed.',
+        )
     }
   }
   return (
@@ -656,6 +696,42 @@ function TeacherSubmissionReview({
               >
                 Save rubric score
               </button>
+            </div>
+          )}
+          {item.review?.status === 'reviewed' && (
+            <div>
+              <p>Feedback: {item.feedback?.status ?? 'none'}</p>
+              {item.feedback?.status !== 'released' && (
+                <>
+                  <label>
+                    Plain-text feedback{' '}
+                    <textarea
+                      value={feedbackText[item.id] ?? ''}
+                      onChange={(event) =>
+                        setFeedbackText((current) => ({
+                          ...current,
+                          [item.id]: event.target.value,
+                        }))
+                      }
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    disabled={!feedbackText[item.id]?.trim()}
+                    onClick={() => void feedback(item.id, 'save')}
+                  >
+                    Save feedback draft
+                  </button>
+                  {item.feedback?.status === 'draft' && (
+                    <button
+                      type="button"
+                      onClick={() => void feedback(item.id, 'release')}
+                    >
+                      Release feedback
+                    </button>
+                  )}
+                </>
+              )}
             </div>
           )}
           {item.review?.status === 'pending' && (

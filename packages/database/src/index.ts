@@ -1064,3 +1064,9 @@ export {
   scoreSubmissionRubric,
   latestRubricScore,
 } from './rubricScoring.js'
+export {
+  CourseworkFeedbackError,
+  CourseworkFeedbackTextSchema,
+  saveDraftCourseworkFeedback,
+  releaseCourseworkFeedback,
+} from './courseworkFeedback.js'
