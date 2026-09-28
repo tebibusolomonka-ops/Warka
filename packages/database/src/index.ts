@@ -958,3 +958,13 @@ export {
   AssessmentParticipationContextError,
   recordAssessmentParticipation,
 } from './assessmentParticipation.js'
+
+export {
+  MakeUpRequestSchema,
+  MakeUpScheduleSchema,
+  MakeUpAssessmentStateError,
+  requestMakeUpAssessment,
+  reviewMakeUpAssessment,
+  scheduleMakeUpAssessment,
+  completeMakeUpAssessment,
+} from './makeUpAssessments.js'

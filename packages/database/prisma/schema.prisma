@@ -131,6 +131,15 @@ enum AssessmentParticipationStatus {
   excused
 }
 
+enum MakeUpAssessmentStatus {
+  requested
+  approved
+  scheduled
+  completed
+  rejected
+  cancelled
+}
+
 enum StudentAttendanceStatus {
   present
   absent
@@ -453,6 +462,7 @@ enum MaintenanceWindowStatus {
 }
 
 model School {
+  makeUpAssessments MakeUpAssessment[]
   assessmentParticipations AssessmentParticipation[]
   assessmentRooms AssessmentRoom[]
   assessmentSchedules AssessmentSchedule[]
@@ -510,6 +520,8 @@ model School {
 }
 
 model User {
+  makeUpCreated MakeUpAssessment[] @relation("MakeUpCreator")
+  makeUpApproved MakeUpAssessment[] @relation("MakeUpApprover")
   assessmentParticipations AssessmentParticipation[] @relation("AssessmentParticipationRecorder")
   performedAttendanceCorrections AttendanceCorrection[] @relation("AttendanceCorrectionPerformer")
   approvedAttendanceCorrections AttendanceCorrection[] @relation("AttendanceCorrectionApprover")
@@ -1264,6 +1276,7 @@ model SchoolClass {
 }
 
 model Student {
+  makeUpAssessments MakeUpAssessment[]
   assessmentParticipations AssessmentParticipation[]
   attendanceRecords StudentAttendanceRecord[]
   transferRequests    TransferRequest[]
@@ -1755,6 +1768,7 @@ model AssessmentSchedule {
 
 model AssessmentSession {
   participations AssessmentParticipation[]
+  makeUpAssessments MakeUpAssessment[]
   id String @id @default(uuid())
   schoolId String
   scheduleId String
@@ -1777,6 +1791,7 @@ model AssessmentSession {
 }
 
 model AssessmentParticipation {
+  makeUpAssessments MakeUpAssessment[]
   id String @id @default(uuid())
   schoolId String
   sessionId String
@@ -1796,6 +1811,34 @@ model AssessmentParticipation {
 
   @@unique([sessionId, studentId])
   @@index([schoolId, studentId])
+}
+
+model MakeUpAssessment {
+  id String @id @default(uuid())
+  schoolId String
+  originalSessionId String
+  originalParticipationId String
+  studentId String
+  reason String
+  status MakeUpAssessmentStatus @default(requested)
+  scheduledDate DateTime? @db.Date
+  startTime String? @db.VarChar(5)
+  endTime String? @db.VarChar(5)
+  createdById String
+  approvedById String?
+  reviewedAt DateTime?
+  completedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  school School @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  originalSession AssessmentSession @relation(fields: [originalSessionId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  originalParticipation AssessmentParticipation @relation(fields: [originalParticipationId], references: [id], onDelete: Restrict)
+  student Student @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  createdBy User @relation("MakeUpCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  approvedBy User? @relation("MakeUpApprover", fields: [approvedById], references: [id], onDelete: Restrict)
+
+  @@unique([originalParticipationId])
+  @@index([schoolId, status])
 }
 
 model Mark {
