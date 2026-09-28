@@ -1141,3 +1141,4 @@ export {
 } from './studentDataQuality.js'
 export { checkEnrollmentDataQuality } from './enrollmentDataQuality.js'
 export { checkAcademicDataQuality } from './academicDataQuality.js'
+export { checkDocumentDataQuality } from './documentDataQuality.js'
