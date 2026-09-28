@@ -64,6 +64,7 @@ function fixture(
     resultSet: {
       findFirst: async () => (options.resultPublished ? { id } : null),
     },
+    gradebookLock: { findUnique: async () => null },
     markEntryWindow: { findUnique: async () => null },
     mark: {
       updateMany: async (input: { data: Record<string, unknown> }) => {

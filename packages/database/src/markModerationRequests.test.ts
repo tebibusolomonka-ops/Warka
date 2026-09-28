@@ -63,6 +63,7 @@ describe('mark moderation requests', () => {
         }),
       },
       resultSet: { findFirst: async () => null },
+      gradebookLock: { findUnique: async () => null },
       markModerationRequest: {
         create: async (input: { data: Record<string, unknown> }) => {
           data = input.data

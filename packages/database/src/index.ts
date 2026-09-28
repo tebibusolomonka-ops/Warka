@@ -995,3 +995,10 @@ export {
 } from './markModerationRequests.js'
 
 export { reviewMarkModeration } from './markModerationReview.js'
+
+export {
+  GradebookLockStateError,
+  assertGradebookUnlocked,
+  lockGradebook,
+  unlockGradebook,
+} from './gradebookLocks.js'

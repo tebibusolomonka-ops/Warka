@@ -153,6 +153,11 @@ enum MarkModerationStatus {
   cancelled
 }
 
+enum GradebookLockAction {
+  locked
+  unlocked
+}
+
 enum StudentAttendanceStatus {
   present
   absent
@@ -475,6 +480,7 @@ enum MaintenanceWindowStatus {
 }
 
 model School {
+  gradebookLocks GradebookLock[]
   markCorrections MarkCorrection[]
   markModerationRequests MarkModerationRequest[]
   markEntryWindows MarkEntryWindow[]
@@ -537,6 +543,7 @@ model School {
 }
 
 model User {
+  gradebookLockActors GradebookLockEvent[]
   reviewedMarkCorrections MarkCorrection[]
   requestedMarkModerations MarkModerationRequest[] @relation("ModerationRequester")
   reviewedMarkModerations MarkModerationRequest[] @relation("ModerationReviewer")
@@ -1183,6 +1190,7 @@ model EmailDelivery {
 }
 
 model AcademicYear {
+  gradebookLocks GradebookLock[]
   assessmentSchedules AssessmentSchedule[]
   calendarDays SchoolCalendarDay[]
   timetableEntries ClassTimetableEntry[]
@@ -1270,6 +1278,7 @@ model GradeLevel {
 }
 
 model SchoolClass {
+  gradebookLocks GradebookLock[]
   assessmentSchedules AssessmentSchedule[]
   assessmentSessions AssessmentSession[]
   timetableEntries ClassTimetableEntry[]
@@ -1495,6 +1504,7 @@ model EnrollmentHistoryEvent {
 }
 
 model Subject {
+  gradebookLocks GradebookLock[]
   assessmentSchedules AssessmentSchedule[]
   timetableEntries ClassTimetableEntry[]
   attendanceSessions AttendanceSession[]
@@ -1696,6 +1706,7 @@ model AttendanceCorrection {
 }
 
 model GradingPeriod {
+  gradebookLocks GradebookLock[]
   assessmentSchedules AssessmentSchedule[]
   resultSets     ResultSet[]
   id             String       @id @default(uuid())
@@ -1964,6 +1975,40 @@ model MarkCorrection {
   reviewer User @relation(fields: [reviewerId], references: [id], onDelete: Restrict)
 
   @@index([schoolId, markId, effectiveAt])
+}
+
+model GradebookLock {
+  id String @id @default(uuid())
+  schoolId String
+  academicYearId String
+  gradingPeriodId String
+  schoolClassId String
+  subjectId String
+  locked Boolean @default(false)
+  lockedAt DateTime?
+  updatedAt DateTime @updatedAt
+  school School @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  academicYear AcademicYear @relation(fields: [academicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  gradingPeriod GradingPeriod @relation(fields: [gradingPeriodId, schoolId, academicYearId], references: [id, schoolId, academicYearId], onDelete: Restrict)
+  schoolClass SchoolClass @relation(fields: [schoolClassId, schoolId, academicYearId], references: [id, schoolId, academicYearId], onDelete: Restrict)
+  subject Subject @relation(fields: [subjectId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  events GradebookLockEvent[]
+
+  @@unique([schoolId, academicYearId, gradingPeriodId, schoolClassId, subjectId], name: "GradebookLock_context_key", map: "GradebookLock_context_key")
+  @@index([schoolId, locked])
+}
+
+model GradebookLockEvent {
+  id String @id @default(uuid())
+  lockId String
+  action GradebookLockAction
+  actorId String
+  reason String?
+  effectiveAt DateTime @default(now())
+  lock GradebookLock @relation(fields: [lockId], references: [id], onDelete: Restrict)
+  actor User @relation(fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([lockId, effectiveAt])
 }
 
 model GradingScheme {

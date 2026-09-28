@@ -14,6 +14,7 @@ import { mayManageClassSubject } from './teachingAssignments.js'
 import { assertResultSetDraft } from './results.js'
 import { assertMarkEntryWindow } from './markEntryWindows.js'
 import { recordAuditEvent } from './auditEvents.js'
+import { assertGradebookUnlocked } from './gradebookLocks.js'
 
 export const RecordMarkSchema = z.object({
   schoolId: z.uuid(),
@@ -116,6 +117,7 @@ async function validMarkContext(
     throw new MarkPermissionError()
   }
   await assertResultSetDraft(database, assessment)
+  await assertGradebookUnlocked(database, assessment)
   const usedOverride = await assertMarkEntryWindow(
     database,
     actorId,

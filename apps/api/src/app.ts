@@ -16,6 +16,7 @@ import {
   MakeUpAssessmentStateError,
   AssessmentInvigilationError,
   MarkEntryWindowStateError,
+  GradebookLockStateError,
   AdministratorRecoveryPermissionError,
   AccountLifecyclePermissionError,
   StaffOffboardingPermissionError,
@@ -530,7 +531,8 @@ export function buildApp(
       error instanceof AssessmentParticipationContextError ||
       error instanceof MakeUpAssessmentStateError ||
       error instanceof AssessmentInvigilationError ||
-      error instanceof MarkEntryWindowStateError
+      error instanceof MarkEntryWindowStateError ||
+      error instanceof GradebookLockStateError
     )
       return reply.code(409).send({
         error: { code: 'ASSESSMENT_STATE', message: error.message },

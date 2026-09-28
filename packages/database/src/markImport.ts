@@ -4,6 +4,7 @@ import { CsvFormatError, parseCsv, type CsvRow } from './csv.js'
 import { findAssessmentById } from './assessments.js'
 import { assertResultSetDraft } from './results.js'
 import { assertMarkEntryWindow } from './markEntryWindows.js'
+import { assertGradebookUnlocked } from './gradebookLocks.js'
 import {
   canRecordAssessment,
   InvalidMarkContextError,
@@ -72,6 +73,7 @@ export async function validateMarkImport(
     throw new MarkPermissionError()
   }
   await assertResultSetDraft(database, assessment)
+  await assertGradebookUnlocked(database, assessment)
   await assertMarkEntryWindow(database, actorId, assessment)
   let csvRows: CsvRow[]
   try {

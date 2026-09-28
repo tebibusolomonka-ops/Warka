@@ -5,6 +5,7 @@ import { assertMarkEntryWindow } from './markEntryWindows.js'
 import { MarkModerationStateError } from './markModerationRequests.js'
 import { hasOrganizationAdminRole } from './organizationMemberships.js'
 import { assertResultSetDraft } from './results.js'
+import { assertGradebookUnlocked } from './gradebookLocks.js'
 import { findSchoolMembership } from './schoolMemberships.js'
 
 export async function reviewMarkModeration(
@@ -50,6 +51,10 @@ export async function reviewMarkModeration(
       }
       if (decision === 'approved') {
         await assertResultSetDraft(
+          transaction as PrismaClient,
+          request.mark.assessment,
+        )
+        await assertGradebookUnlocked(
           transaction as PrismaClient,
           request.mark.assessment,
         )

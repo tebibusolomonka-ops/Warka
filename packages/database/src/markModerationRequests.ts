@@ -2,6 +2,7 @@ import { Prisma, type PrismaClient } from '@prisma/client'
 import { z } from 'zod'
 import { canRecordAssessment } from './marks.js'
 import { assertResultSetDraft } from './results.js'
+import { assertGradebookUnlocked } from './gradebookLocks.js'
 
 export const MarkModerationRequestSchema = z.strictObject({
   schoolId: z.uuid(),
@@ -30,6 +31,7 @@ export async function requestMarkModeration(
     )
   }
   await assertResultSetDraft(database, mark.assessment)
+  await assertGradebookUnlocked(database, mark.assessment)
   const proposedScore = new Prisma.Decimal(value.proposedScore)
   if (
     proposedScore.lt(0) ||

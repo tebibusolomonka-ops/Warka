@@ -97,6 +97,8 @@ export const AuditActionSchema = z.enum([
   'mark.windowOverridden',
   'mark.moderated',
   'mark.moderationRejected',
+  'gradebook.locked',
+  'gradebook.unlocked',
 ])
 
 export const AuditResourceTypeSchema = z.enum([
@@ -108,6 +110,7 @@ export const AuditResourceTypeSchema = z.enum([
   'membership',
   'resultSet',
   'mark',
+  'gradebookLock',
   'publishedResult',
   'issuedDocument',
   'transferRequest',
