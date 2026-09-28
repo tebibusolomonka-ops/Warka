@@ -99,6 +99,10 @@ export const AuditActionSchema = z.enum([
   'mark.moderationRejected',
   'gradebook.locked',
   'gradebook.unlocked',
+  'coursework.published',
+  'coursework.closed',
+  'coursework.cancelled',
+  'coursework.dueDateChanged',
 ])
 
 export const AuditResourceTypeSchema = z.enum([
@@ -143,6 +147,7 @@ export const AuditResourceTypeSchema = z.enum([
   'emailDelivery',
   'notificationPreference',
   'classTimetable',
+  'courseworkAssignment',
 ])
 
 const metadataValue = z.union([

@@ -1016,3 +1016,11 @@ export {
   listVisibleCourseworkAssignments,
   mayManageCourseworkAssignment,
 } from './courseworkAudience.js'
+export {
+  CourseworkLifecycleError,
+  EditCourseworkDraftSchema,
+  editCourseworkDraft,
+  publishCourseworkAssignment,
+  endCourseworkAssignment,
+  changePublishedCourseworkDueDate,
+} from './courseworkLifecycle.js'
