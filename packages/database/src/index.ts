@@ -1135,3 +1135,7 @@ export {
   requireDataQualityAdministrator,
   dismissDataQualityIssue,
 } from './dataQualityIssues.js'
+export {
+  checkStudentDataQuality,
+  type QualityFinding,
+} from './studentDataQuality.js'
