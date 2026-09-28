@@ -19,6 +19,8 @@ function stateLabel(
   detail: StudentCourseworkDetail,
   submission: CourseworkSubmission | null,
 ) {
+  if (detail.assignment.status === 'closed' && detail.editableUntil)
+    return 'Returned for resubmission'
   if (submission?.status === 'submitted' && submission.submittedAt)
     return new Date(submission.submittedAt) > new Date(detail.effectiveDueAt)
       ? 'Late'
@@ -138,9 +140,9 @@ export function StudentCourseworkWorkspace({
   )
   const past = assignments.filter((item) => !upcoming.includes(item))
   const latestDraft = revisions.find((item) => !item.submittedAt)
-  const canEdit =
-    detail?.assignment.status === 'published' &&
-    new Date(detail.effectiveDueAt) >= new Date()
+  const canEdit = Boolean(
+    detail?.editableUntil && new Date(detail.editableUntil) >= new Date(),
+  )
   return (
     <section
       className="academic-panel"

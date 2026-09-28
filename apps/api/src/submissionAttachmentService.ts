@@ -1,6 +1,6 @@
 import {
   enqueueFileScanTask,
-  effectiveCourseworkDueAt,
+  editableCourseworkDueAt,
   visibleCourseworkAssignmentForStudent,
   type PrismaClient,
 } from '@warka/database'
@@ -31,13 +31,13 @@ export function submissionAttachmentService(
     )
     if (
       !audience ||
-      audience.assignment.status !== 'published' ||
       audience.assignment.schoolId !== schoolId ||
-      (await effectiveCourseworkDueAt(
+      !(await editableCourseworkDueAt(
         database,
         audience.assignment,
         audience.studentId,
-      )) < now
+        now,
+      ))
     )
       throw new SubmissionAttachmentError(
         'Assignment is not open to this student',

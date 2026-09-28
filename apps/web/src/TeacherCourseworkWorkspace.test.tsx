@@ -12,6 +12,9 @@ import {
   getTeacherCoursework,
   getTeacherCourseworkAudience,
   getTeacherCourseworkCounts,
+  getTeacherSubmission,
+  listTeacherSubmissions,
+  reviewTeacherRevision,
   listTeacherCoursework,
   transitionTeacherCoursework,
 } from './courseworkApi'
@@ -23,6 +26,9 @@ vi.mock('./courseworkApi', async (importOriginal) => ({
   getTeacherCoursework: vi.fn(),
   getTeacherCourseworkAudience: vi.fn(),
   getTeacherCourseworkCounts: vi.fn(),
+  getTeacherSubmission: vi.fn(),
+  listTeacherSubmissions: vi.fn(),
+  reviewTeacherRevision: vi.fn(),
   listTeacherCoursework: vi.fn(),
   transitionTeacherCoursework: vi.fn(),
 }))
@@ -87,6 +93,11 @@ beforeEach(() => {
     notSubmitted: 13,
     late: 1,
   })
+  vi.mocked(listTeacherSubmissions)
+    .mockReset()
+    .mockResolvedValue({ submissions: [] })
+  vi.mocked(getTeacherSubmission).mockReset()
+  vi.mocked(reviewTeacherRevision).mockReset().mockResolvedValue({})
   vi.mocked(getTeacherCourseworkAudience)
     .mockReset()
     .mockResolvedValue({
@@ -145,6 +156,68 @@ describe('teacher coursework workspace', () => {
         schoolId,
         assignmentId,
         'publish',
+      ),
+    )
+  })
+  it('reviews only a selected submitted revision', async () => {
+    vi.mocked(listTeacherSubmissions).mockResolvedValue({
+      submissions: [
+        {
+          id: assignmentId,
+          studentId: schoolId,
+          status: 'submitted',
+          submittedAt: '2026-09-01T10:00:00.000Z',
+          student: {
+            givenName: 'Student',
+            familyName: 'One',
+            studentReference: 'S-1',
+          },
+        },
+      ],
+    })
+    vi.mocked(getTeacherSubmission).mockResolvedValue({
+      id: assignmentId,
+      studentId: schoolId,
+      status: 'submitted',
+      submittedAt: '2026-09-01T10:00:00.000Z',
+      student: {
+        givenName: 'Student',
+        familyName: 'One',
+        studentReference: 'S-1',
+      },
+      revisions: [
+        {
+          id: assignmentId,
+          revisionNumber: 1,
+          textResponse: 'Synthetic answer',
+          submittedAt: '2026-09-01T10:00:00.000Z',
+          attachments: [],
+          review: {
+            status: 'pending',
+            resubmissionAllowed: false,
+            resubmissionDueAt: null,
+          },
+        },
+      ],
+    })
+    show()
+    fireEvent.change(await screen.findByLabelText('Assignment'), {
+      target: { value: assignmentId },
+    })
+    await screen.findByRole('option', { name: /Student One/ })
+    fireEvent.change(await screen.findByLabelText('Student submission'), {
+      target: { value: assignmentId },
+    })
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Mark reviewed' }),
+    )
+    await waitFor(() =>
+      expect(reviewTeacherRevision).toHaveBeenCalledWith(
+        'http://localhost/api',
+        schoolId,
+        assignmentId,
+        assignmentId,
+        { status: 'reviewed' },
       ),
     )
   })

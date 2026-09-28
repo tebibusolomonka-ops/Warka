@@ -12,6 +12,8 @@ import {
   listVisibleCourseworkAssignments,
   visibleCourseworkAssignmentForStudent,
   effectiveCourseworkDueAt,
+  editableCourseworkDueAt,
+  completeSubmissionReview,
   startCourseworkSubmission,
   ownCourseworkSubmission,
   saveDraftSubmissionRevision,
@@ -33,6 +35,8 @@ const school = z.strictObject({ schoolId: z.uuid() })
 const assignment = school.extend({ assignmentId: z.uuid() })
 const studentAssignment = z.strictObject({ assignmentId: z.uuid() })
 const attachment = assignment.extend({ attachmentId: z.uuid() })
+const staffSubmission = assignment.extend({ submissionId: z.uuid() })
+const staffRevision = assignment.extend({ revisionId: z.uuid() })
 const revision = studentAssignment.extend({ revisionId: z.uuid() })
 const submissionAttachment = revision.extend({ attachmentId: z.uuid() })
 const upload = z.strictObject({
@@ -266,6 +270,63 @@ export function registerCourseworkRoutes(
     },
   )
   app.get(
+    '/schools/:schoolId/coursework/:assignmentId/submissions/:submissionId',
+    { preHandler: authenticate },
+    async (request) => {
+      const { schoolId, assignmentId, submissionId } = staffSubmission.parse(
+        request.params,
+      )
+      await staffAssignment(actor(request), schoolId, assignmentId)
+      const row = await db().courseworkSubmission.findFirst({
+        where: { id: submissionId, schoolId, assignmentId },
+        include: {
+          student: {
+            select: {
+              studentReference: true,
+              givenName: true,
+              familyName: true,
+            },
+          },
+          revisions: {
+            where: { submittedAt: { not: null } },
+            orderBy: { revisionNumber: 'desc' },
+            include: {
+              review: true,
+              attachments: {
+                where: { removedAt: null },
+                select: {
+                  id: true,
+                  fileAsset: {
+                    select: { originalFileName: true, status: true },
+                  },
+                },
+              },
+            },
+          },
+        },
+      })
+      if (!row) throw new CourseworkRouteAccessError('Submission not found')
+      return row
+    },
+  )
+  app.post(
+    '/schools/:schoolId/coursework/:assignmentId/revisions/:revisionId/review',
+    { preHandler: authenticate },
+    async (request) => {
+      const { schoolId, assignmentId, revisionId } = staffRevision.parse(
+        request.params,
+      )
+      return completeSubmissionReview(
+        db(),
+        actor(request),
+        schoolId,
+        assignmentId,
+        revisionId,
+        request.body,
+      )
+    },
+  )
+  app.get(
     '/schools/:schoolId/coursework/:assignmentId/audience',
     { preHandler: authenticate },
     async (request) => {
@@ -441,6 +502,11 @@ export function registerCourseworkRoutes(
           teacherName: teacher?.displayName ?? 'Teacher',
         },
         effectiveDueAt: await effectiveCourseworkDueAt(
+          db(),
+          audience.assignment,
+          audience.studentId,
+        ),
+        editableUntil: await editableCourseworkDueAt(
           db(),
           audience.assignment,
           audience.studentId,

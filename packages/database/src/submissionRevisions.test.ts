@@ -38,6 +38,7 @@ function fixture(
       updateMany: vi.fn().mockResolvedValue({ count: 1 }),
       findUniqueOrThrow: vi.fn().mockResolvedValue({ id }),
     },
+    submissionReview: { create: vi.fn().mockResolvedValue({}) },
   }
   const database = {
     $transaction: vi.fn(

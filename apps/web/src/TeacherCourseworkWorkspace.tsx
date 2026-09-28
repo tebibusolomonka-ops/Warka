@@ -8,6 +8,9 @@ import {
   getTeacherCourseworkAudience,
   getTeacherCourseworkCounts,
   grantTeacherCourseworkExtension,
+  getTeacherSubmission,
+  listTeacherSubmissions,
+  reviewTeacherRevision,
   listTeacherCoursework,
   transitionTeacherCoursework,
   uploadTeacherCoursework,
@@ -15,6 +18,8 @@ import {
   type CourseworkAttachment,
   type CourseworkAudience,
   type CourseworkCounts,
+  type StaffCourseworkDetail,
+  type StaffCourseworkSubmission,
 } from './courseworkApi'
 
 export function TeacherCourseworkWorkspace({
@@ -451,8 +456,149 @@ export function TeacherCourseworkWorkspace({
               </button>
             </form>
           )}
+          <TeacherSubmissionReview
+            baseUrl={baseUrl}
+            schoolId={schoolId}
+            assignmentId={current.id}
+            onSessionExpired={onSessionExpired}
+          />
         </div>
       )}
+    </section>
+  )
+}
+
+function TeacherSubmissionReview({
+  baseUrl,
+  schoolId,
+  assignmentId,
+  onSessionExpired,
+}: {
+  baseUrl: string
+  schoolId: string
+  assignmentId: string
+  onSessionExpired: () => void
+}) {
+  const [submissions, setSubmissions] = useState<StaffCourseworkSubmission[]>(
+    [],
+  )
+  const [selectedId, setSelectedId] = useState('')
+  const [detail, setDetail] = useState<StaffCourseworkDetail | null>(null)
+  const [returnDue, setReturnDue] = useState('')
+  const [refresh, setRefresh] = useState(0)
+  const [error, setError] = useState('')
+  useEffect(() => {
+    let active = true
+    listTeacherSubmissions(baseUrl, schoolId, assignmentId)
+      .then((result) => {
+        if (active) setSubmissions(result.submissions)
+      })
+      .catch((cause: unknown) => {
+        if (active) {
+          if (cause instanceof ApiError && cause.status === 401)
+            onSessionExpired()
+          else setError('Could not load submissions.')
+        }
+      })
+    return () => {
+      active = false
+    }
+  }, [baseUrl, schoolId, assignmentId, refresh, onSessionExpired])
+  useEffect(() => {
+    if (!selectedId) {
+      setDetail(null)
+      return
+    }
+    let active = true
+    getTeacherSubmission(baseUrl, schoolId, assignmentId, selectedId)
+      .then((result) => {
+        if (active) setDetail(result)
+      })
+      .catch((cause: unknown) => {
+        if (active) {
+          if (cause instanceof ApiError && cause.status === 401)
+            onSessionExpired()
+          else setError('Could not load submission history.')
+        }
+      })
+    return () => {
+      active = false
+    }
+  }, [baseUrl, schoolId, assignmentId, selectedId, refresh, onSessionExpired])
+  async function review(revisionId: string, status: 'reviewed' | 'returned') {
+    setError('')
+    try {
+      await reviewTeacherRevision(
+        baseUrl,
+        schoolId,
+        assignmentId,
+        revisionId,
+        status === 'reviewed'
+          ? { status }
+          : { status, resubmissionDueAt: new Date(returnDue).toISOString() },
+      )
+      setRefresh((value) => value + 1)
+    } catch (cause) {
+      if (cause instanceof ApiError && cause.status === 401) onSessionExpired()
+      else setError(cause instanceof Error ? cause.message : 'Review failed.')
+    }
+  }
+  return (
+    <section aria-label="Submission review">
+      <h5>Submission review</h5>
+      {error && <p role="alert">{error}</p>}
+      <label>
+        Student submission{' '}
+        <select
+          value={selectedId}
+          onChange={(event) => setSelectedId(event.target.value)}
+        >
+          <option value="">Choose submission</option>
+          {submissions.map((item) => (
+            <option key={item.id} value={item.id}>
+              {item.student.givenName} {item.student.familyName ?? ''} ·{' '}
+              {item.status}
+            </option>
+          ))}
+        </select>
+      </label>
+      {detail?.revisions.map((item) => (
+        <div key={item.id}>
+          <p>
+            Revision {item.revisionNumber} · Submitted{' '}
+            {item.submittedAt
+              ? new Date(item.submittedAt).toLocaleString()
+              : ''}{' '}
+            · Review {item.review?.status ?? 'pending'}
+          </p>
+          <p>{item.textResponse}</p>
+          {item.review?.status === 'pending' && (
+            <>
+              <button
+                type="button"
+                onClick={() => void review(item.id, 'reviewed')}
+              >
+                Mark reviewed
+              </button>
+              <label>
+                Resubmission deadline{' '}
+                <input
+                  type="datetime-local"
+                  value={returnDue}
+                  onChange={(event) => setReturnDue(event.target.value)}
+                />
+              </label>
+              <button
+                type="button"
+                disabled={!returnDue}
+                onClick={() => void review(item.id, 'returned')}
+              >
+                Return for resubmission
+              </button>
+            </>
+          )}
+        </div>
+      ))}
     </section>
   )
 }

@@ -16,6 +16,7 @@ export type CourseworkAssignment = {
 export type StudentCourseworkDetail = {
   assignment: CourseworkAssignment
   effectiveDueAt: string
+  editableUntil?: string | null
   context: { className: string; subjectName: string; teacherName: string }
   attachments: CourseworkAttachment[]
   submission: CourseworkSubmission | null
@@ -156,6 +157,61 @@ export async function listTeacherCoursework(baseUrl: string, schoolId: string) {
   return (await requestJson(baseUrl, root(schoolId))) as {
     assignments: CourseworkAssignment[]
   }
+}
+export type StaffCourseworkSubmission = {
+  id: string
+  studentId: string
+  status: 'draft' | 'submitted' | 'withdrawn'
+  submittedAt: string | null
+  student: {
+    givenName: string
+    familyName: string | null
+    studentReference: string
+  }
+}
+export type StaffCourseworkDetail = StaffCourseworkSubmission & {
+  revisions: (CourseworkRevision & {
+    review: {
+      status: 'pending' | 'reviewed' | 'returned'
+      resubmissionAllowed: boolean
+      resubmissionDueAt: string | null
+    } | null
+  })[]
+}
+export async function listTeacherSubmissions(
+  baseUrl: string,
+  schoolId: string,
+  assignmentId: string,
+) {
+  return (await requestJson(
+    baseUrl,
+    `${item(schoolId, assignmentId)}/submissions`,
+  )) as { submissions: StaffCourseworkSubmission[] }
+}
+export async function getTeacherSubmission(
+  baseUrl: string,
+  schoolId: string,
+  assignmentId: string,
+  submissionId: string,
+) {
+  return (await requestJson(
+    baseUrl,
+    `${item(schoolId, assignmentId)}/submissions/${encodeURIComponent(submissionId)}`,
+  )) as StaffCourseworkDetail
+}
+export async function reviewTeacherRevision(
+  baseUrl: string,
+  schoolId: string,
+  assignmentId: string,
+  revisionId: string,
+  input:
+    { status: 'reviewed' } | { status: 'returned'; resubmissionDueAt: string },
+) {
+  return requestJson(
+    baseUrl,
+    `${item(schoolId, assignmentId)}/revisions/${encodeURIComponent(revisionId)}/review`,
+    json('POST', input),
+  )
 }
 export async function getTeacherCoursework(
   baseUrl: string,

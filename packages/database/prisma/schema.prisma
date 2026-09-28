@@ -171,6 +171,12 @@ enum CourseworkSubmissionStatus {
   withdrawn
 }
 
+enum SubmissionReviewStatus {
+  pending
+  reviewed
+  returned
+}
+
 enum StudentAttendanceStatus {
   present
   absent
@@ -559,6 +565,7 @@ model School {
 }
 
 model User {
+  submissionReviewsCompleted SubmissionReview[] @relation("SubmissionReviewer")
   assignmentExtensionsCreated AssignmentExtension[] @relation("AssignmentExtensionCreator")
   courseworkAttachmentsCreated CourseworkAttachment[] @relation("CourseworkAttachmentCreator")
   courseworkAssignmentsCreated CourseworkAssignment[] @relation("CourseworkAssignmentCreator")
@@ -1864,6 +1871,7 @@ model CourseworkSubmission {
 }
 
 model SubmissionRevision {
+  review SubmissionReview?
   attachments SubmissionAttachment[]
   id String @id @default(uuid())
   submissionId String
@@ -1875,6 +1883,21 @@ model SubmissionRevision {
 
   @@unique([submissionId, revisionNumber])
   @@index([submissionId, submittedAt])
+}
+
+model SubmissionReview {
+  id String @id @default(uuid())
+  revisionId String @unique
+  status SubmissionReviewStatus @default(pending)
+  reviewedById String?
+  reviewedAt DateTime?
+  resubmissionAllowed Boolean @default(false)
+  resubmissionDueAt DateTime?
+  createdAt DateTime @default(now())
+  revision SubmissionRevision @relation(fields: [revisionId], references: [id], onDelete: Restrict)
+  reviewedBy User? @relation("SubmissionReviewer", fields: [reviewedById], references: [id], onDelete: Restrict)
+
+  @@index([status, createdAt])
 }
 
 model SubmissionAttachment {

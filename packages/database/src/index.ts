@@ -1044,3 +1044,9 @@ export {
   effectiveCourseworkDueAt,
   grantAssignmentExtension,
 } from './assignmentExtensions.js'
+export {
+  SubmissionReviewError,
+  CompleteSubmissionReviewSchema,
+  editableCourseworkDueAt,
+  completeSubmissionReview,
+} from './submissionReviews.js'

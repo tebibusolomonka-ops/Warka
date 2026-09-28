@@ -99,6 +99,7 @@ import {
   CourseworkSubmissionAccessError,
   SubmissionRevisionError,
   AssignmentExtensionError,
+  SubmissionReviewError,
 } from '@warka/database'
 import { ErrorResponseSchema, HealthResponseSchema } from '@warka/shared'
 import { ZodError } from 'zod'
@@ -539,19 +540,18 @@ export function buildApp(
       error instanceof CourseworkAssignmentAccessError ||
       error instanceof CourseworkSubmissionAccessError
     )
-      return reply
-        .code(404)
-        .send({
-          error: {
-            code: 'COURSEWORK_NOT_FOUND',
-            message: 'Coursework not available',
-          },
-        })
+      return reply.code(404).send({
+        error: {
+          code: 'COURSEWORK_NOT_FOUND',
+          message: 'Coursework not available',
+        },
+      })
     if (
       error instanceof CourseworkAssignmentContextError ||
       error instanceof CourseworkLifecycleError ||
       error instanceof SubmissionRevisionError ||
       error instanceof AssignmentExtensionError ||
+      error instanceof SubmissionReviewError ||
       error instanceof CourseworkAttachmentError ||
       error instanceof SubmissionAttachmentError
     )

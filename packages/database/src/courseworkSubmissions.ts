@@ -4,7 +4,7 @@ import {
   visibleCourseworkAssignmentForStudent,
   mayManageCourseworkAssignment,
 } from './courseworkAudience.js'
-import { effectiveCourseworkDueAt } from './assignmentExtensions.js'
+import { editableCourseworkDueAt } from './submissionReviews.js'
 
 export class CourseworkSubmissionAccessError extends Error {}
 
@@ -24,12 +24,12 @@ export async function startCourseworkSubmission(
   )
   if (
     !audience ||
-    audience.assignment.status !== 'published' ||
-    (await effectiveCourseworkDueAt(
+    !(await editableCourseworkDueAt(
       database,
       audience.assignment,
       audience.studentId,
-    )) < now
+      now,
+    ))
   )
     throw new CourseworkSubmissionAccessError(
       'Assignment is not open to this student',
@@ -111,6 +111,11 @@ export async function listCourseworkSubmissionsForStaff(
     throw new CourseworkSubmissionAccessError('Assignment access required')
   return database.courseworkSubmission.findMany({
     where: { schoolId, assignmentId },
+    include: {
+      student: {
+        select: { givenName: true, familyName: true, studentReference: true },
+      },
+    },
     orderBy: [{ startedAt: 'asc' }, { id: 'asc' }],
     take: Math.min(Math.max(take, 1), 100),
     ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
