@@ -19,6 +19,7 @@ import {
   getParentMaterials,
   getParentAnnouncements,
   getParentCoursework,
+  getParentCourseworkSummary,
   type ParentCoursework,
   getParentConversations,
   getParentConversation,
@@ -71,6 +72,13 @@ export function ParentPortal({
       | ParentCoursework[]
     >
   >({ status: 'loading' })
+  const [courseworkSummary, setCourseworkSummary] = useState<{
+    assigned: number
+    submitted: number
+    notSubmitted: number
+    late: number
+    feedbackAvailable: number
+  } | null>(null)
   const [conversations, setConversations] = useState<
     Load<FamilyConversationSummary[]>
   >({ status: 'loading' })
@@ -142,6 +150,15 @@ export function ParentPortal({
           : section === 'Coursework'
             ? getParentCoursework(baseUrl, selected.studentReference)
             : getParentAnnouncements(baseUrl, selected.studentReference)
+    if (section === 'Coursework') {
+      getParentCourseworkSummary(baseUrl, selected.studentReference)
+        .then((value) => {
+          if (active) setCourseworkSummary(value)
+        })
+        .catch(() => {
+          if (active) setCourseworkSummary(null)
+        })
+    }
     request
       .then((data) => {
         if (active) setContent({ status: 'loaded', data })
@@ -435,21 +452,34 @@ export function ParentPortal({
                 )}
               {visibleContent.status === 'loaded' &&
                 section === 'Coursework' && (
-                  <ul>
-                    {(visibleContent.data as ParentCoursework[]).map((item) => (
-                      <li key={item.id}>
-                        <strong>{item.title}</strong> · Due{' '}
-                        {new Date(item.dueAt).toLocaleString()} ·{' '}
-                        {item.submissionStatus}
-                        {item.feedback && (
-                          <p>Teacher feedback: {item.feedback}</p>
-                        )}
-                        {item.rubricScore && (
-                          <p>Released rubric score: {item.rubricScore}</p>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
+                  <>
+                    {courseworkSummary && (
+                      <p>
+                        Assigned {courseworkSummary.assigned} · Submitted{' '}
+                        {courseworkSummary.submitted} · Not submitted{' '}
+                        {courseworkSummary.notSubmitted} · Late{' '}
+                        {courseworkSummary.late} · Feedback available{' '}
+                        {courseworkSummary.feedbackAvailable}
+                      </p>
+                    )}
+                    <ul>
+                      {(visibleContent.data as ParentCoursework[]).map(
+                        (item) => (
+                          <li key={item.id}>
+                            <strong>{item.title}</strong> · Due{' '}
+                            {new Date(item.dueAt).toLocaleString()} ·{' '}
+                            {item.submissionStatus}
+                            {item.feedback && (
+                              <p>Teacher feedback: {item.feedback}</p>
+                            )}
+                            {item.rubricScore && (
+                              <p>Released rubric score: {item.rubricScore}</p>
+                            )}
+                          </li>
+                        ),
+                      )}
+                    </ul>
+                  </>
                 )}
             </div>
           )}

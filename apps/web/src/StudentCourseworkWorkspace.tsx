@@ -4,6 +4,8 @@ import {
   getOwnCourseworkSubmission,
   getStudentCoursework,
   listStudentCoursework,
+  getStudentCourseworkSummary,
+  type PersonalCourseworkSummary,
   saveStudentCourseworkDraft,
   startStudentCoursework,
   submitStudentCoursework,
@@ -55,6 +57,7 @@ export function StudentCourseworkWorkspace({
   onSessionExpired: () => void
 }) {
   const [assignments, setAssignments] = useState<CourseworkAssignment[]>([])
+  const [summary, setSummary] = useState<PersonalCourseworkSummary | null>(null)
   const [selectedId, setSelectedId] = useState('')
   const [detail, setDetail] = useState<StudentCourseworkDetail | null>(null)
   const [submission, setSubmission] = useState<CourseworkSubmission | null>(
@@ -77,6 +80,20 @@ export function StudentCourseworkWorkspace({
         if (cause instanceof ApiError && cause.status === 401)
           onSessionExpired()
         else setError('Could not load coursework.')
+      })
+    return () => {
+      active = false
+    }
+  }, [baseUrl, refresh, onSessionExpired])
+  useEffect(() => {
+    let active = true
+    getStudentCourseworkSummary(baseUrl)
+      .then((value) => {
+        if (active) setSummary(value)
+      })
+      .catch((cause: unknown) => {
+        if (cause instanceof ApiError && cause.status === 401)
+          onSessionExpired()
       })
     return () => {
       active = false
@@ -149,6 +166,13 @@ export function StudentCourseworkWorkspace({
       aria-labelledby="student-coursework-heading"
     >
       <h3 id="student-coursework-heading">Coursework</h3>
+      {summary && (
+        <p>
+          Assigned {summary.assigned} · Submitted {summary.submitted} · Not
+          submitted {summary.notSubmitted} · Late {summary.late} · Feedback
+          available {summary.feedbackAvailable}
+        </p>
+      )}
       {error && <p role="alert">{error}</p>}
       {message && <p role="status">{message}</p>}
       <h4>Upcoming assignments</h4>

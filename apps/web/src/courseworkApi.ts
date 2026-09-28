@@ -144,6 +144,36 @@ export type CourseworkCounts = {
   notSubmitted: number
   late: number
 }
+export type PersonalCourseworkSummary = {
+  assigned: number
+  submitted: number
+  notSubmitted: number
+  late: number
+  feedbackAvailable: number
+}
+export type ClassCourseworkSummary = {
+  assignmentsPublished: number
+  submissionsReceived: number
+  notSubmitted: number
+  pendingReview: number
+  feedbackReleased: number
+}
+export async function getStudentCourseworkSummary(baseUrl: string) {
+  return (await requestJson(
+    baseUrl,
+    '/student/coursework/summary',
+  )) as PersonalCourseworkSummary
+}
+export async function getTeacherClassCourseworkSummary(
+  baseUrl: string,
+  schoolId: string,
+  assignmentId: string,
+) {
+  return (await requestJson(
+    baseUrl,
+    `${item(schoolId, assignmentId)}/class-summary`,
+  )) as ClassCourseworkSummary
+}
 export type CourseworkAudience = {
   studentId: string
   studentReference: string

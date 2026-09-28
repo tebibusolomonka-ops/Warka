@@ -93,6 +93,21 @@ export async function getParentCoursework(
     childPath(reference) + '/coursework',
   )) as ParentCoursework[]
 }
+export async function getParentCourseworkSummary(
+  baseUrl: string,
+  reference: string,
+) {
+  return (await requestJson(
+    baseUrl,
+    childPath(reference) + '/coursework-summary',
+  )) as {
+    assigned: number
+    submitted: number
+    notSubmitted: number
+    late: number
+    feedbackAvailable: number
+  }
+}
 export async function getTeacherContacts(
   baseUrl: string,
   reference: string,

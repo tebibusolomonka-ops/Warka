@@ -37,4 +37,15 @@ export function registerParentPortalRoutes(
       },
     )
   }
+  app.get(
+    '/parent/children/:studentReference/coursework-summary',
+    { preHandler: authenticate },
+    async (request) => {
+      const { studentReference } = childParams.parse(request.params)
+      return getAcademic().courseworkSummary(
+        authenticatedUser(request).id,
+        studentReference,
+      )
+    },
+  )
 }

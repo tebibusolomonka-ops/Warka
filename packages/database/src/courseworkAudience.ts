@@ -63,6 +63,7 @@ export async function listVisibleCourseworkAssignments(
   database: PrismaClient,
   actorId: string,
   now = new Date(),
+  limit = 100,
 ) {
   const access = await findStudentAccessForUser(database, actorId)
   if (!access) return []
@@ -89,7 +90,7 @@ export async function listVisibleCourseworkAssignments(
         })),
     },
     orderBy: [{ dueAt: 'asc' }, { id: 'asc' }],
-    take: 100,
+    ...(limit > 0 ? { take: limit } : {}),
   })
 }
 

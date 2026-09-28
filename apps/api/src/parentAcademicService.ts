@@ -1,4 +1,4 @@
-import type { PrismaClient } from '@warka/database'
+import { summarizePersonalCoursework, type PrismaClient } from '@warka/database'
 import { eligibleParentChildren } from './parentPortalService.js'
 
 export class ParentChildNotFoundError extends Error {
@@ -17,6 +17,20 @@ export function prismaParentAcademicService(database: PrismaClient) {
     return child
   }
   return {
+    async courseworkSummary(userId: string, studentReference: string) {
+      const rows = await prismaParentAcademicService(database).coursework(
+        userId,
+        studentReference,
+      )
+      return summarizePersonalCoursework(
+        rows.map((row) => ({
+          dueAt: row.dueAt,
+          submittedAt: row.submittedAt,
+          submissionStatus: row.submissionStatus,
+          feedbackAvailable: row.feedback !== null,
+        })),
+      )
+    },
     async coursework(userId: string, studentReference: string) {
       const child = await requireChild(userId, studentReference)
       if (!child.schoolClassId) return []
@@ -62,7 +76,6 @@ export function prismaParentAcademicService(database: PrismaClient) {
           },
         },
         orderBy: [{ dueAt: 'asc' }, { id: 'asc' }],
-        take: 100,
       })
       return assignments.map((assignment) => {
         const submission = assignment.submissions[0]

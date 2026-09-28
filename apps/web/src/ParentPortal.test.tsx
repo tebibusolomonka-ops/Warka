@@ -7,6 +7,7 @@ import {
   getParentMaterials,
   getParentAnnouncements,
   getParentCoursework,
+  getParentCourseworkSummary,
   getParentConversations,
   getTeacherContacts,
 } from './parentApi'
@@ -17,6 +18,7 @@ vi.mock('./parentApi', () => ({
   getParentMaterials: vi.fn(),
   getParentAnnouncements: vi.fn(),
   getParentCoursework: vi.fn(),
+  getParentCourseworkSummary: vi.fn(),
   getParentConversations: vi.fn(),
   getTeacherContacts: vi.fn(),
   getParentConversation: vi.fn(),
@@ -83,6 +85,13 @@ beforeEach(() => {
       rubricScore: '8',
     },
   ])
+  vi.mocked(getParentCourseworkSummary).mockResolvedValue({
+    assigned: 1,
+    submitted: 1,
+    notSubmitted: 0,
+    late: 0,
+    feedbackAvailable: 1,
+  })
   vi.mocked(getTeacherContacts).mockResolvedValue([])
 })
 afterEach(cleanup)

@@ -11,6 +11,7 @@ import {
   getOwnCourseworkSubmission,
   getStudentCoursework,
   listStudentCoursework,
+  getStudentCourseworkSummary,
 } from './courseworkApi'
 
 vi.mock('./courseworkApi', async (importOriginal) => ({
@@ -18,6 +19,7 @@ vi.mock('./courseworkApi', async (importOriginal) => ({
   getOwnCourseworkSubmission: vi.fn(),
   getStudentCoursework: vi.fn(),
   listStudentCoursework: vi.fn(),
+  getStudentCourseworkSummary: vi.fn(),
 }))
 const assignmentId = '00000000-0000-4000-8000-000000000001'
 const schoolId = '00000000-0000-4000-8000-000000000002'
@@ -54,6 +56,13 @@ beforeEach(() => {
   vi.mocked(listStudentCoursework)
     .mockReset()
     .mockResolvedValue({ assignments: [assignment] })
+  vi.mocked(getStudentCourseworkSummary).mockReset().mockResolvedValue({
+    assigned: 1,
+    submitted: 0,
+    notSubmitted: 1,
+    late: 0,
+    feedbackAvailable: 0,
+  })
   vi.mocked(getStudentCoursework).mockReset().mockResolvedValue(detail)
   vi.mocked(getOwnCourseworkSubmission)
     .mockReset()

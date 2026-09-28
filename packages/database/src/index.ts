@@ -1078,3 +1078,7 @@ export {
   notifyCoursework,
   studentCourseworkRecipients,
 } from './courseworkNotifications.js'
+export {
+  summarizePersonalCoursework,
+  studentCourseworkSummary,
+} from './courseworkSummaries.js'

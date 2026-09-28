@@ -10,6 +10,7 @@ import {
   grantAssignmentExtension,
   mayManageCourseworkAssignment,
   listVisibleCourseworkAssignments,
+  studentCourseworkSummary,
   visibleCourseworkAssignmentForStudent,
   effectiveCourseworkDueAt,
   editableCourseworkDueAt,
@@ -502,6 +503,72 @@ export function registerCourseworkRoutes(
       }
     },
   )
+  app.get(
+    '/schools/:schoolId/coursework/:assignmentId/class-summary',
+    { preHandler: authenticate },
+    async (request) => {
+      const { schoolId, assignmentId } = assignment.parse(request.params)
+      const selected = await staffAssignment(
+        actor(request),
+        schoolId,
+        assignmentId,
+      )
+      const assignments = await db().courseworkAssignment.findMany({
+        where: {
+          schoolId,
+          academicYearId: selected.academicYearId,
+          schoolClassId: selected.schoolClassId,
+          subjectId: selected.subjectId,
+          status: { in: ['published', 'closed'] },
+        },
+        select: { id: true },
+      })
+      const enrollments = await db().enrollment.findMany({
+        where: {
+          schoolId,
+          academicYearId: selected.academicYearId,
+          schoolClassId: selected.schoolClassId,
+          status: 'approved',
+          withdrawnAt: null,
+        },
+        select: { studentId: true },
+      })
+      const submissions = await db().courseworkSubmission.findMany({
+        where: {
+          assignmentId: { in: assignments.map((item) => item.id) },
+          studentId: { in: enrollments.map((item) => item.studentId) },
+          status: 'submitted',
+        },
+        select: {
+          revisions: {
+            where: { submittedAt: { not: null } },
+            orderBy: { revisionNumber: 'desc' },
+            take: 1,
+            select: {
+              review: { select: { status: true } },
+              feedback: { select: { status: true, releasedAt: true } },
+            },
+          },
+        },
+      })
+      return {
+        assignmentsPublished: assignments.length,
+        submissionsReceived: submissions.length,
+        notSubmitted: Math.max(
+          0,
+          assignments.length * enrollments.length - submissions.length,
+        ),
+        pendingReview: submissions.filter(
+          (item) => item.revisions[0]?.review?.status === 'pending',
+        ).length,
+        feedbackReleased: submissions.filter(
+          (item) =>
+            item.revisions[0]?.feedback?.status === 'released' &&
+            item.revisions[0].feedback.releasedAt,
+        ).length,
+      }
+    },
+  )
   app.post(
     '/schools/:schoolId/coursework/:assignmentId/extensions',
     { preHandler: authenticate },
@@ -602,6 +669,22 @@ export function registerCourseworkRoutes(
           })),
         ),
       }
+    },
+  )
+  app.get(
+    '/student/coursework/summary',
+    { preHandler: authenticate },
+    async (request) => {
+      const access = await findStudentAccessForUser(db(), actor(request))
+      if (!access)
+        throw new CourseworkRouteAccessError('Student access required')
+      const assignments = await listVisibleCourseworkAssignments(
+        db(),
+        actor(request),
+        new Date(),
+        0,
+      )
+      return studentCourseworkSummary(db(), access.studentId, assignments)
     },
   )
   app.get(

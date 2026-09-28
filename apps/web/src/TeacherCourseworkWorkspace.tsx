@@ -7,6 +7,8 @@ import {
   getTeacherCoursework,
   getTeacherCourseworkAudience,
   getTeacherCourseworkCounts,
+  getTeacherClassCourseworkSummary,
+  type ClassCourseworkSummary,
   grantTeacherCourseworkExtension,
   getTeacherSubmission,
   getTeacherRubric,
@@ -49,6 +51,8 @@ export function TeacherCourseworkWorkspace({
     attachments: CourseworkAttachment[]
   } | null>(null)
   const [counts, setCounts] = useState<CourseworkCounts | null>(null)
+  const [classSummary, setClassSummary] =
+    useState<ClassCourseworkSummary | null>(null)
   const [audience, setAudience] = useState<CourseworkAudience>([])
   const [contextId, setContextId] = useState('')
   const [periodId, setPeriodId] = useState('')
@@ -90,6 +94,7 @@ export function TeacherCourseworkWorkspace({
     if (!selectedId) {
       setDetail(null)
       setCounts(null)
+      setClassSummary(null)
       setAudience([])
       return
     }
@@ -97,12 +102,14 @@ export function TeacherCourseworkWorkspace({
     Promise.all([
       getTeacherCoursework(baseUrl, schoolId, selectedId),
       getTeacherCourseworkCounts(baseUrl, schoolId, selectedId),
+      getTeacherClassCourseworkSummary(baseUrl, schoolId, selectedId),
       getTeacherCourseworkAudience(baseUrl, schoolId, selectedId),
     ])
-      .then(([nextDetail, nextCounts, nextAudience]) => {
+      .then(([nextDetail, nextCounts, nextSummary, nextAudience]) => {
         if (active) {
           setDetail(nextDetail)
           setCounts(nextCounts)
+          setClassSummary(nextSummary)
           setAudience(nextAudience.students)
         }
       })
@@ -266,6 +273,15 @@ export function TeacherCourseworkWorkspace({
             <p>
               Assigned {counts.assigned} · Submitted {counts.submitted} · Not
               submitted {counts.notSubmitted} · Late {counts.late}
+            </p>
+          )}
+          {classSummary && (
+            <p>
+              Class: published assignments {classSummary.assignmentsPublished} ·
+              Submissions received {classSummary.submissionsReceived} · Not
+              submitted {classSummary.notSubmitted} · Pending review{' '}
+              {classSummary.pendingReview} · Feedback released{' '}
+              {classSummary.feedbackReleased}
             </p>
           )}
           {current.status === 'draft' && (

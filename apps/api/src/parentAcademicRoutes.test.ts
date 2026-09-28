@@ -18,6 +18,7 @@ describe('parent academic routes', () => {
       announcements: vi.fn().mockResolvedValue([{ title: 'Notice' }]),
       materials: vi.fn().mockResolvedValue([{ title: 'Material' }]),
       coursework: vi.fn().mockResolvedValue([{ title: 'Assignment' }]),
+      courseworkSummary: vi.fn().mockResolvedValue({ assigned: 1 }),
     } as unknown as ParentAcademicService
     const app = Fastify()
     registerParentPortalRoutes(
@@ -41,6 +42,12 @@ describe('parent academic routes', () => {
       expect(response.statusCode).toBe(200)
       expect(academic[resource]).toHaveBeenCalledWith(user.id, 'WKA-123')
     }
+    const summary = await app.inject({
+      method: 'GET',
+      url: '/parent/children/WKA-123/coursework-summary',
+    })
+    expect(summary.statusCode).toBe(200)
+    expect(academic.courseworkSummary).toHaveBeenCalledWith(user.id, 'WKA-123')
     await app.close()
   })
 })
