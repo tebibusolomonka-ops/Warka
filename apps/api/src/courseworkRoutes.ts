@@ -20,6 +20,7 @@ import {
   listOwnSubmissionRevisions,
   listCourseworkSubmissionsForStaff,
   findSchoolMembership,
+  findStudentAccessForUser,
   type PrismaClient,
 } from '@warka/database'
 import { authenticatedUser } from './authenticateRequest.js'
@@ -368,9 +369,23 @@ export function registerCourseworkRoutes(
   app.get(
     '/student/coursework',
     { preHandler: authenticate },
-    async (request) => ({
-      assignments: await listVisibleCourseworkAssignments(db(), actor(request)),
-    }),
+    async (request) => {
+      const rows = await listVisibleCourseworkAssignments(db(), actor(request))
+      const access = await findStudentAccessForUser(db(), actor(request))
+      if (!access) return { assignments: [] }
+      return {
+        assignments: await Promise.all(
+          rows.map(async (row) => ({
+            ...row,
+            effectiveDueAt: await effectiveCourseworkDueAt(
+              db(),
+              row,
+              access.studentId,
+            ),
+          })),
+        ),
+      }
+    },
   )
   app.get(
     '/student/coursework/:assignmentId',
@@ -404,8 +419,27 @@ export function registerCourseworkRoutes(
         actor(request),
         assignmentId,
       )
+      const [schoolClass, subject, teacher] = await Promise.all([
+        db().schoolClass.findUnique({
+          where: { id: audience.assignment.schoolClassId },
+          select: { name: true },
+        }),
+        db().subject.findUnique({
+          where: { id: audience.assignment.subjectId },
+          select: { name: true },
+        }),
+        db().user.findUnique({
+          where: { id: audience.assignment.createdById },
+          select: { displayName: true },
+        }),
+      ])
       return {
         assignment: audience.assignment,
+        context: {
+          className: schoolClass?.name ?? 'Class',
+          subjectName: subject?.name ?? 'Subject',
+          teacherName: teacher?.displayName ?? 'Teacher',
+        },
         effectiveDueAt: await effectiveCourseworkDueAt(
           db(),
           audience.assignment,

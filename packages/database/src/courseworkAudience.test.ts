@@ -142,7 +142,7 @@ describe('coursework audience', () => {
     expect(database.courseworkAssignment.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({
-          status: 'published',
+          status: { in: ['published', 'closed'] },
           OR: [{ schoolId, academicYearId: yearId, schoolClassId: classId }],
         }),
       }),

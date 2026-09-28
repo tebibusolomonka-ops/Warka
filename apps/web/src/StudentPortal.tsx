@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { StudentDocuments } from './StudentDocuments'
 import { AcademicProgressSummary } from './AcademicProgressSummary'
 import { AttendanceHistoryView } from './AttendanceHistoryView'
+import { StudentCourseworkWorkspace } from './StudentCourseworkWorkspace'
 import { getOwnStudentAttendance } from './attendanceApi'
 import type {
   StudentPortalIdentity,
@@ -29,6 +30,7 @@ type Section =
   | 'Announcements'
   | 'Documents'
   | 'Attendance'
+  | 'Coursework'
 
 export function StudentPortal({
   baseUrl,
@@ -146,6 +148,7 @@ export function StudentPortal({
             'Announcements',
             'Documents',
             'Attendance',
+            'Coursework',
           ] as const
         ).map((item) => (
           <button
@@ -168,6 +171,12 @@ export function StudentPortal({
         <AttendanceHistoryView
           requestKey={baseUrl}
           load={() => getOwnStudentAttendance(baseUrl)}
+        />
+      )}
+      {section === 'Coursework' && (
+        <StudentCourseworkWorkspace
+          baseUrl={baseUrl}
+          onSessionExpired={onSessionExpired}
         />
       )}
       {section === 'Overview' && (

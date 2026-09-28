@@ -33,6 +33,7 @@ const classId = '00000000-0000-4000-8000-000000000004'
 const subjectId = '00000000-0000-4000-8000-000000000005'
 const row = {
   id: assignmentId,
+  schoolId,
   academicYearId: yearId,
   schoolClassId: classId,
   subjectId,

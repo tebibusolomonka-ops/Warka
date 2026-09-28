@@ -128,7 +128,10 @@ export async function requireFileAssetAccess(
       )
     )
       return asset
-    if (action !== 'read' || attachment.assignment.status !== 'published')
+    if (
+      action !== 'read' ||
+      !['published', 'closed'].includes(attachment.assignment.status)
+    )
       throw new FileAssetAccessError()
     const visible = await visibleCourseworkAssignmentForStudent(
       database,

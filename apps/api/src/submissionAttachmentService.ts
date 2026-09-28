@@ -31,6 +31,7 @@ export function submissionAttachmentService(
     )
     if (
       !audience ||
+      audience.assignment.status !== 'published' ||
       audience.assignment.schoolId !== schoolId ||
       (await effectiveCourseworkDueAt(
         database,

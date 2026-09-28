@@ -45,7 +45,7 @@ export async function visibleCourseworkAssignmentForStudent(
   const access = await findStudentAccessForUser(database, actorId)
   if (!access) return null
   const assignment = await database.courseworkAssignment.findFirst({
-    where: { id: assignmentId, status: 'published' },
+    where: { id: assignmentId, status: { in: ['published', 'closed'] } },
   })
   if (!assignment) return null
   const enrollment = await eligibleCourseworkEnrollment(
@@ -79,7 +79,7 @@ export async function listVisibleCourseworkAssignments(
   if (!enrollments.length) return []
   return database.courseworkAssignment.findMany({
     where: {
-      status: 'published',
+      status: { in: ['published', 'closed'] },
       OR: enrollments
         .filter((item) => item.schoolClassId)
         .map((item) => ({

@@ -46,7 +46,11 @@ describe('student coursework submissions', () => {
     vi.mocked(visibleCourseworkAssignmentForStudent).mockResolvedValue({
       studentId: id,
       enrollment: { id },
-      assignment: { schoolId: id, dueAt: new Date('2026-12-01') },
+      assignment: {
+        schoolId: id,
+        status: 'published',
+        dueAt: new Date('2026-12-01'),
+      },
     } as never)
     await startCourseworkSubmission(database, id, id, new Date('2026-09-01'))
     expect(database.courseworkSubmission.create).toHaveBeenCalledWith({

@@ -55,7 +55,7 @@ beforeEach(() => {
     .mockReset()
     .mockResolvedValue({
       studentId: id,
-      assignment: { dueAt: new Date('2026-12-01') },
+      assignment: { status: 'published', dueAt: new Date('2026-12-01') },
     } as never)
 })
 describe('submission revisions', () => {

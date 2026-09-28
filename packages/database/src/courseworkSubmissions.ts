@@ -24,6 +24,7 @@ export async function startCourseworkSubmission(
   )
   if (
     !audience ||
+    audience.assignment.status !== 'published' ||
     (await effectiveCourseworkDueAt(
       database,
       audience.assignment,
@@ -47,8 +48,8 @@ export async function startCourseworkSubmission(
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&
       error.code === 'P2002'
-    )
-      return database.courseworkSubmission.findUniqueOrThrow({
+    ) {
+      const existing = await database.courseworkSubmission.findUniqueOrThrow({
         where: {
           assignmentId_studentId: {
             assignmentId,
@@ -56,6 +57,17 @@ export async function startCourseworkSubmission(
           },
         },
       })
+      if (existing.status === 'withdrawn')
+        return database.courseworkSubmission.update({
+          where: { id: existing.id },
+          data: {
+            status: 'draft',
+            submittedAt: null,
+            enrollmentId: audience.enrollment.id,
+          },
+        })
+      return existing
+    }
     throw error
   }
 }

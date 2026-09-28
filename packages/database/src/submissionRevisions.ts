@@ -23,6 +23,7 @@ async function editableAudience(
   )
   if (
     !audience ||
+    audience.assignment.status !== 'published' ||
     (await effectiveCourseworkDueAt(
       database,
       audience.assignment,
@@ -163,5 +164,14 @@ export async function listOwnSubmissionRevisions(
   return database.submissionRevision.findMany({
     where: { submissionId: submission.id },
     orderBy: { revisionNumber: 'desc' },
+    include: {
+      attachments: {
+        where: { removedAt: null },
+        select: {
+          id: true,
+          fileAsset: { select: { originalFileName: true, status: true } },
+        },
+      },
+    },
   })
 }
