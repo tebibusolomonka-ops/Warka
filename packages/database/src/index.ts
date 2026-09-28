@@ -945,3 +945,10 @@ export {
   validateAssessmentSchedule,
   scheduleAssessment,
 } from './assessmentScheduleValidation.js'
+
+export {
+  AssessmentSessionStateError,
+  createAssessmentSession,
+  openAssessmentSession,
+  completeAssessmentSession,
+} from './assessmentSessions.js'

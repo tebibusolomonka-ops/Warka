@@ -118,6 +118,13 @@ enum AssessmentScheduleStatus {
   cancelled
 }
 
+enum AssessmentSessionStatus {
+  planned
+  open
+  completed
+  cancelled
+}
+
 enum StudentAttendanceStatus {
   present
   absent
@@ -442,6 +449,7 @@ enum MaintenanceWindowStatus {
 model School {
   assessmentRooms AssessmentRoom[]
   assessmentSchedules AssessmentSchedule[]
+  assessmentSessions AssessmentSession[]
   calendarDays SchoolCalendarDay[]
   timetablePeriods TimetablePeriod[]
   timetableEntries ClassTimetableEntry[]
@@ -1220,6 +1228,7 @@ model GradeLevel {
 
 model SchoolClass {
   assessmentSchedules AssessmentSchedule[]
+  assessmentSessions AssessmentSession[]
   timetableEntries ClassTimetableEntry[]
   timetables ClassTimetable[]
   attendanceSessions AttendanceSession[]
@@ -1706,6 +1715,7 @@ model AssessmentRoom {
 }
 
 model AssessmentSchedule {
+  sessions AssessmentSession[]
   id String @id @default(uuid())
   schoolId String
   academicYearId String
@@ -1731,6 +1741,28 @@ model AssessmentSchedule {
   @@unique([id, schoolId])
   @@index([schoolId, scheduledDate, startTime])
   @@index([assessmentId, status])
+}
+
+model AssessmentSession {
+  id String @id @default(uuid())
+  schoolId String
+  scheduleId String
+  schoolClassId String
+  sessionDate DateTime @db.Date
+  startTime String @db.VarChar(5)
+  endTime String @db.VarChar(5)
+  status AssessmentSessionStatus @default(planned)
+  openedAt DateTime?
+  completedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  school School @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  schedule AssessmentSchedule @relation(fields: [scheduleId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  schoolClass SchoolClass @relation(fields: [schoolClassId, schoolId], references: [id, schoolId], onDelete: Restrict)
+
+  @@unique([id, schoolId])
+  @@unique([scheduleId])
+  @@index([schoolId, schoolClassId, sessionDate])
 }
 
 model Mark {
