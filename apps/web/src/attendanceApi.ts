@@ -134,3 +134,19 @@ export async function getAttendanceHistory(
     `${root(schoolId)}/students/${encodeURIComponent(studentId)}/history`,
   )) as AttendanceHistory
 }
+export async function getOwnStudentAttendance(baseUrl: string) {
+  return (await requestJson(
+    baseUrl,
+    '/student/attendance',
+  )) as AttendanceHistory
+}
+export async function getLinkedChildAttendance(
+  baseUrl: string,
+  schoolId: string,
+  studentReference: string,
+) {
+  return (await requestJson(
+    baseUrl,
+    `/parent/children/${encodeURIComponent(studentReference)}/attendance?schoolId=${encodeURIComponent(schoolId)}`,
+  )) as AttendanceHistory
+}

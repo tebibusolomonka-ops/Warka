@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { StudentDocuments } from './StudentDocuments'
+import { AttendanceHistoryView } from './AttendanceHistoryView'
+import { getOwnStudentAttendance } from './attendanceApi'
 import type {
   StudentPortalIdentity,
   StudentResult,
@@ -20,7 +22,12 @@ type ResultState =
 type LoadState<T> =
   { status: 'loading' } | { status: 'error' } | { status: 'loaded'; data: T }
 type Section =
-  'Overview' | 'Results' | 'Materials' | 'Announcements' | 'Documents'
+  | 'Overview'
+  | 'Results'
+  | 'Materials'
+  | 'Announcements'
+  | 'Documents'
+  | 'Attendance'
 
 export function StudentPortal({
   baseUrl,
@@ -137,6 +144,7 @@ export function StudentPortal({
             'Materials',
             'Announcements',
             'Documents',
+            'Attendance',
           ] as const
         ).map((item) => (
           <button
@@ -153,6 +161,12 @@ export function StudentPortal({
         <StudentDocuments
           baseUrl={baseUrl}
           onSessionExpired={onSessionExpired}
+        />
+      )}
+      {section === 'Attendance' && (
+        <AttendanceHistoryView
+          requestKey={baseUrl}
+          load={() => getOwnStudentAttendance(baseUrl)}
         />
       )}
       {section === 'Overview' && (

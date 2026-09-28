@@ -37,11 +37,83 @@ export function registerAttendanceRoutes(
 ) {
   const actor = (request: Parameters<typeof authenticatedUser>[0]) =>
     authenticatedUser(request).id
+  async function familyHistory(studentId: string, schoolId?: string) {
+    const records = await getDatabase().studentAttendanceRecord.findMany({
+      where: {
+        studentId,
+        ...(schoolId ? { schoolId } : {}),
+        session: { status: 'finalized' },
+      },
+      include: {
+        session: {
+          select: {
+            date: true,
+            schoolClass: { select: { name: true } },
+            subject: { select: { name: true } },
+          },
+        },
+      },
+      orderBy: { recordedAt: 'desc' },
+      take: 100,
+    })
+    return {
+      records: records.map((record) => ({
+        id: record.id,
+        date: record.session.date,
+        className: record.session.schoolClass.name,
+        subjectName: record.session.subject?.name ?? null,
+        status: record.status,
+      })),
+    }
+  }
   async function scopedSession(schoolId: string, sessionId: string) {
     return getDatabase().attendanceSession.findFirst({
       where: { id: sessionId, schoolId },
     })
   }
+
+  app.get(
+    '/student/attendance',
+    { preHandler: authenticate },
+    async (request, reply) => {
+      const access = await getDatabase().studentAccess.findUnique({
+        where: { userId: actor(request) },
+      })
+      if (!access) return reply.code(403).send()
+      return familyHistory(access.studentId)
+    },
+  )
+
+  app.get(
+    '/parent/children/:studentReference/attendance',
+    { preHandler: authenticate },
+    async (request, reply) => {
+      const { studentReference } = z
+        .strictObject({ studentReference: z.string().min(1).max(120) })
+        .parse(request.params)
+      const { schoolId } = schoolParams.parse(request.query)
+      const access = await getDatabase().guardianAccess.findUnique({
+        where: { userId: actor(request) },
+      })
+      if (!access) return reply.code(403).send()
+      const student = await getDatabase().student.findUnique({
+        where: { studentReference },
+        select: { id: true },
+      })
+      if (!student) return reply.code(404).send()
+      const link = await getDatabase().studentGuardian.findFirst({
+        where: {
+          guardianId: access.guardianId,
+          studentId: student.id,
+          verificationStatus: 'verified',
+          verificationSchoolId: schoolId,
+          revokedAt: null,
+        },
+      })
+      if (!link) return reply.code(403).send()
+      return familyHistory(student.id, schoolId)
+    },
+  )
 
   app.get(
     '/schools/:schoolId/attendance/sessions',

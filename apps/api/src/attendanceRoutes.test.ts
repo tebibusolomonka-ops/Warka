@@ -8,19 +8,17 @@ const studentId = '00000000-0000-4000-8000-000000000002'
 const actorId = '00000000-0000-4000-8000-000000000003'
 
 function fixture(own: boolean) {
-  const findMany = vi
-    .fn()
-    .mockResolvedValue([
-      {
-        id: studentId,
-        status: 'present',
-        session: {
-          date: new Date('2026-09-28'),
-          schoolClass: { name: 'A' },
-          subject: null,
-        },
+  const findMany = vi.fn().mockResolvedValue([
+    {
+      id: studentId,
+      status: 'present',
+      session: {
+        date: new Date('2026-09-28'),
+        schoolClass: { name: 'A' },
+        subject: null,
       },
-    ])
+    },
+  ])
   const database = {
     studentAccess: {
       findUnique: vi.fn().mockResolvedValue(own ? { studentId } : null),
@@ -73,6 +71,45 @@ describe('attendance history API', () => {
       })
       expect(response.statusCode).toBe(403)
       expect(findMany).not.toHaveBeenCalled()
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('requires a verified guardian link before returning child attendance', async () => {
+    const findMany = vi.fn().mockResolvedValue([])
+    const database = {
+      guardianAccess: {
+        findUnique: vi.fn().mockResolvedValue({ guardianId: actorId }),
+      },
+      student: { findUnique: vi.fn().mockResolvedValue({ id: studentId }) },
+      studentGuardian: { findFirst: vi.fn().mockResolvedValue(null) },
+      studentAttendanceRecord: { findMany },
+    } as unknown as PrismaClient
+    const app = Fastify()
+    app.decorateRequest('currentUser', null)
+    registerAttendanceRoutes(
+      app,
+      () => database,
+      async (request) => {
+        request.currentUser = { id: actorId } as User
+      },
+    )
+    try {
+      const response = await app.inject(
+        `/parent/children/CHILD-1/attendance?schoolId=${schoolId}`,
+      )
+      expect(response.statusCode).toBe(403)
+      expect(findMany).not.toHaveBeenCalled()
+      expect(database.studentGuardian.findFirst).toHaveBeenCalledWith({
+        where: {
+          guardianId: actorId,
+          studentId,
+          verificationStatus: 'verified',
+          verificationSchoolId: schoolId,
+          revokedAt: null,
+        },
+      })
     } finally {
       await app.close()
     }

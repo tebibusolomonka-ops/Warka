@@ -10,6 +10,8 @@ import type {
   TeacherContact,
 } from '@warka/shared'
 import { ApiError } from './api'
+import { AttendanceHistoryView } from './AttendanceHistoryView'
+import { getLinkedChildAttendance } from './attendanceApi'
 import {
   getParentChildren,
   getParentResults,
@@ -25,7 +27,12 @@ import {
 type Load<T> =
   { status: 'loading' } | { status: 'error' } | { status: 'loaded'; data: T }
 type Section =
-  'Overview' | 'Results' | 'Materials' | 'Announcements' | 'Messages'
+  | 'Overview'
+  | 'Results'
+  | 'Materials'
+  | 'Announcements'
+  | 'Messages'
+  | 'Attendance'
 
 function safeResource(url: string) {
   try {
@@ -290,6 +297,7 @@ export function ParentPortal({
                 'Materials',
                 'Announcements',
                 'Messages',
+                'Attendance',
               ] as const
             ).map((item) => (
               <button
@@ -319,6 +327,18 @@ export function ParentPortal({
                 <dd>{selected.relationship}</dd>
               </dl>
             </div>
+          )}
+          {selected && section === 'Attendance' && (
+            <AttendanceHistoryView
+              requestKey={`${selected.schoolId}:${selected.studentReference}`}
+              load={() =>
+                getLinkedChildAttendance(
+                  baseUrl,
+                  selected.schoolId,
+                  selected.studentReference,
+                )
+              }
+            />
           )}
           {['Results', 'Materials', 'Announcements'].includes(section) && (
             <div className="academic-panel">
