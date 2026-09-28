@@ -3,6 +3,8 @@ import {
   findStudentAccessForUser,
   hasOrganizationAdminRole,
   mayManageClassSubject,
+  mayManageCourseworkAssignment,
+  visibleCourseworkAssignmentForStudent,
   type PrismaClient,
 } from '@warka/database'
 import { eligibleParentChildren } from './parentPortalService.js'
@@ -103,6 +105,38 @@ export async function requireFileAssetAccess(
       )
     )
       return asset
+    throw new FileAssetAccessError()
+  }
+
+  if (asset.purpose === 'courseworkAssignment') {
+    if (!asset.schoolId) throw new FileAssetAccessError()
+    const attachment = await database.courseworkAttachment.findUnique({
+      where: { fileAssetId: asset.id },
+      include: { assignment: true },
+    })
+    if (
+      !attachment ||
+      attachment.removedAt ||
+      attachment.schoolId !== asset.schoolId
+    )
+      throw new FileAssetAccessError()
+    if (
+      await mayManageCourseworkAssignment(
+        database,
+        actorId,
+        attachment.assignment,
+      )
+    )
+      return asset
+    if (action !== 'read' || attachment.assignment.status !== 'published')
+      throw new FileAssetAccessError()
+    const visible = await visibleCourseworkAssignmentForStudent(
+      database,
+      actorId,
+      attachment.assignmentId,
+      now,
+    )
+    if (visible) return asset
     throw new FileAssetAccessError()
   }
 

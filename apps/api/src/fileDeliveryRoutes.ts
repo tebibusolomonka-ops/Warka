@@ -18,6 +18,10 @@ const materialParams = z.strictObject({
   materialId: z.uuid(),
 })
 const schoolParams = z.strictObject({ schoolId: z.uuid() })
+const courseworkParams = schoolParams.extend({
+  assignmentId: z.uuid(),
+  attachmentId: z.uuid(),
+})
 
 function disposition(name: string) {
   const safe = [...name]
@@ -79,6 +83,27 @@ export function registerFileDeliveryRoutes(
       if (!material?.fileAsset) throw new FileAssetAccessError()
       return deliver(
         material.fileAsset.id,
+        authenticatedUser(request).id,
+        schoolId,
+        reply,
+      )
+    },
+  )
+
+  app.get(
+    '/schools/:schoolId/coursework/:assignmentId/attachments/:attachmentId/download',
+    { preHandler: authenticate, compress: false },
+    async (request, reply) => {
+      const { schoolId, assignmentId, attachmentId } = courseworkParams.parse(
+        request.params,
+      )
+      const attachment = await getDatabase().courseworkAttachment.findFirst({
+        where: { id: attachmentId, schoolId, assignmentId, removedAt: null },
+        select: { fileAssetId: true },
+      })
+      if (!attachment) throw new FileAssetAccessError()
+      return deliver(
+        attachment.fileAssetId,
         authenticatedUser(request).id,
         schoolId,
         reply,

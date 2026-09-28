@@ -2,7 +2,10 @@ import { createHash } from 'node:crypto'
 import { fileTypeFromBuffer } from 'file-type'
 
 export type UploadPurpose =
-  'learningMaterial' | 'schoolBranding' | 'issuedDocument'
+  | 'learningMaterial'
+  | 'schoolBranding'
+  | 'issuedDocument'
+  | 'courseworkAssignment'
 
 export class FileValidationError extends Error {
   readonly status = 'quarantined' as const
@@ -31,6 +34,15 @@ const accepted = {
   issuedDocument: {
     maxBytes: 20 * 1024 * 1024,
     types: { 'application/pdf': ['.pdf'] },
+  },
+  courseworkAssignment: {
+    maxBytes: 20 * 1024 * 1024,
+    types: {
+      'application/pdf': ['.pdf'],
+      'text/plain': ['.txt'],
+      'image/png': ['.png'],
+      'image/jpeg': ['.jpg', '.jpeg'],
+    },
   },
 } as const
 

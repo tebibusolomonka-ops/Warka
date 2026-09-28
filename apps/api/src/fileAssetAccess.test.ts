@@ -5,6 +5,8 @@ import {
   findStudentAccessForUser,
   hasOrganizationAdminRole,
   mayManageClassSubject,
+  mayManageCourseworkAssignment,
+  visibleCourseworkAssignmentForStudent,
 } from '@warka/database'
 import { eligibleParentChildren } from './parentPortalService.js'
 import { prismaDocumentDownloadService } from './documentDownloadService.js'
@@ -21,6 +23,8 @@ vi.mock('@warka/database', async (importOriginal) => {
     findStudentAccessForUser: vi.fn(),
     hasOrganizationAdminRole: vi.fn(),
     mayManageClassSubject: vi.fn(),
+    mayManageCourseworkAssignment: vi.fn(),
+    visibleCourseworkAssignmentForStudent: vi.fn(),
   }
 })
 vi.mock('./parentPortalService.js', () => ({ eligibleParentChildren: vi.fn() }))
@@ -37,7 +41,8 @@ function fixture(
   purpose:
     | 'learningMaterial'
     | 'issuedDocument'
-    | 'schoolBranding' = 'learningMaterial',
+    | 'schoolBranding'
+    | 'courseworkAssignment' = 'learningMaterial',
 ) {
   const asset = {
     id: assetId,
@@ -47,12 +52,28 @@ function fixture(
     learningMaterialId: purpose === 'learningMaterial' ? materialId : null,
     issuedDocumentId: purpose === 'issuedDocument' ? materialId : null,
     storageKey: 'asset_private',
+    scanRequired: purpose === 'courseworkAssignment',
   }
   const database = {
     user: {
       findUnique: vi.fn().mockResolvedValue({ accountStatus: 'active' }),
     },
     fileAsset: { findUnique: vi.fn().mockResolvedValue(asset) },
+    fileScan: {
+      findFirst: vi
+        .fn()
+        .mockResolvedValue({ status: 'clean', result: 'clean' }),
+    },
+    courseworkAttachment: {
+      findUnique: vi
+        .fn()
+        .mockResolvedValue({
+          assignmentId: materialId,
+          schoolId,
+          removedAt: null,
+          assignment: { id: materialId, status: 'published' },
+        }),
+    },
     learningMaterial: {
       findUnique: vi.fn().mockResolvedValue({
         id: materialId,
@@ -77,6 +98,10 @@ beforeEach(() => {
   vi.mocked(findStudentAccessForUser).mockReset().mockResolvedValue(null)
   vi.mocked(hasOrganizationAdminRole).mockReset().mockResolvedValue(false)
   vi.mocked(mayManageClassSubject).mockReset().mockResolvedValue(false)
+  vi.mocked(mayManageCourseworkAssignment).mockReset().mockResolvedValue(false)
+  vi.mocked(visibleCourseworkAssignmentForStudent)
+    .mockReset()
+    .mockResolvedValue(null)
   vi.mocked(eligibleParentChildren).mockReset().mockResolvedValue([])
   vi.mocked(prismaDocumentDownloadService)
     .mockReset()
@@ -86,6 +111,25 @@ beforeEach(() => {
 })
 
 describe('file asset authorization', () => {
+  it('requires a clean scan and current assignment audience for coursework downloads', async () => {
+    const { database } = fixture('courseworkAssignment')
+    await expect(
+      requireFileAssetAccess(database, actorId, assetId, 'read'),
+    ).rejects.toBeInstanceOf(FileAssetAccessError)
+    vi.mocked(visibleCourseworkAssignmentForStudent).mockResolvedValue({
+      id: materialId,
+    } as never)
+    await expect(
+      requireFileAssetAccess(database, actorId, assetId, 'read'),
+    ).resolves.toMatchObject({ id: assetId })
+    vi.mocked(database.fileScan.findFirst).mockResolvedValue({
+      status: 'quarantined',
+      result: 'infected',
+    } as never)
+    await expect(
+      requireFileAssetAccess(database, actorId, assetId, 'read'),
+    ).rejects.toBeInstanceOf(FileAssetAccessError)
+  })
   it('requires current teaching control to manage a learning file', async () => {
     const { database } = fixture()
     await expect(

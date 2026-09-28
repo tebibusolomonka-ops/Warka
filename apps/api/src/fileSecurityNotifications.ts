@@ -5,13 +5,13 @@ type Event = 'processing' | 'quarantined' | 'failed' | 'rescanComplete'
 
 const messages: Record<Event, { title: string; message: string }> = {
   processing: {
-    title: 'Learning material processing',
-    message: 'Your uploaded material is awaiting a security scan.',
+    title: 'File processing',
+    message: 'Your uploaded file is awaiting a security scan.',
   },
   quarantined: {
-    title: 'Learning material rejected',
+    title: 'File rejected',
     message:
-      'Your uploaded material did not pass its security scan. Contact operations for review.',
+      'Your uploaded file did not pass its security scan. Contact operations for review.',
   },
   failed: {
     title: 'File scan needs attention',

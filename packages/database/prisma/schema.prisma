@@ -442,6 +442,7 @@ enum FileAssetPurpose {
   learningMaterial
   schoolBranding
   issuedDocument
+  courseworkAssignment
 }
 
 enum FileAssetStatus {
@@ -551,6 +552,7 @@ model School {
 }
 
 model User {
+  courseworkAttachmentsCreated CourseworkAttachment[] @relation("CourseworkAttachmentCreator")
   courseworkAssignmentsCreated CourseworkAssignment[] @relation("CourseworkAssignmentCreator")
   gradebookLockActors GradebookLockEvent[]
   reviewedMarkCorrections MarkCorrection[]
@@ -647,6 +649,7 @@ model User {
 }
 
 model FileAsset {
+  courseworkAttachment CourseworkAttachment?
   id String @id @default(uuid())
   schoolId String?
   ownerUserId String?
@@ -1770,6 +1773,7 @@ model Assessment {
 }
 
 model CourseworkAssignment {
+  attachments CourseworkAttachment[]
   id String @id @default(uuid())
   schoolId String
   academicYearId String
@@ -1801,6 +1805,22 @@ model CourseworkAssignment {
   @@unique([id, schoolId])
   @@index([schoolId, academicYearId, schoolClassId, subjectId, status])
   @@index([teachingAssignmentId, status])
+}
+
+model CourseworkAttachment {
+  id String @id @default(uuid())
+  schoolId String
+  assignmentId String
+  fileAssetId String @unique
+  createdById String
+  createdAt DateTime @default(now())
+  removedAt DateTime?
+  assignment CourseworkAssignment @relation(fields: [assignmentId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  fileAsset FileAsset @relation(fields: [fileAssetId], references: [id], onDelete: Restrict)
+  createdBy User @relation("CourseworkAttachmentCreator", fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@index([assignmentId, removedAt])
+  @@index([schoolId, createdAt])
 }
 
 model MarkEntryWindow {
