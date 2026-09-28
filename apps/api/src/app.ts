@@ -17,6 +17,7 @@ import {
   AssessmentInvigilationError,
   MarkEntryWindowStateError,
   GradebookLockStateError,
+  MarkModerationStateError,
   AdministratorRecoveryPermissionError,
   AccountLifecyclePermissionError,
   StaffOffboardingPermissionError,
@@ -179,6 +180,7 @@ import { registerAcademicRolloverRoutes } from './academicRolloverRoutes.js'
 import { registerTimetableRoutes } from './timetableRoutes.js'
 import { registerAttendanceRoutes } from './attendanceRoutes.js'
 import { registerAssessmentScheduleRoutes } from './assessmentScheduleRoutes.js'
+import { registerGradebookRoutes } from './gradebookRoutes.js'
 import {
   prismaAcademicRolloverService,
   type AcademicRolloverService,
@@ -498,6 +500,7 @@ export function buildApp(
     registerTimetableRoutes(app, getDatabase, authenticate)
     registerAttendanceRoutes(app, getDatabase, authenticate)
     registerAssessmentScheduleRoutes(app, getDatabase, authenticate)
+    registerGradebookRoutes(app, getDatabase, authenticate)
     registerEnrollmentRoutes(
       app,
       getStore,
@@ -532,7 +535,8 @@ export function buildApp(
       error instanceof MakeUpAssessmentStateError ||
       error instanceof AssessmentInvigilationError ||
       error instanceof MarkEntryWindowStateError ||
-      error instanceof GradebookLockStateError
+      error instanceof GradebookLockStateError ||
+      error instanceof MarkModerationStateError
     )
       return reply.code(409).send({
         error: { code: 'ASSESSMENT_STATE', message: error.message },
