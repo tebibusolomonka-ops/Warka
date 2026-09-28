@@ -306,6 +306,23 @@ export function registerTimetableRoutes(
     },
   )
   app.get(
+    '/schools/:schoolId/timetable/me/calendar-days',
+    { preHandler: authenticate },
+    async (request, reply) => {
+      const { schoolId } = school.parse(request.params)
+      const { academicYearId } = yearQuery.parse(request.query)
+      if (!(await activeTeacher(authenticatedUser(request).id, schoolId)))
+        return reply.code(403).send()
+      return {
+        days: await listSchoolCalendarDays(
+          getDatabase(),
+          schoolId,
+          academicYearId,
+        ),
+      }
+    },
+  )
+  app.get(
     '/schools/:schoolId/timetable/me',
     { preHandler: authenticate },
     async (request, reply) => {

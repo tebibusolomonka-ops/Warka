@@ -187,3 +187,14 @@ export async function getOwnTeacherTimetable(
   )) as { entries: ClassTimetableEntry[] }
   return result.entries
 }
+export async function getOwnTeacherCalendarDays(
+  baseUrl: string,
+  schoolId: string,
+  academicYearId: string,
+) {
+  const result = (await requestJson(
+    baseUrl,
+    `${path(schoolId)}/timetable/me/calendar-days?academicYearId=${encodeURIComponent(academicYearId)}`,
+  )) as { days: SchoolCalendarDay[] }
+  return result.days
+}
