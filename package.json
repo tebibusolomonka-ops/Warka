@@ -28,6 +28,7 @@
     "build": "pnpm db:generate && pnpm -r build",
     "lint": "eslint apps packages tests playwright.config.ts",
     "format:check": "prettier --check package.json apps packages tests playwright.config.ts",
+    "metrics:code": "node scripts/code-metrics.mjs",
     "db:up": "docker compose up -d --wait",
     "db:down": "docker compose down",
     "db:migrate": "pnpm db:deploy",
