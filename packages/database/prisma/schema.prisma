@@ -215,6 +215,7 @@ enum ReportingPeriodStatus {
 enum ReportingSubmissionStatus {
   draft
   submitted
+  underReview
   approved
   returned
 }
@@ -961,6 +962,7 @@ model ReportingSubmission {
   schoolId          String
   status            ReportingSubmissionStatus @default(draft)
   currentVersion    Int                       @default(0)
+  acceptedVersion   Int?
   snapshot          Json
   submittedAt       DateTime?
   submittedById     String?

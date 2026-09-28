@@ -4,6 +4,7 @@ export type ReportingCoverage = {
   expected: number
   draft: number
   submitted: number
+  underReview: number
   approved: number
   returned: number
   missing: number
@@ -19,6 +20,7 @@ export function calculateCoverage(
     expected,
     draft: 0,
     submitted: 0,
+    underReview: 0,
     approved: 0,
     returned: 0,
     missing: Math.max(0, expected - statuses.length),

@@ -47,6 +47,8 @@ export const AuditActionSchema = z.enum([
   'transfer.accepted',
   'transfer.rejected',
   'report.submitted',
+  'report.resubmitted',
+  'report.reviewStarted',
   'report.approved',
   'report.returned',
   'report.exported',

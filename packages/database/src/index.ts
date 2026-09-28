@@ -499,6 +499,7 @@ export {
   submitSchoolReport,
   resubmitSchoolReport,
   approveSchoolReport,
+  startSchoolReportReview,
   returnSchoolReport,
 } from './reportingSubmissions.js'
 export type {

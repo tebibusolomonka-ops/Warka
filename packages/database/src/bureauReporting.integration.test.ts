@@ -255,6 +255,16 @@ describe.skipIf(!database)('bureau reporting in PostgreSQL', () => {
       expect(versions[1]?.snapshot).not.toEqual(firstVersion.snapshot)
       await approveSchoolReport(database!, manager.id, draft.id)
       expect(
+        await database!.reportingSubmission.findUniqueOrThrow({
+          where: { id: draft.id },
+          select: { status: true, acceptedVersion: true, currentVersion: true },
+        }),
+      ).toMatchObject({
+        status: 'approved',
+        acceptedVersion: 2,
+        currentVersion: 2,
+      })
+      expect(
         await database!.notification.count({
           where: { userId: schoolAdministrator.id, type: 'report.approved' },
         }),

@@ -2,6 +2,7 @@ import type { FastifyInstance, preHandlerHookHandler } from 'fastify'
 import { z } from 'zod'
 import {
   approveSchoolReport,
+  startSchoolReportReview,
   assignRequiredSchools,
   buildAcademicAggregate,
   buildEnrollmentAggregate,
@@ -172,10 +173,34 @@ export function registerBureauRoutes(
     },
   )
   app.post(
+    '/bureau/:organizationId/submissions/:id/start-review',
+    { preHandler: authenticate },
+    async (request) => {
+      const { organizationId, id } = IdSchema.parse(request.params)
+      const scoped = await getDatabase().reportingSubmission.findUniqueOrThrow({
+        where: { id },
+        include: { reportingPeriod: true },
+      })
+      if (scoped.reportingPeriod.organizationId !== organizationId)
+        throw new ReportingSubmissionError('Reporting scope mismatch')
+      return startSchoolReportReview(
+        getDatabase(),
+        authenticatedUser(request).id,
+        id,
+      )
+    },
+  )
+  app.post(
     '/bureau/:organizationId/submissions/:id/approve',
     { preHandler: authenticate },
-    (request) => {
-      const { id } = IdSchema.parse(request.params)
+    async (request) => {
+      const { organizationId, id } = IdSchema.parse(request.params)
+      const scoped = await getDatabase().reportingSubmission.findUniqueOrThrow({
+        where: { id },
+        include: { reportingPeriod: true },
+      })
+      if (scoped.reportingPeriod.organizationId !== organizationId)
+        throw new ReportingSubmissionError('Reporting scope mismatch')
       return approveSchoolReport(
         getDatabase(),
         authenticatedUser(request).id,
@@ -186,8 +211,14 @@ export function registerBureauRoutes(
   app.post(
     '/bureau/:organizationId/submissions/:id/return',
     { preHandler: authenticate },
-    (request) => {
-      const { id } = IdSchema.parse(request.params)
+    async (request) => {
+      const { organizationId, id } = IdSchema.parse(request.params)
+      const scoped = await getDatabase().reportingSubmission.findUniqueOrThrow({
+        where: { id },
+        include: { reportingPeriod: true },
+      })
+      if (scoped.reportingPeriod.organizationId !== organizationId)
+        throw new ReportingSubmissionError('Reporting scope mismatch')
       const { reason } = z
         .strictObject({ reason: z.string() })
         .parse(request.body)

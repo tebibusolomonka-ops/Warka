@@ -7,6 +7,7 @@ describe('reporting coverage and freshness', () => {
       expected: 3,
       draft: 1,
       submitted: 0,
+      underReview: 0,
       approved: 0,
       returned: 1,
       missing: 1,

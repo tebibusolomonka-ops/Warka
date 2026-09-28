@@ -78,6 +78,14 @@ describe('bureau reporting authorization routes', () => {
       (
         await app.inject({
           method: 'POST',
+          url: `/bureau/${organizationId}/submissions/52eb26d2-bb55-43b3-9a8d-a743a68d6f28/start-review`,
+        })
+      ).statusCode,
+    ).toBe(403)
+    expect(
+      (
+        await app.inject({
+          method: 'POST',
           url: `/bureau/${organizationId}/submissions/52eb26d2-bb55-43b3-9a8d-a743a68d6f28/approve`,
         })
       ).statusCode,
@@ -96,9 +104,10 @@ describe('bureau reporting authorization routes', () => {
       reportingSubmission: {
         findUniqueOrThrow: vi.fn().mockResolvedValue({
           status: 'submitted',
+          currentVersion: 1,
           reportingPeriod: { organizationId },
         }),
-        update: vi.fn().mockResolvedValue({ status: 'approved' }),
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
       },
     }
     const app = testApp(database)
@@ -116,6 +125,11 @@ describe('bureau reporting authorization routes', () => {
         })
       ).statusCode,
     ).toBe(200)
+    const review = await app.inject({
+      method: 'POST',
+      url: `/bureau/${organizationId}/submissions/52eb26d2-bb55-43b3-9a8d-a743a68d6f28/start-review`,
+    })
+    expect(review.statusCode, review.body).toBe(200)
     expect(
       (
         await app.inject({
@@ -169,14 +183,12 @@ describe('bureau reporting authorization routes', () => {
             },
           }),
           updateMany: vi.fn().mockResolvedValue({ count: 1 }),
-          findUniqueOrThrow: vi
-            .fn()
-            .mockResolvedValue({
-              id: periodId,
-              currentVersion: 1,
-              snapshot: { enrollment: { dataState: 'reported' } },
-              submittedAt: new Date(),
-            }),
+          findUniqueOrThrow: vi.fn().mockResolvedValue({
+            id: periodId,
+            currentVersion: 1,
+            snapshot: { enrollment: { dataState: 'reported' } },
+            submittedAt: new Date(),
+          }),
         },
         reportingSubmissionVersion: { create: vi.fn().mockResolvedValue({}) },
       }

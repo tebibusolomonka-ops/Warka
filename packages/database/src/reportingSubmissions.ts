@@ -180,16 +180,24 @@ export async function approveSchoolReport(
     submission.reportingPeriod.organizationId,
     'manage',
   )
-  if (submission.status !== 'submitted')
+  if (!['submitted', 'underReview'].includes(submission.status))
     throw new ReportingSubmissionError('Only submitted reports may be approved')
+  if (submission.currentVersion < 1)
+    throw new ReportingSubmissionError('Submitted version is missing')
   return database.$transaction(async (transaction) => {
-    const updated = await transaction.reportingSubmission.update({
-      where: { id: submissionId },
+    const changed = await transaction.reportingSubmission.updateMany({
+      where: { id: submissionId, status: { in: ['submitted', 'underReview'] } },
       data: {
         status: 'approved',
+        acceptedVersion: submission.currentVersion,
         approvedAt: new Date(),
         approvedById: actorUserId,
       },
+    })
+    if (changed.count !== 1)
+      throw new ReportingSubmissionError('Report review state changed')
+    const updated = await transaction.reportingSubmission.findUniqueOrThrow({
+      where: { id: submissionId },
     })
     await recordAuditEvent(transaction, {
       organizationId: submission.reportingPeriod.organizationId,
@@ -244,17 +252,22 @@ export async function returnSchoolReport(
     submission.reportingPeriod.organizationId,
     'manage',
   )
-  if (submission.status !== 'submitted')
+  if (!['submitted', 'underReview'].includes(submission.status))
     throw new ReportingSubmissionError('Only submitted reports may be returned')
   return database.$transaction(async (transaction) => {
-    const updated = await transaction.reportingSubmission.update({
-      where: { id: submissionId },
+    const changed = await transaction.reportingSubmission.updateMany({
+      where: { id: submissionId, status: { in: ['submitted', 'underReview'] } },
       data: {
         status: 'returned',
         returnedAt: new Date(),
         returnedById: actorUserId,
         returnReason,
       },
+    })
+    if (changed.count !== 1)
+      throw new ReportingSubmissionError('Report review state changed')
+    const updated = await transaction.reportingSubmission.findUniqueOrThrow({
+      where: { id: submissionId },
     })
     await recordAuditEvent(transaction, {
       organizationId: submission.reportingPeriod.organizationId,
@@ -289,5 +302,41 @@ export async function returnSchoolReport(
       },
     )
     return updated
+  })
+}
+
+export async function startSchoolReportReview(
+  database: SubmissionStore,
+  actorUserId: string,
+  submissionId: string,
+) {
+  const submission = await database.reportingSubmission.findUniqueOrThrow({
+    where: { id: submissionId },
+    include: { reportingPeriod: true },
+  })
+  await requireBureauPermission(
+    database,
+    actorUserId,
+    submission.reportingPeriod.organizationId,
+    'manage',
+  )
+  const changed = await database.reportingSubmission.updateMany({
+    where: { id: submissionId, status: 'submitted' },
+    data: { status: 'underReview' },
+  })
+  if (changed.count !== 1)
+    throw new ReportingSubmissionError(
+      'Only submitted reports may enter review',
+    )
+  await recordAuditEvent(database, {
+    organizationId: submission.reportingPeriod.organizationId,
+    schoolId: submission.schoolId,
+    actorUserId,
+    action: 'report.reviewStarted',
+    resourceType: 'reportingSubmission',
+    resourceId: submissionId,
+  })
+  return database.reportingSubmission.findUniqueOrThrow({
+    where: { id: submissionId },
   })
 }
