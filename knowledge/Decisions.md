@@ -18,3 +18,4 @@
 See [[Security]] for the resulting invariants.
 - Communication choices are per user and category. Account-security in-app notices cannot be disabled. Immediate email uses only selected event types and minimal template text; daily/weekly digests are opt-in and deduplicated by user/window.
 - Email links use a validated Warka base URL and normal authentication. Self-service delivery history omits addresses, provider IDs, failure internals, and message bodies. Operations is limited to transactional delivery administration; arbitrary bulk sending is out of scope.
+- Timetable conflicts are explicit blockers. Creation and publication do not move lessons automatically. Teacher and class collisions, expired assignments, and cross-school scope are checked before publication; archived versions retain their entries.

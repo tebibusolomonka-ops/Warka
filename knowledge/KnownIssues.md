@@ -9,3 +9,4 @@
 
 Resolved prior validation failures are recorded in [[Batches/141-160]].
 - Local PostgreSQL is unavailable for live browser journeys; Playwright discovery is local, while execution depends on CI or a dedicated PostgreSQL service. SMTP delivery and production configuration remain deployment checks.
+- Commit 241 corrected the FileScan test teardown order without weakening the production foreign key. Local PostgreSQL remains unavailable, so the live integration test and CI confirmation are pending final validation.

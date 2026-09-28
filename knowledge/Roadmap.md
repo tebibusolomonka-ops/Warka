@@ -12,3 +12,4 @@ Notification delivery preferences, safe notification email routing, digest sched
 
 Production storage configuration and operational deployment decisions remain environment-specific. No delivery commitment is implied.
 Communication preference controls, safe notification email routing, daily/weekly digests, owned delivery history, and controlled browser journeys are implemented through commit 240. Deployment still requires PostgreSQL migration, a stable recovery key, a public app URL, and configured SMTP.
+Timetable calendar, periods, class versions, conflict validation, administrator API/workspace, teacher view, and browser journey are implemented through commit 250. Attendance capture and family views follow in commits 251–260.
