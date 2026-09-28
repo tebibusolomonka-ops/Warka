@@ -140,6 +140,45 @@ export async function requireFileAssetAccess(
     throw new FileAssetAccessError()
   }
 
+  if (asset.purpose === 'courseworkSubmission') {
+    if (!asset.schoolId) throw new FileAssetAccessError()
+    const attachment = await database.submissionAttachment.findUnique({
+      where: { fileAssetId: asset.id },
+      include: {
+        revision: {
+          include: { submission: { include: { assignment: true } } },
+        },
+      },
+    })
+    if (
+      !attachment ||
+      attachment.removedAt ||
+      attachment.schoolId !== asset.schoolId
+    )
+      throw new FileAssetAccessError()
+    const { revision } = attachment
+    const { submission } = revision
+    if (submission.schoolId !== asset.schoolId) throw new FileAssetAccessError()
+    const own = await visibleCourseworkAssignmentForStudent(
+      database,
+      actorId,
+      submission.assignmentId,
+      now,
+    )
+    if (own?.studentId === submission.studentId) return asset
+    if (
+      action === 'read' &&
+      revision.submittedAt &&
+      (await mayManageCourseworkAssignment(
+        database,
+        actorId,
+        submission.assignment,
+      ))
+    )
+      return asset
+    throw new FileAssetAccessError()
+  }
+
   if (asset.purpose === 'issuedDocument') {
     if (!asset.issuedDocumentId || !asset.schoolId)
       throw new FileAssetAccessError()

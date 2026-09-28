@@ -3,6 +3,7 @@ import { Readable } from 'node:stream'
 import { afterAll, describe, expect, it } from 'vitest'
 import { createDatabaseClient } from '@warka/database'
 import { courseworkAttachmentService } from './courseworkAttachmentService.js'
+import { submissionAttachmentService } from './submissionAttachmentService.js'
 import {
   FileAssetAccessError,
   requireFileAssetAccess,
@@ -176,6 +177,85 @@ describe.skipIf(!database)(
             publishedAt: new Date(),
           },
         })
+        const enrollment = await database!.enrollment.findFirstOrThrow({
+          where: { studentId: student.id, schoolId: school.id },
+        })
+        const submission = await database!.courseworkSubmission.create({
+          data: {
+            schoolId: school.id,
+            assignmentId: assignment.id,
+            studentId: student.id,
+            enrollmentId: enrollment.id,
+          },
+        })
+        const revision = await database!.submissionRevision.create({
+          data: {
+            submissionId: submission.id,
+            revisionNumber: 1,
+            textResponse: 'Synthetic answer',
+          },
+        })
+        const studentFile = await submissionAttachmentService(
+          database!,
+          storage,
+        ).upload(learner.id, school.id, assignment.id, revision.id, {
+          bytes: Buffer.from('Synthetic response'),
+          originalFileName: 'response.txt',
+          claimedContentType: 'text/plain',
+        })
+        await expect(
+          requireFileAssetAccess(
+            database!,
+            teacher.id,
+            studentFile.fileAssetId,
+            'read',
+          ),
+        ).rejects.toBeInstanceOf(FileAssetAccessError)
+        const submittedAt = new Date('2026-09-01T10:00:00.000Z')
+        await database!.submissionRevision.update({
+          where: { id: revision.id },
+          data: { submittedAt },
+        })
+        await database!.courseworkSubmission.update({
+          where: { id: submission.id },
+          data: { status: 'submitted', submittedAt },
+        })
+        const studentScan = await database!.fileScan.findFirstOrThrow({
+          where: { fileAssetId: studentFile.fileAssetId },
+        })
+        await processPendingFileScan({
+          database: database!,
+          storage,
+          scanner: new FakeFileScanner([{ status: 'clean' }]),
+          scanId: studentScan.id,
+        })
+        await expect(
+          requireFileAssetAccess(
+            database!,
+            teacher.id,
+            studentFile.fileAssetId,
+            'read',
+          ),
+        ).resolves.toMatchObject({ id: studentFile.fileAssetId })
+        expect(
+          (
+            await database!.submissionRevision.findUniqueOrThrow({
+              where: { id: revision.id },
+            })
+          ).submittedAt,
+        ).toEqual(submittedAt)
+        await database!.fileAsset.update({
+          where: { id: studentFile.fileAssetId },
+          data: { status: 'quarantined' },
+        })
+        await expect(
+          requireFileAssetAccess(
+            database!,
+            teacher.id,
+            studentFile.fileAssetId,
+            'read',
+          ),
+        ).rejects.toBeInstanceOf(FileAssetAccessError)
         await expect(
           requireFileAssetAccess(
             database!,
@@ -218,6 +298,15 @@ describe.skipIf(!database)(
           where: { fileAssetId: { in: assets.map((item) => item.id) } },
         })
         await database!.courseworkAttachment.deleteMany({
+          where: { schoolId: school.id },
+        })
+        await database!.submissionAttachment.deleteMany({
+          where: { schoolId: school.id },
+        })
+        await database!.submissionRevision.deleteMany({
+          where: { submission: { schoolId: school.id } },
+        })
+        await database!.courseworkSubmission.deleteMany({
           where: { schoolId: school.id },
         })
         await database!.fileAsset.deleteMany({ where: { schoolId: school.id } })

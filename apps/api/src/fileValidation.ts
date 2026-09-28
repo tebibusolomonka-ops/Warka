@@ -6,6 +6,7 @@ export type UploadPurpose =
   | 'schoolBranding'
   | 'issuedDocument'
   | 'courseworkAssignment'
+  | 'courseworkSubmission'
 
 export class FileValidationError extends Error {
   readonly status = 'quarantined' as const
@@ -36,6 +37,15 @@ const accepted = {
     types: { 'application/pdf': ['.pdf'] },
   },
   courseworkAssignment: {
+    maxBytes: 20 * 1024 * 1024,
+    types: {
+      'application/pdf': ['.pdf'],
+      'text/plain': ['.txt'],
+      'image/png': ['.png'],
+      'image/jpeg': ['.jpg', '.jpeg'],
+    },
+  },
+  courseworkSubmission: {
     maxBytes: 20 * 1024 * 1024,
     types: {
       'application/pdf': ['.pdf'],

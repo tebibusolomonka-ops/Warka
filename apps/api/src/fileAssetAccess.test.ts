@@ -42,7 +42,8 @@ function fixture(
     | 'learningMaterial'
     | 'issuedDocument'
     | 'schoolBranding'
-    | 'courseworkAssignment' = 'learningMaterial',
+    | 'courseworkAssignment'
+    | 'courseworkSubmission' = 'learningMaterial',
 ) {
   const asset = {
     id: assetId,
@@ -52,7 +53,8 @@ function fixture(
     learningMaterialId: purpose === 'learningMaterial' ? materialId : null,
     issuedDocumentId: purpose === 'issuedDocument' ? materialId : null,
     storageKey: 'asset_private',
-    scanRequired: purpose === 'courseworkAssignment',
+    scanRequired:
+      purpose === 'courseworkAssignment' || purpose === 'courseworkSubmission',
   }
   const database = {
     user: {
@@ -65,13 +67,28 @@ function fixture(
         .mockResolvedValue({ status: 'clean', result: 'clean' }),
     },
     courseworkAttachment: {
+      findUnique: vi.fn().mockResolvedValue({
+        assignmentId: materialId,
+        schoolId,
+        removedAt: null,
+        assignment: { id: materialId, status: 'published' },
+      }),
+    },
+    submissionAttachment: {
       findUnique: vi
         .fn()
         .mockResolvedValue({
-          assignmentId: materialId,
           schoolId,
           removedAt: null,
-          assignment: { id: materialId, status: 'published' },
+          revision: {
+            submittedAt: null,
+            submission: {
+              schoolId,
+              studentId: materialId,
+              assignmentId: materialId,
+              assignment: { id: materialId },
+            },
+          },
         }),
     },
     learningMaterial: {
@@ -111,6 +128,36 @@ beforeEach(() => {
 })
 
 describe('file asset authorization', () => {
+  it('keeps submission files from teachers until both submission and clean scan', async () => {
+    const { database } = fixture('courseworkSubmission')
+    vi.mocked(mayManageCourseworkAssignment).mockResolvedValue(true)
+    await expect(
+      requireFileAssetAccess(database, actorId, assetId, 'read'),
+    ).rejects.toBeInstanceOf(FileAssetAccessError)
+    vi.mocked(database.submissionAttachment.findUnique).mockResolvedValue({
+      schoolId,
+      removedAt: null,
+      revision: {
+        submittedAt: new Date(),
+        submission: {
+          schoolId,
+          studentId: materialId,
+          assignmentId: materialId,
+          assignment: { id: materialId },
+        },
+      },
+    } as never)
+    await expect(
+      requireFileAssetAccess(database, actorId, assetId, 'read'),
+    ).resolves.toMatchObject({ id: assetId })
+    vi.mocked(database.fileScan.findFirst).mockResolvedValue({
+      status: 'pending',
+      result: null,
+    } as never)
+    await expect(
+      requireFileAssetAccess(database, actorId, assetId, 'read'),
+    ).rejects.toBeInstanceOf(FileAssetAccessError)
+  })
   it('requires a clean scan and current assignment audience for coursework downloads', async () => {
     const { database } = fixture('courseworkAssignment')
     await expect(

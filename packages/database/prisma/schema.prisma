@@ -449,6 +449,7 @@ enum FileAssetPurpose {
   schoolBranding
   issuedDocument
   courseworkAssignment
+  courseworkSubmission
 }
 
 enum FileAssetStatus {
@@ -656,6 +657,7 @@ model User {
 
 model FileAsset {
   courseworkAttachment CourseworkAttachment?
+  submissionAttachment SubmissionAttachment?
   id String @id @default(uuid())
   schoolId String?
   ownerUserId String?
@@ -1838,6 +1840,7 @@ model CourseworkSubmission {
 }
 
 model SubmissionRevision {
+  attachments SubmissionAttachment[]
   id String @id @default(uuid())
   submissionId String
   revisionNumber Int
@@ -1848,6 +1851,20 @@ model SubmissionRevision {
 
   @@unique([submissionId, revisionNumber])
   @@index([submissionId, submittedAt])
+}
+
+model SubmissionAttachment {
+  id String @id @default(uuid())
+  schoolId String
+  revisionId String
+  fileAssetId String @unique
+  createdAt DateTime @default(now())
+  removedAt DateTime?
+  revision SubmissionRevision @relation(fields: [revisionId], references: [id], onDelete: Restrict)
+  fileAsset FileAsset @relation(fields: [fileAssetId], references: [id], onDelete: Restrict)
+
+  @@index([revisionId, removedAt])
+  @@index([schoolId, createdAt])
 }
 
 model CourseworkAttachment {
