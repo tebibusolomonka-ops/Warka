@@ -18,6 +18,7 @@ import {
   returnSchoolReport,
   submitSchoolReport,
   ReportingSubmissionError,
+  evaluateReportingReadiness,
   findSchoolMembership,
   hasOrganizationAdminRole,
   type PrismaClient,
@@ -308,6 +309,24 @@ export function registerBureauRoutes(
         periodId,
         schoolId,
       )
+    },
+  )
+  app.get(
+    '/schools/:schoolId/reporting/:periodId/readiness',
+    { preHandler: authenticate },
+    async (request) => {
+      const { schoolId, periodId } = SchoolPeriodSchema.parse(request.params)
+      const membership = await findSchoolMembership(
+        getDatabase(),
+        authenticatedUser(request).id,
+        schoolId,
+      )
+      if (
+        !membership ||
+        !['administrator', 'registrar'].includes(membership.role)
+      )
+        throw new ReportingSubmissionError('School reporting permission denied')
+      return evaluateReportingReadiness(getDatabase(), periodId, schoolId)
     },
   )
 }

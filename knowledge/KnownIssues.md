@@ -1,5 +1,7 @@
 # Known issues
 
+- PostgreSQL is unavailable locally for this batch; new data-quality migration and integration tests require CI execution. Quality checks currently use bounded school queries without background scheduling configuration; scheduled invocation can use the existing scheduler. Reporting window fields are optional for historical periods, which continue to use their existing due date.
+
 - Local PostgreSQL and Docker are unavailable for this batch. Family meeting and school event Playwright discovery can run locally, but live browser behavior, migration deployment, and real database integration need CI. Event upload uses the shared scanner; production ClamAV and private storage remain deployment checks. Event lists currently cap at 100 rows and do not expose pagination.
 
 - Real PostgreSQL coursework mark-transfer and family meeting integration tests are present, but local execution remains unavailable because no PostgreSQL server is listening on `127.0.0.1:5432`. Coursework Playwright discovery passed; live execution remains a final CI check. Teacher meeting windows are school-only and do not integrate with personal calendars or create online meetings.

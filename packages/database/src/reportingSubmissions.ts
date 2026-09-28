@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { recordAuditEvent } from './auditEvents.js'
 import { createNotifications } from './notifications.js'
 import { requireBureauPermission } from './bureauAccess.js'
+import { evaluateReportingReadiness } from './reportingValidation.js'
 
 export class ReportingSubmissionError extends Error {}
 
@@ -17,6 +18,7 @@ type SubmissionStore = Pick<
   | 'reportingSubmission'
   | 'schoolMembership'
   | 'notification'
+  | 'dataQualityIssue'
 >
 
 async function requireSchoolSubmitter(
@@ -62,6 +64,15 @@ export async function submitSchoolReport(
   schoolId: string,
 ) {
   await requireSchoolSubmitter(database, actorUserId, schoolId)
+  const readiness = await evaluateReportingReadiness(
+    database as PrismaClient,
+    reportingPeriodId,
+    schoolId,
+  )
+  if (!readiness.ready)
+    throw new ReportingSubmissionError(
+      `Report is not ready: ${readiness.blocking.join(', ')}`,
+    )
   return database.$transaction(async (transaction) => {
     const period = await transaction.reportingPeriod.findUniqueOrThrow({
       where: { id: reportingPeriodId },

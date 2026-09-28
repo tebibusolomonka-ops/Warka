@@ -1,5 +1,7 @@
 # Decisions
 
+- Data quality evaluates facts without repairing source records or scoring schools. Duplicate candidate findings never merge students; missing re-enrollment is never dropout. Historical issued snapshots are validated as snapshots, never compared with mutable current student values. Reporting treats blank, unknown, not reported, and not applicable as distinct from numeric zero; readiness reports blockers and warnings and does not submit.
+
 - School events use current school relationships for audience resolution; drafts stay private. Attachments require a clean current scan before publication or download. RSVP is an expressed intention, never evidence of attendance or a student engagement measure. Event location is a school label, with no participant location tracking.
 
 - Family meeting requests require an authenticated guardian with a verified, unrevoked relationship to a currently enrolled child and an active teacher assignment for that child's class. Teacher availability contains school meeting windows only; it never reads a private calendar, personal contact details, or participant locations. Scheduling uses a serializable transaction and rejects overlapping teacher bookings. Rescheduling appends history instead of replacing prior times.

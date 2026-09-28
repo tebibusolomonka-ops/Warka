@@ -101,8 +101,26 @@ describe.skipIf(!database)('bureau reporting in PostgreSQL', () => {
       await assignRequiredSchools(database!, manager.id, period.id, [school.id])
       await openReportingPeriod(database!, manager.id, period.id)
       const originalSnapshot = {
-        enrollment: { dataState: 'reported', total: 0 },
-        academic: { dataState: 'reported', publishedResultCount: 0 },
+        enrollment: {
+          dataState: 'reported',
+          total: 0,
+          byAcademicYear: [],
+          byGradeLevel: [],
+        },
+        academic: {
+          dataState: 'reported',
+          publishedResultCount: 0,
+          outcomes: [],
+        },
+        activity: {
+          transfers: { confirmed: 0, unresolved: 0, rejected: 0 },
+          verification: {
+            active: 0,
+            corrected: 0,
+            withdrawn: 0,
+            unavailable: 0,
+          },
+        },
       }
       const draft = await prepareSchoolReport(
         database!,
@@ -125,8 +143,26 @@ describe.skipIf(!database)('bureau reporting in PostgreSQL', () => {
           })
         ).snapshot,
       ).toEqual({
-        enrollment: { dataState: 'reported', total: 0 },
-        academic: { dataState: 'reported', publishedResultCount: 0 },
+        enrollment: {
+          dataState: 'reported',
+          total: 0,
+          byAcademicYear: [],
+          byGradeLevel: [],
+        },
+        academic: {
+          dataState: 'reported',
+          publishedResultCount: 0,
+          outcomes: [],
+        },
+        activity: {
+          transfers: { confirmed: 0, unresolved: 0, rejected: 0 },
+          verification: {
+            active: 0,
+            corrected: 0,
+            withdrawn: 0,
+            unavailable: 0,
+          },
+        },
       })
       await returnSchoolReport(
         database!,
@@ -156,7 +192,32 @@ describe.skipIf(!database)('bureau reporting in PostgreSQL', () => {
         schoolAdministrator.id,
         period.id,
         school.id,
-        { enrollment: { dataState: 'reported', total: 1 } },
+        {
+          enrollment: {
+            dataState: 'reported',
+            total: 1,
+            byAcademicYear: [
+              { academicYearId: period.id, name: 'Current', count: 1 },
+            ],
+            byGradeLevel: [
+              { gradeLevelId: school.id, name: 'Grade', count: 1 },
+            ],
+          },
+          academic: {
+            dataState: 'reported',
+            publishedResultCount: 0,
+            outcomes: [],
+          },
+          activity: {
+            transfers: { confirmed: 0, unresolved: 0, rejected: 0 },
+            verification: {
+              active: 0,
+              corrected: 0,
+              withdrawn: 0,
+              unavailable: 0,
+            },
+          },
+        },
       )
       await submitSchoolReport(
         database!,
