@@ -986,6 +986,7 @@ model ReportingSubmissionVersion {
   version           Int
   snapshot          Json
   validationSummary Json
+  resubmissionReason String? @db.VarChar(500)
   status            ReportingSubmissionStatus @default(submitted)
   submittedAt       DateTime                  @default(now())
   submittedById     String

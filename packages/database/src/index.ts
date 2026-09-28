@@ -497,6 +497,7 @@ export {
   ReportingSubmissionError,
   prepareSchoolReport,
   submitSchoolReport,
+  resubmitSchoolReport,
   approveSchoolReport,
   returnSchoolReport,
 } from './reportingSubmissions.js'

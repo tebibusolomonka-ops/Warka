@@ -75,6 +75,32 @@ export async function submitSchoolReport(
   reportingPeriodId: string,
   schoolId: string,
 ) {
+  return submitVersion(database, actorUserId, reportingPeriodId, schoolId)
+}
+
+export async function resubmitSchoolReport(
+  database: SubmissionStore,
+  actorUserId: string,
+  reportingPeriodId: string,
+  schoolId: string,
+  reason: string,
+) {
+  return submitVersion(
+    database,
+    actorUserId,
+    reportingPeriodId,
+    schoolId,
+    z.string().trim().min(3).max(500).parse(reason),
+  )
+}
+
+async function submitVersion(
+  database: SubmissionStore,
+  actorUserId: string,
+  reportingPeriodId: string,
+  schoolId: string,
+  resubmissionReason?: string,
+) {
   await requireSchoolSubmitter(database, actorUserId, schoolId)
   return database.$transaction(async (transaction) => {
     const readiness = await evaluateReportingReadiness(
@@ -95,7 +121,7 @@ export async function submitSchoolReport(
       where: {
         reportingPeriodId,
         schoolId,
-        status: { in: ['draft', 'returned'] },
+        status: resubmissionReason ? 'returned' : 'draft',
       },
       data: {
         status: 'submitted',
@@ -120,6 +146,7 @@ export async function submitSchoolReport(
           warnings: readiness.warnings,
           blocking: readiness.blocking,
         },
+        resubmissionReason: resubmissionReason ?? null,
         status: 'submitted',
         submittedAt: submission.submittedAt!,
         submittedById: actorUserId,
@@ -129,10 +156,10 @@ export async function submitSchoolReport(
       organizationId: period.organizationId,
       schoolId,
       actorUserId,
-      action: 'report.submitted',
+      action: resubmissionReason ? 'report.resubmitted' : 'report.submitted',
       resourceType: 'reportingSubmission',
       resourceId: submission.id,
-      metadata: { reportingPeriodId },
+      metadata: { reportingPeriodId, version: submission.currentVersion },
     })
     return submission
   })

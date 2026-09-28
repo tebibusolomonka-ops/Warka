@@ -17,6 +17,7 @@ import {
   resolveBureauScope,
   returnSchoolReport,
   submitSchoolReport,
+  resubmitSchoolReport,
   ReportingSubmissionError,
   evaluateReportingReadiness,
   findSchoolMembership,
@@ -34,6 +35,9 @@ const PeriodSchema = z.strictObject({
 const SchoolPeriodSchema = z.strictObject({
   schoolId: z.uuid(),
   periodId: z.uuid(),
+})
+const ResubmissionSchema = z.strictObject({
+  reason: z.string().trim().min(3).max(500),
 })
 
 export function registerBureauRoutes(
@@ -308,6 +312,21 @@ export function registerBureauRoutes(
         authenticatedUser(request).id,
         periodId,
         schoolId,
+      )
+    },
+  )
+  app.post(
+    '/schools/:schoolId/reporting/:periodId/resubmit',
+    { preHandler: authenticate },
+    (request) => {
+      const { schoolId, periodId } = SchoolPeriodSchema.parse(request.params)
+      const { reason } = ResubmissionSchema.parse(request.body)
+      return resubmitSchoolReport(
+        getDatabase(),
+        authenticatedUser(request).id,
+        periodId,
+        schoolId,
+        reason,
       )
     },
   )

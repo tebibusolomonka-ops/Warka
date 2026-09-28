@@ -16,6 +16,7 @@ import {
   openReportingPeriod,
   prepareSchoolReport,
   requireBureauPermission,
+  resubmitSchoolReport,
   resolveBureauScope,
   returnSchoolReport,
   revokeBureauAccess,
@@ -238,11 +239,12 @@ describe.skipIf(!database)('bureau reporting in PostgreSQL', () => {
           },
         },
       )
-      await submitSchoolReport(
+      await resubmitSchoolReport(
         database!,
         schoolAdministrator.id,
         period.id,
         school.id,
+        'Updated the approved enrollment aggregate',
       )
       const versions = await database!.reportingSubmissionVersion.findMany({
         where: { submissionId: draft.id },
