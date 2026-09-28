@@ -67,6 +67,9 @@ import {
   SchoolDocumentProfilePermissionError,
   ImportStateError,
   AcademicYearClosingPermissionError,
+  ClassTimetableBlockedError,
+  ClassTimetableStateError,
+  ClassTimetableEntryError,
   AcademicYearClosingStateError,
   AcademicYearClosingBlockedError,
   ProgressionPlanSourceError,
@@ -159,6 +162,7 @@ import { registerDocumentDownloadRoutes } from './documentDownloadRoutes.js'
 import { registerStudentDocumentRoutes } from './studentDocumentRoutes.js'
 import { registerSchoolDocumentRoutes } from './schoolDocumentRoutes.js'
 import { registerAcademicRolloverRoutes } from './academicRolloverRoutes.js'
+import { registerTimetableRoutes } from './timetableRoutes.js'
 import {
   prismaAcademicRolloverService,
   type AcademicRolloverService,
@@ -475,6 +479,7 @@ export function buildApp(
         prismaDocumentVerificationService(getDatabase()),
     )
     registerAcademicRoutes(app, getAcademic, authenticate)
+    registerTimetableRoutes(app, getDatabase, authenticate)
     registerEnrollmentRoutes(
       app,
       getStore,
@@ -493,6 +498,21 @@ export function buildApp(
   )
 
   app.setErrorHandler((error, _request, reply) => {
+    if (error instanceof ClassTimetableBlockedError)
+      return reply.code(409).send({
+        error: {
+          code: 'TIMETABLE_CONFLICT',
+          message: error.message,
+          problems: error.problems,
+        },
+      })
+    if (
+      error instanceof ClassTimetableStateError ||
+      error instanceof ClassTimetableEntryError
+    )
+      return reply
+        .code(409)
+        .send({ error: { code: 'TIMETABLE_STATE', message: error.message } })
     if (error instanceof FileValidationError)
       return reply
         .code(400)
