@@ -993,3 +993,5 @@ export {
   MarkModerationStateError,
   requestMarkModeration,
 } from './markModerationRequests.js'
+
+export { reviewMarkModeration } from './markModerationReview.js'

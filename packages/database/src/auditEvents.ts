@@ -95,6 +95,8 @@ export const AuditActionSchema = z.enum([
   'timetable.published',
   'timetable.archived',
   'mark.windowOverridden',
+  'mark.moderated',
+  'mark.moderationRejected',
 ])
 
 export const AuditResourceTypeSchema = z.enum([

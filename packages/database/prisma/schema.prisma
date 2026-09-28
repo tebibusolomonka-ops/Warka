@@ -475,6 +475,7 @@ enum MaintenanceWindowStatus {
 }
 
 model School {
+  markCorrections MarkCorrection[]
   markModerationRequests MarkModerationRequest[]
   markEntryWindows MarkEntryWindow[]
   assessmentInvigilations AssessmentInvigilation[]
@@ -536,6 +537,7 @@ model School {
 }
 
 model User {
+  reviewedMarkCorrections MarkCorrection[]
   requestedMarkModerations MarkModerationRequest[] @relation("ModerationRequester")
   reviewedMarkModerations MarkModerationRequest[] @relation("ModerationReviewer")
   createdMarkEntryWindows MarkEntryWindow[]
@@ -1902,6 +1904,7 @@ model MakeUpAssessment {
 
 model Mark {
   moderationRequests MarkModerationRequest[]
+  corrections MarkCorrection[]
   id           String     @id @default(uuid())
   schoolId     String
   studentId    String
@@ -1923,6 +1926,7 @@ model Mark {
 }
 
 model MarkModerationRequest {
+  correction MarkCorrection?
   id String @id @default(uuid())
   schoolId String
   markId String
@@ -1942,6 +1946,24 @@ model MarkModerationRequest {
 
   @@index([schoolId, status])
   @@index([markId, createdAt])
+}
+
+model MarkCorrection {
+  id String @id @default(uuid())
+  schoolId String
+  markId String
+  moderationRequestId String @unique
+  previousScore Decimal @db.Decimal(8, 2)
+  newScore Decimal @db.Decimal(8, 2)
+  reviewerId String
+  reason String
+  effectiveAt DateTime @default(now())
+  school School @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  mark Mark @relation(fields: [markId], references: [id], onDelete: Restrict)
+  moderationRequest MarkModerationRequest @relation(fields: [moderationRequestId], references: [id], onDelete: Restrict)
+  reviewer User @relation(fields: [reviewerId], references: [id], onDelete: Restrict)
+
+  @@index([schoolId, markId, effectiveAt])
 }
 
 model GradingScheme {
