@@ -462,6 +462,7 @@ enum MaintenanceWindowStatus {
 }
 
 model School {
+  assessmentInvigilations AssessmentInvigilation[]
   makeUpAssessments MakeUpAssessment[]
   assessmentParticipations AssessmentParticipation[]
   assessmentRooms AssessmentRoom[]
@@ -520,6 +521,8 @@ model School {
 }
 
 model User {
+  assessmentInvigilations AssessmentInvigilation[]
+  assignedInvigilations AssessmentInvigilation[] @relation("InvigilationAssigner")
   makeUpCreated MakeUpAssessment[] @relation("MakeUpCreator")
   makeUpApproved MakeUpAssessment[] @relation("MakeUpApprover")
   assessmentParticipations AssessmentParticipation[] @relation("AssessmentParticipationRecorder")
@@ -1767,6 +1770,7 @@ model AssessmentSchedule {
 }
 
 model AssessmentSession {
+  invigilations AssessmentInvigilation[]
   participations AssessmentParticipation[]
   makeUpAssessments MakeUpAssessment[]
   id String @id @default(uuid())
@@ -1788,6 +1792,22 @@ model AssessmentSession {
   @@unique([id, schoolId])
   @@unique([scheduleId])
   @@index([schoolId, schoolClassId, sessionDate])
+}
+
+model AssessmentInvigilation {
+  id String @id @default(uuid())
+  schoolId String
+  sessionId String
+  userId String
+  assignedById String
+  createdAt DateTime @default(now())
+  school School @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  session AssessmentSession @relation(fields: [sessionId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+  assignedBy User @relation("InvigilationAssigner", fields: [assignedById], references: [id], onDelete: Restrict)
+
+  @@unique([sessionId, userId])
+  @@index([schoolId, userId])
 }
 
 model AssessmentParticipation {

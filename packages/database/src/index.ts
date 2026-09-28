@@ -968,3 +968,8 @@ export {
   scheduleMakeUpAssessment,
   completeMakeUpAssessment,
 } from './makeUpAssessments.js'
+
+export {
+  AssessmentInvigilationError,
+  assignAssessmentInvigilator,
+} from './assessmentInvigilation.js'
