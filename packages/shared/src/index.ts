@@ -72,6 +72,7 @@ export const StudentPortalIdentitySchema = z.object({
   familyName: z.string().nullable(),
   currentEnrollment: z
     .object({
+      schoolId: z.string().uuid().optional(),
       school: z.string(),
       academicYear: z.string(),
       gradeLevel: z.string(),

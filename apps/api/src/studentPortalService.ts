@@ -12,6 +12,7 @@ export type StudentIdentity = {
   givenName: string
   familyName: string | null
   currentEnrollment: null | {
+    schoolId: string
     school: string
     academicYear: string
     gradeLevel: string
@@ -94,6 +95,7 @@ export function prismaStudentPortalService(
         familyName: access.student.familyName,
         currentEnrollment: enrollment
           ? {
+              schoolId: enrollment.schoolId,
               school: enrollment.school.name,
               academicYear: enrollment.academicYear.name,
               gradeLevel: enrollment.gradeLevel.name,

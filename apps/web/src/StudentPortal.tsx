@@ -3,6 +3,7 @@ import { StudentDocuments } from './StudentDocuments'
 import { AcademicProgressSummary } from './AcademicProgressSummary'
 import { AttendanceHistoryView } from './AttendanceHistoryView'
 import { StudentCourseworkWorkspace } from './StudentCourseworkWorkspace'
+import { FamilyEventWorkspace } from './FamilyEventWorkspace'
 import { getOwnStudentAttendance } from './attendanceApi'
 import type {
   StudentPortalIdentity,
@@ -31,6 +32,7 @@ type Section =
   | 'Documents'
   | 'Attendance'
   | 'Coursework'
+  | 'Events'
 
 export function StudentPortal({
   baseUrl,
@@ -149,6 +151,7 @@ export function StudentPortal({
             'Documents',
             'Attendance',
             'Coursework',
+            'Events',
           ] as const
         ).map((item) => (
           <button
@@ -177,6 +180,12 @@ export function StudentPortal({
         <StudentCourseworkWorkspace
           baseUrl={baseUrl}
           onSessionExpired={onSessionExpired}
+        />
+      )}
+      {section === 'Events' && identity.currentEnrollment?.schoolId && (
+        <FamilyEventWorkspace
+          baseUrl={baseUrl}
+          schoolId={identity.currentEnrollment.schoolId}
         />
       )}
       {section === 'Overview' && (

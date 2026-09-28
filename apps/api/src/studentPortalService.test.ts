@@ -14,6 +14,7 @@ const student = {
   familyName: 'Bekele',
 }
 const current = {
+  schoolId: randomUUID(),
   school: { name: 'Current school' },
   academicYear: { name: '2026', startsOn: new Date('2026-09-01') },
   gradeLevel: { name: 'Grade 2' },
@@ -125,6 +126,7 @@ describe('student portal identity', () => {
       givenName: 'Hana',
       familyName: 'Bekele',
       currentEnrollment: {
+        schoolId: current.schoolId,
         school: 'Current school',
         academicYear: '2026',
         gradeLevel: 'Grade 2',

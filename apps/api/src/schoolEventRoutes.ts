@@ -87,36 +87,58 @@ export function registerSchoolEventRoutes(
       ))
     )
       throw new SchoolEventRouteAccessError('Event unavailable')
-    return getDatabase()
-      .schoolEvent.findFirstOrThrow({
-        where: { id: eventId, schoolId },
-        select: {
-          id: true,
-          schoolId: true,
-          title: true,
-          description: true,
-          startsAt: true,
-          endsAt: true,
-          schoolLocation: true,
-          status: true,
-          rsvpEnabled: true,
-          attachments: {
-            where: { removedAt: null },
-            select: {
-              id: true,
-              fileAsset: { select: { originalFileName: true, status: true } },
+    const event = await getDatabase().schoolEvent.findFirstOrThrow({
+      where: { id: eventId, schoolId },
+      select: {
+        id: true,
+        schoolId: true,
+        title: true,
+        description: true,
+        startsAt: true,
+        endsAt: true,
+        schoolLocation: true,
+        status: true,
+        rsvpEnabled: true,
+        attachments: {
+          where: { removedAt: null },
+          select: {
+            id: true,
+            fileAsset: {
+              select: {
+                originalFileName: true,
+                status: true,
+                scans: {
+                  select: { result: true },
+                  orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+                  take: 1,
+                },
+              },
             },
           },
         },
-      })
-      .then((event) => ({
-        ...event,
-        attachments: event.attachments.map((attachment) => ({
-          id: attachment.id,
-          originalFileName: attachment.fileAsset.originalFileName,
-          available: attachment.fileAsset.status === 'available',
-        })),
-      }))
+      },
+    })
+    const response = await getDatabase().eventResponse.findUnique({
+      where: {
+        eventId_respondentUserId_subjectKey: {
+          eventId,
+          respondentUserId: actorId,
+          subjectKey: studentId ? `child:${studentId}` : 'self',
+        },
+      },
+      select: { status: true },
+    })
+    return {
+      ...event,
+      responseStatus: response?.status ?? null,
+      attachments: event.attachments.map((attachment) => ({
+        id: attachment.id,
+        originalFileName: attachment.fileAsset.originalFileName,
+        available:
+          attachment.fileAsset.status === 'available' &&
+          attachment.fileAsset.scans[0]?.result === 'clean',
+      })),
+    }
   }
   async function listVisible(
     actorId: string,

@@ -10,6 +10,7 @@ export type SchoolEvent = {
   schoolLocation: string | null
   status: 'draft' | 'published' | 'cancelled' | 'completed'
   rsvpEnabled: boolean
+  responseStatus?: 'going' | 'notGoing' | null
   audience?: {
     scope: string
     schoolClassId: string | null
