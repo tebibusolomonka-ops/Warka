@@ -1142,3 +1142,8 @@ export {
 export { checkEnrollmentDataQuality } from './enrollmentDataQuality.js'
 export { checkAcademicDataQuality } from './academicDataQuality.js'
 export { checkDocumentDataQuality } from './documentDataQuality.js'
+export {
+  DataQualityRunInputSchema,
+  DataQualityRunConflictError,
+  evaluateDataQuality,
+} from './dataQualityRuns.js'

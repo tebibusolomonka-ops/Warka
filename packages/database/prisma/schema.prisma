@@ -231,6 +231,18 @@ enum DataQualityIssueStatus {
   dismissed
 }
 
+enum DataQualityRunTrigger {
+  manual
+  scheduled
+  reportingValidation
+}
+
+enum DataQualityRunStatus {
+  running
+  completed
+  failed
+}
+
 enum VerificationResultStatus {
   active
   corrected
@@ -520,6 +532,7 @@ enum MaintenanceWindowStatus {
 
 model School {
   dataQualityIssues DataQualityIssue[]
+  dataQualityRuns DataQualityRun[]
   events SchoolEvent[]
   meetingAvailability TeacherMeetingAvailability[]
   meetingRequests ParentTeacherMeetingRequest[]
@@ -983,6 +996,23 @@ model DataQualityIssue {
 
   @@index([schoolId, status, severity, detectedAt])
   @@index([schoolId, category, code])
+}
+
+model DataQualityRun {
+  id String @id @default(uuid())
+  schoolId String
+  trigger DataQualityRunTrigger
+  status DataQualityRunStatus @default(running)
+  checksExecuted String[]
+  infoCount Int @default(0)
+  warningCount Int @default(0)
+  blockingCount Int @default(0)
+  startedAt DateTime @default(now())
+  completedAt DateTime?
+  failureCode String? @db.VarChar(80)
+  school School @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+
+  @@index([schoolId, startedAt])
 }
 
 model AuditEvent {
