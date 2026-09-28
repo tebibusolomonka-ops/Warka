@@ -20,6 +20,7 @@ import {
 import { ApiError } from './api'
 import { AcademicSetup } from './AcademicSetup'
 import { GradebookWorkspace } from './GradebookWorkspace'
+import { TeacherCourseworkWorkspace } from './TeacherCourseworkWorkspace'
 
 type WorkspaceData = {
   structure: AcademicStructure
@@ -328,6 +329,15 @@ export function AcademicWorkspace({
               schoolId={schoolId}
               structure={data.structure}
               onChanged={() => setRefresh((value) => value + 1)}
+              onSessionExpired={onSessionExpired}
+            />
+          )}
+          {(role === 'teacher' || role === 'administrator') && (
+            <TeacherCourseworkWorkspace
+              baseUrl={baseUrl}
+              schoolId={schoolId}
+              structure={data.structure}
+              teachingAssignments={data.assignments}
               onSessionExpired={onSessionExpired}
             />
           )}

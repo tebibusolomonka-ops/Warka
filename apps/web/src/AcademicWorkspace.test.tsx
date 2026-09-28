@@ -8,6 +8,9 @@ import {
 } from '@testing-library/react'
 import { AcademicWorkspace } from './AcademicWorkspace'
 vi.mock('./GradebookWorkspace', () => ({ GradebookWorkspace: () => null }))
+vi.mock('./TeacherCourseworkWorkspace', () => ({
+  TeacherCourseworkWorkspace: () => null,
+}))
 import {
   applyAcademicImport,
   correctAcademicResult,

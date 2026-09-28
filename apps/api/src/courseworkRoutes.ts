@@ -264,6 +264,88 @@ export function registerCourseworkRoutes(
       }
     },
   )
+  app.get(
+    '/schools/:schoolId/coursework/:assignmentId/audience',
+    { preHandler: authenticate },
+    async (request) => {
+      const { schoolId, assignmentId } = assignment.parse(request.params)
+      const row = await staffAssignment(actor(request), schoolId, assignmentId)
+      const enrollments = await db().enrollment.findMany({
+        where: {
+          schoolId,
+          academicYearId: row.academicYearId,
+          schoolClassId: row.schoolClassId,
+          status: 'approved',
+          withdrawnAt: null,
+          OR: [{ approvedAt: null }, { approvedAt: { lte: new Date() } }],
+        },
+        select: {
+          id: true,
+          studentId: true,
+          student: {
+            select: {
+              studentReference: true,
+              givenName: true,
+              familyName: true,
+            },
+          },
+        },
+        orderBy: { student: { givenName: 'asc' } },
+      })
+      return {
+        students: enrollments.map((item) => ({
+          studentId: item.studentId,
+          studentReference: item.student.studentReference,
+          name: [item.student.givenName, item.student.familyName]
+            .filter(Boolean)
+            .join(' '),
+        })),
+      }
+    },
+  )
+  app.get(
+    '/schools/:schoolId/coursework/:assignmentId/counts',
+    { preHandler: authenticate },
+    async (request) => {
+      const { schoolId, assignmentId } = assignment.parse(request.params)
+      const row = await staffAssignment(actor(request), schoolId, assignmentId)
+      const now = new Date()
+      const enrollments = await db().enrollment.findMany({
+        where: {
+          schoolId,
+          academicYearId: row.academicYearId,
+          schoolClassId: row.schoolClassId,
+          status: 'approved',
+          withdrawnAt: null,
+          OR: [{ approvedAt: null }, { approvedAt: { lte: now } }],
+        },
+        select: { studentId: true },
+      })
+      const studentIds = enrollments.map((item) => item.studentId)
+      const submissions = await db().courseworkSubmission.findMany({
+        where: {
+          assignmentId,
+          studentId: { in: studentIds },
+          status: 'submitted',
+        },
+        select: { studentId: true, submittedAt: true },
+      })
+      let late = 0
+      for (const item of submissions)
+        if (
+          item.submittedAt &&
+          item.submittedAt >
+            (await effectiveCourseworkDueAt(db(), row, item.studentId))
+        )
+          late++
+      return {
+        assigned: studentIds.length,
+        submitted: submissions.length,
+        notSubmitted: Math.max(0, studentIds.length - submissions.length),
+        late,
+      }
+    },
+  )
   app.post(
     '/schools/:schoolId/coursework/:assignmentId/extensions',
     { preHandler: authenticate },
