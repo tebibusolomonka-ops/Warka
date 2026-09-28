@@ -952,3 +952,9 @@ export {
   openAssessmentSession,
   completeAssessmentSession,
 } from './assessmentSessions.js'
+
+export {
+  AssessmentParticipationInputSchema,
+  AssessmentParticipationContextError,
+  recordAssessmentParticipation,
+} from './assessmentParticipation.js'

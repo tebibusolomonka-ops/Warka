@@ -125,6 +125,12 @@ enum AssessmentSessionStatus {
   cancelled
 }
 
+enum AssessmentParticipationStatus {
+  present
+  absent
+  excused
+}
+
 enum StudentAttendanceStatus {
   present
   absent
@@ -447,6 +453,7 @@ enum MaintenanceWindowStatus {
 }
 
 model School {
+  assessmentParticipations AssessmentParticipation[]
   assessmentRooms AssessmentRoom[]
   assessmentSchedules AssessmentSchedule[]
   assessmentSessions AssessmentSession[]
@@ -503,6 +510,7 @@ model School {
 }
 
 model User {
+  assessmentParticipations AssessmentParticipation[] @relation("AssessmentParticipationRecorder")
   performedAttendanceCorrections AttendanceCorrection[] @relation("AttendanceCorrectionPerformer")
   approvedAttendanceCorrections AttendanceCorrection[] @relation("AttendanceCorrectionApprover")
   openedAttendanceSessions AttendanceSession[]
@@ -1256,6 +1264,7 @@ model SchoolClass {
 }
 
 model Student {
+  assessmentParticipations AssessmentParticipation[]
   attendanceRecords StudentAttendanceRecord[]
   transferRequests    TransferRequest[]
   issuedDocuments     IssuedDocument[]
@@ -1362,6 +1371,7 @@ model StudentGuardian {
 }
 
 model Enrollment {
+  assessmentParticipations AssessmentParticipation[]
   attendanceRecords StudentAttendanceRecord[]
   receivingTransfer TransferRequest?  @relation("TransferDestination")
   sourceTransfers   TransferRequest[] @relation("TransferSource")
@@ -1744,6 +1754,7 @@ model AssessmentSchedule {
 }
 
 model AssessmentSession {
+  participations AssessmentParticipation[]
   id String @id @default(uuid())
   schoolId String
   scheduleId String
@@ -1763,6 +1774,28 @@ model AssessmentSession {
   @@unique([id, schoolId])
   @@unique([scheduleId])
   @@index([schoolId, schoolClassId, sessionDate])
+}
+
+model AssessmentParticipation {
+  id String @id @default(uuid())
+  schoolId String
+  sessionId String
+  studentId String
+  enrollmentId String
+  academicYearId String
+  schoolClassId String
+  status AssessmentParticipationStatus
+  recordedById String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  school School @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  session AssessmentSession @relation(fields: [sessionId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  student Student @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  enrollment Enrollment @relation(fields: [enrollmentId, schoolId, academicYearId, schoolClassId, studentId], references: [id, schoolId, academicYearId, schoolClassId, studentId], onDelete: Restrict)
+  recordedBy User @relation("AssessmentParticipationRecorder", fields: [recordedById], references: [id], onDelete: Restrict)
+
+  @@unique([sessionId, studentId])
+  @@index([schoolId, studentId])
 }
 
 model Mark {
