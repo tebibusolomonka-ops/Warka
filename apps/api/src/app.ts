@@ -104,6 +104,10 @@ import {
   RubricScoringError,
   CourseworkFeedbackError,
   CourseworkMarkTransferError,
+  FamilyMeetingAccessError,
+  MeetingAvailabilityError,
+  MeetingSchedulingError,
+  MeetingHistoryError,
 } from '@warka/database'
 import { ErrorResponseSchema, HealthResponseSchema } from '@warka/shared'
 import { ZodError } from 'zod'
@@ -269,6 +273,10 @@ import {
   type AcademicService,
 } from './academicService.js'
 import { registerAcademicRoutes } from './academicRoutes.js'
+import {
+  FamilyMeetingRouteAccessError,
+  registerFamilyMeetingRoutes,
+} from './familyMeetingRoutes.js'
 
 export function buildApp(
   options: {
@@ -457,6 +465,7 @@ export function buildApp(
     registerStudentPortalRoutes(app, getStudentPortal, authenticate)
     registerLearningMaterialRoutes(app, getMaterials, authenticate)
     registerCourseworkRoutes(app, getDatabase, authenticate)
+    registerFamilyMeetingRoutes(app, getDatabase, authenticate)
     registerAnnouncementRoutes(app, getAnnouncements, authenticate)
     registerParentServiceRoutes(app, getDatabase, authenticate)
     registerBureauRoutes(app, getDatabase, authenticate)
@@ -539,6 +548,24 @@ export function buildApp(
   )
 
   app.setErrorHandler((error, _request, reply) => {
+    if (
+      error instanceof FamilyMeetingRouteAccessError ||
+      error instanceof FamilyMeetingAccessError
+    )
+      return reply.code(404).send({
+        error: {
+          code: 'MEETING_NOT_FOUND',
+          message: 'Meeting context unavailable',
+        },
+      })
+    if (
+      error instanceof MeetingAvailabilityError ||
+      error instanceof MeetingSchedulingError ||
+      error instanceof MeetingHistoryError
+    )
+      return reply
+        .code(409)
+        .send({ error: { code: 'MEETING_STATE', message: error.message } })
     if (
       error instanceof CourseworkRouteAccessError ||
       error instanceof CourseworkAssignmentAccessError ||
