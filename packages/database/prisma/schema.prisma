@@ -1687,6 +1687,10 @@ model ParentTeacherMeetingRequest {
   teachingAssignmentId String
   topic String @db.VarChar(300)
   status ParentTeacherMeetingStatus @default(requested)
+  scheduledStartAt DateTime?
+  scheduledEndAt DateTime?
+  meetingMethod MeetingMethod?
+  schoolLocation String? @db.VarChar(200)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   school School @relation(fields: [schoolId], references: [id], onDelete: Restrict)
@@ -1697,6 +1701,7 @@ model ParentTeacherMeetingRequest {
   teachingAssignment TeachingAssignment @relation(fields: [teachingAssignmentId], references: [id], onDelete: Restrict)
 
   @@index([schoolId, teacherId, status, createdAt])
+  @@index([schoolId, teacherId, scheduledStartAt])
   @@index([guardianUserId, studentId, createdAt])
 }
 

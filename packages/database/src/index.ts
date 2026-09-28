@@ -1094,3 +1094,8 @@ export {
   createMeetingAvailability,
   closeMeetingAvailability,
 } from './meetingAvailability.js'
+export {
+  ScheduleFamilyMeetingSchema,
+  MeetingSchedulingError,
+  scheduleFamilyMeeting,
+} from './meetingScheduling.js'

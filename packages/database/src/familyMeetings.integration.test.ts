@@ -5,6 +5,10 @@ import {
   FamilyMeetingAccessError,
   requestFamilyMeeting,
 } from './familyMeetings.js'
+import {
+  MeetingSchedulingError,
+  scheduleFamilyMeeting,
+} from './meetingScheduling.js'
 
 const testUrl = process.env.TEST_DATABASE_URL ?? process.env.DATABASE_URL
 const database = testUrl
@@ -150,6 +154,46 @@ describe.skipIf(!database)('family meeting requests in PostgreSQL', () => {
         teacherId: teacher.id,
         studentId: student.id,
       })
+      const startsAt = new Date(Date.now() + 86400000)
+      const endsAt = new Date(startsAt.getTime() + 1800000)
+      const slot = await db.teacherMeetingAvailability.create({
+        data: {
+          schoolId: school.id,
+          teacherId: teacher.id,
+          startsAt,
+          endsAt,
+          method: 'inPerson',
+        },
+      })
+      await expect(
+        scheduleFamilyMeeting(db, unrelatedTeacher.id, {
+          schoolId: school.id,
+          requestId: request.id,
+          availabilityId: slot.id,
+          schoolLocation: 'School office',
+        }),
+      ).rejects.toBeInstanceOf(MeetingSchedulingError)
+      const scheduled = await scheduleFamilyMeeting(db, teacher.id, {
+        schoolId: school.id,
+        requestId: request.id,
+        availabilityId: slot.id,
+        schoolLocation: 'School office',
+      })
+      expect(scheduled).toMatchObject({
+        status: 'scheduled',
+        scheduledStartAt: startsAt,
+        scheduledEndAt: endsAt,
+        meetingMethod: 'inPerson',
+      })
+      const second = await requestFamilyMeeting(db, guardianUser.id, input)
+      await expect(
+        scheduleFamilyMeeting(db, teacher.id, {
+          schoolId: school.id,
+          requestId: second.id,
+          availabilityId: slot.id,
+          schoolLocation: 'School office',
+        }),
+      ).rejects.toBeInstanceOf(MeetingSchedulingError)
       await db.studentGuardian.update({
         where: {
           studentId_guardianId: {
@@ -166,9 +210,12 @@ describe.skipIf(!database)('family meeting requests in PostgreSQL', () => {
         await db.parentTeacherMeetingRequest.count({
           where: { schoolId: school.id },
         }),
-      ).toBe(1)
+      ).toBe(2)
     } finally {
       await db.parentTeacherMeetingRequest.deleteMany({
+        where: { schoolId: school.id },
+      })
+      await db.teacherMeetingAvailability.deleteMany({
         where: { schoolId: school.id },
       })
       await db.teachingAssignment.deleteMany({ where: { schoolId: school.id } })
