@@ -30,6 +30,7 @@ beforeEach(() => {
   vi.resetAllMocks()
   vi.mocked(getParentChildren).mockResolvedValue([
     {
+      studentId: '123e4567-e89b-42d3-a456-426614174000',
       studentReference: 'WKA-123',
       displayName: 'Hana',
       schoolId: 'school-1',

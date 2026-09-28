@@ -8,6 +8,7 @@ export class ParentPortalAccessError extends Error {
 }
 
 export type ParentChild = {
+  studentId: string
   studentReference: string
   displayName: string
   schoolId: string
@@ -125,6 +126,7 @@ export function prismaParentPortalService(
       const children = await eligibleParentChildren(database, userId)
       if (children.length === 0) throw new ParentPortalAccessError()
       return children.map((child) => ({
+        studentId: child.studentId,
         studentReference: child.studentReference,
         displayName: child.displayName,
         schoolId: child.schoolId,

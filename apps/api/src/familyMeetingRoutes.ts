@@ -230,6 +230,12 @@ export function registerFamilyMeetingRoutes(
           meetingMethod: true,
           schoolLocation: true,
           createdAt: true,
+          events: {
+            where: { kind: { in: ['declined', 'cancelled'] } },
+            select: { reason: true },
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+          },
         },
         orderBy: { id: 'desc' },
         take: limit + 1,

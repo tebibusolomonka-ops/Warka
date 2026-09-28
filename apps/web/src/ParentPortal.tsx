@@ -12,6 +12,7 @@ import type {
 import { ApiError } from './api'
 import { AttendanceHistoryView } from './AttendanceHistoryView'
 import { AcademicProgressSummary } from './AcademicProgressSummary'
+import { GuardianMeetingWorkspace } from './GuardianMeetingWorkspace'
 import { getLinkedChildAttendance } from './attendanceApi'
 import {
   getParentChildren,
@@ -38,6 +39,7 @@ type Section =
   | 'Coursework'
   | 'Messages'
   | 'Attendance'
+  | 'Meetings'
 
 function safeResource(url: string) {
   try {
@@ -326,6 +328,7 @@ export function ParentPortal({
                 'Coursework',
                 'Announcements',
                 'Messages',
+                'Meetings',
                 'Attendance',
               ] as const
             ).map((item) => (
@@ -371,6 +374,15 @@ export function ParentPortal({
                   selected.studentReference,
                 )
               }
+            />
+          )}
+          {selected && section === 'Meetings' && (
+            <GuardianMeetingWorkspace
+              baseUrl={baseUrl}
+              schoolId={selected.schoolId}
+              studentId={selected.studentId}
+              childName={selected.displayName}
+              onSessionExpired={onSessionExpired}
             />
           )}
           {['Results', 'Materials', 'Announcements', 'Coursework'].includes(

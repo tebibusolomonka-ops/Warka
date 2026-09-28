@@ -393,6 +393,7 @@ export const ParentIdentitySchema = z.object({ displayName: z.string() })
 export type ParentIdentity = z.infer<typeof ParentIdentitySchema>
 
 export const ParentChildSchema = z.object({
+  studentId: z.uuid(),
   studentReference: z.string(),
   displayName: z.string(),
   schoolId: z.uuid(),

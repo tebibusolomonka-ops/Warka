@@ -31,12 +31,10 @@ function fixture() {
   const database = {
     guardianAccess: { findUnique: vi.fn().mockResolvedValue({ guardianId }) },
     enrollment: {
-      findFirst: vi
-        .fn()
-        .mockResolvedValue({
-          academicYearId: schoolId,
-          schoolClassId: schoolId,
-        }),
+      findFirst: vi.fn().mockResolvedValue({
+        academicYearId: schoolId,
+        schoolClassId: schoolId,
+      }),
     },
     teachingAssignment: {
       findMany: vi.fn().mockResolvedValue([]),
