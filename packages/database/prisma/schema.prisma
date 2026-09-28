@@ -486,6 +486,8 @@ model School {
 }
 
 model User {
+  performedAttendanceCorrections AttendanceCorrection[] @relation("AttendanceCorrectionPerformer")
+  approvedAttendanceCorrections AttendanceCorrection[] @relation("AttendanceCorrectionApprover")
   openedAttendanceSessions AttendanceSession[]
   recordedAttendance StudentAttendanceRecord[]
   createdFileAssets FileAsset[] @relation("FileAssetCreatedBy")
@@ -1604,9 +1606,26 @@ model StudentAttendanceRecord {
   student Student @relation(fields: [studentId], references: [id], onDelete: Restrict)
   enrollment Enrollment @relation(fields: [enrollmentId, schoolId, academicYearId, schoolClassId, studentId], references: [id, schoolId, academicYearId, schoolClassId, studentId], onDelete: Restrict, map: "StudentAttendanceRecord_enrollment_scope_fkey")
   recordedBy User @relation(fields: [recordedById], references: [id], onDelete: Restrict)
+  corrections AttendanceCorrection[]
 
   @@unique([sessionId, studentId])
   @@index([schoolId, studentId, recordedAt])
+}
+
+model AttendanceCorrection {
+  id String @id @default(uuid())
+  recordId String
+  previousStatus StudentAttendanceStatus
+  newStatus StudentAttendanceStatus
+  reason String
+  performedById String
+  approvedById String?
+  effectiveAt DateTime @default(now())
+  record StudentAttendanceRecord @relation(fields: [recordId], references: [id], onDelete: Restrict)
+  performedBy User @relation("AttendanceCorrectionPerformer", fields: [performedById], references: [id], onDelete: Restrict)
+  approvedBy User? @relation("AttendanceCorrectionApprover", fields: [approvedById], references: [id], onDelete: Restrict)
+
+  @@index([recordId, effectiveAt])
 }
 
 model GradingPeriod {
