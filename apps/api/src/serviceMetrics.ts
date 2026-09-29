@@ -3,13 +3,16 @@ import { databaseQueryMetrics, type PrismaClient } from '@warka/database'
 import type { RequestLog } from './requestLogging.js'
 import { authenticatedUser } from './authenticateRequest.js'
 import { requireOperator } from './operationsAccess.js'
+import { PerformanceBudgetMetrics } from './performanceBudgets.js'
 
 export class ServiceMetrics {
+  readonly performanceBudgets = new PerformanceBudgetMetrics()
   private readonly counts = new Map<
     string,
     { requests: number; errors: number; durationMs: number }
   >()
   record(entry: RequestLog) {
+    this.performanceBudgets.record(entry)
     const key = `${entry.method} ${entry.route}`
     const current = this.counts.get(key) ?? {
       requests: 0,
@@ -41,6 +44,7 @@ export function registerMetricsRoutes(
       await requireOperator(getDatabase(), authenticatedUser(request).id)
       return {
         http: metrics.snapshot(),
+        performanceBudgets: metrics.performanceBudgets.snapshot(),
         database: databaseQueryMetrics.snapshot(),
       }
     },
