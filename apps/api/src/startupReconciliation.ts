@@ -2,6 +2,7 @@ import {
   reconcileInterruptedScheduledTasks,
   type PrismaClient,
 } from '@warka/database'
+import { reconcileStaleFileScans } from './fileScanReconciliation.js'
 
 export type StartupReconciliationResult = {
   status: 'notRun' | 'completed' | 'timedOut' | 'failed'
@@ -43,18 +44,14 @@ async function reconcileDomains(database: PrismaClient, now: Date) {
     now,
     staleAfterMs: 300_000,
   })
-  const [backups, scans, deliveries, rehearsals, pendingVerifications] =
+  const [backups, scanResult, deliveries, rehearsals, pendingVerifications] =
     await Promise.all([
       database.backupRecord.findMany({
         where: { status: 'running', startedAt: { lte: cutoff } },
         select: { id: true },
         take: 100,
       }),
-      database.fileScan.findMany({
-        where: { status: 'scanning', startedAt: { lte: cutoff } },
-        select: { id: true },
-        take: 100,
-      }),
+      reconcileStaleFileScans(database, { now, staleAfterMs: 300_000 }),
       database.emailDelivery.findMany({
         where: { status: 'sending', startedAt: { lte: cutoff } },
         select: { id: true },
@@ -78,16 +75,6 @@ async function reconcileDomains(database: PrismaClient, now: Date) {
           },
         })
       : { count: 0 },
-    scans.length
-      ? database.fileScan.updateMany({
-          where: { id: { in: scans.map(({ id }) => id) }, status: 'scanning' },
-          data: {
-            status: 'unavailable',
-            completedAt: now,
-            failureCode: 'WORKER_INTERRUPTED',
-          },
-        })
-      : { count: 0 },
     deliveries.length
       ? database.emailDelivery.updateMany({
           where: {
@@ -108,7 +95,7 @@ async function reconcileDomains(database: PrismaClient, now: Date) {
     interruptedExecutions: interrupted.length,
     interruptedBackups: backups.length,
     pendingBackupVerifications: pendingVerifications,
-    staleFileScans: scans.length,
+    staleFileScans: scanResult.detected,
     ambiguousEmailDeliveries: deliveries.length,
     restoreRehearsalsForReview: rehearsals,
   }

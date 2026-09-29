@@ -1,5 +1,10 @@
 import { describe, expect, it, vi } from 'vitest'
 import { runStartupReconciliation } from './startupReconciliation.js'
+import { reconcileStaleFileScans } from './fileScanReconciliation.js'
+
+vi.mock('./fileScanReconciliation.js', () => ({
+  reconcileStaleFileScans: vi.fn(),
+}))
 
 function databaseFixture() {
   return {
@@ -30,6 +35,10 @@ function databaseFixture() {
 
 describe('startup task reconciliation', () => {
   it('uses domain-specific safe transitions', async () => {
+    vi.mocked(reconcileStaleFileScans).mockResolvedValue({
+      detected: 1,
+      rescheduled: ['replacement'],
+    })
     const database = databaseFixture()
     const now = new Date('2026-09-30T10:00:00.000Z')
     const result = await runStartupReconciliation(database as never, { now })
@@ -43,11 +52,10 @@ describe('startup task reconciliation', () => {
       ambiguousEmailDeliveries: 1,
       restoreRehearsalsForReview: 1,
     })
-    expect(database.fileScan.updateMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({ status: 'unavailable' }),
-      }),
-    )
+    expect(reconcileStaleFileScans).toHaveBeenCalledWith(database, {
+      now,
+      staleAfterMs: 300_000,
+    })
     expect(database.emailDelivery.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
