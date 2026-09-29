@@ -140,6 +140,7 @@ import { registerSearchRoutes } from './searchRoutes.js'
 import { registerResponseCompression } from './responseCompression.js'
 import { installDefaultCachePolicy } from './cachePolicy.js'
 import { registerSchedulerRoutes } from './schedulerRoutes.js'
+import { registerRecoveryRoutes } from './recoveryRoutes.js'
 import { operationsTestActions } from './operationsTestAdapter.js'
 import { OperationsPermissionError } from './operationsAccess.js'
 import { registerSchoolContactRoutes } from './schoolContactRoutes.js'
@@ -465,6 +466,7 @@ export function buildApp(
     registerCommunicationDeliveryRoutes(app, getDatabase, authenticate)
     registerSearchRoutes(app, getDatabase, authenticate)
     registerSchedulerRoutes(app, getDatabase, authenticate)
+    registerRecoveryRoutes(app, getDatabase, authenticate)
     registerSupportRequestRoutes(app, getDatabase, authenticate)
     registerSchoolContactRoutes(app, getDatabase, authenticate)
     registerSchoolRoutes(app, getStore, getAccess, authenticate)
