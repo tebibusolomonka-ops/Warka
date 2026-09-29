@@ -1,5 +1,6 @@
 import { useEffect, useState, type ChangeEvent } from 'react'
 import { ApiError } from './api'
+import { AccessibleDialog } from './AccessibleDialog'
 import {
   applySchoolImport,
   cancelSchoolImport,
@@ -24,6 +25,7 @@ export function SchoolOperationsWorkspace({
   onSessionExpired: () => void
 }) {
   const [open, setOpen] = useState(false)
+  const [confirmApply, setConfirmApply] = useState(false)
   const [jobs, setJobs] = useState<ImportJob[]>([])
   const [job, setJob] = useState<ImportJob | null>(null)
   const [file, setFile] = useState<File | null>(null)
@@ -210,10 +212,33 @@ export function SchoolOperationsWorkspace({
                   <button
                     type="button"
                     disabled={busy || (hasWarnings && !acknowledgeWarnings)}
-                    onClick={() => void run('apply')}
+                    onClick={() => setConfirmApply(true)}
                   >
                     Apply import
                   </button>
+                  {confirmApply && (
+                    <AccessibleDialog
+                      title="Apply student import"
+                      description="Apply the validated student import to this school?"
+                      onClose={() => setConfirmApply(false)}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => setConfirmApply(false)}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setConfirmApply(false)
+                          void run('apply')
+                        }}
+                      >
+                        Confirm apply import
+                      </button>
+                    </AccessibleDialog>
+                  )}
                 </>
               )}
               {job.status === 'invalid' && (

@@ -28,6 +28,26 @@ body {
   padding: 3rem 1.5rem;
 }
 
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  background: rgb(0 0 0 / 55%);
+}
+
+.dialog-panel {
+  max-width: 32rem;
+  padding: 1.5rem;
+  background: #fff;
+  border-radius: 0.35rem;
+}
+
+.dialog-panel:focus-visible {
+  outline: 3px solid #18543d;
+}
+
 header {
   border-bottom: 1px solid #cbd8ce;
   margin-bottom: 2rem;

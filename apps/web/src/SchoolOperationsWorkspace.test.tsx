@@ -93,6 +93,12 @@ describe('school operations', () => {
       screen.getByRole('checkbox', { name: /I reviewed duplicate warnings/ }),
     )
     fireEvent.click(screen.getByRole('button', { name: 'Apply import' }))
+    expect(
+      screen.getByRole('dialog', { name: 'Apply student import' }),
+    ).toBeTruthy()
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Confirm apply import' }),
+    )
     await waitFor(() => expect(onApplied).toHaveBeenCalledTimes(1))
     expect(applySchoolImport).toHaveBeenCalledWith(
       '/api',
