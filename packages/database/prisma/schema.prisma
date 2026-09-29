@@ -61,6 +61,7 @@ enum AccountStatus {
 enum EmailDeliveryStatus {
   queued
   sending
+  deliveryUnknown
   sent
   failed
   cancelled

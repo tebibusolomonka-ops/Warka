@@ -95,7 +95,7 @@ async function reconcileDomains(database: PrismaClient, now: Date) {
             status: 'sending',
           },
           data: {
-            status: 'failed',
+            status: 'deliveryUnknown',
             failedAt: now,
             failureCode: 'AMBIGUOUS',
           },

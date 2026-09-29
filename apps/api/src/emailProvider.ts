@@ -9,6 +9,7 @@ export const OutboundEmailSchema = z.strictObject({
 
 export type OutboundEmail = z.infer<typeof OutboundEmailSchema>
 export type EmailProviderHealth = 'available' | 'degraded' | 'unavailable'
+export type EmailDeliveryLookup = 'delivered' | 'notDelivered' | 'unknown'
 export type EmailSendResult =
   | { status: 'sent'; providerMessageId?: string }
   | {
@@ -25,6 +26,7 @@ export type EmailSendResult =
 export interface EmailProvider {
   send(message: OutboundEmail): Promise<EmailSendResult>
   health(): Promise<EmailProviderHealth>
+  lookup?(providerMessageId: string): Promise<EmailDeliveryLookup>
 }
 
 export class FakeEmailProvider implements EmailProvider {

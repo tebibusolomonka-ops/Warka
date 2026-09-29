@@ -50,7 +50,10 @@ describe('startup task reconciliation', () => {
     )
     expect(database.emailDelivery.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.objectContaining({ failureCode: 'AMBIGUOUS' }),
+        data: expect.objectContaining({
+          status: 'deliveryUnknown',
+          failureCode: 'AMBIGUOUS',
+        }),
       }),
     )
     expect(database.restoreRehearsal.count).toHaveBeenCalled()

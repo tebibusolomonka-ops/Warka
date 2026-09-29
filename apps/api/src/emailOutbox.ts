@@ -173,10 +173,11 @@ export async function processQueuedEmailDelivery(
         data: { status: 'sent', sentAt: now },
       })
   } else {
+    const ambiguous = result.failureCode === 'AMBIGUOUS'
     await database.emailDelivery.update({
       where: { id },
       data: {
-        status: 'failed',
+        status: ambiguous ? 'deliveryUnknown' : 'failed',
         failedAt: now,
         failureCode: result.failureCode,
       },
@@ -188,4 +189,37 @@ export async function processQueuedEmailDelivery(
       })
   }
   return result
+}
+
+export async function reconcileUnknownEmailDelivery(
+  database: PrismaClient,
+  provider: EmailProvider,
+  id: string,
+  now = new Date(),
+) {
+  const delivery = await database.emailDelivery.findUnique({
+    where: { id },
+    select: { status: true, providerMessageId: true },
+  })
+  if (!delivery || delivery.status !== 'deliveryUnknown')
+    return { status: 'notUnknown' as const }
+  if (!provider.lookup || !delivery.providerMessageId)
+    return { status: 'manualReview' as const }
+  const result = await provider.lookup(delivery.providerMessageId)
+  if (result === 'unknown') return { status: 'manualReview' as const }
+  const updated = await database.emailDelivery.updateMany({
+    where: { id, status: 'deliveryUnknown' },
+    data:
+      result === 'delivered'
+        ? { status: 'sent', sentAt: now, failureCode: null }
+        : { status: 'failed', failedAt: now, failureCode: 'NOT_DELIVERED' },
+  })
+  return {
+    status:
+      updated.count !== 1
+        ? ('notUnknown' as const)
+        : result === 'delivered'
+          ? ('delivered' as const)
+          : ('notDelivered' as const),
+  }
 }
