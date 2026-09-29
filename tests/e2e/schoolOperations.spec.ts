@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { expect, test } from '@playwright/test'
 import { createDatabaseClient } from '../../packages/database/dist/index.js'
 import { hashPassword } from '../../packages/auth/dist/index.js'
+import { expectAccessiblePage } from './accessibility.js'
 
 test('school administrator imports synthetic registrations and downloads an audited roster', async ({
   page,
@@ -76,6 +77,7 @@ test('school administrator imports synthetic registrations and downloads an audi
       page.getByRole('heading', { name: 'My schools' }),
     ).toBeVisible()
     await page.getByLabel('School', { exact: true }).selectOption(schoolId)
+    await expectAccessiblePage(page)
     await page.getByRole('button', { name: 'School operations' }).click()
     await page.getByLabel('Student registration CSV').setInputFiles({
       name: 'synthetic-registration.csv',
@@ -85,6 +87,16 @@ test('school administrator imports synthetic registrations and downloads an audi
     await page.getByRole('button', { name: 'Upload and validate' }).click()
     await expect(page.getByText(/Status: validated/)).toBeVisible()
     await page.getByRole('button', { name: 'Apply import' }).click()
+    const dialog = page.getByRole('dialog', { name: 'Apply student import' })
+    await expect(dialog).toBeFocused()
+    await page.keyboard.press('Tab')
+    await expect(dialog.getByRole('button', { name: 'Cancel' })).toBeFocused()
+    await page.keyboard.press('Escape')
+    await expect(
+      page.getByRole('button', { name: 'Apply import' }),
+    ).toBeFocused()
+    await page.getByRole('button', { name: 'Apply import' }).click()
+    await dialog.getByRole('button', { name: 'Confirm apply import' }).click()
     await expect(
       page.getByText('1 student registrations applied as draft enrollments.'),
     ).toBeVisible()

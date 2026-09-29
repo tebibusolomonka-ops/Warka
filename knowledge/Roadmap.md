@@ -1,5 +1,7 @@
 # Roadmap
 
+Commits 351–360 establish accessibility scans, landmarks and skip navigation, workspace focus, associated form errors, dialog focus, keyboard search, live status, textual state cues, reduced-motion behavior, and representative browser journeys. Manual assistive technology review remains future validation work.
+
 Commits 341–350 add reporting provenance, communication readiness, production profiles and validation, graceful shutdown, build metadata, migration preflight, and the operator deployment workspace. Accessibility infrastructure and interaction quality follow in 351–360.
 
 Commits 321–330 add factual, non-destructive data quality checks and runs, school administration tools, reporting windows, and pre-submission validation. Versioned reporting, bureau review, exports, notifications, and journeys follow in 331–340.

@@ -1,5 +1,7 @@
 # Testing
 
+The accessibility Playwright helper runs axe-core WCAG A/AA scans on sign-in, student, guardian, school administration, bureau, family meeting, and Operations screens. Focused journeys check skip navigation, form error focus and association, dialog focus restoration, search keyboard access, route title and focus, and reduced motion. Manual assistive technology review remains necessary.
+
 Deployment tests cover production configuration, profiles, bounded shutdown ordering, safe build fields, migration history classification, readiness reasons, operator API access, and React status. The focused Operations Playwright journey checks deployment metadata and denies school administrator access. Local discovery is distinct from a live PostgreSQL browser run.
 
 `pnpm db:preflight` validates the Prisma schema and inspects migration status without applying or repairing migrations. It reports ready, pending, failed migration, divergence, or unavailable using safe status labels. Run it after migration deployment and before application rollout; a missing local PostgreSQL service reports unavailable.

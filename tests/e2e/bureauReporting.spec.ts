@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { expect, test } from '@playwright/test'
 import { createDatabaseClient } from '../../packages/database/dist/index.js'
 import { hashPassword } from '../../packages/auth/dist/index.js'
+import { expectAccessiblePage } from './accessibility.js'
 
 test('school report return, correction, resubmission and accepted version preserve history', async ({
   page,
@@ -81,6 +82,7 @@ test('school report return, correction, resubmission and accepted version preser
     await expect(
       page.getByRole('heading', { name: 'Bureau reporting' }),
     ).toBeVisible()
+    await expectAccessiblePage(page)
     await expect(
       page.getByText('Required Browser School — missing'),
     ).toBeVisible()

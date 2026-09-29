@@ -1,5 +1,7 @@
 # Known issues
 
+- Automated axe-core scans and keyboard journeys do not replace manual screen-reader testing. Local PostgreSQL is unavailable for live authenticated browser execution; CI must validate the final journeys.
+
 - Reporting attempts overwritten before versioning cannot be reconstructed. A legacy backfill contains only the last stored state and has no original checksum.
 - Local PostgreSQL remains unavailable. Migration preflight reports databaseUnavailable locally; deployment readiness and the browser journey need CI PostgreSQL confirmation. A forced shutdown after the bounded drain can leave in-flight scheduled tasks requiring operator review; email with uncertain provider outcome must not be resent automatically.
 

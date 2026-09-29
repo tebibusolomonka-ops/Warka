@@ -1,5 +1,7 @@
 # Security
 
+Accessibility changes retain API authorization and relationship checks. Live-region messages remain brief and avoid student record details, credentials, and private status payloads; status text is visible without color. Deployment data remains operator-only despite a visible Operations section for eligible owners.
+
 Production configuration errors and deployment APIs expose only safe names and controlled states, never connection strings or credentials. Detailed deployment information requires the existing operator allowlist and current owner membership; school users cannot access it. Legacy report history labels unavailable provenance rather than implying verified historical evidence.
 
 School data-quality issue detail and dismissal require current administrator membership; bureau reporting access does not grant student-level issue access. Issue summaries use bounded factual codes and minimal references. Checks do not modify student, enrollment, mark, or document records. Reporting readiness preserves blank versus zero and rejects blocking issues without submitting.

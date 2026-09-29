@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { expect, test } from '@playwright/test'
 import { createDatabaseClient } from '../../packages/database/dist/index.js'
 import { hashPassword } from '../../packages/auth/dist/index.js'
+import { expectAccessiblePage } from './accessibility.js'
 
 test('guardian requests a school meeting and sees the teacher schedule', async ({
   page,
@@ -160,6 +161,7 @@ test('guardian requests a school meeting and sees the teacher schedule', async (
     await expect(
       page.getByRole('heading', { name: 'Family meetings for Sample' }),
     ).toBeVisible()
+    await expectAccessiblePage(page)
     await page.getByLabel('Current teacher').selectOption(assignment.id)
     await expect(page.getByRole('option', { name: /Science/ })).toHaveCount(1)
     await page.getByLabel('Topic').fill('Discuss classroom learning')

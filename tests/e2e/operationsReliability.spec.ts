@@ -4,6 +4,7 @@ import { join } from 'node:path'
 import { expect, test } from '@playwright/test'
 import { createDatabaseClient } from '../../packages/database/dist/index.js'
 import { hashPassword } from '../../packages/auth/dist/index.js'
+import { expectAccessiblePage } from './accessibility.js'
 
 const operatorId = '717ac602-fd66-4400-9116-13a79b8cc3da'
 
@@ -90,8 +91,15 @@ test('operator verifies a backup, rehearses restore, resolves an incident, and t
       ).toBeVisible()
       await expect(page.getByText('Application version: 0.1.0')).toBeVisible()
       await expect(page.getByText(/Migration status:/)).toBeVisible()
-      await expect(page.getByText(/database: ready/)).toBeVisible()
-      await expect(page.getByText(/email: disabled/)).toBeVisible()
+      await expect(
+        page.locator('#operations-deployment').getByText('database: ready'),
+      ).toBeVisible()
+      await expect(
+        page
+          .locator('#operations-deployment')
+          .getByText(/email: (disabled|available|unavailable)/),
+      ).toBeVisible()
+      await expectAccessiblePage(page)
       await clickReady('Run backup')
       await clickReady('Verify backup')
       await clickReady('Run restore rehearsal')

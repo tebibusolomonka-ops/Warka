@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { test, expect } from '@playwright/test'
 import { createDatabaseClient } from '../../packages/database/dist/index.js'
 import { hashPassword } from '../../packages/auth/dist/index.js'
+import { expectAccessiblePage } from './accessibility.js'
 
 test('guardian portal and school office conversation', async ({ page }) => {
   test.setTimeout(150_000)
@@ -201,6 +202,8 @@ test('guardian portal and school office conversation', async ({ page }) => {
     await expect(
       page.getByRole('heading', { name: 'Parent portal' }),
     ).toBeVisible()
+    await expect(page).toHaveTitle('Guardian portal | Warka')
+    await expectAccessiblePage(page)
     await expect(
       page.getByText(`Warka reference: ${student.studentReference}`),
     ).toBeVisible()

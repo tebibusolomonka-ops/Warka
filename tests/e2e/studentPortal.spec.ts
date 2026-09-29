@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { test, expect } from '@playwright/test'
 import { createDatabaseClient } from '../../packages/database/dist/index.js'
 import { hashPassword } from '../../packages/auth/dist/index.js'
+import { expectAccessiblePage } from './accessibility.js'
 
 const operatorId = '717ac602-fd66-4400-9116-13a79b8cc3da'
 
@@ -363,6 +364,9 @@ test('staff provisions student portal access with official records', async ({
     await expect(
       page.getByRole('heading', { name: 'Student portal' }),
     ).toBeVisible()
+    await expect(page).toHaveTitle('Student portal | Warka')
+    await expect(page.locator('#main-content')).toBeFocused()
+    await expectAccessiblePage(page)
     await expect(
       page.getByText('Student reference: BROWSER-' + suffix),
     ).toBeVisible()
@@ -439,6 +443,10 @@ test('staff provisions student portal access with official records', async ({
       },
     })
     const searchInput = page.getByLabel('Search this school')
+    await page.keyboard.press('/')
+    await expect(searchInput).toBeFocused()
+    await page.keyboard.press('Escape')
+    await expect(searchInput).not.toBeFocused()
     await searchInput.fill('BROWSER-' + suffix)
     await expect(
       page

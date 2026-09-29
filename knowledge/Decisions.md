@@ -1,5 +1,7 @@
 # Decisions
 
+- Accessibility checks use axe-core on representative browser pages plus focused keyboard journeys. Automated scans are a gate for detectable violations, not proof of complete WCAG conformance. Workspace changes focus the main region and update a nonsensitive page title; background refreshes do not move focus.
+
 - Legacy reporting backfill is explicitly unverified: it is the last recoverable stored state and cannot reconstruct overwritten attempts or an original checksum. Native versions retain checksums.
 - Reporting reminder readiness reflects scheduler, outbox, and email provider state; disabled delivery is visible. Production startup validates core and enabled-feature configuration by name only. Deployment readiness uses ready, degraded, and blocked states instead of a score; migration preflight never applies repairs.
 
