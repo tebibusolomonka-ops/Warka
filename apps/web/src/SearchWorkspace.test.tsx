@@ -52,13 +52,20 @@ it('groups authorized results as text and opens one with keyboard', async () => 
   expect(screen.getByRole('heading', { name: 'Students' })).toBeTruthy()
   expect(screen.queryByRole('heading', { name: 'Staff' })).toBeNull()
   const result = screen.getByRole('button', { name: /Ada Learner/ })
-  fireEvent.keyDown(result.parentElement!.parentElement!.parentElement!, {
-    key: 'Enter',
-  })
+  result.focus()
+  fireEvent.click(result)
   expect(
     screen.getByRole('region', { name: 'Selected search result' }).textContent,
   ).toContain('WRK-1')
   await waitFor(() => expect(openSearchResult).toHaveBeenCalled())
+  fireEvent.keyDown(document, { key: '/' })
+  expect(document.activeElement).toBe(
+    screen.getByLabelText('Search this school'),
+  )
+  fireEvent.keyDown(document, { key: 'Escape' })
+  expect(document.activeElement).not.toBe(
+    screen.getByLabelText('Search this school'),
+  )
 })
 it('waits for a useful query and avoids eager result-body requests', async () => {
   vi.mocked(searchSchool).mockResolvedValue({

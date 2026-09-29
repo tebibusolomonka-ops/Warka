@@ -53,12 +53,18 @@ export function SearchWorkspace({
   const generation = useRef(0)
   useEffect(() => {
     const focus = (event: globalThis.KeyboardEvent) => {
+      const target = event.target as HTMLElement
+      if (event.key === 'Escape' && document.activeElement === input.current) {
+        input.current?.blur()
+        return
+      }
       if (
-        (event.key === '/' &&
-          !['INPUT', 'TEXTAREA'].includes(
-            (event.target as HTMLElement).tagName,
-          )) ||
-        ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k')
+        event.key === '/' &&
+        !event.ctrlKey &&
+        !event.metaKey &&
+        !event.altKey &&
+        !['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName) &&
+        !target.isContentEditable
       ) {
         event.preventDefault()
         input.current?.focus()
@@ -122,16 +128,12 @@ export function SearchWorkspace({
       setActiveIndex(next)
       buttons.current[next]?.focus()
     }
-    if (event.key === 'Enter') {
-      event.preventDefault()
-      const item = items[activeIndex]
-      if (item) void open(item)
-    }
   }
   let position = 0
   return (
     <section aria-label="Global search" id="global-search">
       <h2>Search</h2>
+      <p>Press / to focus search. Press Escape to leave the search field.</p>
       <form onSubmit={submit}>
         <label htmlFor="global-search-input">Search this school</label>
         <input
