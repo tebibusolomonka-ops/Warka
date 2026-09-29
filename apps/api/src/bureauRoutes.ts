@@ -15,6 +15,8 @@ import {
   createReportingPeriod,
   getReportingCoverage,
   getRegionalReportingValidation,
+  createReportingExport,
+  ReportingExportTypeSchema,
   listReportingPeriods,
   openReportingPeriod,
   prepareSchoolReport,
@@ -37,6 +39,11 @@ const ScopeSchema = z.strictObject({ organizationId: z.uuid() })
 const PeriodSchema = z.strictObject({
   organizationId: z.uuid(),
   periodId: z.uuid(),
+})
+const ReportingExportParams = z.strictObject({
+  organizationId: z.uuid(),
+  periodId: z.uuid(),
+  type: ReportingExportTypeSchema,
 })
 const SchoolPeriodSchema = z.strictObject({
   schoolId: z.uuid(),
@@ -75,6 +82,30 @@ export function registerBureauRoutes(
         select: { id: true, name: true },
         orderBy: [{ name: 'asc' }, { id: 'asc' }],
       })
+    },
+  )
+  app.get(
+    '/bureau/:organizationId/periods/:periodId/exports/:type',
+    { preHandler: authenticate },
+    async (request, reply) => {
+      const { organizationId, periodId, type } = ReportingExportParams.parse(
+        request.params,
+      )
+      const { csv } = await createReportingExport(
+        getDatabase(),
+        authenticatedUser(request).id,
+        organizationId,
+        periodId,
+        type,
+      )
+      return reply
+        .header('content-type', 'text/csv; charset=utf-8')
+        .header(
+          'content-disposition',
+          `attachment; filename="reporting-${type}.csv"`,
+        )
+        .header('cache-control', 'no-store')
+        .send(csv)
     },
   )
   app.get(

@@ -514,6 +514,11 @@ export {
   validateRegionalReporting,
   getRegionalReportingValidation,
 } from './regionalReportingValidation.js'
+export {
+  ReportingExportTypeSchema,
+  buildReportingExportRows,
+  createReportingExport,
+} from './reportingExports.js'
 export type {
   ReportingSubmission,
   ReportingSubmissionStatus,

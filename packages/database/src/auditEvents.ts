@@ -121,6 +121,7 @@ export const AuditResourceTypeSchema = z.enum([
   'issuedDocument',
   'transferRequest',
   'reportingSubmission',
+  'reportingPeriod',
   'schoolServiceAccess',
   'bureauAccess',
   'accessReview',
