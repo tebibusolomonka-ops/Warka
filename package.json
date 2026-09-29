@@ -41,6 +41,7 @@
     "test:e2e": "pnpm build && playwright test"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@eslint/js": "^9.36.0",
     "@playwright/test": "^1.63.0",
     "eslint": "^9.36.0",
