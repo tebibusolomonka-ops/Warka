@@ -12,6 +12,9 @@ import {
   emailOutboxConfiguration,
 } from './emailOutboxScheduler.js'
 import { FakeEmailProvider } from './emailProvider.js'
+import { assertProductionConfiguration } from './productionConfiguration.js'
+
+assertProductionConfiguration(process.env)
 
 const controlledEmail =
   process.env.NODE_ENV === 'test' &&
