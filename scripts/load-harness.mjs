@@ -2,7 +2,57 @@ import autocannon from 'autocannon'
 import { pathToFileURL } from 'node:url'
 
 const profiles = {
-  smoke: { connections: 1, duration: 1, requests: [{ path: '/health' }] },
+  smoke: { connections: 1, duration: 1, scenario: 'smoke' },
+  representativeReads: {
+    connections: 5,
+    duration: 30,
+    scenario: 'representativeReads',
+  },
+}
+
+function syntheticId(env, name) {
+  const value = env[name]
+  if (
+    !value ||
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+      value,
+    )
+  )
+    throw new Error(`${name} must be a synthetic fixture UUID`)
+  return value
+}
+
+function profileRequests(profile, env) {
+  if (profile.scenario === 'smoke') return [{ path: '/health' }]
+  const school = syntheticId(env, 'WARKA_LOAD_SCHOOL_ID')
+  const session = syntheticId(env, 'WARKA_LOAD_ATTENDANCE_SESSION_ID')
+  const academicYear = syntheticId(env, 'WARKA_LOAD_ACADEMIC_YEAR_ID')
+  const gradingPeriod = syntheticId(env, 'WARKA_LOAD_GRADING_PERIOD_ID')
+  const schoolClass = syntheticId(env, 'WARKA_LOAD_SCHOOL_CLASS_ID')
+  const subject = syntheticId(env, 'WARKA_LOAD_SUBJECT_ID')
+  const gradebook = new URLSearchParams({
+    academicYearId: academicYear,
+    gradingPeriodId: gradingPeriod,
+    schoolClassId: schoolClass,
+    subjectId: subject,
+  })
+  return [
+    { title: 'authenticated portal read', path: '/notifications?take=20' },
+    {
+      title: 'student directory search',
+      path: `/search?schoolId=${school}&q=synthetic&types=student&limit=10&offset=0`,
+    },
+    { title: 'notification list', path: '/notifications?unread=false&take=20' },
+    {
+      title: 'teacher gradebook read',
+      path: `/schools/${school}/gradebook?${gradebook}`,
+    },
+    {
+      title: 'attendance roster read',
+      path: `/schools/${school}/attendance/sessions/${session}/roster`,
+    },
+    { title: 'reporting dashboard read', path: `/schools/${school}/reporting` },
+  ]
 }
 
 function integer(value, fallback, minimum, maximum, name) {
@@ -52,8 +102,8 @@ export function loadConfiguration(env = process.env) {
       300,
       'duration',
     ),
-    requests: profile.requests,
-    token: env.WARKA_LOAD_TOKEN,
+    requests: profileRequests(profile, env),
+    cookie: env.WARKA_LOAD_COOKIE,
   }
 }
 
@@ -64,9 +114,7 @@ export async function runLoad(config) {
     duration: config.duration,
     requests: config.requests.map((request) => ({
       ...request,
-      headers: config.token
-        ? { authorization: `Bearer ${config.token}` }
-        : undefined,
+      headers: config.cookie ? { cookie: config.cookie } : undefined,
     })),
   })
   return {
