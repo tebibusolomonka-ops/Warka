@@ -4,12 +4,30 @@ import { recordAuditEvent, type PrismaClient } from '@warka/database'
 import { authenticatedUser } from './authenticateRequest.js'
 import { requireOperator } from './operationsAccess.js'
 import { maxEmailDeliveryAttempts } from './emailOutboxScheduler.js'
+import {
+  beforeStableCursor,
+  decodeStableCursor,
+  encodeStableCursor,
+} from './stablePagination.js'
 
 const querySchema = z.strictObject({
   status: z
     .enum(['queued', 'sending', 'sent', 'failed', 'cancelled'])
     .optional(),
   limit: z.coerce.number().int().min(1).max(100).default(50),
+  cursor: z
+    .string()
+    .min(1)
+    .max(300)
+    .transform((value, context) => {
+      try {
+        return decodeStableCursor(value)
+      } catch {
+        context.addIssue({ code: 'custom', message: 'Invalid cursor' })
+        return z.NEVER
+      }
+    })
+    .optional(),
 })
 
 function maskedAddress(address: string) {
@@ -31,10 +49,14 @@ export function registerEmailAdministrationRoutes(
     async (request) => {
       await operator(request)
       const query = querySchema.parse(request.query)
+      const cursor = query.cursor
       const deliveries = await getDatabase().emailDelivery.findMany({
-        ...(query.status ? { where: { status: query.status } } : {}),
+        where: {
+          ...(query.status ? { status: query.status } : {}),
+          ...(cursor ? beforeStableCursor(cursor, 'createdAt') : {}),
+        },
         orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-        take: query.limit,
+        take: query.limit + 1,
         select: {
           id: true,
           recipientAddress: true,
@@ -48,7 +70,7 @@ export function registerEmailAdministrationRoutes(
         },
       })
       return {
-        deliveries: deliveries.map((item) => ({
+        deliveries: deliveries.slice(0, query.limit).map((item) => ({
           id: item.id,
           recipient: maskedAddress(item.recipientAddress),
           templateKey: item.templateKey,
@@ -65,6 +87,13 @@ export function registerEmailAdministrationRoutes(
               (item.recoveryRequest.status === 'pending' &&
                 item.recoveryRequest.expiresAt > new Date())),
         })),
+        nextCursor:
+          deliveries.length > query.limit && deliveries[query.limit - 1]
+            ? encodeStableCursor({
+                at: deliveries[query.limit - 1]!.createdAt,
+                id: deliveries[query.limit - 1]!.id,
+              })
+            : null,
       }
     },
   )

@@ -8,27 +8,28 @@ const deliveryId = '123e4567-e89b-42d3-a456-426614174001'
 
 function fixture(owner: boolean) {
   const auditCreate = vi.fn().mockResolvedValue({})
+  const findMany = vi.fn().mockResolvedValue([
+    {
+      id: deliveryId,
+      recipientAddress: 'recipient@example.test',
+      templateKey: 'accountRecovery',
+      status: 'failed',
+      createdAt: new Date('2026-09-30T00:00:00.000Z'),
+      scheduledAt: new Date(),
+      attemptCount: 1,
+      failureCode: 'UNAVAILABLE',
+      recoveryRequest: {
+        status: 'pending',
+        expiresAt: new Date(Date.now() + 60000),
+      },
+    },
+  ])
   const database = {
     organizationMembership: {
       findFirst: vi.fn().mockResolvedValue(owner ? { userId: actorId } : null),
     },
     emailDelivery: {
-      findMany: vi.fn().mockResolvedValue([
-        {
-          id: deliveryId,
-          recipientAddress: 'recipient@example.test',
-          templateKey: 'accountRecovery',
-          status: 'failed',
-          createdAt: new Date(),
-          scheduledAt: new Date(),
-          attemptCount: 1,
-          failureCode: 'UNAVAILABLE',
-          recoveryRequest: {
-            status: 'pending',
-            expiresAt: new Date(Date.now() + 60000),
-          },
-        },
-      ]),
+      findMany,
     },
     $transaction: (work: (transaction: unknown) => Promise<unknown>) =>
       work({
@@ -63,7 +64,7 @@ function fixture(owner: boolean) {
     },
   )
   app.setErrorHandler((_error, _request, reply) => reply.code(403).send())
-  return { app, auditCreate }
+  return { app, auditCreate, findMany }
 }
 
 afterEach(() => vi.unstubAllEnvs())
@@ -120,6 +121,73 @@ describe('email administration routes', () => {
         }),
       })
       expect(JSON.stringify(auditCreate.mock.calls)).not.toContain('token')
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('keeps cursor boundaries inside status scope and rejects invalid cursors', async () => {
+    vi.stubEnv('WARKA_OPERATOR_USER_IDS', actorId)
+    const { app, findMany } = fixture(true)
+    try {
+      findMany.mockResolvedValueOnce([
+        {
+          id: deliveryId,
+          recipientAddress: 'first@example.test',
+          templateKey: 'notice',
+          status: 'failed',
+          createdAt: new Date('2026-09-30T00:00:00.000Z'),
+          scheduledAt: new Date(),
+          attemptCount: 1,
+          failureCode: 'UNAVAILABLE',
+          recoveryRequest: null,
+        },
+        {
+          id: '123e4567-e89b-42d3-a456-426614174002',
+          recipientAddress: 'second@example.test',
+          templateKey: 'notice',
+          status: 'failed',
+          createdAt: new Date('2026-09-29T00:00:00.000Z'),
+          scheduledAt: new Date(),
+          attemptCount: 1,
+          failureCode: 'UNAVAILABLE',
+          recoveryRequest: null,
+        },
+      ])
+      const first = await app.inject({
+        url: '/operations/email/deliveries?status=failed&limit=1',
+        headers: { 'x-user': actorId },
+      })
+      expect(first.statusCode).toBe(200)
+      expect(findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { status: 'failed' },
+          orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+          take: 2,
+        }),
+      )
+      const cursor = first.json().nextCursor as string
+      expect(cursor).toBeTruthy()
+      await app.inject({
+        url: `/operations/email/deliveries?status=failed&limit=1&cursor=${encodeURIComponent(cursor)}`,
+        headers: { 'x-user': actorId },
+      })
+      expect(findMany).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            status: 'failed',
+            OR: expect.any(Array),
+          }),
+        }),
+      )
+      expect(
+        (
+          await app.inject({
+            url: '/operations/email/deliveries?cursor=invalid',
+            headers: { 'x-user': actorId },
+          })
+        ).statusCode,
+      ).toBe(403)
     } finally {
       await app.close()
     }
