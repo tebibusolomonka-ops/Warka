@@ -510,6 +510,10 @@ export {
   listBureauReportingNotes,
 } from './reportingNotes.js'
 export { createReportingSnapshotEvidence } from './reportingSnapshotEvidence.js'
+export {
+  validateRegionalReporting,
+  getRegionalReportingValidation,
+} from './regionalReportingValidation.js'
 export type {
   ReportingSubmission,
   ReportingSubmissionStatus,

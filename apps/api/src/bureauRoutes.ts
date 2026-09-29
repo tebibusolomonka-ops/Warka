@@ -14,6 +14,7 @@ import {
   closeReportingPeriod,
   createReportingPeriod,
   getReportingCoverage,
+  getRegionalReportingValidation,
   listReportingPeriods,
   openReportingPeriod,
   prepareSchoolReport,
@@ -74,6 +75,19 @@ export function registerBureauRoutes(
         select: { id: true, name: true },
         orderBy: [{ name: 'asc' }, { id: 'asc' }],
       })
+    },
+  )
+  app.get(
+    '/bureau/:organizationId/periods/:periodId/validation',
+    { preHandler: authenticate },
+    (request) => {
+      const { organizationId, periodId } = PeriodSchema.parse(request.params)
+      return getRegionalReportingValidation(
+        getDatabase(),
+        authenticatedUser(request).id,
+        organizationId,
+        periodId,
+      )
     },
   )
   app.get(
