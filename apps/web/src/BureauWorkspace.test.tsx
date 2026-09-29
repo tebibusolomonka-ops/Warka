@@ -53,7 +53,15 @@ describe('reporting review workspaces', () => {
       if (url.endsWith('/schools/school-1/reporting'))
         return ok([{ ...report, submission: { ...submission, status } }])
       if (url.endsWith('/readiness'))
-        return ok({ ready: true, warnings: [], blocking: [] })
+        return ok({
+          ready: true,
+          warnings: [],
+          blocking: [],
+          communicationScheduling: {
+            status: 'disabled',
+            reasons: ['schedulerDisabled'],
+          },
+        })
       if (url.endsWith('/notes')) return ok([])
       if (url.endsWith('/resubmit') && init?.method === 'POST') {
         status = 'submitted'
@@ -72,6 +80,11 @@ describe('reporting review workspaces', () => {
     ).not.toBeNull()
     expect(screen.getByText(/Correct official enrollment/)).not.toBeNull()
     expect(await screen.findByText('Ready to submit')).not.toBeNull()
+    expect(
+      screen.getByText(
+        'Scheduled reporting reminders are not ready for delivery.',
+      ),
+    ).not.toBeNull()
     expect(screen.getByText(/Version 1, submitted/)).not.toBeNull()
     expect(
       screen.getByText(

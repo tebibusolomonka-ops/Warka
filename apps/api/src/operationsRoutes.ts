@@ -13,6 +13,7 @@ import { requireOperator } from './operationsAccess.js'
 import { sendOperationsAlert } from './operationsAlerts.js'
 import { checkReadiness, type Readiness } from './readiness.js'
 import type { ServiceMetrics } from './serviceMetrics.js'
+import { checkCommunicationSchedulingReadiness } from './communicationSchedulingReadiness.js'
 
 const idParams = z.strictObject({ id: z.uuid() })
 const updateBody = z.strictObject({
@@ -80,6 +81,7 @@ export function registerOperationsRoutes(
         scanCounts,
         emailCounts,
         emailRetries,
+        communicationScheduling,
       ] = await Promise.all([
         readiness(database),
         database.backupRecord.findFirst({
@@ -137,6 +139,7 @@ export function registerOperationsRoutes(
         database.scheduledTaskExecution.count({
           where: { taskType: 'emailDelivery', attempt: { gt: 1 } },
         }),
+        checkCommunicationSchedulingReadiness({ database }),
       ])
       return {
         readiness: health,
@@ -158,6 +161,7 @@ export function registerOperationsRoutes(
           ),
           retryCount: emailRetries,
         },
+        communicationScheduling,
       }
     },
   )

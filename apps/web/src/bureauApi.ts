@@ -79,6 +79,10 @@ export type ReportingReadiness = {
   ready: boolean
   warnings: string[]
   blocking: string[]
+  communicationScheduling?: {
+    status: 'ready' | 'degraded' | 'disabled'
+    reasons: string[]
+  }
 }
 
 export const getBureauAccess = (baseUrl: string) =>

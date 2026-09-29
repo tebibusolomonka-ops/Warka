@@ -33,6 +33,7 @@ import {
   type PrismaClient,
 } from '@warka/database'
 import { authenticatedUser } from './authenticateRequest.js'
+import { checkCommunicationSchedulingReadiness } from './communicationSchedulingReadiness.js'
 
 const IdSchema = z.strictObject({ organizationId: z.uuid(), id: z.uuid() })
 const ScopeSchema = z.strictObject({ organizationId: z.uuid() })
@@ -492,7 +493,11 @@ export function registerBureauRoutes(
         !['administrator', 'registrar'].includes(membership.role)
       )
         throw new ReportingSubmissionError('School reporting permission denied')
-      return evaluateReportingReadiness(getDatabase(), periodId, schoolId)
+      const [reporting, communicationScheduling] = await Promise.all([
+        evaluateReportingReadiness(getDatabase(), periodId, schoolId),
+        checkCommunicationSchedulingReadiness({ database: getDatabase() }),
+      ])
+      return { ...reporting, communicationScheduling }
     },
   )
 }

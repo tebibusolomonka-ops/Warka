@@ -566,6 +566,14 @@ export function SchoolReportingWorkspace({
                   <p>
                     {readiness.ready ? 'Ready to submit' : 'Submission blocked'}
                   </p>
+                  {report.reportingPeriod.status === 'open' &&
+                    readiness.communicationScheduling?.status !== 'ready' &&
+                    readiness.communicationScheduling && (
+                      <p role="status">
+                        Scheduled reporting reminders are not ready for
+                        delivery.
+                      </p>
+                    )}
                   <ul>
                     {(readiness.blocking ?? []).map((code) => (
                       <li key={code}>Blocking: {code}</li>
