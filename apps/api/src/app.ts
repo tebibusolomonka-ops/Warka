@@ -129,6 +129,7 @@ import { registerStaffAccessRoutes } from './staffAccessRoutes.js'
 import { registerBackupRoutes } from './backupRoutes.js'
 import { checkReadiness } from './readiness.js'
 import { installRequestLogging, writeRequestLog } from './requestLogging.js'
+import { installRequestTimeouts } from './requestTimeouts.js'
 import { ServiceMetrics, registerMetricsRoutes } from './serviceMetrics.js'
 import { registerOperationsRoutes } from './operationsRoutes.js'
 import { registerQuarantineRoutes } from './quarantineRoutes.js'
@@ -378,6 +379,7 @@ export function buildApp(
   registerResponseCompression(app)
   installDefaultCachePolicy(app)
   app.decorateRequest('currentUser', null)
+  installRequestTimeouts(app)
   const metrics = new ServiceMetrics()
   installRequestLogging(app, (entry) => {
     writeRequestLog(entry)
