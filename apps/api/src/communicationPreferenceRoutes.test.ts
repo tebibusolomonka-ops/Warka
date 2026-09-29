@@ -49,7 +49,7 @@ describe('communication preference routes', () => {
       })
       expect(response.statusCode).toBe(200)
       expect(findMany).toHaveBeenCalledWith({ where: { userId } })
-      expect(response.json().preferences).toHaveLength(8)
+      expect(response.json().preferences).toHaveLength(9)
     } finally {
       await app.close()
     }

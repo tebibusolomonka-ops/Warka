@@ -109,6 +109,8 @@ import {
   MeetingSchedulingError,
   MeetingHistoryError,
   DataQualityIssueAccessError,
+  BureauAccessDeniedError,
+  ReportingNoteAccessDenied,
   DataQualityIssueStateError,
   DataQualityRunConflictError,
   SchoolEventAccessError,
@@ -562,6 +564,16 @@ export function buildApp(
   )
 
   app.setErrorHandler((error, _request, reply) => {
+    if (
+      error instanceof BureauAccessDeniedError ||
+      error instanceof ReportingNoteAccessDenied
+    )
+      return reply.code(403).send({
+        error: {
+          code: 'BUREAU_ACCESS_DENIED',
+          message: 'Reporting access denied',
+        },
+      })
     if (error instanceof DataQualityIssueAccessError)
       return reply.code(404).send({
         error: {

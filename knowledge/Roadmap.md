@@ -22,3 +22,7 @@ Timetable calendar, periods, class versions, conflict validation, administrator 
 - Commits 271–280 add server-enforced entry windows, completeness, moderation history, gradebook locks, readiness, staff controls, scoped family progress summaries, and a browser journey. Deployment still requires PostgreSQL migration and CI-backed browser validation.
 - Commits 281–290 add assignment publication, enrollment-derived audience, immutable submitted revisions, shared secure file uploads, personal extensions, scoped API actions, and the teacher workspace. Student UI, review, rubrics, feedback, explicit official mark transfer, guardian views, and browser journeys follow in 291–300.
 - Commits 291–300 add the student workspace, review, frozen versioned rubrics, released feedback, explicit official mark transfer, verified guardian reads, preference-aware notifications, factual summaries, and a browser journey. PostgreSQL-backed migration and browser execution remain deployment and CI checks.
+
+# Batch 321–340 checkpoint
+
+Data quality, reporting windows/readiness, versioned school submissions, bureau review, discrepancy notes, aggregate validation/exports, deadline notices, and both reporting workspaces are implemented. Browser journeys and clean migration execution depend on a PostgreSQL environment. See [[Batches/321-340]].

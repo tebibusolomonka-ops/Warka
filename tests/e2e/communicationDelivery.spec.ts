@@ -79,6 +79,21 @@ test('notification email, digest, and delivery history stay inside the user boun
     expect(await history.text()).not.toContain(email)
 
     await page.getByLabel('School announcements digest').selectOption('daily')
+    await expect
+      .poll(
+        async () =>
+          (
+            await database.notificationPreference.findUnique({
+              where: {
+                userId_category: {
+                  userId: user.id,
+                  category: 'schoolAnnouncements',
+                },
+              },
+            })
+          )?.digestCadence,
+      )
+      .toBe('daily')
     const yesterday = new Date()
     yesterday.setUTCHours(0, 0, 0, 0)
     yesterday.setUTCDate(yesterday.getUTCDate() - 1)
@@ -99,8 +114,26 @@ test('notification email, digest, and delivery history stay inside the user boun
         emailRoutedAt: new Date(),
       },
     })
-    await page.request.post('/api/__test/email-tick')
-    await page.request.post('/api/__test/email-tick')
+    await expect
+      .poll(async () => {
+        expect(
+          (await page.request.post('/api/__test/email-tick')).status(),
+        ).toBe(200)
+        return database.emailDigest.count({ where: { userId: user.id } })
+      })
+      .toBe(1)
+    await expect
+      .poll(async () => {
+        expect(
+          (await page.request.post('/api/__test/email-tick')).status(),
+        ).toBe(200)
+        const digest = await database.emailDigest.findFirst({
+          where: { userId: user.id },
+          include: { delivery: true },
+        })
+        return digest?.delivery?.status
+      })
+      .toBe('sent')
     const digests = await database.emailDigest.findMany({
       where: { userId: user.id },
       include: { delivery: true },

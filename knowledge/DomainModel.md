@@ -2,6 +2,8 @@
 
 `DataQualityIssue` stores a school, bounded factual code/summary, minimal entity reference, severity, status, and dismissal or resolution history. `DataQualityRun` stores selected checks, trigger, timing, state, and severity counts; a partial database index prevents concurrent running evaluations for one school. Reporting periods may define open, due, and close times in addition to their historical due date.
 
+`ReportingSubmissionVersion` records a numbered aggregate snapshot, submitter, time, validation summary, optional resubmission reason, and deterministic checksum. `ReportingSubmission.acceptedVersion` identifies the authoritative accepted attempt; returning and resubmitting retain previous versions. `ReportingReviewNote` links a version and author, is append-only, and has school-and-bureau or bureau-internal visibility.
+
 `SchoolEvent` records school, creator, plain-text content, dates, safe school location, lifecycle, and optional RSVP setting. `SchoolEventAudience` stores one scope and optional class or grade reference; eligibility resolves current enrollment, verified guardian relationship, or effective staff membership. `EventAttachment` points to a purpose-bound `FileAsset`. `EventResponse` stores one latest going/notGoing response per user and child context with `EventResponseHistory`; it never creates an attendance record.
 
 `ParentTeacherMeetingRequest` joins a school, student, verified guardian identity, teacher, and exact teaching assignment. It has a controlled lifecycle. `TeacherMeetingAvailability` stores only voluntary school meeting windows and method. A scheduled request stores the chosen time; `MeetingEvent` preserves requests, schedules, reschedules, declines, cancellations, and completions with previous and new times.

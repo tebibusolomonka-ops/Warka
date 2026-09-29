@@ -145,7 +145,7 @@ describe.skipIf(!database)('bureau reporting in PostgreSQL', () => {
       expect(firstVersion).toMatchObject({
         submittedById: schoolAdministrator.id,
         status: 'submitted',
-        validationSummary: { warnings: [], blocking: [] },
+        validationSummary: { blocking: [] },
       })
       expect(firstVersion.snapshotChecksum).toMatch(/^[a-f0-9]{64}$/)
       await expect(

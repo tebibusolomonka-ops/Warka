@@ -11,9 +11,40 @@ function submissionStore(role: string | null = 'administrator') {
     id: randomUUID(),
     schoolId: randomUUID(),
     reportingPeriodId: randomUUID(),
+    currentVersion: 1,
+    submittedAt: new Date(),
+    snapshot: {
+      enrollment: {
+        dataState: 'reported',
+        total: 0,
+        byAcademicYear: [],
+        byGradeLevel: [],
+      },
+      academic: {
+        dataState: 'reported',
+        publishedResultCount: 0,
+        outcomes: [],
+      },
+      activity: {
+        transfers: { confirmed: 0, unresolved: 0, rejected: 0 },
+        verification: { active: 0, corrected: 0, withdrawn: 0, unavailable: 0 },
+      },
+    },
   }
   const transaction = {
     auditEvent: { create: auditCreate },
+    reportingRequirement: {
+      findUnique: vi.fn().mockResolvedValue({
+        reportingPeriod: {
+          status: 'open',
+          opensAt: null,
+          dueAt: null,
+          closesAt: null,
+          submissionDueOn: new Date('2099-01-01'),
+        },
+      }),
+    },
+    dataQualityIssue: { findMany: vi.fn().mockResolvedValue([]) },
     reportingPeriod: {
       findUniqueOrThrow: vi.fn().mockResolvedValue({
         id: submission.reportingPeriodId,
@@ -22,8 +53,13 @@ function submissionStore(role: string | null = 'administrator') {
       }),
     },
     reportingSubmission: {
-      update: vi.fn().mockResolvedValue(submission),
+      findUnique: vi.fn().mockResolvedValue(submission),
+      updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+      findUniqueOrThrow: vi.fn().mockResolvedValue(submission),
     },
+    reportingSubmissionVersion: { create: vi.fn().mockResolvedValue({}) },
+    bureauAccess: { findMany: vi.fn().mockResolvedValue([]) },
+    notification: { createMany: vi.fn().mockResolvedValue({ count: 0 }) },
   }
   return {
     auditCreate,

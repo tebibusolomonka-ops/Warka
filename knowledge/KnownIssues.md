@@ -22,3 +22,7 @@ Resolved prior validation failures are recorded in [[Batches/141-160]].
 - Gradebook migrations and the final browser journey also require CI PostgreSQL. The staff workspace reuses existing academic filters and result submission; readiness is advisory and does not publish. Progress counts completed present participation and currently authorized published results, not a new grading calculation.
 - Coursework PostgreSQL integration tests and live browser journeys skip locally without a database. Teacher counts use current approved class enrollment, so historical denominators can change with enrollment. The teacher workspace currently lists up to one page of assignments; pagination is available in the API.
 - Coursework mark-transfer tests cover service gates with mocks locally; live PostgreSQL and Playwright execution require a dedicated database. Browser coverage uses a controlled scanner fixture, so production ClamAV and object storage need deployment validation. Class summary denominators follow current approved enrollment and can change historically.
+
+# Reporting batch notes
+
+Local PostgreSQL and Docker are unavailable, so migration deployment, database integration, and live Playwright journeys await CI. Legacy reporting submissions are backfilled as version 1 from their last stored snapshot; older overwritten attempts cannot be reconstructed, and those backfilled versions have no checksum. Scheduled reporting reminders run with the enabled email outbox scheduler; deployments with that scheduler disabled do not send them.
