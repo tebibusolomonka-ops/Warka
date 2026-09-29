@@ -14,6 +14,7 @@ import {
 import { FakeEmailProvider } from './emailProvider.js'
 import { assertProductionConfiguration } from './productionConfiguration.js'
 import { environmentProfile } from './environmentProfile.js'
+import { createApplicationShutdown } from './applicationShutdown.js'
 
 const profile = environmentProfile(process.env)
 assertProductionConfiguration(process.env)
@@ -46,6 +47,13 @@ const app = buildApp({
   ...(testEmailProvider ? { testEmailProvider } : {}),
   testEmailTick: () => emailScheduler?.tick() ?? Promise.resolve(),
 })
+const shutdown = createApplicationShutdown({
+  stopWorkers: [scheduler, scanScheduler, emailScheduler],
+  closeServer: () => app.close(),
+  onTimeout: () => process.exit(1),
+})
+process.once('SIGTERM', () => void shutdown())
+process.once('SIGINT', () => void shutdown())
 app.addHook('onClose', async () => {
   await scheduler?.stop()
   await scanScheduler?.stop()

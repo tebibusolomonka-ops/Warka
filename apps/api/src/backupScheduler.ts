@@ -315,6 +315,7 @@ export class BackupScheduler {
           select: { id: true },
         })
         for (const record of pending) {
+          if (this.stopped) break
           const execution = await startScheduledTask(
             this.database,
             'backupVerification',

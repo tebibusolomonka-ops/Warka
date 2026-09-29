@@ -133,6 +133,7 @@ export class FileScanScheduler {
         take: 10,
       })
       for (const task of queued) {
+        if (this.stopped) break
         const claimed = await this.database.scheduledTaskExecution.updateMany({
           where: { id: task.id, status: 'pending' },
           data: { status: 'running', startedAt: now },
