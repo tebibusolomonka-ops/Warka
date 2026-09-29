@@ -84,6 +84,14 @@ test('operator verifies a backup, rehearses restore, resolves an incident, and t
       await expect(
         page.getByRole('heading', { name: 'Operations', exact: true }),
       ).toBeVisible({ timeout: 15_000 })
+      await page.getByRole('link', { name: 'Deployment' }).click()
+      await expect(
+        page.getByRole('heading', { name: 'Deployment' }),
+      ).toBeVisible()
+      await expect(page.getByText('Application version: 0.1.0')).toBeVisible()
+      await expect(page.getByText(/Migration status:/)).toBeVisible()
+      await expect(page.getByText(/database: ready/)).toBeVisible()
+      await expect(page.getByText(/email: disabled/)).toBeVisible()
       await clickReady('Run backup')
       await clickReady('Verify backup')
       await clickReady('Run restore rehearsal')
@@ -236,6 +244,9 @@ test('operator verifies a backup, rehearses restore, resolves an incident, and t
       await expect(
         page.getByText('Signed in as Operations School Administrator'),
       ).toBeVisible()
+      expect(
+        (await page.request.get('/api/operations/deployment')).status(),
+      ).toBe(403)
       const execution = await database.scheduledTaskExecution.findFirstOrThrow({
         where: { taskType: 'backup' },
         orderBy: { createdAt: 'desc' },

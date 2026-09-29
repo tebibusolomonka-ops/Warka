@@ -1,5 +1,8 @@
 # Known issues
 
+- Reporting attempts overwritten before versioning cannot be reconstructed. A legacy backfill contains only the last stored state and has no original checksum.
+- Local PostgreSQL remains unavailable. Migration preflight reports databaseUnavailable locally; deployment readiness and the browser journey need CI PostgreSQL confirmation. A forced shutdown after the bounded drain can leave in-flight scheduled tasks requiring operator review; email with uncertain provider outcome must not be resent automatically.
+
 - PostgreSQL is unavailable locally for this batch; new data-quality migration and integration tests require CI execution. Quality checks currently use bounded school queries without background scheduling configuration; scheduled invocation can use the existing scheduler. Reporting window fields are optional for historical periods, which continue to use their existing due date.
 
 - Local PostgreSQL and Docker are unavailable for this batch. Family meeting and school event Playwright discovery can run locally, but live browser behavior, migration deployment, and real database integration need CI. Event upload uses the shared scanner; production ClamAV and private storage remain deployment checks. Event lists currently cap at 100 rows and do not expose pagination.

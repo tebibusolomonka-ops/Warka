@@ -1,5 +1,7 @@
 # Security
 
+Production configuration errors and deployment APIs expose only safe names and controlled states, never connection strings or credentials. Detailed deployment information requires the existing operator allowlist and current owner membership; school users cannot access it. Legacy report history labels unavailable provenance rather than implying verified historical evidence.
+
 School data-quality issue detail and dismissal require current administrator membership; bureau reporting access does not grant student-level issue access. Issue summaries use bounded factual codes and minimal references. Checks do not modify student, enrollment, mark, or document records. Reporting readiness preserves blank versus zero and rejects blocking issues without submitting.
 
 Reporting versions contain strict approved aggregates only, never student names or references. Snapshot checksums indicate integrity, not authentication. School routes return shared notes only; bureau-internal notes require scoped bureau access. Bureau review never writes school values. CSV exports read accepted aggregate snapshots, use formula-safe serialization, and create an audit event. No school ranking or performance score is produced.

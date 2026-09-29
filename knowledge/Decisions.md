@@ -1,5 +1,8 @@
 # Decisions
 
+- Legacy reporting backfill is explicitly unverified: it is the last recoverable stored state and cannot reconstruct overwritten attempts or an original checksum. Native versions retain checksums.
+- Reporting reminder readiness reflects scheduler, outbox, and email provider state; disabled delivery is visible. Production startup validates core and enabled-feature configuration by name only. Deployment readiness uses ready, degraded, and blocked states instead of a score; migration preflight never applies repairs.
+
 - Data quality evaluates facts without repairing source records or scoring schools. Duplicate candidate findings never merge students; missing re-enrollment is never dropout. Historical issued snapshots are validated as snapshots, never compared with mutable current student values. Reporting treats blank, unknown, not reported, and not applicable as distinct from numeric zero; readiness reports blockers and warnings and does not submit.
 
 - Report submission is explicit and versioned. Resubmission requires a returned report and a reason; acceptance stores the exact version number. Bureau review may return or accept but cannot edit school aggregate values. Review notes append history, and internal notes never enter school reads. Regional validation uses factual codes without ranking, fraud labels, dropout inference, or quality scores. CSV exports use accepted aggregate versions only. Native versions retain verified snapshot checksums; a legacy backfill identifies only the last recoverable stored state, with no invented earlier attempts or historical checksum.

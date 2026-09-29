@@ -10,6 +10,7 @@ import {
   createMaintenance,
   getIncident,
   getOperationsStatus,
+  getDeploymentStatus,
   getStorageSummary,
   listBackups,
   listIncidents,
@@ -26,6 +27,7 @@ import {
   type IncidentTimeline,
   type Maintenance,
   type OperationsStatus,
+  type DeploymentStatus,
   type SchedulerState,
   type ScheduledExecution,
   type DueBackupPolicy,
@@ -35,6 +37,7 @@ import {
 export function OperationsWorkspace({ baseUrl }: { baseUrl: string }) {
   const [available, setAvailable] = useState(false)
   const [status, setStatus] = useState<OperationsStatus>()
+  const [deployment, setDeployment] = useState<DeploymentStatus>()
   const [backups, setBackups] = useState<Backup[]>([])
   const [incidents, setIncidents] = useState<Incident[]>([])
   const [maintenance, setMaintenance] = useState<Maintenance[]>([])
@@ -59,6 +62,7 @@ export function OperationsWorkspace({ baseUrl }: { baseUrl: string }) {
     let active = true
     Promise.all([
       getOperationsStatus(baseUrl),
+      getDeploymentStatus(baseUrl),
       listBackups(baseUrl),
       listIncidents(baseUrl),
       listMaintenance(baseUrl),
@@ -70,6 +74,7 @@ export function OperationsWorkspace({ baseUrl }: { baseUrl: string }) {
       .then(
         ([
           nextStatus,
+          nextDeployment,
           nextBackups,
           nextIncidents,
           nextMaintenance,
@@ -81,6 +86,7 @@ export function OperationsWorkspace({ baseUrl }: { baseUrl: string }) {
           if (!active) return
           setAvailable(true)
           setStatus(nextStatus)
+          setDeployment(nextDeployment)
           setBackups(nextBackups)
           setIncidents(nextIncidents)
           setMaintenance(nextMaintenance)
@@ -156,6 +162,7 @@ export function OperationsWorkspace({ baseUrl }: { baseUrl: string }) {
       <h2>Operations</h2>
       <nav aria-label="Operations sections">
         <a href="#operations-status">System status</a>{' '}
+        <a href="#operations-deployment">Deployment</a>{' '}
         <a href="#operations-backups">Backups</a>{' '}
         <a href="#operations-rehearsals">Restore rehearsals</a>{' '}
         <a href="#operations-scheduled">Scheduled tasks</a>{' '}
@@ -167,6 +174,35 @@ export function OperationsWorkspace({ baseUrl }: { baseUrl: string }) {
         <a href="#operations-email">Email delivery</a>
       </nav>
       {error && <p role="alert">{error}</p>}
+      <section id="operations-deployment" aria-labelledby="deployment-heading">
+        <h3 id="deployment-heading">Deployment</h3>
+        <button type="button" onClick={() => setRefresh((value) => value + 1)}>
+          Refresh deployment
+        </button>
+        <p>Application version: {deployment?.build.version ?? 'Unknown'}</p>
+        <p>Commit SHA: {deployment?.build.commitSha ?? 'Unavailable'}</p>
+        <p>Build timestamp: {deployment?.build.builtAt ?? 'Unavailable'}</p>
+        <p>Environment: {deployment?.build.environment ?? 'Unknown'}</p>
+        <p>Deployment readiness: {deployment?.readiness.status ?? 'Unknown'}</p>
+        <p>Migration status: {deployment?.readiness.migration ?? 'Unknown'}</p>
+        <ul>
+          {Object.entries(deployment?.readiness.dependencies ?? {}).map(
+            ([name, state]) => (
+              <li key={name}>
+                {name}: {state}
+              </li>
+            ),
+          )}
+          {Object.entries(deployment?.features ?? {}).map(([name, enabled]) => (
+            <li key={name}>
+              {name}: {enabled ? 'enabled' : 'disabled'}
+            </li>
+          ))}
+          {deployment?.readiness.reasons.map((reason) => (
+            <li key={reason}>Reason: {reason}</li>
+          ))}
+        </ul>
+      </section>
       <section id="operations-status">
         <h3>System status</h3>
         <p>Readiness: {status?.readiness.status ?? 'Unknown'}</p>

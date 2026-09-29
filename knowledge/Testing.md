@@ -1,5 +1,7 @@
 # Testing
 
+Deployment tests cover production configuration, profiles, bounded shutdown ordering, safe build fields, migration history classification, readiness reasons, operator API access, and React status. The focused Operations Playwright journey checks deployment metadata and denies school administrator access. Local discovery is distinct from a live PostgreSQL browser run.
+
 `pnpm db:preflight` validates the Prisma schema and inspects migration status without applying or repairing migrations. It reports ready, pending, failed migration, divergence, or unavailable using safe status labels. Run it after migration deployment and before application rollout; a missing local PostgreSQL service reports unavailable.
 
 Data quality unit checks cover student, academic, document, run reconciliation, API scope, and React controls. PostgreSQL tests cover issue persistence and enrollment consistency; they skip locally without a server. Reporting validation tests cover blank/unknown values, aggregate totals, open blockers, and non-submitting readiness. Final CI must confirm migrations and live database behavior.

@@ -71,6 +71,28 @@ const status = z.object({
     })
     .optional(),
 })
+const deployment = z.object({
+  build: z.object({
+    version: z.string(),
+    commitSha: z.string().nullable(),
+    builtAt: z.string().nullable(),
+    environment: z.enum(['development', 'test', 'production']),
+  }),
+  readiness: z.object({
+    status: z.enum(['ready', 'degraded', 'blocked']),
+    reasons: z.array(z.string()),
+    dependencies: z.record(z.string(), z.string()),
+    migration: z.enum(['unknown', 'ready', 'pending', 'failed', 'unavailable']),
+  }),
+  features: z.object({
+    backupScheduler: z.boolean(),
+    fileScanning: z.boolean(),
+    emailOutbox: z.boolean(),
+  }),
+})
+export type DeploymentStatus = z.infer<typeof deployment>
+export const getDeploymentStatus = async (baseUrl: string) =>
+  deployment.parse(await requestJson(baseUrl, '/operations/deployment'))
 const timeline = incident.extend({
   updates: z.array(
     z.object({

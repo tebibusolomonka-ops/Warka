@@ -1,5 +1,7 @@
 # Architecture
 
+Deployment startup validates production configuration and resolves an explicit development, test, or production profile. Signal handling stops scheduler claims before server close and bounds the drain. The operator-only Deployment API joins safe build metadata, dependency and migration readiness, and feature switches; the React Operations workspace displays these states.
+
 Data-quality checks read current school records and return factual codes. Evaluation runs reconcile open issue history without changing underlying records. School administrator routes and workspace expose filtered issues and existing correction destinations. Reporting readiness validates existing bureau reporting periods and approved aggregates before explicit submission.
 
 School events use a separate draft/published/completed lifecycle from announcements. Fastify event routes derive school, audience, student, and verified guardian scope from current relationships. School administrators manage events in React; student and guardian portals show only eligible published events. Event attachments reuse FileAsset storage, scanning, quarantine, and private delivery. RSVP persistence and aggregate counts are separate from attendance.

@@ -9,6 +9,7 @@ import {
 import { OperationsWorkspace } from './OperationsWorkspace'
 import {
   getOperationsStatus,
+  getDeploymentStatus,
   getStorageSummary,
   listBackups,
   listIncidents,
@@ -26,6 +27,7 @@ import {
 
 vi.mock('./operationsApi', () => ({
   getOperationsStatus: vi.fn(),
+  getDeploymentStatus: vi.fn(),
   getStorageSummary: vi.fn(),
   listBackups: vi.fn(),
   listIncidents: vi.fn(),
@@ -58,6 +60,25 @@ afterEach(() => {
 })
 
 it('shows safe operational sections and runs backup, verification, and rehearsal actions', async () => {
+  vi.mocked(getDeploymentStatus).mockResolvedValue({
+    build: {
+      version: '0.1.0',
+      commitSha: 'a'.repeat(40),
+      builtAt: '2026-09-29T00:00:00.000Z',
+      environment: 'test',
+    },
+    readiness: {
+      status: 'degraded',
+      reasons: ['migrationUnverified'],
+      dependencies: { database: 'ready', email: 'disabled' },
+      migration: 'unavailable',
+    },
+    features: {
+      backupScheduler: false,
+      fileScanning: false,
+      emailOutbox: false,
+    },
+  })
   vi.mocked(getOperationsStatus).mockResolvedValue({
     readiness: { status: 'ready', dependencies: { database: 'ready' } },
     recentBackup: null,
@@ -129,6 +150,9 @@ it('shows safe operational sections and runs backup, verification, and rehearsal
   vi.mocked(rehearseBackup).mockResolvedValue({})
   render(<OperationsWorkspace baseUrl="http://localhost:3000/api" />)
   await screen.findByRole('heading', { name: 'Operations' })
+  expect(screen.getByText('Application version: 0.1.0')).toBeTruthy()
+  expect(screen.getByText('Migration status: unavailable')).toBeTruthy()
+  expect(screen.getByText('email: disabled')).toBeTruthy()
   expect(screen.getByText('Available assets: 2')).toBeTruthy()
   expect(screen.getByText('Latest: succeeded')).toBeTruthy()
   expect(

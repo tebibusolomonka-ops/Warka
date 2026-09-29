@@ -1,5 +1,7 @@
 # Roadmap
 
+Commits 341–350 add reporting provenance, communication readiness, production profiles and validation, graceful shutdown, build metadata, migration preflight, and the operator deployment workspace. Accessibility infrastructure and interaction quality follow in 351–360.
+
 Commits 321–330 add factual, non-destructive data quality checks and runs, school administration tools, reporting windows, and pre-submission validation. Versioned reporting, bureau review, exports, notifications, and journeys follow in 331–340.
 
 Commits 301–320 complete coursework stabilization, canonical code metrics, family meeting workflows, and audience-scoped school events with RSVP. Database-backed integration and browser journeys still require final CI validation where local PostgreSQL is unavailable.
