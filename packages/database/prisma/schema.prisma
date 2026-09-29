@@ -876,6 +876,7 @@ model ScheduledTaskExecution {
   @@index([status, createdAt])
   @@index([status, startedAt])
   @@index([status, leaseExpiresAt])
+  @@index([taskType, status, scheduledFor])
   @@unique([seriesId, attempt])
 }
 
@@ -1415,6 +1416,7 @@ model EmailDelivery {
   digest             EmailDigest?        @relation(fields: [digestId], references: [id], onDelete: SetNull)
 
   @@index([status, scheduledAt])
+  @@index([status, failureCode, failedAt])
   @@index([recipientUserId, createdAt])
 }
 
@@ -1691,6 +1693,7 @@ model Enrollment {
   @@unique([id, schoolId, studentId])
   @@unique([id, schoolId, academicYearId, schoolClassId, studentId], map: "Enrollment_attendance_scope_key")
   @@index([schoolId, academicYearId, status])
+  @@index([schoolId, studentId])
   @@index([schoolId, gradeLevelId])
   @@index([approvedById])
   @@index([withdrawnById])
@@ -2229,6 +2232,7 @@ model CourseworkAssignment {
 
   @@unique([id, schoolId])
   @@index([schoolId, academicYearId, schoolClassId, subjectId, status])
+  @@index([schoolId, createdAt, id])
   @@index([teachingAssignmentId, status])
 }
 
