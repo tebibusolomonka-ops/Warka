@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { ApiError } from './api'
 import { FormErrorSummary } from './FormErrorSummary'
+import { AsyncStatus } from './AsyncStatus'
 import {
   getOwnCourseworkSubmission,
   getStudentCoursework,
@@ -175,7 +176,7 @@ export function StudentCourseworkWorkspace({
         </p>
       )}
       <FormErrorSummary id="coursework-error" message={error} />
-      {message && <p role="status">{message}</p>}
+      {message && <AsyncStatus message={message} />}
       <h4>Upcoming assignments</h4>
       <ul>
         {upcoming.map((item) => (

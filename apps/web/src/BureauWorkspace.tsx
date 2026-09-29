@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { FormErrorSummary } from './FormErrorSummary'
+import { AsyncStatus } from './AsyncStatus'
 import {
   assignRequiredSchools,
   changePeriod,
@@ -739,7 +740,7 @@ export function SchoolReportingWorkspace({
           )}
         </>
       )}
-      {message && <p role="status">{message}</p>}
+      {message && <AsyncStatus message={message} />}
     </section>
   )
 }

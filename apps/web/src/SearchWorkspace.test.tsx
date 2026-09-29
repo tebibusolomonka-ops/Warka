@@ -50,6 +50,7 @@ it('groups authorized results as text and opens one with keyboard', async () => 
   fireEvent.click(screen.getByRole('button', { name: 'Search' }))
   await waitFor(() => expect(searchSchool).toHaveBeenCalled())
   expect(screen.getByRole('heading', { name: 'Students' })).toBeTruthy()
+  expect(screen.getByRole('status').textContent).toContain('1 search results')
   expect(screen.queryByRole('heading', { name: 'Staff' })).toBeNull()
   const result = screen.getByRole('button', { name: /Ada Learner/ })
   result.focus()

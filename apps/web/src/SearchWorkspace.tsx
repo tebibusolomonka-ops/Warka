@@ -12,6 +12,7 @@ import {
   type SearchResult,
   type SearchType,
 } from './searchApi'
+import { AsyncStatus } from './AsyncStatus'
 
 const labels: Record<SearchType, string> = {
   student: 'Students',
@@ -47,6 +48,7 @@ export function SearchWorkspace({
   const [opened, setOpened] = useState<OpenedSearchResult | null>(null)
   const [error, setError] = useState('')
   const [activeIndex, setActiveIndex] = useState(0)
+  const [searched, setSearched] = useState(false)
   const input = useRef<HTMLInputElement>(null)
   const buttons = useRef<HTMLButtonElement[]>([])
   const items = order.flatMap((type) => groups[type] ?? [])
@@ -89,6 +91,7 @@ export function SearchWorkspace({
         .then((response) => {
           if (generation.current === current) {
             setGroups(response.groups)
+            setSearched(true)
             setActiveIndex(0)
             setError('')
           }
@@ -146,6 +149,9 @@ export function SearchWorkspace({
         />
         <button type="submit">Search</button>
       </form>
+      {searched && (
+        <AsyncStatus message={`${items.length} search results available.`} />
+      )}
       {error && <p role="alert">{error}</p>}
       <div onKeyDown={onResultsKeyDown}>
         {order

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { ApiError } from './api'
 import { FormErrorSummary } from './FormErrorSummary'
+import { AsyncStatus } from './AsyncStatus'
 import {
   cancelGuardianMeeting,
   listChildMeetingTeachers,
@@ -110,7 +111,7 @@ export function GuardianMeetingWorkspace({
         meeting windows.
       </p>
       <FormErrorSummary id="meeting-error" message={error} />
-      {message && <p role="status">{message}</p>}
+      {message && <AsyncStatus message={message} />}
       <form
         onSubmit={(event) => {
           event.preventDefault()
