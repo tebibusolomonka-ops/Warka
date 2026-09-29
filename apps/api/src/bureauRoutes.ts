@@ -2,6 +2,10 @@ import type { FastifyInstance, preHandlerHookHandler } from 'fastify'
 import { z } from 'zod'
 import {
   approveSchoolReport,
+  addSchoolReportingNote,
+  addBureauReportingNote,
+  listSchoolReportingNotes,
+  listBureauReportingNotes,
   startSchoolReportReview,
   assignRequiredSchools,
   buildAcademicAggregate,
@@ -36,6 +40,11 @@ const PeriodSchema = z.strictObject({
 const SchoolPeriodSchema = z.strictObject({
   schoolId: z.uuid(),
   periodId: z.uuid(),
+})
+const ReportingNoteBodySchema = z.strictObject({ body: z.string() })
+const BureauReportingNoteSchema = z.strictObject({
+  body: z.string(),
+  visibility: z.enum(['schoolAndBureau', 'bureauInternal']),
 })
 const ResubmissionSchema = z.strictObject({
   reason: z.string().trim().min(3).max(500),
@@ -187,6 +196,35 @@ export function registerBureauRoutes(
         getDatabase(),
         authenticatedUser(request).id,
         id,
+      )
+    },
+  )
+  app.get(
+    '/bureau/:organizationId/submissions/:id/notes',
+    { preHandler: authenticate },
+    (request) => {
+      const { organizationId, id } = IdSchema.parse(request.params)
+      return listBureauReportingNotes(
+        getDatabase(),
+        authenticatedUser(request).id,
+        organizationId,
+        id,
+      )
+    },
+  )
+  app.post(
+    '/bureau/:organizationId/submissions/:id/notes',
+    { preHandler: authenticate },
+    (request) => {
+      const { organizationId, id } = IdSchema.parse(request.params)
+      const { body, visibility } = BureauReportingNoteSchema.parse(request.body)
+      return addBureauReportingNote(
+        getDatabase(),
+        authenticatedUser(request).id,
+        organizationId,
+        id,
+        visibility,
+        body,
       )
     },
   )
@@ -358,6 +396,34 @@ export function registerBureauRoutes(
         periodId,
         schoolId,
         reason,
+      )
+    },
+  )
+  app.get(
+    '/schools/:schoolId/reporting/:periodId/notes',
+    { preHandler: authenticate },
+    (request) => {
+      const { schoolId, periodId } = SchoolPeriodSchema.parse(request.params)
+      return listSchoolReportingNotes(
+        getDatabase(),
+        authenticatedUser(request).id,
+        periodId,
+        schoolId,
+      )
+    },
+  )
+  app.post(
+    '/schools/:schoolId/reporting/:periodId/notes',
+    { preHandler: authenticate },
+    (request) => {
+      const { schoolId, periodId } = SchoolPeriodSchema.parse(request.params)
+      const { body } = ReportingNoteBodySchema.parse(request.body)
+      return addSchoolReportingNote(
+        getDatabase(),
+        authenticatedUser(request).id,
+        periodId,
+        schoolId,
+        body,
       )
     },
   )

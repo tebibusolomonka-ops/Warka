@@ -220,6 +220,11 @@ enum ReportingSubmissionStatus {
   returned
 }
 
+enum ReportingNoteVisibility {
+  schoolAndBureau
+  bureauInternal
+}
+
 enum DataQualitySeverity {
   info
   warning
@@ -601,6 +606,7 @@ model School {
 }
 
 model User {
+  reportingNotesAuthored ReportingReviewNote[]
   reportingVersionsSubmitted ReportingSubmissionVersion[] @relation("ReportingVersionSubmitter")
   dismissedDataQualityIssues DataQualityIssue[] @relation("DataQualityIssueDismisser")
   resolvedDataQualityIssues DataQualityIssue[] @relation("DataQualityIssueResolver")
@@ -994,9 +1000,25 @@ model ReportingSubmissionVersion {
   submittedById     String
   submission        ReportingSubmission       @relation(fields: [submissionId], references: [id], onDelete: Cascade)
   submittedBy       User                      @relation("ReportingVersionSubmitter", fields: [submittedById], references: [id], onDelete: Restrict)
+  reviewNotes       ReportingReviewNote[]
 
   @@unique([submissionId, version])
   @@index([submittedById])
+}
+
+model ReportingReviewNote {
+  id String @id @default(uuid())
+  submissionId String
+  version Int
+  authorUserId String
+  visibility ReportingNoteVisibility
+  body String @db.VarChar(2000)
+  createdAt DateTime @default(now())
+  versionRecord ReportingSubmissionVersion @relation(fields: [submissionId, version], references: [submissionId, version], onDelete: Cascade)
+  authorUser User @relation(fields: [authorUserId], references: [id], onDelete: Restrict)
+
+  @@index([submissionId, createdAt])
+  @@index([authorUserId])
 }
 
 model DataQualityIssue {

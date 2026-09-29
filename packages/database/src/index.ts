@@ -502,6 +502,13 @@ export {
   startSchoolReportReview,
   returnSchoolReport,
 } from './reportingSubmissions.js'
+export {
+  ReportingNoteAccessDenied,
+  addSchoolReportingNote,
+  addBureauReportingNote,
+  listSchoolReportingNotes,
+  listBureauReportingNotes,
+} from './reportingNotes.js'
 export type {
   ReportingSubmission,
   ReportingSubmissionStatus,
