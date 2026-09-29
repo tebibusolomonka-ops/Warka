@@ -1,5 +1,5 @@
 import type { FastifyInstance, preHandlerHookHandler } from 'fastify'
-import type { PrismaClient } from '@warka/database'
+import { databaseQueryMetrics, type PrismaClient } from '@warka/database'
 import type { RequestLog } from './requestLogging.js'
 import { authenticatedUser } from './authenticateRequest.js'
 import { requireOperator } from './operationsAccess.js'
@@ -39,7 +39,10 @@ export function registerMetricsRoutes(
     { preHandler: authenticate },
     async (request) => {
       await requireOperator(getDatabase(), authenticatedUser(request).id)
-      return { http: metrics.snapshot() }
+      return {
+        http: metrics.snapshot(),
+        database: databaseQueryMetrics.snapshot(),
+      }
     },
   )
 }

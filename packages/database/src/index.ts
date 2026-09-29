@@ -1,5 +1,10 @@
 import { PrismaClient } from '@prisma/client'
 import { z } from 'zod'
+import {
+  databaseQueryMetrics,
+  queryCategory,
+  slowQueryThreshold,
+} from './queryMetrics.js'
 
 const databaseUrlSchema = z
   .url()
@@ -17,10 +22,39 @@ export function createDatabaseClient(
     throw new Error('DATABASE_URL must be a valid PostgreSQL connection URL')
   }
 
-  return new PrismaClient({ datasourceUrl: result.data })
+  const threshold = slowQueryThreshold(env)
+  const client = new PrismaClient({
+    datasourceUrl: result.data,
+    log: [
+      { emit: 'event', level: 'query' },
+      { emit: 'event', level: 'error' },
+    ],
+  })
+  client.$on('query', (event) =>
+    databaseQueryMetrics.record({
+      category: queryCategory(event.query),
+      durationMs: event.duration,
+      success: true,
+      slowThresholdMs: threshold,
+    }),
+  )
+  client.$on('error', () =>
+    databaseQueryMetrics.record({
+      category: 'other',
+      durationMs: 0,
+      success: false,
+      slowThresholdMs: threshold,
+    }),
+  )
+  return client
 }
 
 export type { PrismaClient }
+export {
+  databaseQueryMetrics,
+  queryCategory,
+  slowQueryThreshold,
+} from './queryMetrics.js'
 export {
   AttendanceSummaryInputSchema,
   getAttendanceSummary,
