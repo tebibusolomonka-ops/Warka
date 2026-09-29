@@ -846,6 +846,10 @@ model ScheduledTaskExecution {
   status ScheduledTaskStatus @default(pending)
   recoveryDisposition TaskRecoveryDisposition?
   recoveryReason String?
+  claimedAt DateTime?
+  leaseExpiresAt DateTime?
+  heartbeatAt DateTime?
+  workerId String?
   attempt Int @default(1)
   failureCode String?
   eligibleCount Int?
@@ -855,6 +859,7 @@ model ScheduledTaskExecution {
   @@index([taskType, scope, scheduledFor])
   @@index([status, createdAt])
   @@index([status, startedAt])
+  @@index([status, leaseExpiresAt])
   @@unique([seriesId, attempt])
 }
 

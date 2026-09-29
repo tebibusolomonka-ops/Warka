@@ -6,6 +6,7 @@ import {
   completeScheduledTask,
   failScheduledTask,
   evaluateConfiguredRetentionPolicy,
+  createWorkerInstanceId,
 } from '@warka/database'
 import { executeBackup, LocalBackupStorage } from './backupService.js'
 import { verifyBackup } from './backupVerification.js'
@@ -104,6 +105,8 @@ export class BackupScheduler {
   private timer: ReturnType<typeof setInterval> | undefined
   private running: Promise<void> | undefined
   private stopped = false
+  private readonly workerId = createWorkerInstanceId()
+  private readonly leaseMs = 300_000
 
   constructor(
     private readonly database: PrismaClient,
@@ -125,6 +128,7 @@ export class BackupScheduler {
       undefined,
       attempt,
       seriesId,
+      { workerId: this.workerId, leaseMs: this.leaseMs, now },
     )
     try {
       const recordId = await schedulerHealth.track(() =>
@@ -135,9 +139,19 @@ export class BackupScheduler {
           storage: new LocalBackupStorage(this.config.storageDirectory),
         }),
       )
-      await completeScheduledTask(this.database, execution.id, recordId)
+      await completeScheduledTask(
+        this.database,
+        execution.id,
+        recordId,
+        undefined,
+        {
+          workerId: this.workerId,
+        },
+      )
     } catch {
-      await failScheduledTask(this.database, execution.id, 'BACKUP_FAILED')
+      await failScheduledTask(this.database, execution.id, 'BACKUP_FAILED', {
+        workerId: this.workerId,
+      })
       if (attempt >= maxScheduledAttempts)
         await sendOperationsAlert(
           this.database,
@@ -172,20 +186,28 @@ export class BackupScheduler {
       policy.id,
       attempt,
       seriesId,
+      { workerId: this.workerId, leaseMs: this.leaseMs, now },
     )
     try {
       const result = await schedulerHealth.track(() =>
         this.evaluateRetention(this.database, policy, now),
       )
-      await completeScheduledTask(this.database, execution.id, policy.id, {
-        eligibleCount: result.eligibleCount,
-        oldestEligibleAt: result.oldestEligibleAt,
-      })
+      await completeScheduledTask(
+        this.database,
+        execution.id,
+        policy.id,
+        {
+          eligibleCount: result.eligibleCount,
+          oldestEligibleAt: result.oldestEligibleAt,
+        },
+        { workerId: this.workerId },
+      )
     } catch {
       await failScheduledTask(
         this.database,
         execution.id,
         'RETENTION_EVALUATION_FAILED',
+        { workerId: this.workerId },
       )
     }
   }
@@ -322,6 +344,9 @@ export class BackupScheduler {
             'database',
             now,
             record.id,
+            1,
+            undefined,
+            { workerId: this.workerId, leaseMs: this.leaseMs, now },
           )
           try {
             await schedulerHealth.track(async () => {
@@ -332,12 +357,19 @@ export class BackupScheduler {
               })
               if (!passed) throw new Error('Backup verification failed')
             })
-            await completeScheduledTask(this.database, execution.id, record.id)
+            await completeScheduledTask(
+              this.database,
+              execution.id,
+              record.id,
+              undefined,
+              { workerId: this.workerId },
+            )
           } catch {
             await failScheduledTask(
               this.database,
               execution.id,
               'VERIFICATION_FAILED',
+              { workerId: this.workerId },
             )
             await sendOperationsAlert(
               this.database,

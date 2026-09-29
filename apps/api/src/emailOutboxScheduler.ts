@@ -3,6 +3,8 @@ import {
   completeScheduledTask,
   failScheduledTask,
   scheduleReportingDeadlineNotifications,
+  claimScheduledTask,
+  createWorkerInstanceId,
 } from '@warka/database'
 import { PostgresSchedulerLock, type SchedulerLock } from './backupScheduler.js'
 import type { EmailProvider } from './emailProvider.js'
@@ -83,6 +85,7 @@ export class EmailOutboxScheduler {
   private timer: ReturnType<typeof setInterval> | undefined
   private running: Promise<void> | undefined
   private stopped = false
+  private readonly workerId = createWorkerInstanceId()
 
   constructor(
     private readonly database: PrismaClient,
@@ -99,7 +102,9 @@ export class EmailOutboxScheduler {
     attempt: number
   }) {
     if (!task.resourceId) {
-      await failScheduledTask(this.database, task.id, 'DELIVERY_ERROR')
+      await failScheduledTask(this.database, task.id, 'DELIVERY_ERROR', {
+        workerId: this.workerId,
+      })
       return
     }
     try {
@@ -111,7 +116,9 @@ export class EmailOutboxScheduler {
         this.config.recovery,
       )
       if (outcome.status === 'failed') {
-        await failScheduledTask(this.database, task.id, outcome.failureCode)
+        await failScheduledTask(this.database, task.id, outcome.failureCode, {
+          workerId: this.workerId,
+        })
         if (!outcome.retryable || task.attempt >= maxEmailDeliveryAttempts)
           await sendOperationsAlert(
             this.database,
@@ -119,9 +126,17 @@ export class EmailOutboxScheduler {
             task.resourceId,
           ).catch(() => undefined)
       } else
-        await completeScheduledTask(this.database, task.id, task.resourceId)
+        await completeScheduledTask(
+          this.database,
+          task.id,
+          task.resourceId,
+          undefined,
+          { workerId: this.workerId },
+        )
     } catch {
-      await failScheduledTask(this.database, task.id, 'DELIVERY_ERROR')
+      await failScheduledTask(this.database, task.id, 'DELIVERY_ERROR', {
+        workerId: this.workerId,
+      })
     }
   }
 
@@ -207,11 +222,13 @@ export class EmailOutboxScheduler {
       })
       for (const task of queued) {
         if (this.stopped) break
-        const claimed = await this.database.scheduledTaskExecution.updateMany({
-          where: { id: task.id, status: 'pending' },
-          data: { status: 'running', startedAt: now },
-        })
-        if (claimed.count === 1) await this.runTask(task)
+        const claimed = await claimScheduledTask(
+          this.database,
+          task.id,
+          this.workerId,
+          { now },
+        )
+        if (claimed) await this.runTask(task)
       }
     })
     this.running = work.then(() => undefined)

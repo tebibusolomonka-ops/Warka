@@ -29,6 +29,7 @@ export async function startScheduledTask(
   resourceId?: string,
   attempt = 1,
   seriesId: string = randomUUID(),
+  lease?: { workerId: string; leaseMs: number; now?: Date },
 ) {
   if (
     !/^[a-zA-Z0-9_-]{1,80}$/.test(scope) ||
@@ -36,6 +37,14 @@ export async function startScheduledTask(
     attempt < 1
   )
     throw new Error('Invalid scheduled task metadata')
+  const now = lease?.now ?? new Date()
+  if (
+    lease &&
+    (!/^worker_[a-f0-9-]{36}$/.test(lease.workerId) ||
+      !Number.isInteger(lease.leaseMs) ||
+      lease.leaseMs < 1_000)
+  )
+    throw new Error('Invalid scheduled task lease')
   return database.scheduledTaskExecution.create({
     data: {
       taskType,
@@ -43,9 +52,17 @@ export async function startScheduledTask(
       scope,
       resourceId: resourceId ?? null,
       scheduledFor,
-      startedAt: new Date(),
+      startedAt: now,
       status: 'running',
       attempt,
+      ...(lease
+        ? {
+            claimedAt: now,
+            heartbeatAt: now,
+            leaseExpiresAt: new Date(now.getTime() + lease.leaseMs),
+            workerId: lease.workerId,
+          }
+        : {}),
     },
   })
 }
@@ -55,6 +72,7 @@ export async function completeScheduledTask(
   id: string,
   resourceId?: string,
   summary?: { eligibleCount: number; oldestEligibleAt: Date | null },
+  ownership?: { workerId: string; now?: Date },
 ) {
   if (
     summary &&
@@ -62,7 +80,16 @@ export async function completeScheduledTask(
   )
     throw new Error('Invalid scheduled task summary')
   const result = await database.scheduledTaskExecution.updateMany({
-    where: { id, status: 'running' },
+    where: {
+      id,
+      status: 'running',
+      ...(ownership
+        ? {
+            workerId: ownership.workerId,
+            leaseExpiresAt: { gt: ownership.now ?? new Date() },
+          }
+        : {}),
+    },
     data: {
       status: 'completed',
       completedAt: new Date(),
@@ -77,14 +104,56 @@ export async function failScheduledTask(
   database: PrismaClient,
   id: string,
   failureCode: string,
+  ownership?: { workerId: string; now?: Date },
 ) {
   if (!/^[A-Z_]{1,60}$/.test(failureCode))
     throw new Error('Invalid scheduled task failure code')
   const result = await database.scheduledTaskExecution.updateMany({
-    where: { id, status: 'running' },
+    where: {
+      id,
+      status: 'running',
+      ...(ownership
+        ? {
+            workerId: ownership.workerId,
+            leaseExpiresAt: { gt: ownership.now ?? new Date() },
+          }
+        : {}),
+    },
     data: { status: 'failed', completedAt: new Date(), failureCode },
   })
   if (result.count !== 1) throw new Error('Scheduled task is not running')
+}
+
+export function createWorkerInstanceId() {
+  return `worker_${randomUUID()}`
+}
+
+export async function claimScheduledTask(
+  database: Pick<PrismaClient, 'scheduledTaskExecution'>,
+  id: string,
+  workerId: string,
+  input: { now?: Date; leaseMs?: number } = {},
+) {
+  const now = input.now ?? new Date()
+  const leaseMs = input.leaseMs ?? 300_000
+  if (
+    !/^worker_[a-f0-9-]{36}$/.test(workerId) ||
+    !Number.isInteger(leaseMs) ||
+    leaseMs < 1_000
+  )
+    throw new Error('Invalid scheduled task lease')
+  const result = await database.scheduledTaskExecution.updateMany({
+    where: { id, status: 'pending' },
+    data: {
+      status: 'running',
+      startedAt: now,
+      claimedAt: now,
+      heartbeatAt: now,
+      leaseExpiresAt: new Date(now.getTime() + leaseMs),
+      workerId,
+    },
+  })
+  return result.count === 1
 }
 
 export function interruptedTaskDisposition(

@@ -111,6 +111,8 @@ export {
   failScheduledTask,
   interruptedTaskDisposition,
   reconcileInterruptedScheduledTasks,
+  createWorkerInstanceId,
+  claimScheduledTask,
 } from './scheduledTaskExecutions.js'
 export { evaluateConfiguredRetentionPolicy } from './retentionPolicies.js'
 export {

@@ -53,7 +53,11 @@ describe('asynchronous file scan tasks', () => {
     )
     expect(f.database.scheduledTaskExecution.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { id: f.task.id, status: 'running' },
+        where: expect.objectContaining({
+          id: f.task.id,
+          status: 'running',
+          workerId: expect.stringMatching(/^worker_/),
+        }),
         data: expect.objectContaining({ status: 'completed' }),
       }),
     )
@@ -64,7 +68,11 @@ describe('asynchronous file scan tasks', () => {
     await f.scheduler.tick()
     expect(f.database.scheduledTaskExecution.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { id: f.task.id, status: 'running' },
+        where: expect.objectContaining({
+          id: f.task.id,
+          status: 'running',
+          workerId: expect.stringMatching(/^worker_/),
+        }),
         data: expect.objectContaining({
           status: 'failed',
           failureCode: 'SCANNER_UNAVAILABLE',

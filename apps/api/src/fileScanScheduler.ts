@@ -3,6 +3,8 @@ import {
   completeScheduledTask,
   failScheduledTask,
   startScheduledTask,
+  claimScheduledTask,
+  createWorkerInstanceId,
 } from '@warka/database'
 import { PostgresSchedulerLock, type SchedulerLock } from './backupScheduler.js'
 import { configuredFileScanner } from './fileScannerConfig.js'
@@ -37,6 +39,7 @@ export class FileScanScheduler {
   private timer: ReturnType<typeof setInterval> | undefined
   private running: Promise<void> | undefined
   private stopped = false
+  private readonly workerId = createWorkerInstanceId()
   constructor(
     private readonly database: PrismaClient,
     private readonly config: ReturnType<typeof fileScanSchedulerConfiguration>,
@@ -49,7 +52,9 @@ export class FileScanScheduler {
 
   private async runTask(execution: { id: string; resourceId: string | null }) {
     if (!execution.resourceId) {
-      await failScheduledTask(this.database, execution.id, 'SCAN_ERROR')
+      await failScheduledTask(this.database, execution.id, 'SCAN_ERROR', {
+        workerId: this.workerId,
+      })
       return
     }
     try {
@@ -64,15 +69,20 @@ export class FileScanScheduler {
           this.database,
           execution.id,
           outcome.failureCode,
+          { workerId: this.workerId },
         )
       else
         await completeScheduledTask(
           this.database,
           execution.id,
           execution.resourceId,
+          undefined,
+          { workerId: this.workerId },
         )
     } catch {
-      await failScheduledTask(this.database, execution.id, 'SCAN_ERROR')
+      await failScheduledTask(this.database, execution.id, 'SCAN_ERROR', {
+        workerId: this.workerId,
+      })
     }
   }
 
@@ -114,6 +124,7 @@ export class FileScanScheduler {
         failure.resourceId,
         failure.attempt + 1,
         failure.seriesId,
+        { workerId: this.workerId, leaseMs: 300_000, now },
       )
       await this.runTask(execution)
     }
@@ -134,11 +145,13 @@ export class FileScanScheduler {
       })
       for (const task of queued) {
         if (this.stopped) break
-        const claimed = await this.database.scheduledTaskExecution.updateMany({
-          where: { id: task.id, status: 'pending' },
-          data: { status: 'running', startedAt: now },
-        })
-        if (claimed.count === 1) await this.runTask(task)
+        const claimed = await claimScheduledTask(
+          this.database,
+          task.id,
+          this.workerId,
+          { now },
+        )
+        if (claimed) await this.runTask(task)
       }
     })
     this.running = work.then(() => undefined)
