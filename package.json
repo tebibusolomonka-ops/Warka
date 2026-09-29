@@ -23,6 +23,7 @@
     "build:database": "pnpm --filter @warka/database build",
     "test:database": "pnpm --filter @warka/database test",
     "db:deploy": "pnpm --filter @warka/database migrate:deploy",
+    "db:preflight": "node scripts/db-preflight.mjs",
     "test": "pnpm build && pnpm -r --if-present test",
     "typecheck": "pnpm build && pnpm -r typecheck",
     "build": "pnpm db:generate && pnpm -r build",

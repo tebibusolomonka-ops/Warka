@@ -1,5 +1,7 @@
 # Testing
 
+`pnpm db:preflight` validates the Prisma schema and inspects migration status without applying or repairing migrations. It reports ready, pending, failed migration, divergence, or unavailable using safe status labels. Run it after migration deployment and before application rollout; a missing local PostgreSQL service reports unavailable.
+
 Data quality unit checks cover student, academic, document, run reconciliation, API scope, and React controls. PostgreSQL tests cover issue persistence and enrollment consistency; they skip locally without a server. Reporting validation tests cover blank/unknown values, aggregate totals, open blockers, and non-submitting readiness. Final CI must confirm migrations and live database behavior.
 
 Reporting tests cover version persistence, explicit resubmission, review authorization, append-only note visibility, canonical checksum stability, regional issue codes, safe accepted-only CSV, notification deduplication, and React controls. The Playwright reporting journeys cover return/correction/resubmission/acceptance with preserved versions and a blocked unknown aggregate. Local discovery is not live browser execution.
