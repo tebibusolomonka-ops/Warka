@@ -9,6 +9,7 @@ export function emailCategoryForNotification(
   if (type.startsWith('coursework.')) return 'learningMaterials'
   if (type === 'familyMessage.reply') return 'familyCommunication'
   if (type.startsWith('meeting.')) return 'familyCommunication'
+  if (type.startsWith('report.')) return 'reporting'
   if (['support.response', 'support.resolved', 'support.closed'].includes(type))
     return 'support'
   if (type.startsWith('privacy.')) return 'privacy'

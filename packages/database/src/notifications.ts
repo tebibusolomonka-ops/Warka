@@ -39,12 +39,19 @@ async function preferenceFilter(
     where: { userId_category: { userId, category: 'familyCommunication' } },
     select: { inAppEnabled: true },
   })
+  const reporting = await database.notificationPreference?.findUnique({
+    where: { userId_category: { userId, category: 'reporting' } },
+    select: { inAppEnabled: true },
+  })
   const hidden = [
     ...(coursework?.inAppEnabled === false
       ? [{ type: { startsWith: 'coursework.' } }]
       : []),
     ...(meetings?.inAppEnabled === false
       ? [{ type: { startsWith: 'meeting.' } }]
+      : []),
+    ...(reporting?.inAppEnabled === false
+      ? [{ type: { startsWith: 'report.' } }]
       : []),
   ]
   return hidden.length ? { NOT: hidden } : {}

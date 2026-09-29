@@ -1,5 +1,9 @@
 import type { PrismaClient } from '@warka/database'
-import { completeScheduledTask, failScheduledTask } from '@warka/database'
+import {
+  completeScheduledTask,
+  failScheduledTask,
+  scheduleReportingDeadlineNotifications,
+} from '@warka/database'
 import { PostgresSchedulerLock, type SchedulerLock } from './backupScheduler.js'
 import type { EmailProvider } from './emailProvider.js'
 import { processQueuedEmailDelivery } from './emailOutbox.js'
@@ -188,6 +192,7 @@ export class EmailOutboxScheduler {
   async tick(now = new Date()) {
     if (!this.config.enabled || this.stopped || this.running) return
     const work = this.lock.run(async () => {
+      await scheduleReportingDeadlineNotifications(this.database, now)
       await routePendingNotificationEmails(this.database, now)
       await scheduleDueEmailDigests(this.database, now)
       await this.retry(now)

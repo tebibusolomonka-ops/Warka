@@ -75,6 +75,7 @@ enum NotificationCategory {
   familyCommunication
   support
   privacy
+  reporting
 }
 
 enum EmailDigestStatus {

@@ -10,6 +10,7 @@ export const NotificationCategorySchema = z.enum([
   'familyCommunication',
   'support',
   'privacy',
+  'reporting',
 ])
 
 export const notificationCategories = NotificationCategorySchema.options

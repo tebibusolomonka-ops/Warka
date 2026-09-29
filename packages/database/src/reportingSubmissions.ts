@@ -164,6 +164,27 @@ async function submitVersion(
       resourceId: submission.id,
       metadata: { reportingPeriodId, version: submission.currentVersion },
     })
+    const reviewers = await transaction.bureauAccess.findMany({
+      where: {
+        organizationId: period.organizationId,
+        role: 'reportManager',
+        revokedAt: null,
+      },
+      select: { userId: true },
+    })
+    await createNotifications(
+      transaction,
+      reviewers.map((reviewer) => reviewer.userId),
+      {
+        type: resubmissionReason ? 'report.resubmitted' : 'report.submitted',
+        title: resubmissionReason
+          ? 'School report resubmitted'
+          : 'School report submitted',
+        message: 'A school report is ready for bureau review.',
+        resourceType: 'reportingSubmission',
+        resourceId: submission.id,
+      },
+    )
     return submission
   })
 }

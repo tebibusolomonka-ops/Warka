@@ -519,6 +519,10 @@ export {
   buildReportingExportRows,
   createReportingExport,
 } from './reportingExports.js'
+export {
+  planReportingDeadlineNotifications,
+  scheduleReportingDeadlineNotifications,
+} from './reportingDeadlineNotifications.js'
 export type {
   ReportingSubmission,
   ReportingSubmissionStatus,

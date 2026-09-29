@@ -8,6 +8,7 @@ const category = z.enum([
   'learningMaterials',
   'documents',
   'familyCommunication',
+  'reporting',
   'support',
   'privacy',
 ])

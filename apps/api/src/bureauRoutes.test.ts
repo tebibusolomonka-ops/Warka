@@ -146,6 +146,7 @@ describe('bureau reporting authorization routes', () => {
     async (role) => {
       const database = {
         schoolMembership: { findUnique: vi.fn().mockResolvedValue({ role }) },
+        bureauAccess: { findMany: vi.fn().mockResolvedValue([]) },
         reportingPeriod: {
           findUniqueOrThrow: vi
             .fn()

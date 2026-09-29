@@ -55,6 +55,7 @@ describe('email delivery retries', () => {
       },
     }
     const database = {
+      reportingPeriod: { findMany: vi.fn().mockResolvedValue([]) },
       notification: { findMany: vi.fn().mockResolvedValue([]) },
       notificationPreference: { findMany: vi.fn().mockResolvedValue([]) },
       scheduledTaskExecution: { findMany },

@@ -12,6 +12,7 @@ const labels: Record<CommunicationPreference['category'], string> = {
   learningMaterials: 'Learning materials',
   documents: 'Documents',
   familyCommunication: 'Family communication',
+  reporting: 'Reporting',
   support: 'Support',
   privacy: 'Privacy',
 }
