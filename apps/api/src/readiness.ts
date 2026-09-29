@@ -1,6 +1,6 @@
 import { access, constants } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
-import type { PrismaClient } from '@warka/database'
+import { databasePoolConfiguration, type PrismaClient } from '@warka/database'
 import { schedulerHealth } from './schedulerHealth.js'
 import { configuredFileScanner } from './fileScannerConfig.js'
 import type { ScannerHealth } from './fileScanner.js'
@@ -18,6 +18,11 @@ export type Readiness = {
   scheduler?: Awaited<ReturnType<typeof schedulerHealth.snapshot>>
   scanner?: ScannerHealth
   email: EmailProviderHealth | 'disabled'
+  databasePool: {
+    status: 'configured'
+    connectionLimit: number
+    poolTimeoutSeconds: number
+  }
 }
 
 export async function checkReadiness(input: {
@@ -28,6 +33,7 @@ export async function checkReadiness(input: {
   checkEmail?: () => Promise<EmailProviderHealth>
 }): Promise<Readiness> {
   const env = input.env ?? process.env
+  const pool = databasePoolConfiguration(env)
   const checkPath =
     input.checkPath ??
     ((path: string) => access(path, constants.R_OK | constants.W_OK))
@@ -100,5 +106,6 @@ export async function checkReadiness(input: {
     ...(scheduler ? { scheduler } : {}),
     ...(scanner ? { scanner } : {}),
     email,
+    databasePool: { status: 'configured', ...pool },
   }
 }

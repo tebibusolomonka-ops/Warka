@@ -24,6 +24,11 @@ describe('dependency readiness', () => {
         backupStorage: 'ready',
       },
       email: 'disabled',
+      databasePool: {
+        status: 'configured',
+        connectionLimit: 10,
+        poolTimeoutSeconds: 10,
+      },
     })
     expect(JSON.stringify(ready)).not.toContain('private')
     const failed = await checkReadiness({

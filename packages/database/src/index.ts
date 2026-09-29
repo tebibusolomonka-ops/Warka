@@ -5,6 +5,10 @@ import {
   queryCategory,
   slowQueryThreshold,
 } from './queryMetrics.js'
+import {
+  applyDatabasePoolConfiguration,
+  databasePoolConfiguration,
+} from './poolConfiguration.js'
 
 const databaseUrlSchema = z
   .url()
@@ -23,8 +27,9 @@ export function createDatabaseClient(
   }
 
   const threshold = slowQueryThreshold(env)
+  const pool = databasePoolConfiguration(env)
   const client = new PrismaClient({
-    datasourceUrl: result.data,
+    datasourceUrl: applyDatabasePoolConfiguration(result.data, pool),
     log: [
       { emit: 'event', level: 'query' },
       { emit: 'event', level: 'error' },
@@ -55,6 +60,11 @@ export {
   queryCategory,
   slowQueryThreshold,
 } from './queryMetrics.js'
+export {
+  applyDatabasePoolConfiguration,
+  databasePoolConfiguration,
+} from './poolConfiguration.js'
+export type { DatabasePoolConfiguration } from './poolConfiguration.js'
 export {
   AttendanceSummaryInputSchema,
   getAttendanceSummary,
