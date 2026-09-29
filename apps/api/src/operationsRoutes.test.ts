@@ -79,10 +79,19 @@ describe('operations status API', () => {
     const app = fixture(false)
     expect((await app.inject('/operations/status')).statusCode).toBe(401)
     expect((await app.inject('/operations/storage')).statusCode).toBe(401)
+    expect((await app.inject('/operations/build')).statusCode).toBe(401)
     expect(
       (
         await app.inject({
           url: '/operations/status',
+          headers: { 'x-user': actorId },
+        })
+      ).statusCode,
+    ).toBe(403)
+    expect(
+      (
+        await app.inject({
+          url: '/operations/build',
           headers: { 'x-user': actorId },
         })
       ).statusCode,

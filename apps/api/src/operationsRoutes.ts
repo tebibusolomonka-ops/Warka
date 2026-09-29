@@ -14,6 +14,7 @@ import { sendOperationsAlert } from './operationsAlerts.js'
 import { checkReadiness, type Readiness } from './readiness.js'
 import type { ServiceMetrics } from './serviceMetrics.js'
 import { checkCommunicationSchedulingReadiness } from './communicationSchedulingReadiness.js'
+import { buildMetadata } from './buildMetadata.js'
 
 const idParams = z.strictObject({ id: z.uuid() })
 const updateBody = z.strictObject({
@@ -36,6 +37,14 @@ export function registerOperationsRoutes(
 ) {
   const operator = async (request: Parameters<preHandlerHookHandler>[0]) =>
     requireOperator(getDatabase(), authenticatedUser(request).id)
+  app.get(
+    '/operations/build',
+    { preHandler: authenticate },
+    async (request) => {
+      await operator(request)
+      return buildMetadata(process.env)
+    },
+  )
   app.get(
     '/operations/storage',
     { preHandler: authenticate },
