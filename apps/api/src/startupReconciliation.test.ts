@@ -29,7 +29,13 @@ function databaseFixture() {
       findMany: vi.fn().mockResolvedValue([{ id: 'delivery' }]),
       updateMany: vi.fn().mockResolvedValue({ count: 1 }),
     },
-    restoreRehearsal: { count: vi.fn().mockResolvedValue(1) },
+    restoreRehearsal: {
+      findMany: vi.fn().mockResolvedValue([{ id: 'rehearsal' }]),
+    },
+    recoveryReview: {
+      findFirst: vi.fn().mockResolvedValue(null),
+      create: vi.fn().mockResolvedValue({}),
+    },
   }
 }
 
@@ -64,6 +70,7 @@ describe('startup task reconciliation', () => {
         }),
       }),
     )
-    expect(database.restoreRehearsal.count).toHaveBeenCalled()
+    expect(database.restoreRehearsal.findMany).toHaveBeenCalled()
+    expect(database.recoveryReview.create).toHaveBeenCalledTimes(3)
   })
 })

@@ -1,5 +1,7 @@
 # Roadmap
 
+Commits 361–370 add interrupted-task classification, execution leases and heartbeats, bounded startup reconciliation, ambiguous email and stale scan recovery, manual RecoveryReview records, factual disaster-recovery readiness, and operator-only Recovery controls. Performance engineering follows in commits 371–380.
+
 Commits 351–360 establish accessibility scans, landmarks and skip navigation, workspace focus, associated form errors, dialog focus, keyboard search, live status, textual state cues, reduced-motion behavior, and representative browser journeys. Manual assistive technology review remains future validation work.
 
 Commits 341–350 add reporting provenance, communication readiness, production profiles and validation, graceful shutdown, build metadata, migration preflight, and the operator deployment workspace. Accessibility infrastructure and interaction quality follow in 351–360.

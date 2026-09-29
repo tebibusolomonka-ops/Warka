@@ -172,7 +172,14 @@ const emailDelivery = z.object({
   id: z.uuid(),
   recipient: z.string(),
   templateKey: z.string(),
-  status: z.enum(['queued', 'sending', 'sent', 'failed', 'cancelled']),
+  status: z.enum([
+    'queued',
+    'sending',
+    'deliveryUnknown',
+    'sent',
+    'failed',
+    'cancelled',
+  ]),
   createdAt: date,
   scheduledAt: date,
   attemptCount: z.number(),
@@ -292,3 +299,78 @@ export const changeMaintenanceStatus = (
   post(baseUrl, `/operations/maintenance/${encodeURIComponent(id)}/status`, {
     status,
   })
+
+const recoverySummary = z.object({
+  startup: z.object({
+    status: z.enum(['notRun', 'completed', 'timedOut', 'failed']),
+    interruptedExecutions: z.number(),
+    staleFileScans: z.number(),
+    ambiguousEmailDeliveries: z.number(),
+    restoreRehearsalsForReview: z.number(),
+  }),
+  disasterRecovery: z.object({
+    status: z.enum(['ready', 'warning', 'blocked']),
+    lastSuccessfulBackup: date.nullable(),
+    lastVerification: date.nullable(),
+    lastRestoreRehearsal: date.nullable(),
+    blockers: z.array(z.string()),
+    warnings: z.array(z.string()),
+  }),
+})
+const recoveryExecution = z.object({
+  id: z.uuid(),
+  taskType: z.string(),
+  scope: z.string(),
+  resourceId: z.string().nullable(),
+  attempt: z.number(),
+  startedAt: date.nullable(),
+  interruptedAt: date.nullable(),
+  claimedAt: date.nullable(),
+  heartbeatAt: date.nullable(),
+  leaseExpiresAt: date.nullable(),
+  recoveryDisposition: z
+    .enum(['safeToRetry', 'needsReconciliation', 'manualReview'])
+    .nullable(),
+  recoveryReason: z.string().nullable(),
+})
+const recoveryReview = z.object({
+  id: z.uuid(),
+  domain: z.string(),
+  resourceType: z.string(),
+  resourceReference: z.string(),
+  reasonCode: z.string(),
+  status: z.enum(['open', 'resolved', 'dismissed']),
+  createdAt: date,
+  resolvedAt: date.nullable(),
+  resolution: z.string().nullable(),
+})
+export type RecoverySummary = z.infer<typeof recoverySummary>
+export type RecoveryExecution = z.infer<typeof recoveryExecution>
+export type RecoveryReview = z.infer<typeof recoveryReview>
+export const getRecoverySummary = async (baseUrl: string) =>
+  recoverySummary.parse(await requestJson(baseUrl, '/operations/recovery'))
+export const listRecoveryExecutions = async (baseUrl: string) =>
+  z
+    .array(recoveryExecution)
+    .parse(await requestJson(baseUrl, '/operations/recovery/executions'))
+export const listRecoveryReviews = async (baseUrl: string) =>
+  z
+    .array(recoveryReview)
+    .parse(await requestJson(baseUrl, '/operations/recovery/reviews'))
+export const retryRecoveryExecution = (baseUrl: string, id: string) =>
+  post(
+    baseUrl,
+    `/operations/recovery/executions/${encodeURIComponent(id)}/retry`,
+  )
+export const resolveRecoveryReview = (
+  baseUrl: string,
+  id: string,
+  resolution: string,
+) =>
+  post(
+    baseUrl,
+    `/operations/recovery/reviews/${encodeURIComponent(id)}/resolve`,
+    {
+      resolution,
+    },
+  )

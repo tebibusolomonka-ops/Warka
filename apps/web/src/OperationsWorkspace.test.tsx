@@ -7,6 +7,10 @@ import {
   waitFor,
 } from '@testing-library/react'
 import { OperationsWorkspace } from './OperationsWorkspace'
+
+vi.mock('./RecoveryWorkspace', () => ({
+  RecoveryWorkspace: () => <section>Recovery</section>,
+}))
 import {
   getOperationsStatus,
   getDeploymentStatus,

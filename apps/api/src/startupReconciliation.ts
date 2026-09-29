@@ -57,8 +57,10 @@ async function reconcileDomains(database: PrismaClient, now: Date) {
         select: { id: true },
         take: 100,
       }),
-      database.restoreRehearsal.count({
+      database.restoreRehearsal.findMany({
         where: { status: 'running', startedAt: { lte: cutoff } },
+        select: { id: true },
+        take: 100,
       }),
       database.backupRecord.count({
         where: { status: 'completed', verificationResult: null },
@@ -89,6 +91,37 @@ async function reconcileDomains(database: PrismaClient, now: Date) {
         })
       : { count: 0 },
   ])
+  const reviews = [
+    ...backups.map(({ id }) => ({
+      domain: 'backup' as const,
+      resourceType: 'backupRecord',
+      resourceReference: id,
+      reasonCode: 'INTERRUPTED_BACKUP',
+    })),
+    ...deliveries.map(({ id }) => ({
+      domain: 'emailDelivery' as const,
+      resourceType: 'emailDelivery',
+      resourceReference: id,
+      reasonCode: 'PROVIDER_OUTCOME_UNKNOWN',
+    })),
+    ...rehearsals.map(({ id }) => ({
+      domain: 'restoreRehearsal' as const,
+      resourceType: 'restoreRehearsal',
+      resourceReference: id,
+      reasonCode: 'INTERRUPTED_REHEARSAL',
+    })),
+  ]
+  for (const review of reviews) {
+    const existing = await database.recoveryReview.findFirst({
+      where: {
+        domain: review.domain,
+        resourceReference: review.resourceReference,
+        status: 'open',
+      },
+      select: { id: true },
+    })
+    if (!existing) await database.recoveryReview.create({ data: review })
+  }
   return {
     status: 'completed' as const,
     completedAt: now,
@@ -97,7 +130,7 @@ async function reconcileDomains(database: PrismaClient, now: Date) {
     pendingBackupVerifications: pendingVerifications,
     staleFileScans: scanResult.detected,
     ambiguousEmailDeliveries: deliveries.length,
-    restoreRehearsalsForReview: rehearsals,
+    restoreRehearsalsForReview: rehearsals.length,
   }
 }
 

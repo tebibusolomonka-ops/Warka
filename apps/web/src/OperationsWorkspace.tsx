@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { ApiError } from './api'
 import { FileSecurityWorkspace } from './FileSecurityWorkspace'
 import { EmailDeliveryWorkspace } from './EmailDeliveryWorkspace'
+import { RecoveryWorkspace } from './RecoveryWorkspace'
 import {
   addIncidentUpdate,
   changeIncidentStatus,
@@ -172,6 +173,7 @@ export function OperationsWorkspace({ baseUrl }: { baseUrl: string }) {
         <a href="#operations-storage">Storage</a>
         <a href="#operations-file-security">File security</a>
         <a href="#operations-email">Email delivery</a>
+        <a href="#operations-recovery">Recovery</a>
       </nav>
       {error && <p role="alert">{error}</p>}
       <section id="operations-deployment" aria-labelledby="deployment-heading">
@@ -238,6 +240,7 @@ export function OperationsWorkspace({ baseUrl }: { baseUrl: string }) {
         counts={status?.emailDelivery?.counts ?? {}}
         retryCount={status?.emailDelivery?.retryCount ?? 0}
       />
+      <RecoveryWorkspace baseUrl={baseUrl} />
       <section id="operations-backups">
         <h3>Backups</h3>
         <button
