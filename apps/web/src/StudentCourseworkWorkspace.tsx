@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { ApiError } from './api'
+import { FormErrorSummary } from './FormErrorSummary'
 import {
   getOwnCourseworkSubmission,
   getStudentCoursework,
@@ -173,7 +174,7 @@ export function StudentCourseworkWorkspace({
           available {summary.feedbackAvailable}
         </p>
       )}
-      {error && <p role="alert">{error}</p>}
+      <FormErrorSummary id="coursework-error" message={error} />
       {message && <p role="status">{message}</p>}
       <h4>Upcoming assignments</h4>
       <ul>
@@ -252,6 +253,8 @@ export function StudentCourseworkWorkspace({
               <label>
                 Text response{' '}
                 <textarea
+                  aria-invalid={!!error}
+                  aria-describedby={error ? 'coursework-error' : undefined}
                   value={textResponse}
                   maxLength={20000}
                   onChange={(event) => setTextResponse(event.target.value)}

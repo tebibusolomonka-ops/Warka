@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { WorkspaceFocus } from './WorkspaceFocus'
+import { FormErrorSummary } from './FormErrorSummary'
 import {
   LoginCredentialsSchema,
   type AccessibleSchool,
@@ -798,6 +799,8 @@ function AuthenticatedApp() {
                 <label htmlFor="email">Email</label>
                 <input
                   id="email"
+                  aria-invalid={!!formError}
+                  aria-describedby={formError ? 'signin-error' : undefined}
                   type="email"
                   autoComplete="username"
                   value={email}
@@ -809,6 +812,8 @@ function AuthenticatedApp() {
                 <label htmlFor="password">Password</label>
                 <input
                   id="password"
+                  aria-invalid={!!formError}
+                  aria-describedby={formError ? 'signin-error' : undefined}
                   type="password"
                   autoComplete="current-password"
                   value={password}
@@ -820,7 +825,7 @@ function AuthenticatedApp() {
                 {busy ? 'Signing in' : 'Sign in'}
               </button>
             </form>
-            {formError && <p role="alert">{formError}</p>}
+            <FormErrorSummary id="signin-error" message={formError} />
             {baseUrl && <PublicRecovery baseUrl={baseUrl} />}
           </section>
         )}

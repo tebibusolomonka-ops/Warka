@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { ApiError } from './api'
+import { FormErrorSummary } from './FormErrorSummary'
 import {
   cancelGuardianMeeting,
   listChildMeetingTeachers,
@@ -108,7 +109,7 @@ export function GuardianMeetingWorkspace({
         Request a school meeting with a current teacher. Times shown are school
         meeting windows.
       </p>
-      {error && <p role="alert">{error}</p>}
+      <FormErrorSummary id="meeting-error" message={error} />
       {message && <p role="status">{message}</p>}
       <form
         onSubmit={(event) => {
@@ -145,6 +146,8 @@ export function GuardianMeetingWorkspace({
         <label>
           Topic{' '}
           <textarea
+            aria-invalid={!!error}
+            aria-describedby={error ? 'meeting-error' : undefined}
             value={topic}
             minLength={3}
             maxLength={300}

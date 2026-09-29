@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { FormErrorSummary } from './FormErrorSummary'
 import {
   assignRequiredSchools,
   changePeriod,
@@ -140,7 +141,7 @@ export function BureauWorkspace({
     <section aria-labelledby="bureau-heading">
       <h2 id="bureau-heading">Bureau reporting</h2>
       <p>{access.organization.name}</p>
-      {error && <p role="alert">{error}</p>}
+      <FormErrorSummary id="bureau-reporting-error" message={error} />
       <nav aria-label="Bureau reporting sections">
         Overview · Reporting periods · School submissions · Enrollment ·
         Academic outcomes · Transfers · Verification activity
@@ -524,7 +525,7 @@ export function SchoolReportingWorkspace({
   return (
     <section aria-labelledby="school-reporting-heading">
       <h3 id="school-reporting-heading">Reporting</h3>
-      {error && <p role="alert">{error}</p>}
+      <FormErrorSummary id="school-reporting-error" message={error} />
       {reports.length === 0 && !error && (
         <p>This school is not currently required to report.</p>
       )}
@@ -702,6 +703,10 @@ export function SchoolReportingWorkspace({
                     Resubmission reason
                     <input
                       value={resubmissionReason}
+                      aria-invalid={!!error}
+                      aria-describedby={
+                        error ? 'school-reporting-error' : undefined
+                      }
                       onChange={(event) =>
                         setResubmissionReason(event.target.value)
                       }

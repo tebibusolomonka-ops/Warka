@@ -8,6 +8,7 @@ import {
   type StudentOptions,
 } from '@warka/shared'
 import { StudentAccountPanel } from './StudentAccountPanel'
+import { FormErrorSummary } from './FormErrorSummary'
 import { GuardianManagement } from './GuardianManagement'
 import { DocumentPanel } from './DocumentPanel'
 import { CorrectionWorkspace } from './CorrectionWorkspace'
@@ -400,6 +401,10 @@ export function StudentWorkspace({
                   <label htmlFor="given-name">Given name</label>
                   <input
                     id="given-name"
+                    aria-invalid={!!formError}
+                    aria-describedby={
+                      formError ? 'registration-error' : undefined
+                    }
                     value={givenName}
                     onChange={(event) => setGivenName(event.target.value)}
                     required
@@ -521,7 +526,7 @@ export function StudentWorkspace({
                 </button>
               </form>
             )}
-          {formError && <p role="alert">{formError}</p>}
+          <FormErrorSummary id="registration-error" message={formError} />
         </>
       )}
 
