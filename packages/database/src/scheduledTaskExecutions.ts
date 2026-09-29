@@ -204,7 +204,13 @@ export async function reconcileInterruptedScheduledTasks(
     throw new Error('Invalid interrupted task threshold')
   const cutoff = new Date(now.getTime() - staleAfterMs)
   const stale = await database.scheduledTaskExecution.findMany({
-    where: { status: 'running', startedAt: { lte: cutoff } },
+    where: {
+      status: 'running',
+      OR: [
+        { leaseExpiresAt: { lte: now } },
+        { leaseExpiresAt: null, startedAt: { lte: cutoff } },
+      ],
+    },
     orderBy: { startedAt: 'asc' },
     take: 100,
     select: { id: true, taskType: true },

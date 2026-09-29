@@ -33,7 +33,13 @@ describe('interrupted scheduled task recovery', () => {
       expect.objectContaining({
         where: {
           status: 'running',
-          startedAt: { lte: new Date('2026-09-30T09:59:00.000Z') },
+          OR: [
+            { leaseExpiresAt: { lte: now } },
+            {
+              leaseExpiresAt: null,
+              startedAt: { lte: new Date('2026-09-30T09:59:00.000Z') },
+            },
+          ],
         },
       }),
     )

@@ -16,6 +16,7 @@ import type { ServiceMetrics } from './serviceMetrics.js'
 import { checkCommunicationSchedulingReadiness } from './communicationSchedulingReadiness.js'
 import { buildMetadata } from './buildMetadata.js'
 import { evaluateDeploymentReadiness } from './deploymentReadiness.js'
+import { startupReconciliationStatus } from './startupReconciliation.js'
 
 const idParams = z.strictObject({ id: z.uuid() })
 const updateBody = z.strictObject({
@@ -192,6 +193,7 @@ export function registerOperationsRoutes(
           retryCount: emailRetries,
         },
         communicationScheduling,
+        startupReconciliation: startupReconciliationStatus.snapshot(),
       }
     },
   )

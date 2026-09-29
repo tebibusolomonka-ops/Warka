@@ -16,6 +16,7 @@ import { assertProductionConfiguration } from './productionConfiguration.js'
 import { environmentProfile } from './environmentProfile.js'
 import { createApplicationShutdown } from './applicationShutdown.js'
 import { buildMetadata } from './buildMetadata.js'
+import { runStartupReconciliation } from './startupReconciliation.js'
 
 const profile = environmentProfile(process.env)
 assertProductionConfiguration(process.env)
@@ -67,6 +68,10 @@ app.addHook('onClose', async () => {
 try {
   await app.listen(serverConfig(process.env))
   app.log.info({ build: buildMetadata(process.env) }, 'Warka started')
+  const reconciliationDatabase =
+    schedulerDatabase ?? scanDatabase ?? emailDatabase
+  if (reconciliationDatabase)
+    await runStartupReconciliation(reconciliationDatabase)
   if (
     process.env.NODE_ENV === 'test' &&
     process.env.WARKA_SCHEDULER_CONTROLLED_TEST === 'enabled'
