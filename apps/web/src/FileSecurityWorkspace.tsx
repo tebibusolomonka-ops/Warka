@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { StatusLabel } from './StatusLabel'
 import {
   listFileSecurityScans,
   removeQuarantinedAsset,
@@ -61,7 +62,7 @@ export function FileSecurityWorkspace({ baseUrl }: { baseUrl: string }) {
               .map((scan) => (
                 <li key={scan.id}>
                   {scan.fileAsset.originalFileName} · {scan.fileAsset.purpose} ·{' '}
-                  {scan.status}
+                  <StatusLabel status={scan.status} context="Scan" />
                   {['infected', 'failed', 'unavailable'].includes(
                     scan.status,
                   ) && (

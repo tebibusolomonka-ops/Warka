@@ -9,6 +9,7 @@ import {
 } from '@warka/shared'
 import { StudentAccountPanel } from './StudentAccountPanel'
 import { FormErrorSummary } from './FormErrorSummary'
+import { StatusLabel } from './StatusLabel'
 import { GuardianManagement } from './GuardianManagement'
 import { DocumentPanel } from './DocumentPanel'
 import { CorrectionWorkspace } from './CorrectionWorkspace'
@@ -335,9 +336,10 @@ export function StudentWorkspace({
                       >
                         {studentName(student)} · {student.studentReference}
                       </button>
-                      <span className={'status status-' + enrollment.status}>
-                        {enrollment.status}
-                      </span>
+                      <StatusLabel
+                        status={enrollment.status}
+                        context="Enrollment"
+                      />
                     </li>
                   ))}
                 </ul>
@@ -618,10 +620,7 @@ export function StudentWorkspace({
               {detail.data.enrollments.map((enrollment) => (
                 <div className="enrollment" key={enrollment.id}>
                   <p>
-                    Status:{' '}
-                    <span className={'status status-' + enrollment.status}>
-                      {enrollment.status}
-                    </span>
+                    Status: <StatusLabel status={enrollment.status} />
                   </p>
                   {enrollment.status === 'draft' &&
                     access.capabilities.canSubmit && (
