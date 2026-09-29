@@ -109,6 +109,8 @@ export {
   enqueueFileScanTask,
   completeScheduledTask,
   failScheduledTask,
+  interruptedTaskDisposition,
+  reconcileInterruptedScheduledTasks,
 } from './scheduledTaskExecutions.js'
 export { evaluateConfiguredRetentionPolicy } from './retentionPolicies.js'
 export {

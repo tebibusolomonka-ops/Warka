@@ -481,9 +481,16 @@ enum ScheduledTaskType {
 enum ScheduledTaskStatus {
   pending
   running
+  interrupted
   completed
   failed
   skipped
+}
+
+enum TaskRecoveryDisposition {
+  safeToRetry
+  needsReconciliation
+  manualReview
 }
 
 enum FileAssetPurpose {
@@ -835,7 +842,10 @@ model ScheduledTaskExecution {
   scheduledFor DateTime
   startedAt DateTime?
   completedAt DateTime?
+  interruptedAt DateTime?
   status ScheduledTaskStatus @default(pending)
+  recoveryDisposition TaskRecoveryDisposition?
+  recoveryReason String?
   attempt Int @default(1)
   failureCode String?
   eligibleCount Int?
@@ -844,6 +854,7 @@ model ScheduledTaskExecution {
 
   @@index([taskType, scope, scheduledFor])
   @@index([status, createdAt])
+  @@index([status, startedAt])
   @@unique([seriesId, attempt])
 }
 

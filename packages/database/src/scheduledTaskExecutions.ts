@@ -1,4 +1,8 @@
-import type { PrismaClient, ScheduledTaskType } from '@prisma/client'
+import type {
+  PrismaClient,
+  ScheduledTaskType,
+  TaskRecoveryDisposition,
+} from '@prisma/client'
 import { randomUUID } from 'node:crypto'
 
 export async function enqueueFileScanTask(
@@ -81,4 +85,52 @@ export async function failScheduledTask(
     data: { status: 'failed', completedAt: new Date(), failureCode },
   })
   if (result.count !== 1) throw new Error('Scheduled task is not running')
+}
+
+export function interruptedTaskDisposition(
+  taskType: ScheduledTaskType,
+): TaskRecoveryDisposition {
+  if (
+    taskType === 'retentionEvaluation' ||
+    taskType === 'backupVerification' ||
+    taskType === 'fileScan'
+  )
+    return 'safeToRetry'
+  if (taskType === 'emailDelivery') return 'needsReconciliation'
+  return 'manualReview'
+}
+
+export async function reconcileInterruptedScheduledTasks(
+  database: Pick<PrismaClient, 'scheduledTaskExecution'>,
+  input: { now?: Date; staleAfterMs?: number } = {},
+) {
+  const now = input.now ?? new Date()
+  const staleAfterMs = input.staleAfterMs ?? 300_000
+  if (!Number.isInteger(staleAfterMs) || staleAfterMs < 1_000)
+    throw new Error('Invalid interrupted task threshold')
+  const cutoff = new Date(now.getTime() - staleAfterMs)
+  const stale = await database.scheduledTaskExecution.findMany({
+    where: { status: 'running', startedAt: { lte: cutoff } },
+    orderBy: { startedAt: 'asc' },
+    take: 100,
+    select: { id: true, taskType: true },
+  })
+  const interrupted: Array<{
+    id: string
+    disposition: TaskRecoveryDisposition
+  }> = []
+  for (const execution of stale) {
+    const disposition = interruptedTaskDisposition(execution.taskType)
+    const result = await database.scheduledTaskExecution.updateMany({
+      where: { id: execution.id, status: 'running' },
+      data: {
+        status: 'interrupted',
+        interruptedAt: now,
+        recoveryDisposition: disposition,
+        recoveryReason: 'EXECUTION_OWNERSHIP_LOST',
+      },
+    })
+    if (result.count === 1) interrupted.push({ id: execution.id, disposition })
+  }
+  return interrupted
 }
