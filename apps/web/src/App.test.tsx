@@ -256,6 +256,8 @@ describe('authenticated web shell', () => {
     ).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Student portal' }))
     await screen.findByText(/WKA-DUAL/)
+    expect(document.title).toBe('Student portal | Warka')
+    expect(document.activeElement).toBe(screen.getByRole('main'))
     expect(screen.queryByText('School directory')).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: 'Staff workspace' }))
     await screen.findByText('School directory')

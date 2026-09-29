@@ -17,6 +17,9 @@ export function DocumentVerificationPage({
 }) {
   const [reference, setReference] = useState(initialReference)
   const [result, setResult] = useState<Result>({ status: 'idle' })
+  useEffect(() => {
+    document.title = 'Document verification | Warka'
+  }, [])
   const baseUrl = (() => {
     try {
       return apiBaseUrl(import.meta.env.VITE_API_URL, window.location.origin)

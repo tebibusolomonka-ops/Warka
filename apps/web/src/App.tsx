@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
+import { WorkspaceFocus } from './WorkspaceFocus'
 import {
   LoginCredentialsSchema,
   type AccessibleSchool,
@@ -319,6 +320,7 @@ function SignedInShell({
     return (
       <>
         {workspaceChoices}
+        <WorkspaceFocus name="Bureau workspace" />
         <BureauWorkspace baseUrl={baseUrl} access={bureau.access[0]!} />
       </>
     )
@@ -326,6 +328,7 @@ function SignedInShell({
     return (
       <>
         {workspaceChoices}
+        <WorkspaceFocus name="Guardian portal" />
         <ParentPortal
           baseUrl={baseUrl}
           identity={parent.identity}
@@ -343,6 +346,7 @@ function SignedInShell({
     return (
       <>
         {workspaceChoices}
+        <WorkspaceFocus name="Student portal" />
         <StudentPortal
           baseUrl={baseUrl}
           identity={portal.identity}
@@ -372,6 +376,7 @@ function SignedInShell({
   return (
     <>
       {workspaceChoices}
+      <WorkspaceFocus name="Staff workspace" />
       <div className="account">
         <p>Signed in as {user.displayName}</p>
         <button type="button" onClick={onSignOut}>
@@ -659,6 +664,10 @@ function AuthenticatedApp() {
   const [busy, setBusy] = useState(false)
   const [signingOut, setSigningOut] = useState(false)
   const [refresh, setRefresh] = useState(0)
+  useEffect(() => {
+    if (authentication.status === 'signedOut')
+      document.title = 'Sign in | Warka'
+  }, [authentication.status])
   const baseUrl = (() => {
     try {
       return apiBaseUrl(import.meta.env.VITE_API_URL, window.location.origin)
