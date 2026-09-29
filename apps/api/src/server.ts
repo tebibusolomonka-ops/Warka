@@ -13,7 +13,9 @@ import {
 } from './emailOutboxScheduler.js'
 import { FakeEmailProvider } from './emailProvider.js'
 import { assertProductionConfiguration } from './productionConfiguration.js'
+import { environmentProfile } from './environmentProfile.js'
 
+const profile = environmentProfile(process.env)
 assertProductionConfiguration(process.env)
 
 const controlledEmail =
@@ -40,6 +42,7 @@ const emailScheduler = emailDatabase
   ? new EmailOutboxScheduler(emailDatabase, emailConfig, testEmailProvider)
   : undefined
 const app = buildApp({
+  production: profile.secureCookies,
   ...(testEmailProvider ? { testEmailProvider } : {}),
   testEmailTick: () => emailScheduler?.tick() ?? Promise.resolve(),
 })

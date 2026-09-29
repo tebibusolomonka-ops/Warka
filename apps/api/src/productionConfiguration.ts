@@ -4,6 +4,7 @@ import { clamAvConfiguration } from './clamAvScanner.js'
 import { smtpConfiguration } from './smtpEmailProvider.js'
 import { schedulerConfiguration } from './backupScheduler.js'
 import { emailOutboxConfiguration } from './emailOutboxScheduler.js'
+import { environmentProfile } from './environmentProfile.js'
 
 export type ConfigurationIssue = {
   category: 'requiredCore' | 'requiredWhenEnabled'
@@ -13,7 +14,7 @@ export type ConfigurationIssue = {
 export function validateProductionConfiguration(
   env: NodeJS.ProcessEnv,
 ): ConfigurationIssue[] {
-  if (env.NODE_ENV !== 'production') return []
+  if (environmentProfile(env).name !== 'production') return []
   const issues: ConfigurationIssue[] = []
   const requireValue = (
     category: ConfigurationIssue['category'],
@@ -37,8 +38,10 @@ export function validateProductionConfiguration(
     return url.protocol === 'https:' && !url.username && !url.password
   })
   requireValue('requiredCore', ['PORT'], () => !!serverConfig(env))
-  requireValue('requiredCore', ['FILE_STORAGE_BACKEND'], () =>
-    ['s3', 'local'].includes(env.FILE_STORAGE_BACKEND ?? ''),
+  requireValue(
+    'requiredCore',
+    ['FILE_STORAGE_BACKEND'],
+    () => env.FILE_STORAGE_BACKEND === 's3',
   )
   if (env.FILE_STORAGE_BACKEND === 's3')
     requireValue(

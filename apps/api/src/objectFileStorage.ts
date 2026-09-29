@@ -12,17 +12,19 @@ import {
   LocalFileStorage,
   type FileStorage,
 } from './fileStorage.js'
+import { environmentProfile } from './environmentProfile.js'
 
 export function configuredFileStorage(
   env: NodeJS.ProcessEnv = process.env,
 ): FileStorage {
+  const profile = environmentProfile(env)
   if (env.FILE_STORAGE_BACKEND === 's3') {
     const { bucket, client } = objectStorageConfiguration(env)
     return new ObjectFileStorage(client, bucket)
   }
   if (
-    env.FILE_STORAGE_BACKEND === 'local' ||
-    (!env.FILE_STORAGE_BACKEND && env.NODE_ENV !== 'production')
+    (env.FILE_STORAGE_BACKEND === 'local' && profile.name !== 'production') ||
+    (!env.FILE_STORAGE_BACKEND && profile.defaultFileStorage === 'local')
   ) {
     if (!env.FILE_STORAGE_DIR)
       throw new Error('File storage directory is required')
