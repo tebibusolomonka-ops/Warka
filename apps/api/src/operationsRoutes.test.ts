@@ -80,6 +80,7 @@ describe('operations status API', () => {
     expect((await app.inject('/operations/status')).statusCode).toBe(401)
     expect((await app.inject('/operations/storage')).statusCode).toBe(401)
     expect((await app.inject('/operations/build')).statusCode).toBe(401)
+    expect((await app.inject('/operations/deployment')).statusCode).toBe(401)
     expect(
       (
         await app.inject({
@@ -92,6 +93,14 @@ describe('operations status API', () => {
       (
         await app.inject({
           url: '/operations/build',
+          headers: { 'x-user': actorId },
+        })
+      ).statusCode,
+    ).toBe(403)
+    expect(
+      (
+        await app.inject({
+          url: '/operations/deployment',
           headers: { 'x-user': actorId },
         })
       ).statusCode,
@@ -124,6 +133,15 @@ describe('operations status API', () => {
   it('returns a safe aggregate to an authorized operator', async () => {
     vi.stubEnv('WARKA_OPERATOR_USER_IDS', actorId)
     const app = fixture(true)
+    const deployment = await app.inject({
+      url: '/operations/deployment',
+      headers: { 'x-user': actorId },
+    })
+    expect(deployment.statusCode).toBe(200)
+    expect(deployment.json()).toHaveProperty('readiness.migration')
+    expect(deployment.json()).toHaveProperty('features.emailOutbox')
+    expect(deployment.body).not.toContain('DATABASE_URL')
+    expect(deployment.body).not.toContain('SMTP_PASSWORD')
     const response = await app.inject({
       url: '/operations/status',
       headers: { 'x-user': actorId },

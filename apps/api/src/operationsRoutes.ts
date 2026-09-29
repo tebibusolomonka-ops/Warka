@@ -15,6 +15,7 @@ import { checkReadiness, type Readiness } from './readiness.js'
 import type { ServiceMetrics } from './serviceMetrics.js'
 import { checkCommunicationSchedulingReadiness } from './communicationSchedulingReadiness.js'
 import { buildMetadata } from './buildMetadata.js'
+import { evaluateDeploymentReadiness } from './deploymentReadiness.js'
 
 const idParams = z.strictObject({ id: z.uuid() })
 const updateBody = z.strictObject({
@@ -43,6 +44,26 @@ export function registerOperationsRoutes(
     async (request) => {
       await operator(request)
       return buildMetadata(process.env)
+    },
+  )
+  app.get(
+    '/operations/deployment',
+    { preHandler: authenticate },
+    async (request) => {
+      await operator(request)
+      return {
+        build: buildMetadata(process.env),
+        readiness: await evaluateDeploymentReadiness({
+          database: getDatabase(),
+        }),
+        features: {
+          backupScheduler:
+            process.env.WARKA_BACKUP_SCHEDULER_ENABLED === 'true',
+          fileScanning:
+            process.env.WARKA_FILE_SCAN_SCHEDULER_ENABLED === 'true',
+          emailOutbox: process.env.WARKA_EMAIL_OUTBOX_ENABLED === 'true',
+        },
+      }
     },
   )
   app.get(
