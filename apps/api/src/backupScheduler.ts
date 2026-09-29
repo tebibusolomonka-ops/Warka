@@ -15,6 +15,7 @@ import { requireOperator } from './operationsAccess.js'
 import { cleanupBackupArtifacts } from './backupRetention.js'
 import { maxScheduledAttempts, retryEligible } from './schedulerRetry.js'
 import { schedulerHealth } from './schedulerHealth.js'
+import { withTaskHeartbeat } from './taskHeartbeat.js'
 
 const lockKey = 8_246_181
 
@@ -131,14 +132,21 @@ export class BackupScheduler {
       { workerId: this.workerId, leaseMs: this.leaseMs, now },
     )
     try {
-      const recordId = await schedulerHealth.track(() =>
-        this.backup({
-          database: this.database,
-          actorId: this.config.actorId,
-          databaseUrl: this.config.databaseUrl,
-          storage: new LocalBackupStorage(this.config.storageDirectory),
-        }),
-      )
+      const recordId = await withTaskHeartbeat({
+        database: this.database,
+        executionId: execution.id,
+        workerId: this.workerId,
+        active: () => !this.stopped,
+        work: () =>
+          schedulerHealth.track(() =>
+            this.backup({
+              database: this.database,
+              actorId: this.config.actorId,
+              databaseUrl: this.config.databaseUrl,
+              storage: new LocalBackupStorage(this.config.storageDirectory),
+            }),
+          ),
+      })
       await completeScheduledTask(
         this.database,
         execution.id,
@@ -189,9 +197,16 @@ export class BackupScheduler {
       { workerId: this.workerId, leaseMs: this.leaseMs, now },
     )
     try {
-      const result = await schedulerHealth.track(() =>
-        this.evaluateRetention(this.database, policy, now),
-      )
+      const result = await withTaskHeartbeat({
+        database: this.database,
+        executionId: execution.id,
+        workerId: this.workerId,
+        active: () => !this.stopped,
+        work: () =>
+          schedulerHealth.track(() =>
+            this.evaluateRetention(this.database, policy, now),
+          ),
+      })
       await completeScheduledTask(
         this.database,
         execution.id,
@@ -349,13 +364,22 @@ export class BackupScheduler {
             { workerId: this.workerId, leaseMs: this.leaseMs, now },
           )
           try {
-            await schedulerHealth.track(async () => {
-              const passed = await this.verify({
-                database: this.database,
-                id: record.id,
-                storage: new LocalBackupStorage(this.config.storageDirectory),
-              })
-              if (!passed) throw new Error('Backup verification failed')
+            await withTaskHeartbeat({
+              database: this.database,
+              executionId: execution.id,
+              workerId: this.workerId,
+              active: () => !this.stopped,
+              work: () =>
+                schedulerHealth.track(async () => {
+                  const passed = await this.verify({
+                    database: this.database,
+                    id: record.id,
+                    storage: new LocalBackupStorage(
+                      this.config.storageDirectory,
+                    ),
+                  })
+                  if (!passed) throw new Error('Backup verification failed')
+                }),
             })
             await completeScheduledTask(
               this.database,

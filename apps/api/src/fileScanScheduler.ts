@@ -13,6 +13,7 @@ import { processPendingFileScan } from './fileScanWorkflow.js'
 import { maxScheduledAttempts, retryEligible } from './schedulerRetry.js'
 import type { FileScanner } from './fileScanner.js'
 import type { FileStorage } from './fileStorage.js'
+import { withTaskHeartbeat } from './taskHeartbeat.js'
 
 export function fileScanSchedulerConfiguration(
   env: NodeJS.ProcessEnv = process.env,
@@ -58,11 +59,18 @@ export class FileScanScheduler {
       return
     }
     try {
-      const outcome = await processPendingFileScan({
+      const outcome = await withTaskHeartbeat({
         database: this.database,
-        storage: this.storage,
-        scanner: this.scanner,
-        scanId: execution.resourceId,
+        executionId: execution.id,
+        workerId: this.workerId,
+        active: () => !this.stopped,
+        work: () =>
+          processPendingFileScan({
+            database: this.database,
+            storage: this.storage,
+            scanner: this.scanner,
+            scanId: execution.resourceId!,
+          }),
       })
       if (outcome.status === 'failed')
         await failScheduledTask(

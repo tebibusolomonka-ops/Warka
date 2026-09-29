@@ -156,6 +156,31 @@ export async function claimScheduledTask(
   return result.count === 1
 }
 
+export async function heartbeatScheduledTask(
+  database: Pick<PrismaClient, 'scheduledTaskExecution'>,
+  id: string,
+  workerId: string,
+  input: { now?: Date; leaseMs?: number } = {},
+) {
+  const now = input.now ?? new Date()
+  const leaseMs = input.leaseMs ?? 300_000
+  if (!Number.isInteger(leaseMs) || leaseMs < 1_000)
+    throw new Error('Invalid scheduled task lease')
+  const result = await database.scheduledTaskExecution.updateMany({
+    where: {
+      id,
+      status: 'running',
+      workerId,
+      leaseExpiresAt: { gt: now },
+    },
+    data: {
+      heartbeatAt: now,
+      leaseExpiresAt: new Date(now.getTime() + leaseMs),
+    },
+  })
+  return result.count === 1
+}
+
 export function interruptedTaskDisposition(
   taskType: ScheduledTaskType,
 ): TaskRecoveryDisposition {

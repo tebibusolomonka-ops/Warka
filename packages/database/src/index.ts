@@ -113,6 +113,7 @@ export {
   reconcileInterruptedScheduledTasks,
   createWorkerInstanceId,
   claimScheduledTask,
+  heartbeatScheduledTask,
 } from './scheduledTaskExecutions.js'
 export { evaluateConfiguredRetentionPolicy } from './retentionPolicies.js'
 export {

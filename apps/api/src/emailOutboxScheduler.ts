@@ -14,6 +14,7 @@ import { retryDelayMs } from './schedulerRetry.js'
 import { sendOperationsAlert } from './operationsAlerts.js'
 import { routePendingNotificationEmails } from './notificationEmailRouting.js'
 import { scheduleDueEmailDigests } from './emailDigestScheduler.js'
+import { withTaskHeartbeat } from './taskHeartbeat.js'
 
 export const maxEmailDeliveryAttempts = 3
 
@@ -108,13 +109,20 @@ export class EmailOutboxScheduler {
       return
     }
     try {
-      const outcome = await processQueuedEmailDelivery(
-        this.database,
-        this.provider,
-        task.resourceId,
-        new Date(),
-        this.config.recovery,
-      )
+      const outcome = await withTaskHeartbeat({
+        database: this.database,
+        executionId: task.id,
+        workerId: this.workerId,
+        active: () => !this.stopped,
+        work: () =>
+          processQueuedEmailDelivery(
+            this.database,
+            this.provider,
+            task.resourceId!,
+            new Date(),
+            this.config.recovery,
+          ),
+      })
       if (outcome.status === 'failed') {
         await failScheduledTask(this.database, task.id, outcome.failureCode, {
           workerId: this.workerId,
