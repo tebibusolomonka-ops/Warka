@@ -101,6 +101,36 @@ button {
   font: inherit;
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  button {
+    transition: background-color 150ms ease-in-out;
+  }
+
+  .dialog-panel {
+    animation: dialog-enter 160ms ease-out;
+  }
+}
+
+@keyframes dialog-enter {
+  from {
+    opacity: 0;
+    transform: translateY(0.4rem);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button,
+  .dialog-panel {
+    animation: none;
+    transition: none;
+  }
+}
+
 button:focus-visible,
 input:focus-visible,
 select:focus-visible,
