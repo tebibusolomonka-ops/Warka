@@ -61,6 +61,8 @@ export type ReportingVersion = {
   version: number
   snapshot: Record<string, unknown>
   snapshotChecksum?: string | null
+  provenance: 'nativeVersion' | 'legacyBackfill'
+  integrityState: 'verified' | 'legacyUnverified'
   submittedAt: string
   status: string
   resubmissionReason?: string | null

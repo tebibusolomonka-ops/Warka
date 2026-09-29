@@ -379,6 +379,9 @@ export function BureauWorkspace({
                 {version.resubmissionReason
                   ? ` — ${version.resubmissionReason}`
                   : ''}
+                {version.provenance === 'legacyBackfill'
+                  ? ' — last recoverable legacy state; earlier attempts and original checksum unavailable'
+                  : ' — native version; checksum recorded'}
                 <pre>{JSON.stringify(version.snapshot, null, 2)}</pre>
               </li>
             ))}
@@ -598,6 +601,9 @@ export function SchoolReportingWorkspace({
                         {version.resubmissionReason
                           ? ` — ${version.resubmissionReason}`
                           : ''}
+                        {version.provenance === 'legacyBackfill'
+                          ? ' — last recoverable legacy state; earlier attempts and original checksum unavailable'
+                          : ' — native version; checksum recorded'}
                         <pre>{JSON.stringify(version.snapshot, null, 2)}</pre>
                       </li>
                     ))}

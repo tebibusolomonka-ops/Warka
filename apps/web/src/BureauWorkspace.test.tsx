@@ -29,6 +29,9 @@ const submission = {
       id: 'version-1',
       version: 1,
       submittedAt: '2026-06-01T00:00:00Z',
+      provenance: 'legacyBackfill',
+      integrityState: 'legacyUnverified',
+      snapshotChecksum: null,
       snapshot: { enrollment: { dataState: 'reported', total: 12 } },
     },
   ],
@@ -70,6 +73,11 @@ describe('reporting review workspaces', () => {
     expect(screen.getByText(/Correct official enrollment/)).not.toBeNull()
     expect(await screen.findByText('Ready to submit')).not.toBeNull()
     expect(screen.getByText(/Version 1, submitted/)).not.toBeNull()
+    expect(
+      screen.getByText(
+        /last recoverable legacy state; earlier attempts and original checksum unavailable/,
+      ),
+    ).not.toBeNull()
     fireEvent.change(screen.getByLabelText('Resubmission reason'), {
       target: { value: 'Corrected approved aggregate' },
     })

@@ -995,6 +995,8 @@ model ReportingSubmissionVersion {
   version           Int
   snapshot          Json
   snapshotChecksum  String? @db.VarChar(64)
+  provenance        ReportingVersionProvenance @default(nativeVersion)
+  integrityState    ReportingVersionIntegrity @default(verified)
   validationSummary Json
   resubmissionReason String? @db.VarChar(500)
   status            ReportingSubmissionStatus @default(submitted)
@@ -1006,6 +1008,16 @@ model ReportingSubmissionVersion {
 
   @@unique([submissionId, version])
   @@index([submittedById])
+}
+
+enum ReportingVersionProvenance {
+  nativeVersion
+  legacyBackfill
+}
+
+enum ReportingVersionIntegrity {
+  verified
+  legacyUnverified
 }
 
 model ReportingReviewNote {

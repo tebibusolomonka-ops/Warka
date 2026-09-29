@@ -148,6 +148,8 @@ describe.skipIf(!database)('bureau reporting in PostgreSQL', () => {
         validationSummary: { blocking: [] },
       })
       expect(firstVersion.snapshotChecksum).toMatch(/^[a-f0-9]{64}$/)
+      expect(firstVersion.provenance).toBe('nativeVersion')
+      expect(firstVersion.integrityState).toBe('verified')
       await expect(
         submitSchoolReport(
           database!,

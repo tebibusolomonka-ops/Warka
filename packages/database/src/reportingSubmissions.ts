@@ -145,6 +145,8 @@ async function submitVersion(
         version: submission.currentVersion,
         snapshot: evidence.snapshot,
         snapshotChecksum: evidence.checksum,
+        provenance: 'nativeVersion',
+        integrityState: 'verified',
         validationSummary: {
           warnings: readiness.warnings,
           blocking: readiness.blocking,
