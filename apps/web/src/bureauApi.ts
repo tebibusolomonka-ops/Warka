@@ -38,17 +38,45 @@ export type ReportingPeriod = {
   startsOn: string
   endsOn: string
   submissionDueOn: string
+  opensAt?: string | null
+  dueAt?: string | null
+  closesAt?: string | null
   requirements: Array<{ school: { id: string; name: string } }>
 }
 export type Submission = {
   id: string
-  status: 'draft' | 'submitted' | 'approved' | 'returned'
+  status: 'draft' | 'submitted' | 'underReview' | 'approved' | 'returned'
   snapshot: Record<string, unknown>
+  currentVersion?: number
+  acceptedVersion?: number | null
+  versions?: ReportingVersion[]
   submittedAt?: string
   approvedAt?: string
   returnReason?: string
   school: { id: string; name: string }
   reportingPeriod: { id: string; name: string }
+}
+export type ReportingVersion = {
+  id: string
+  version: number
+  snapshot: Record<string, unknown>
+  snapshotChecksum?: string | null
+  submittedAt: string
+  status: string
+  resubmissionReason?: string | null
+}
+export type ReportingNote = {
+  id: string
+  version: number
+  body: string
+  visibility: 'schoolAndBureau' | 'bureauInternal'
+  createdAt: string
+  authorUser: { displayName: string }
+}
+export type ReportingReadiness = {
+  ready: boolean
+  warnings: string[]
+  blocking: string[]
 }
 
 export const getBureauAccess = (baseUrl: string) =>
@@ -67,6 +95,7 @@ export const getCoverage = (
       expected: number
       draft: number
       submitted: number
+      underReview: number
       approved: number
       returned: number
       missing: number
@@ -97,7 +126,7 @@ export const decideSubmission = (
   baseUrl: string,
   organizationId: string,
   id: string,
-  action: 'approve' | 'return',
+  action: 'start-review' | 'approve' | 'return',
   reason?: string,
 ) =>
   request<Submission>(
@@ -128,6 +157,104 @@ export const submitReport = (
     `/schools/${schoolId}/reporting/${periodId}/submit`,
     { method: 'POST' },
   )
+export const resubmitReport = (
+  baseUrl: string,
+  schoolId: string,
+  periodId: string,
+  reason: string,
+) =>
+  request<Submission>(
+    baseUrl,
+    `/schools/${schoolId}/reporting/${periodId}/resubmit`,
+    {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    },
+  )
+export const getReportingReadiness = (
+  baseUrl: string,
+  schoolId: string,
+  periodId: string,
+) =>
+  request<ReportingReadiness>(
+    baseUrl,
+    `/schools/${schoolId}/reporting/${periodId}/readiness`,
+  )
+export const listSchoolReportingNotes = (
+  baseUrl: string,
+  schoolId: string,
+  periodId: string,
+) =>
+  request<ReportingNote[]>(
+    baseUrl,
+    `/schools/${schoolId}/reporting/${periodId}/notes`,
+  )
+export const addSchoolReportingNote = (
+  baseUrl: string,
+  schoolId: string,
+  periodId: string,
+  body: string,
+) =>
+  request<ReportingNote>(
+    baseUrl,
+    `/schools/${schoolId}/reporting/${periodId}/notes`,
+    {
+      method: 'POST',
+      body: JSON.stringify({ body }),
+    },
+  )
+export const listBureauReportingNotes = (
+  baseUrl: string,
+  organizationId: string,
+  submissionId: string,
+) =>
+  request<ReportingNote[]>(
+    baseUrl,
+    `/bureau/${organizationId}/submissions/${submissionId}/notes`,
+  )
+export const addBureauReportingNote = (
+  baseUrl: string,
+  organizationId: string,
+  submissionId: string,
+  body: string,
+  visibility: 'schoolAndBureau' | 'bureauInternal',
+) =>
+  request<ReportingNote>(
+    baseUrl,
+    `/bureau/${organizationId}/submissions/${submissionId}/notes`,
+    {
+      method: 'POST',
+      body: JSON.stringify({ body, visibility }),
+    },
+  )
+export const getRegionalValidation = (
+  baseUrl: string,
+  organizationId: string,
+  periodId: string,
+) =>
+  request<{
+    issues: { schoolId: string | null; code: string; severity: string }[]
+  }>(baseUrl, `/bureau/${organizationId}/periods/${periodId}/validation`)
+export async function downloadReportingExport(
+  baseUrl: string,
+  organizationId: string,
+  periodId: string,
+  type: 'coverage' | 'enrollment' | 'academic' | 'transfers',
+) {
+  const response = await fetch(
+    `${baseUrl}/bureau/${organizationId}/periods/${periodId}/exports/${type}`,
+    {
+      credentials: 'include',
+    },
+  )
+  if (!response.ok)
+    throw new ApiError(
+      'Reporting export failed',
+      response.status,
+      'REPORTING_EXPORT_FAILED',
+    )
+  return response.text()
+}
 
 export type SchoolReport = {
   reportingPeriodId: string

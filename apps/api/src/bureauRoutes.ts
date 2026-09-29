@@ -220,7 +220,11 @@ export function registerBureauRoutes(
       )
       return getDatabase().reportingSubmission.findMany({
         where: { reportingPeriod: { organizationId } },
-        include: { school: true, reportingPeriod: true },
+        include: {
+          school: true,
+          reportingPeriod: true,
+          versions: { orderBy: { version: 'asc' } },
+        },
         orderBy: { updatedAt: 'desc' },
         take: 100,
       })
@@ -374,6 +378,7 @@ export function registerBureauRoutes(
                 schoolId,
               },
             },
+            include: { versions: { orderBy: { version: 'asc' } } },
           }),
         })),
       )
