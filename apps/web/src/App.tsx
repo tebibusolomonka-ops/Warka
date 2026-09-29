@@ -748,98 +748,103 @@ function AuthenticatedApp() {
   }, [baseUrl])
 
   return (
-    <main className="shell">
-      <header>
-        <h1>Warka</h1>
-        <p>School records and services</p>
-      </header>
-      {authentication.status === 'checking' && (
-        <p role="status">Checking authentication</p>
-      )}
-      {authentication.status === 'signedOut' && (
-        <section aria-labelledby="signin-heading">
-          <h2 id="signin-heading">Sign in</h2>
-          {authentication.message && (
-            <div role="alert">
-              <p>{authentication.message}</p>
-              {baseUrl && (
-                <button
-                  type="button"
-                  disabled={signingOut}
-                  onClick={() => {
-                    if (authentication.retryLogout) {
-                      void signOut()
-                    } else {
-                      setAuthentication({ status: 'checking' })
-                      setRefresh((value) => value + 1)
-                    }
-                  }}
-                >
-                  {authentication.retryLogout ? 'Retry sign out' : 'Retry'}
-                </button>
-              )}
-            </div>
-          )}
-          <form onSubmit={signIn}>
-            <div className="field">
-              <label htmlFor="email">Email</label>
-              <input
-                id="email"
-                type="email"
-                autoComplete="username"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                required
-              />
-            </div>
-            <div className="field">
-              <label htmlFor="password">Password</label>
-              <input
-                id="password"
-                type="password"
-                autoComplete="current-password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                required
-              />
-            </div>
-            <button type="submit" disabled={busy || signingOut || !baseUrl}>
-              {busy ? 'Signing in' : 'Sign in'}
-            </button>
-          </form>
-          {formError && <p role="alert">{formError}</p>}
-          {baseUrl && <PublicRecovery baseUrl={baseUrl} />}
-        </section>
-      )}
-      {authentication.status === 'signedIn' &&
-        baseUrl &&
-        authentication.user.mustChangePassword && (
-          <PasswordChange
-            baseUrl={baseUrl}
-            onSignOut={() => void signOut()}
-            onChanged={async () => {
-              const user = await getCurrentUser(baseUrl)
-              setAuthentication({ status: 'signedIn', user })
-            }}
-          />
+    <>
+      <a className="skip-link" href="#main-content">
+        Skip to main content
+      </a>
+      <main className="shell" id="main-content" tabIndex={-1}>
+        <header>
+          <h1>Warka</h1>
+          <p>School records and services</p>
+        </header>
+        {authentication.status === 'checking' && (
+          <p role="status">Checking authentication</p>
         )}
-      {authentication.status === 'signedIn' &&
-        baseUrl &&
-        !authentication.user.mustChangePassword && (
-          <>
-            <AccountSecurity baseUrl={baseUrl} />
-            <CommunicationPreferencesWorkspace baseUrl={baseUrl} />
-            <SupportWorkspace baseUrl={baseUrl} />
-            <NotificationCenter baseUrl={baseUrl} />
-            <SignedInShell
+        {authentication.status === 'signedOut' && (
+          <section aria-labelledby="signin-heading">
+            <h2 id="signin-heading">Sign in</h2>
+            {authentication.message && (
+              <div role="alert">
+                <p>{authentication.message}</p>
+                {baseUrl && (
+                  <button
+                    type="button"
+                    disabled={signingOut}
+                    onClick={() => {
+                      if (authentication.retryLogout) {
+                        void signOut()
+                      } else {
+                        setAuthentication({ status: 'checking' })
+                        setRefresh((value) => value + 1)
+                      }
+                    }}
+                  >
+                    {authentication.retryLogout ? 'Retry sign out' : 'Retry'}
+                  </button>
+                )}
+              </div>
+            )}
+            <form onSubmit={signIn}>
+              <div className="field">
+                <label htmlFor="email">Email</label>
+                <input
+                  id="email"
+                  type="email"
+                  autoComplete="username"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  required
+                />
+              </div>
+              <div className="field">
+                <label htmlFor="password">Password</label>
+                <input
+                  id="password"
+                  type="password"
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  required
+                />
+              </div>
+              <button type="submit" disabled={busy || signingOut || !baseUrl}>
+                {busy ? 'Signing in' : 'Sign in'}
+              </button>
+            </form>
+            {formError && <p role="alert">{formError}</p>}
+            {baseUrl && <PublicRecovery baseUrl={baseUrl} />}
+          </section>
+        )}
+        {authentication.status === 'signedIn' &&
+          baseUrl &&
+          authentication.user.mustChangePassword && (
+            <PasswordChange
               baseUrl={baseUrl}
-              user={authentication.user}
-              onSignedOut={signedOut}
               onSignOut={() => void signOut()}
+              onChanged={async () => {
+                const user = await getCurrentUser(baseUrl)
+                setAuthentication({ status: 'signedIn', user })
+              }}
             />
-          </>
-        )}
-    </main>
+          )}
+        {authentication.status === 'signedIn' &&
+          baseUrl &&
+          !authentication.user.mustChangePassword && (
+            <>
+              <AccountSecurity baseUrl={baseUrl} />
+              <CommunicationPreferencesWorkspace baseUrl={baseUrl} />
+              <SupportWorkspace baseUrl={baseUrl} />
+              <NotificationCenter baseUrl={baseUrl} />
+              <SignedInShell
+                baseUrl={baseUrl}
+                user={authentication.user}
+                onSignedOut={signedOut}
+                onSignOut={() => void signOut()}
+              />
+            </>
+          )}
+      </main>
+    </>
   )
 }
 

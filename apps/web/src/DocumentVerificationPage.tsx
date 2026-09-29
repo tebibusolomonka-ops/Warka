@@ -62,80 +62,90 @@ export function DocumentVerificationPage({
   }
 
   return (
-    <main className="shell">
-      <header>
-        <h1>Warka</h1>
-        <p>Document verification</p>
-      </header>
-      <section aria-labelledby="verification-heading">
-        <h2 id="verification-heading">Check a document reference</h2>
-        <p>Check whether a reference matches a Warka issuing-school record.</p>
-        <form onSubmit={submit}>
-          <label className="field">
-            Verification reference
-            <input
-              value={reference}
-              onChange={(event) => setReference(event.target.value)}
-              autoComplete="off"
-              required
-            />
-          </label>
-          <button type="submit">Check reference</button>
-        </form>
-        {result.status === 'loading' && <p role="status">Checking reference</p>}
-        {result.status === 'error' && (
-          <p role="alert">
-            Could not reach the verification service. Try again.
+    <>
+      <a className="skip-link" href="#main-content">
+        Skip to main content
+      </a>
+      <main className="shell" id="main-content" tabIndex={-1}>
+        <header>
+          <h1>Warka</h1>
+          <p>Document verification</p>
+        </header>
+        <section aria-labelledby="verification-heading">
+          <h2 id="verification-heading">Check a document reference</h2>
+          <p>
+            Check whether a reference matches a Warka issuing-school record.
           </p>
-        )}
-        {result.status === 'loaded' && result.data.status === 'unavailable' && (
-          <p role="status">Warka cannot verify this reference.</p>
-        )}
-        {result.status === 'loaded' && result.data.status === 'corrected' && (
-          <p role="status">
-            This document version was corrected. Check with the issuing school
-            for the current version.
-          </p>
-        )}
-        {result.status === 'loaded' && result.data.status === 'withdrawn' && (
-          <p role="status">
-            This document was withdrawn by the issuing school.
-          </p>
-        )}
-        {result.status === 'loaded' && result.data.status === 'active' && (
-          <section aria-labelledby="verified-heading">
-            <h3 id="verified-heading">Verified Warka record</h3>
-            <p>Reference matches the current Warka issuing-school record.</p>
-            <dl>
-              <dt>Issuing school</dt>
-              <dd>{result.data.issuingSchool}</dd>
-              <dt>Document type</dt>
-              <dd>{result.data.documentType}</dd>
-              <dt>Student</dt>
-              <dd>{result.data.student.displayName}</dd>
-              <dt>Student reference</dt>
-              <dd>{result.data.student.studentReference}</dd>
-              <dt>Issue date</dt>
-              <dd>{result.data.issuedAt.slice(0, 10)}</dd>
-              <dt>Academic year</dt>
-              <dd>{result.data.academicYear}</dd>
-              <dt>Status</dt>
-              <dd>Active</dd>
-            </dl>
-            <h4>Published results on this document</h4>
-            <ul>
-              {result.data.subjects.map((subject) => (
-                <li key={subject.gradingPeriod + subject.subject}>
-                  {subject.academicYear && <>{subject.academicYear} · </>}
-                  {subject.gradingPeriod} · {subject.subject}:{' '}
-                  {subject.percentage}% · {subject.gradeLabel}
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
-      </section>
-      <a href="/">Warka sign in</a>
-    </main>
+          <form onSubmit={submit}>
+            <label className="field">
+              Verification reference
+              <input
+                value={reference}
+                onChange={(event) => setReference(event.target.value)}
+                autoComplete="off"
+                required
+              />
+            </label>
+            <button type="submit">Check reference</button>
+          </form>
+          {result.status === 'loading' && (
+            <p role="status">Checking reference</p>
+          )}
+          {result.status === 'error' && (
+            <p role="alert">
+              Could not reach the verification service. Try again.
+            </p>
+          )}
+          {result.status === 'loaded' &&
+            result.data.status === 'unavailable' && (
+              <p role="status">Warka cannot verify this reference.</p>
+            )}
+          {result.status === 'loaded' && result.data.status === 'corrected' && (
+            <p role="status">
+              This document version was corrected. Check with the issuing school
+              for the current version.
+            </p>
+          )}
+          {result.status === 'loaded' && result.data.status === 'withdrawn' && (
+            <p role="status">
+              This document was withdrawn by the issuing school.
+            </p>
+          )}
+          {result.status === 'loaded' && result.data.status === 'active' && (
+            <section aria-labelledby="verified-heading">
+              <h3 id="verified-heading">Verified Warka record</h3>
+              <p>Reference matches the current Warka issuing-school record.</p>
+              <dl>
+                <dt>Issuing school</dt>
+                <dd>{result.data.issuingSchool}</dd>
+                <dt>Document type</dt>
+                <dd>{result.data.documentType}</dd>
+                <dt>Student</dt>
+                <dd>{result.data.student.displayName}</dd>
+                <dt>Student reference</dt>
+                <dd>{result.data.student.studentReference}</dd>
+                <dt>Issue date</dt>
+                <dd>{result.data.issuedAt.slice(0, 10)}</dd>
+                <dt>Academic year</dt>
+                <dd>{result.data.academicYear}</dd>
+                <dt>Status</dt>
+                <dd>Active</dd>
+              </dl>
+              <h4>Published results on this document</h4>
+              <ul>
+                {result.data.subjects.map((subject) => (
+                  <li key={subject.gradingPeriod + subject.subject}>
+                    {subject.academicYear && <>{subject.academicYear} · </>}
+                    {subject.gradingPeriod} · {subject.subject}:{' '}
+                    {subject.percentage}% · {subject.gradeLabel}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+        </section>
+        <a href="/">Warka sign in</a>
+      </main>
+    </>
   )
 }

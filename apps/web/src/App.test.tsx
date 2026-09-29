@@ -9,6 +9,7 @@ import {
 } from '@testing-library/react'
 import type { UserIdentity } from '@warka/shared'
 import { App } from './App'
+
 import { getParentIdentity } from './parentApi'
 import {
   ApiError,
@@ -207,6 +208,12 @@ describe('authenticated web shell', () => {
     expect(screen.getByText(/Corrected/)).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Sign out' }))
     await screen.findByRole('button', { name: 'Sign in' })
+    expect(screen.getByRole('main').id).toBe('main-content')
+    expect(
+      screen
+        .getByRole('link', { name: 'Skip to main content' })
+        .getAttribute('href'),
+    ).toBe('#main-content')
     expect(screen.queryByRole('heading', { name: 'Student portal' })).toBeNull()
   })
 

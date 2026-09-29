@@ -8,6 +8,20 @@ body {
   margin: 0;
 }
 
+.skip-link {
+  position: absolute;
+  left: 1rem;
+  top: -5rem;
+  z-index: 1000;
+  padding: 0.6rem 0.9rem;
+  background: #fff;
+  color: #172a2a;
+}
+
+.skip-link:focus {
+  top: 1rem;
+}
+
 .shell {
   max-width: 50rem;
   margin: 0 auto;
