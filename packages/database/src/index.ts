@@ -117,6 +117,10 @@ export {
 } from './scheduledTaskExecutions.js'
 export { evaluateConfiguredRetentionPolicy } from './retentionPolicies.js'
 export {
+  createRecoveryReview,
+  resolveRecoveryReview,
+} from './recoveryReviews.js'
+export {
   createPendingBackup,
   startBackup,
   completeBackup,

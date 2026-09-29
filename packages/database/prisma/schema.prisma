@@ -494,6 +494,20 @@ enum TaskRecoveryDisposition {
   manualReview
 }
 
+enum RecoveryReviewStatus {
+  open
+  resolved
+  dismissed
+}
+
+enum RecoveryDomain {
+  scheduledTask
+  emailDelivery
+  fileScan
+  backup
+  restoreRehearsal
+}
+
 enum FileAssetPurpose {
   learningMaterial
   schoolBranding
@@ -694,6 +708,7 @@ model User {
   emailDeliveries              EmailDelivery[]
   notificationPreferences      NotificationPreference[]
   emailDigests                 EmailDigest[]
+  resolvedRecoveryReviews      RecoveryReview[] @relation("RecoveryReviewResolver")
   startedOnboardings            SchoolOnboarding[] @relation("OnboardingStartedBy")
   completedOnboardings          SchoolOnboarding[] @relation("OnboardingCompletedBy")
   completedChecklistItems       OnboardingChecklistItem[]
@@ -862,6 +877,23 @@ model ScheduledTaskExecution {
   @@index([status, startedAt])
   @@index([status, leaseExpiresAt])
   @@unique([seriesId, attempt])
+}
+
+model RecoveryReview {
+  id String @id @default(uuid())
+  domain RecoveryDomain
+  resourceType String
+  resourceReference String
+  reasonCode String
+  status RecoveryReviewStatus @default(open)
+  createdAt DateTime @default(now())
+  resolvedAt DateTime?
+  resolvedById String?
+  resolution String?
+  resolvedBy User? @relation("RecoveryReviewResolver", fields: [resolvedById], references: [id], onDelete: Restrict)
+
+  @@index([status, createdAt])
+  @@index([domain, resourceReference])
 }
 
 model BackupRecord {
