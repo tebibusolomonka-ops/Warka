@@ -38,6 +38,47 @@ const metrics = z.array(
     durationMs: z.number(),
   }),
 )
+const performance = z.object({
+  requestCategories: z.array(
+    z.object({
+      category: z.enum([
+        'interactiveRead',
+        'interactiveWrite',
+        'search',
+        'reporting',
+        'fileStream',
+        'backgroundAdmin',
+      ]),
+      warningThresholdMs: z.number(),
+      requests: z.number(),
+      exceeded: z.number(),
+      durationMs: z.number(),
+      maxDurationMs: z.number(),
+    }),
+  ),
+  databaseQueries: z.array(
+    z.object({
+      category: z.string(),
+      count: z.number(),
+      failures: z.number(),
+      slow: z.number(),
+      durationMs: z.number(),
+    }),
+  ),
+  database: z.object({
+    state: z.enum(['ready', 'unavailable']),
+    pool: z.object({
+      status: z.literal('configured'),
+      connectionLimit: z.number(),
+      poolTimeoutSeconds: z.number(),
+    }),
+  }),
+  queueDepth: z.array(z.object({ category: z.string(), count: z.number() })),
+  loadTest: z.null(),
+})
+export type PerformanceSummary = z.infer<typeof performance>
+export const getPerformanceSummary = async (baseUrl: string) =>
+  performance.parse(await requestJson(baseUrl, '/operations/performance'))
 const status = z.object({
   readiness: z.object({
     status: z.string(),

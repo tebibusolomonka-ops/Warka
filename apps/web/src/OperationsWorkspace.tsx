@@ -3,6 +3,7 @@ import { ApiError } from './api'
 import { FileSecurityWorkspace } from './FileSecurityWorkspace'
 import { EmailDeliveryWorkspace } from './EmailDeliveryWorkspace'
 import { RecoveryWorkspace } from './RecoveryWorkspace'
+import { PerformanceWorkspace } from './PerformanceWorkspace'
 import {
   addIncidentUpdate,
   changeIncidentStatus,
@@ -174,6 +175,7 @@ export function OperationsWorkspace({ baseUrl }: { baseUrl: string }) {
         <a href="#operations-file-security">File security</a>
         <a href="#operations-email">Email delivery</a>
         <a href="#operations-recovery">Recovery</a>
+        <a href="#operations-performance">Performance</a>
       </nav>
       {error && <p role="alert">{error}</p>}
       <section id="operations-deployment" aria-labelledby="deployment-heading">
@@ -241,6 +243,7 @@ export function OperationsWorkspace({ baseUrl }: { baseUrl: string }) {
         retryCount={status?.emailDelivery?.retryCount ?? 0}
       />
       <RecoveryWorkspace baseUrl={baseUrl} />
+      <PerformanceWorkspace baseUrl={baseUrl} />
       <section id="operations-backups">
         <h3>Backups</h3>
         <button

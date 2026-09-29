@@ -1,5 +1,9 @@
 import type { FastifyInstance, preHandlerHookHandler } from 'fastify'
-import { databaseQueryMetrics, type PrismaClient } from '@warka/database'
+import {
+  databasePoolConfiguration,
+  databaseQueryMetrics,
+  type PrismaClient,
+} from '@warka/database'
 import type { RequestLog } from './requestLogging.js'
 import { authenticatedUser } from './authenticateRequest.js'
 import { requireOperator } from './operationsAccess.js'
@@ -46,6 +50,41 @@ export function registerMetricsRoutes(
         http: metrics.snapshot(),
         performanceBudgets: metrics.performanceBudgets.snapshot(),
         database: databaseQueryMetrics.snapshot(),
+      }
+    },
+  )
+  app.get(
+    '/operations/performance',
+    { preHandler: authenticate },
+    async (request) => {
+      const database = getDatabase()
+      await requireOperator(database, authenticatedUser(request).id)
+      const [databaseState, queued] = await Promise.all([
+        database.$queryRaw`SELECT 1`.then(
+          () => 'ready' as const,
+          () => 'unavailable' as const,
+        ),
+        database.scheduledTaskExecution.groupBy({
+          by: ['taskType'],
+          where: { status: 'pending' },
+          _count: { id: true },
+        }),
+      ])
+      return {
+        requestCategories: metrics.performanceBudgets.snapshot(),
+        databaseQueries: databaseQueryMetrics.snapshot(),
+        database: {
+          state: databaseState,
+          pool: {
+            status: 'configured' as const,
+            ...databasePoolConfiguration(),
+          },
+        },
+        queueDepth: queued.map((item) => ({
+          category: item.taskType,
+          count: item._count.id,
+        })),
+        loadTest: null,
       }
     },
   )

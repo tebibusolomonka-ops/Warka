@@ -49,4 +49,51 @@ describe('service metrics', () => {
     ).toBe(403)
     await app.close()
   })
+
+  it('returns safe broad performance summaries to an operator', async () => {
+    vi.stubEnv('WARKA_OPERATOR_USER_IDS', actorId)
+    const app = Fastify()
+    app.decorateRequest('currentUser', null)
+    const database = {
+      organizationMembership: {
+        findFirst: vi.fn().mockResolvedValue({ userId: actorId }),
+      },
+      $queryRaw: vi.fn().mockResolvedValue([]),
+      scheduledTaskExecution: {
+        groupBy: vi
+          .fn()
+          .mockResolvedValue([{ taskType: 'fileScan', _count: { id: 2 } }]),
+      },
+    } as unknown as PrismaClient
+    const metrics = new ServiceMetrics()
+    metrics.record({
+      correlationId: 'private-request',
+      actorId,
+      method: 'GET',
+      route: '/search',
+      statusCode: 200,
+      durationMs: 1200,
+    })
+    registerMetricsRoutes(
+      app,
+      () => database,
+      async (request) => {
+        request.currentUser = { id: actorId } as User
+      },
+      metrics,
+    )
+    const response = await app.inject('/operations/performance')
+    if (response.statusCode !== 200) throw new Error(response.body)
+    expect(response.statusCode).toBe(200)
+    expect(response.json()).toMatchObject({
+      database: { state: 'ready' },
+      queueDepth: [{ category: 'fileScan', count: 2 }],
+      loadTest: null,
+    })
+    expect(response.body).not.toContain('/search')
+    expect(response.body).not.toContain(actorId)
+    expect(response.body).not.toContain('private-request')
+    await app.close()
+    vi.unstubAllEnvs()
+  })
 })
