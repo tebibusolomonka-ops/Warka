@@ -36,3 +36,8 @@ Assessment scheduling references existing `Assessment` definitions. School-scope
 Gradebook services enforce mark-entry windows, completeness, moderation, locking, and publication readiness in the database layer. Scoped Fastify routes feed the staff workspace; student and guardian progress summaries derive from published results and explicit assessment activity.
 Coursework uses separate assignment, audience, submission, revision, extension, and attachment services. Fastify exposes explicit staff and student actions; the teacher React workspace consumes scoped routes. Both attachment types use the shared FileAsset scanner and private delivery gateway.
 Rubric scoring, controlled feedback release, and an explicit transactional transfer to the existing Mark service extend coursework without creating another official grade store. The student and guardian portals use scoped read paths; guardian writes are absent. Coursework events use existing notification preferences and digest routing.
+## Recovery and performance reliability
+
+Scheduled work uses database leases with bounded heartbeats and domain-specific startup reconciliation. Ownership loss creates an interrupted state; only work classified safe to retry can be replayed. External effects with uncertain outcomes enter reconciliation or manual review.
+
+API observability aggregates normalized route categories and query operation categories. Performance budgets warn without rejecting domain work. Interactive and background HTTP timeouts are separate, file streams are exempt, and Prisma pool limits are validated before client creation. The repository load harness is explicit-target, synthetic-data, read-only by default, and production-blocked by default.

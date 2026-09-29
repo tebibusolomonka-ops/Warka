@@ -11,6 +11,9 @@ import { OperationsWorkspace } from './OperationsWorkspace'
 vi.mock('./RecoveryWorkspace', () => ({
   RecoveryWorkspace: () => <section>Recovery</section>,
 }))
+vi.mock('./PerformanceWorkspace', () => ({
+  PerformanceWorkspace: () => <section>Performance</section>,
+}))
 import {
   getOperationsStatus,
   getDeploymentStatus,

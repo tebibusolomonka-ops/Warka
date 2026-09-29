@@ -31,3 +31,6 @@ Resolved prior validation failures are recorded in [[Batches/141-160]].
 # Reporting batch notes
 
 Local PostgreSQL and Docker are unavailable, so migration deployment, database integration, and live Playwright journeys await CI. Legacy reporting submissions are backfilled as version 1 from their last stored snapshot; older overwritten attempts cannot be reconstructed, and those backfilled versions have no checksum. Scheduled reporting reminders run with the enabled email outbox scheduler; deployments with that scheduler disabled do not send them.
+## Remaining recovery and performance limits
+
+Forced shutdown can still leave external side effects whose outcome cannot be inferred. Warka now records these as interrupted or unknown and requires reconciliation or controlled operator review; it does not guarantee automatic recovery. Local performance results depend on fixtures, hardware, and deployment topology. The load profiles provide comparative evidence and do not establish universal service levels.

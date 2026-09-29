@@ -32,3 +32,6 @@ Timetable calendar, periods, class versions, conflict validation, administrator 
 # Batch 321–340 checkpoint
 
 Data quality, reporting windows/readiness, versioned school submissions, bureau review, discrepancy notes, aggregate validation/exports, deadline notices, and both reporting workspaces are implemented. Browser journeys and clean migration execution depend on a PostgreSQL environment. See [[Batches/321-340]].
+## Completed reliability phase
+
+Interrupted work recovery, disaster recovery evidence, query and request instrumentation, reviewed indexes, stable pagination, request and pool safeguards, representative load scenarios, and operator performance views are implemented. Future tuning should use observed production-safe aggregates and environment-specific load results rather than universal latency promises.

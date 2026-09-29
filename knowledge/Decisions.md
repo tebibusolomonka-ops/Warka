@@ -43,3 +43,10 @@ See [[Security]] for the resulting invariants.
 - A gradebook lock requires complete marks, closed entry windows, and resolved moderation. Locking differs from result submission and publication. Readiness reports blockers but never publishes. Academic progress summaries use published facts without ranking, prediction, or student risk scores.
 - Coursework publication blocks until every active assignment attachment has a clean scan. Submission files may still be scanning at submission; the student's submittedAt is recorded immediately and scanner completion never changes it. Extensions apply per student. Coursework scores remain separate from official marks until an explicit transfer into the existing mark service. Transfer respects entry windows, gradebook locks, result state, and duplicate mark protection.
 - Rubrics freeze after first scoring and scores retain versions. Plain-text feedback is private until release. Verified guardians have read-only coursework access. Factual counts never rank students or infer engagement, failure, or behavioral risk.
+## Recovery and performance decisions
+
+- Preserve interrupted executions and require evidence before replaying uncertain external effects.
+- Report disaster recovery readiness as factual states and dates, never as a score or guarantee.
+- Keep performance labels broad and exclude SQL, parameters, personal identifiers, and request identifiers.
+- Use stable timestamp plus identifier pagination for changing lists while reapplying authorization scope on every page.
+- Keep production load testing disabled unless an operator supplies the separate explicit override.

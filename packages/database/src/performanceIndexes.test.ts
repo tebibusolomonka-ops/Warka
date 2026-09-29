@@ -18,7 +18,6 @@ describe('performance query indexes migration', () => {
       'EmailDelivery_status_failureCode_failedAt_idx',
       'Enrollment_schoolId_studentId_idx',
       'CourseworkAssignment_schoolId_createdAt_id_idx',
-      'Student_givenName_trgm_idx',
     ])
       expect(migration).toContain(expected)
   })

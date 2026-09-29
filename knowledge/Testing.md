@@ -47,3 +47,6 @@ Run `pnpm metrics:code` for the committed `HEAD`, or `pnpm metrics:code <revisio
 `pnpm test:load` runs the repository owned autocannon harness. It requires `WARKA_LOAD_TARGET`, `WARKA_LOAD_ENV`, and a matching `WARKA_LOAD_ACK`; production targets also require `WARKA_ALLOW_PRODUCTION_LOAD=true`. Authentication comes from `WARKA_LOAD_COOKIE`, and scenario identifiers must refer to seeded synthetic fixtures.
 
 The `representativeReads` profile covers portal and notification reads, student search, teacher gradebook, attendance roster, and reporting dashboard paths. It sends read requests only and reports throughput, p50/p95/p99 latency, errors, and timeouts. Results are written to standard output for ephemeral CI or operator capture and are not committed. These measurements describe the tested environment and are not universal service level guarantees.
+## Reliability regression gates
+
+Deterministic tests assert bounded notification and attendance query structure instead of wall-clock timing. The final browser journey verifies the safe Performance view for an operator and denial for a school administrator. Normal CI runs `pnpm test:load:config`; sustained load requires an explicitly acknowledged external target.
