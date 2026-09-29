@@ -186,7 +186,28 @@ describe('bureau reporting authorization routes', () => {
           findUniqueOrThrow: vi.fn().mockResolvedValue({
             id: periodId,
             currentVersion: 1,
-            snapshot: { enrollment: { dataState: 'reported' } },
+            snapshot: {
+              enrollment: {
+                dataState: 'reported',
+                total: 0,
+                byAcademicYear: [],
+                byGradeLevel: [],
+              },
+              academic: {
+                dataState: 'reported',
+                publishedResultCount: 0,
+                outcomes: [],
+              },
+              activity: {
+                transfers: { confirmed: 0, unresolved: 0, rejected: 0 },
+                verification: {
+                  active: 0,
+                  corrected: 0,
+                  withdrawn: 0,
+                  unavailable: 0,
+                },
+              },
+            },
             submittedAt: new Date(),
           }),
         },

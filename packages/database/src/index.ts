@@ -509,6 +509,7 @@ export {
   listSchoolReportingNotes,
   listBureauReportingNotes,
 } from './reportingNotes.js'
+export { createReportingSnapshotEvidence } from './reportingSnapshotEvidence.js'
 export type {
   ReportingSubmission,
   ReportingSubmissionStatus,

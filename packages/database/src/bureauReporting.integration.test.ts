@@ -147,6 +147,7 @@ describe.skipIf(!database)('bureau reporting in PostgreSQL', () => {
         status: 'submitted',
         validationSummary: { warnings: [], blocking: [] },
       })
+      expect(firstVersion.snapshotChecksum).toMatch(/^[a-f0-9]{64}$/)
       await expect(
         submitSchoolReport(
           database!,
@@ -253,6 +254,10 @@ describe.skipIf(!database)('bureau reporting in PostgreSQL', () => {
       expect(versions.map(({ version }) => version)).toEqual([1, 2])
       expect(versions[0]?.snapshot).toEqual(firstVersion.snapshot)
       expect(versions[1]?.snapshot).not.toEqual(firstVersion.snapshot)
+      expect(versions[0]?.snapshotChecksum).toBe(firstVersion.snapshotChecksum)
+      expect(versions[1]?.snapshotChecksum).not.toBe(
+        firstVersion.snapshotChecksum,
+      )
       await approveSchoolReport(database!, manager.id, draft.id)
       expect(
         await database!.reportingSubmission.findUniqueOrThrow({

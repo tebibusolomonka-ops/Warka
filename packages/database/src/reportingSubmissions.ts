@@ -5,6 +5,7 @@ import { recordAuditEvent } from './auditEvents.js'
 import { createNotifications } from './notifications.js'
 import { requireBureauPermission } from './bureauAccess.js'
 import { evaluateReportingReadiness } from './reportingValidation.js'
+import { createReportingSnapshotEvidence } from './reportingSnapshotEvidence.js'
 
 export class ReportingSubmissionError extends Error {}
 
@@ -137,11 +138,13 @@ async function submitVersion(
     const submission = await transaction.reportingSubmission.findUniqueOrThrow({
       where: { reportingPeriodId_schoolId: { reportingPeriodId, schoolId } },
     })
+    const evidence = createReportingSnapshotEvidence(submission.snapshot)
     await transaction.reportingSubmissionVersion.create({
       data: {
         submissionId: submission.id,
         version: submission.currentVersion,
-        snapshot: submission.snapshot as Prisma.InputJsonValue,
+        snapshot: evidence.snapshot,
+        snapshotChecksum: evidence.checksum,
         validationSummary: {
           warnings: readiness.warnings,
           blocking: readiness.blocking,

@@ -993,6 +993,7 @@ model ReportingSubmissionVersion {
   submissionId      String
   version           Int
   snapshot          Json
+  snapshotChecksum  String? @db.VarChar(64)
   validationSummary Json
   resubmissionReason String? @db.VarChar(500)
   status            ReportingSubmissionStatus @default(submitted)
