@@ -54,6 +54,12 @@ export function createDatabaseClient(
   return client
 }
 
+export {
+  ExternalRecordReferenceInputSchema,
+  createExternalRecordReference,
+  findExternalRecordReference,
+} from './externalRecordReferences.js'
+
 export type { PrismaClient }
 export {
   databaseQueryMetrics,

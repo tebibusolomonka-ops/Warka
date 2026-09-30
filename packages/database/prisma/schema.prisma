@@ -640,6 +640,7 @@ model School {
 }
 
 model User {
+  externalRecordReferences      ExternalRecordReference[]
   reportingNotesAuthored         ReportingReviewNote[]
   reportingVersionsSubmitted     ReportingSubmissionVersion[]  @relation("ReportingVersionSubmitter")
   dismissedDataQualityIssues     DataQualityIssue[]            @relation("DataQualityIssueDismisser")
@@ -755,6 +756,27 @@ model User {
   createdRetentionHolds          RetentionHold[]               @relation("RetentionHoldCreatedBy")
   releasedRetentionHolds         RetentionHold[]               @relation("RetentionHoldReleasedBy")
   marks                          Mark[]
+}
+
+enum ExternalEntityType {
+  student
+  school
+  staff
+}
+
+model ExternalRecordReference {
+  id          String             @id @default(uuid())
+  sourceSystem String
+  externalId  String
+  entityType  ExternalEntityType
+  entityId    String
+  createdAt   DateTime           @default(now())
+  createdById String
+  createdBy   User               @relation(fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@unique([sourceSystem, entityType, externalId])
+  @@index([entityType, entityId])
+  @@index([createdById, createdAt])
 }
 
 model FileAsset {
