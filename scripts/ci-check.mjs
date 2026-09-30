@@ -37,6 +37,14 @@ export function validateCiWorkflow(source) {
       ? job.steps.map((step) => step?.run).filter(Boolean)
       : [],
   )
+  const actions = jobs.flatMap((job) =>
+    Array.isArray(job?.steps)
+      ? job.steps.map((step) => step?.uses).filter(Boolean)
+      : [],
+  )
+  for (const action of actions)
+    if (!action.startsWith('./') && !/^[^@\s]+@[a-f0-9]{40}$/i.test(action))
+      errors.push(`Workflow action must use an immutable commit SHA: ${action}`)
   for (const required of REQUIRED_VALIDATION_COMMANDS)
     if (!commands.includes(required))
       errors.push(`CI validation command is missing: ${required}`)

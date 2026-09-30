@@ -23,6 +23,7 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
 ${commands.map((command) => `      - run: ${command}`).join('\n')}
 `
 
@@ -42,4 +43,18 @@ test('rejects missing main coverage and validation commands', () => {
 
 test('rejects malformed or duplicate workflow keys', () => {
   assert.ok(validateCiWorkflow('name: CI\nname: duplicate').length > 0)
+})
+
+test('rejects floating workflow action tags', () => {
+  const errors = validateCiWorkflow(
+    valid.replace(
+      'actions/checkout@11d5960a326750d5838078e36cf38b85af677262',
+      'actions/checkout@v4',
+    ),
+  )
+  assert.ok(
+    errors.includes(
+      'Workflow action must use an immutable commit SHA: actions/checkout@v4',
+    ),
+  )
 })
