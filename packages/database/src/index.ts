@@ -73,6 +73,11 @@ export {
   StudentColumnMappingSchema,
   previewStudentColumnMapping,
 } from './studentImportMapping.js'
+export {
+  ImportTransformationConfigSchema,
+  transformImportRow,
+  previewImportTransformations,
+} from './importTransformations.js'
 
 export type { PrismaClient }
 export {
