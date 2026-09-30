@@ -11,6 +11,7 @@ import type { UserIdentity } from '@warka/shared'
 import { App } from './App'
 
 import { getParentIdentity } from './parentApi'
+import { getBureauAccess } from './bureauApi'
 import {
   ApiError,
   getAccessibleSchools,
@@ -36,6 +37,10 @@ vi.mock('./ParentPortal', () => ({
 vi.mock('./parentApi', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./parentApi')>()),
   getParentIdentity: vi.fn(),
+}))
+vi.mock('./bureauApi', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./bureauApi')>()),
+  getBureauAccess: vi.fn(),
 }))
 
 vi.mock('./api', async (importOriginal) => {
@@ -89,6 +94,7 @@ beforeEach(() => {
   vi.stubEnv('VITE_API_URL', '/api')
   vi.mocked(getSchools).mockResolvedValue([])
   vi.mocked(getAccessibleSchools).mockResolvedValue([])
+  vi.mocked(getBureauAccess).mockResolvedValue([])
   vi.mocked(getStudents).mockResolvedValue({ items: [], limit: 50, offset: 0 })
   vi.mocked(logout).mockResolvedValue(undefined)
   vi.mocked(getStudentIdentity).mockRejectedValue(

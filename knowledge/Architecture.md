@@ -41,3 +41,7 @@ Rubric scoring, controlled feedback release, and an explicit transactional trans
 Scheduled work uses database leases with bounded heartbeats and domain-specific startup reconciliation. Ownership loss creates an interrupted state; only work classified safe to retry can be replayed. External effects with uncertain outcomes enter reconciliation or manual review.
 
 API observability aggregates normalized route categories and query operation categories. Performance budgets warn without rejecting domain work. Interactive and background HTTP timeouts are separate, file streams are exempt, and Prisma pool limits are validated before client creation. The repository load harness is explicit-target, synthetic-data, read-only by default, and production-blocked by default.
+
+## Localization
+
+`@warka/shared` owns locale selection, the `en`, `am`, and `om` catalogs, interpolation, locale formatting, Ethiopic calendar display, and deterministic catalog validation. React surfaces consume this shared layer. English is the fallback for unsupported locales and lower-priority missing translations. User language and calendar choices are separate persisted preferences. Canonical timestamps and numeric values cross API and database boundaries unchanged.

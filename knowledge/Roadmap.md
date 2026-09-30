@@ -35,3 +35,7 @@ Data quality, reporting windows/readiness, versioned school submissions, bureau 
 ## Completed reliability phase
 
 Interrupted work recovery, disaster recovery evidence, query and request instrumentation, reviewed indexes, stable pagination, request and pool safeguards, representative load scenarios, and operator performance views are implemented. Future tuning should use observed production-safe aggregates and environment-specific load results rather than universal latency promises.
+
+## Completed localization phase
+
+Localization foundation, preferences, locale formatting, Ethiopic calendar presentation, representative portals and workflows, catalog checks, and browser journeys are implemented for English, Amharic, and Afaan Oromo. Professional linguistic certification remains future work.

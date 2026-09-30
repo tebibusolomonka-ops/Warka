@@ -50,3 +50,7 @@ The `representativeReads` profile covers portal and notification reads, student 
 ## Reliability regression gates
 
 Deterministic tests assert bounded notification and attendance query structure instead of wall-clock timing. The final browser journey verifies the safe Performance view for an operator and denial for a school administrator. Normal CI runs `pnpm test:load:config`; sustained load requires an explicitly acknowledged external target.
+
+## Localization regression gates
+
+Run `pnpm i18n:check` for locale identifiers, duplicate keys, critical coverage, placeholder parity, unknown keys, and HTML markup. Unit tests cover fallback, interpolation, locale formatting, Ethiopic boundaries, and preference independence. Focused Playwright journeys cover persisted language choice, authored-content preservation, recovery neutrality, keyboard navigation, and canonical-date preservation.

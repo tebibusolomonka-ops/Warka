@@ -24,9 +24,9 @@ describe('localization', () => {
 
   it('makes a missing key detectable outside production', () => {
     const catalogs = { en: {} as TranslationCatalog }
-    expect(createTranslator({ locale: 'om', mode: 'test', catalogs })('common.save')).toBe(
-      '[[missing:om:common.save]]',
-    )
+    expect(
+      createTranslator({ locale: 'om', mode: 'test', catalogs })('common.save'),
+    ).toBe('[[missing:om:common.save]]')
   })
 
   it('interpolates named values without interpreting markup', () => {

@@ -56,6 +56,7 @@ import { PublicRecovery } from './PublicRecovery'
 import { SearchWorkspace } from './SearchWorkspace'
 import { LocalizedNavigation, browserLocale } from './LocalizedNavigation'
 import { StaffWorkflowNavigation } from './StaffWorkflowNavigation'
+import { LocalizationSettings } from './LocalizationSettings'
 
 type Authentication =
   | { status: 'checking' }
@@ -863,6 +864,23 @@ function AuthenticatedApp() {
           baseUrl &&
           !authentication.user.mustChangePassword && (
             <>
+              <LocalizationSettings
+                baseUrl={baseUrl}
+                locale={authentication.user.preferredLocale ?? 'en'}
+                calendar={authentication.user.preferredCalendar ?? 'gregorian'}
+                onLocaleChanged={(preferredLocale) =>
+                  setAuthentication({
+                    status: 'signedIn',
+                    user: { ...authentication.user, preferredLocale },
+                  })
+                }
+                onCalendarChanged={(preferredCalendar) =>
+                  setAuthentication({
+                    status: 'signedIn',
+                    user: { ...authentication.user, preferredCalendar },
+                  })
+                }
+              />
               <AccountSecurity
                 baseUrl={baseUrl}
                 locale={authentication.user.preferredLocale}

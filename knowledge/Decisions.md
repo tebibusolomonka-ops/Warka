@@ -50,3 +50,6 @@ See [[Security]] for the resulting invariants.
 - Keep performance labels broad and exclude SQL, parameters, personal identifiers, and request identifiers.
 - Use stable timestamp plus identifier pagination for changing lists while reapplying authorization scope on every page.
 - Keep production load testing disabled unless an operator supplies the separate explicit override.
+- Localize application-owned labels and controlled status displays through the shared catalogs. Preserve API codes and enum values. Do not automatically translate names, announcements, feedback, coursework instructions, meeting reasons, family messages, or other authored content.
+- Use English fallback for unsupported locales and noncritical missing translations. Critical navigation, authentication, recovery, results, document, attendance, and reporting keys must exist in every supported catalog.
+- Keep locale and calendar preferences independent. Ethiopic calendar rendering is presentation and input assistance rather than a certified civil calendar implementation; higher-risk dates include Gregorian context and canonical ISO values remain authoritative.

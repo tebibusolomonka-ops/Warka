@@ -109,6 +109,11 @@ const englishCatalog = {
   'status.finalized': 'Finalized',
   'status.absent': 'Absent',
   'status.present': 'Present',
+  'settings.localization': 'Language and calendar',
+  'settings.language': 'Language',
+  'settings.calendar': 'Calendar',
+  'settings.gregorian': 'Gregorian',
+  'settings.ethiopian': 'Ethiopian',
 } as const satisfies TranslationCatalog
 
 export type TranslationKey = keyof typeof englishCatalog
@@ -207,6 +212,11 @@ const amharicCatalog: Partial<Record<TranslationKey, string>> = {
   'status.finalized': 'ተጠናቋል',
   'status.absent': 'አልተገኘም',
   'status.present': 'ተገኝቷል',
+  'settings.localization': 'ቋንቋ እና የቀን መቁጠሪያ',
+  'settings.language': 'ቋንቋ',
+  'settings.calendar': 'የቀን መቁጠሪያ',
+  'settings.gregorian': 'ጎርጎርዮሳዊ',
+  'settings.ethiopian': 'ኢትዮጵያዊ',
 }
 
 const oromoCatalog: Partial<Record<TranslationKey, string>> = {
@@ -309,6 +319,11 @@ const oromoCatalog: Partial<Record<TranslationKey, string>> = {
   'status.finalized': 'Xumurameera',
   'status.absent': 'Hin argamne',
   'status.present': 'Argameera',
+  'settings.localization': 'Afaanii fi lakkoofsa baraa',
+  'settings.language': 'Afaan',
+  'settings.calendar': 'Lakkoofsa baraa',
+  'settings.gregorian': 'Giriigooriyaanii',
+  'settings.ethiopian': 'Itoophiyaa',
 }
 
 export const translationCatalogs: Readonly<

@@ -20,7 +20,11 @@ export function browserLocale(): 'en' | 'am' | 'om' {
   )
 }
 
-export function LocalizedNavigation({ locale }: { locale?: string | undefined }) {
+export function LocalizedNavigation({
+  locale,
+}: {
+  locale?: string | undefined
+}) {
   const t = createTranslator({ locale: locale ?? browserLocale() })
   return (
     <nav aria-label={t('navigation.label')} className="application-nav">

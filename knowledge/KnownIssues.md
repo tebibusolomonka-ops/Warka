@@ -34,3 +34,7 @@ Local PostgreSQL and Docker are unavailable, so migration deployment, database i
 ## Remaining recovery and performance limits
 
 Forced shutdown can still leave external side effects whose outcome cannot be inferred. Warka now records these as interrupted or unknown and requires reconciliation or controlled operator review; it does not guarantee automatic recovery. Local performance results depend on fixtures, hardware, and deployment topology. The load profiles provide comparative evidence and do not establish universal service levels.
+
+## Localization limits
+
+Amharic and Afaan Oromo catalogs have engineering review only; they have not received professional linguistic certification. Ethiopic calendar display uses the platform `Intl` implementation and is not presented as government-certified conversion.

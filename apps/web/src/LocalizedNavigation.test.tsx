@@ -12,7 +12,9 @@ describe('LocalizedNavigation', () => {
     const navigation = screen.getByRole('navigation', { name: label })
     expect(navigation).toBeTruthy()
     expect(
-      within(navigation).getByRole('link', { name: search }).getAttribute('href'),
+      within(navigation)
+        .getByRole('link', { name: search })
+        .getAttribute('href'),
     ).toBe('#global-search')
     expect(within(navigation).getAllByRole('link')).toHaveLength(11)
   })
