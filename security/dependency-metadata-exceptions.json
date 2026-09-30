@@ -1,0 +1,9 @@
+{
+  "exceptions": [
+    {
+      "package": "buffers",
+      "reason": "The published package does not declare license metadata; absence is reported and is not evidence of malicious behavior.",
+      "reviewContext": "Review when its transitive dependency chain changes or upstream metadata is corrected."
+    }
+  ]
+}

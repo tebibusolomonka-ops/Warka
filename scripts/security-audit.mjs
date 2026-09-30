@@ -48,11 +48,16 @@ function main() {
   )
   let output
   try {
-    output = execFileSync(
-      process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm',
-      ['audit', '--prod', '--json'],
-      { cwd: root, encoding: 'utf8' },
-    )
+    const executable =
+      process.platform === 'win32' ? process.env.ComSpec : 'pnpm'
+    const args =
+      process.platform === 'win32'
+        ? ['/d', '/s', '/c', 'pnpm audit --prod --json']
+        : ['audit', '--prod', '--json']
+    output = execFileSync(executable, args, {
+      cwd: root,
+      encoding: 'utf8',
+    })
   } catch (error) {
     output = error.stdout
     if (!output) throw error
