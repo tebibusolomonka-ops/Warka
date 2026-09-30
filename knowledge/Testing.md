@@ -64,3 +64,7 @@ Tests cover clean scanned XLSX parsing and resource limits, approved mapping tar
 ## Supply chain validation
 
 Use `pnpm ci:check`, `pnpm install:check`, `pnpm security:dependencies`, `pnpm security:sbom`, and `pnpm security:check`. CI installs with `--frozen-lockfile`; the combined security command is non-mutating and includes secret patterns, dependency audit, metadata, SBOM, workflow policy, and release checksum validation.
+
+## Security hardening validation
+
+Unit and route tests cover response headers, trusted origins, session-bound CSRF, privileged session rotation, proxy parsing, outbound URL rejection, request limits, authorization boundaries, and safe posture projection. `tests/e2e/securityHardening.spec.ts` verifies hardened headers, untrusted-origin rejection, CSRF denial, authentication requirements, and response secrecy against the running API. A local discovery run is not equivalent to execution with PostgreSQL.

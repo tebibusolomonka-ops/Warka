@@ -52,6 +52,15 @@ describe('web origin policy', () => {
     await app.close()
   })
 
+  it('uses the origin portion of the public API base URL', () => {
+    expect(
+      trustedOrigins({
+        NODE_ENV: 'test',
+        PUBLIC_BASE_URL: 'http://127.0.0.1:4173/api',
+      }),
+    ).toEqual(new Set(['http://127.0.0.1:4173']))
+  })
+
   it('rejects malformed and insecure production origins', () => {
     expect(() =>
       trustedOrigins({

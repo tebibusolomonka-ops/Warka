@@ -264,7 +264,17 @@ test('teacher captures attendance and student sees only finalized history', asyn
     await expect(page.getByRole('button', { name: 'Sign out' })).toBeVisible()
     const finalized = await page.evaluate(
       async (path) =>
-        (await fetch(path, { method: 'POST', credentials: 'include' })).status,
+        (
+          await fetch(path, {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+              'x-csrf-token': decodeURIComponent(
+                document.cookie.match(/(?:^|; )warka_csrf=([^;]+)/)?.[1] ?? '',
+              ),
+            },
+          })
+        ).status,
       `/api/schools/${schoolId}/attendance/sessions/${sessionId}/finalize`,
     )
     expect(finalized).toBe(200)

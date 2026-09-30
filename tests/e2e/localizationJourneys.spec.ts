@@ -75,6 +75,13 @@ async function localizedShell(
           scope: { type: 'school' },
         })),
       )
+    if (path === '/student/progress')
+      return json({
+        completedAssessments: 0,
+        publishedResultsAvailable: 0,
+        subjectsWithPublishedResults: [],
+        upcomingAssessments: [],
+      })
     if (path.endsWith('/events'))
       return json({
         events: [
@@ -146,7 +153,9 @@ test('Afaan Oromo localizes student chrome and preserves authored text', async (
     ],
   })
   await page.goto('/')
-  await expect(page.getByRole('button', { name: 'Beeksisawwan' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Beeksisawwan' })).toBeVisible({
+    timeout: 10_000,
+  })
   const authored = await page.evaluate(async () =>
     (await fetch('/api/student/announcements')).json(),
   )

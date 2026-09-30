@@ -34,3 +34,5 @@ Search results are derived summaries, not a new durable identity or access grant
 # Interoperability records
 
 `ExternalRecordReference` associates a source-scoped external identifier with a Warka entity without replacing its ID. `ImportSourceProfile` owns structured mappings; `ImportDryRun` records versioned checksums and factual results. Possible duplicates remain review findings.
+
+Security posture is a derived operational projection rather than a durable score. It combines bounded configuration states with aggregate `LoginAttemptBucket` blocks and quarantined `FileAsset` counts. Authorization remains defined by current account, membership, assignment, student, guardian, bureau, support, and operator relationships.

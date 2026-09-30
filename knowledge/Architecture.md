@@ -54,3 +54,7 @@ Controlled imports progress through scanned parsing, strict mapping, determinist
 ## Supply chain controls (commit 410)
 
 The main CI workflow covers pushes to `main` and pull requests, uses immutable action revisions, read-only token permissions, frozen pnpm installs, and a repository-owned policy check. Operations users can read only validated build and CI status through `/operations/supply-chain`; dependency internals and credentials are not exposed.
+
+## Application security controls
+
+Fastify applies security headers, an allowlisted origin policy, session-bound CSRF validation, bounded request sizes, explicit proxy trust, and validated external URL rules at shared boundaries. Privileged authentication rotates sessions. The operator Security view combines controlled configuration facts with aggregate blocked-login and quarantined-file counts; it exposes no credentials, tokens, dependency graph, or private record details.

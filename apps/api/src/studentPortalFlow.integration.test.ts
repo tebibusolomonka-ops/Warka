@@ -219,6 +219,7 @@ describe.skipIf(!database)('student portal workflow in PostgreSQL', () => {
         },
       })
       expect(change.statusCode).toBe(204)
+      const rotatedStudentCookie = cookie(change)
       expect(
         (
           await app.inject({
@@ -226,12 +227,21 @@ describe.skipIf(!database)('student portal workflow in PostgreSQL', () => {
             url: '/auth/me',
             headers: studentCookie,
           })
+        ).statusCode,
+      ).toBe(401)
+      expect(
+        (
+          await app.inject({
+            method: 'GET',
+            url: '/auth/me',
+            headers: rotatedStudentCookie,
+          })
         ).json().mustChangePassword,
       ).toBe(false)
       const identity = await app.inject({
         method: 'GET',
         url: '/student/me',
-        headers: studentCookie,
+        headers: rotatedStudentCookie,
       })
       expect(identity.json()).toMatchObject({
         studentReference: first.studentReference,
@@ -243,7 +253,7 @@ describe.skipIf(!database)('student portal workflow in PostgreSQL', () => {
       const results = await app.inject({
         method: 'GET',
         url: `/student/results?studentId=${second.id}`,
-        headers: studentCookie,
+        headers: rotatedStudentCookie,
       })
       expect(results.json()).toMatchObject([
         { subject: 'Math', percentage: 91 },
@@ -252,7 +262,7 @@ describe.skipIf(!database)('student portal workflow in PostgreSQL', () => {
       const materials = await app.inject({
         method: 'GET',
         url: '/student/materials',
-        headers: studentCookie,
+        headers: rotatedStudentCookie,
       })
       expect(materials.json()).toMatchObject([
         { title: 'Practice sheet', subject: 'Math' },
@@ -260,7 +270,7 @@ describe.skipIf(!database)('student portal workflow in PostgreSQL', () => {
       const announcements = await app.inject({
         method: 'GET',
         url: '/student/announcements',
-        headers: studentCookie,
+        headers: rotatedStudentCookie,
       })
       expect(announcements.json()).toMatchObject([
         { title: 'Class notice', scope: { type: 'class', name: 'A' } },
@@ -274,7 +284,7 @@ describe.skipIf(!database)('student portal workflow in PostgreSQL', () => {
         const denied = await app.inject({
           method,
           url,
-          headers: studentCookie,
+          headers: rotatedStudentCookie,
           ...(method === 'POST'
             ? {
                 payload: {
@@ -290,7 +300,7 @@ describe.skipIf(!database)('student portal workflow in PostgreSQL', () => {
       const materialWrite = await app.inject({
         method: 'POST',
         url: `/schools/${school.id}/materials`,
-        headers: studentCookie,
+        headers: rotatedStudentCookie,
         payload: {
           academicYearId: year.id,
           schoolClassId: schoolClass.id,
@@ -305,7 +315,7 @@ describe.skipIf(!database)('student portal workflow in PostgreSQL', () => {
       const announcementWrite = await app.inject({
         method: 'POST',
         url: `/schools/${school.id}/announcements`,
-        headers: studentCookie,
+        headers: rotatedStudentCookie,
         payload: { title: 'Forbidden', body: 'Text', publish: true },
       })
       expect(announcementWrite.statusCode).toBe(404)

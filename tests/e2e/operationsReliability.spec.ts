@@ -29,6 +29,7 @@ test('operator verifies a backup, rehearses restore, resolves an incident, and t
   let priorPolicy: Awaited<
     ReturnType<typeof database.backupPolicy.findUnique>
   > = null
+  let priorBackupDates: Array<{ id: string; createdAt: Date }> = []
   let ownerCreated = false
   const signIn = async (email: string) => {
     await page.goto('/')
@@ -130,8 +131,10 @@ test('operator verifies a backup, rehearses restore, resolves an incident, and t
           updatedById: operatorId,
         },
       })
+      priorBackupDates = await database.backupRecord.findMany({
+        select: { id: true, createdAt: true },
+      })
       await database.backupRecord.updateMany({
-        where: { createdById: operatorId },
         data: { createdAt: new Date(Date.now() - 172_800_000) },
       })
       expect(
@@ -290,6 +293,11 @@ test('operator verifies a backup, rehearses restore, resolves an incident, and t
           where: { id: 'database', updatedById: operatorId },
         })
       }
+      for (const backup of priorBackupDates)
+        await database.backupRecord.updateMany({
+          where: { id: backup.id },
+          data: { createdAt: backup.createdAt },
+        })
       const backups = ownerCreated
         ? await database.backupRecord.findMany({
             where: { createdById: operatorId },

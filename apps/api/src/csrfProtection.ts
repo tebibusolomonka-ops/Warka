@@ -36,6 +36,11 @@ export function registerCsrfProtection(
   })
   app.addHook('preHandler', async (request, reply) => {
     if (!['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method)) return
+    if (
+      request.url === '/auth/recovery/request' ||
+      request.url === '/auth/recovery/reset'
+    )
+      return
     const origin = request.headers.origin
     if (origin) {
       let sameOrigin = false
@@ -43,12 +48,14 @@ export function registerCsrfProtection(
         const parsed = new URL(origin)
         sameOrigin =
           parsed.origin === `${request.protocol}://${request.headers.host}`
-      } catch {}
+      } catch {
+        sameOrigin = false
+      }
       if (!sameOrigin && !allowed.has(origin))
         return reply.code(403).send(rejected())
     }
     const session = request.cookies[sessionCookieName]
-    if (!session || (!origin && !request.headers['sec-fetch-site'])) return
+    if (!session || !origin) return
     const provided = request.headers['x-csrf-token']
     if (
       typeof provided !== 'string' ||

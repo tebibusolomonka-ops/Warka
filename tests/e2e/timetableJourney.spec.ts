@@ -136,7 +136,17 @@ test('administrator publishes a class timetable and teacher sees only assigned l
     await expect(page.getByRole('button', { name: 'Sign out' })).toBeVisible()
     const published = await page.evaluate(
       async (path) =>
-        (await fetch(path, { method: 'POST', credentials: 'include' })).status,
+        (
+          await fetch(path, {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+              'x-csrf-token': decodeURIComponent(
+                document.cookie.match(/(?:^|; )warka_csrf=([^;]+)/)?.[1] ?? '',
+              ),
+            },
+          })
+        ).status,
       `/api/schools/${schoolId}/timetables/${plan.id}/publish`,
     )
     expect(published).toBe(200)
@@ -153,7 +163,12 @@ test('administrator publishes a class timetable and teacher sees only assigned l
         const response = await fetch(path, {
           method: 'POST',
           credentials: 'include',
-          headers: { 'content-type': 'application/json' },
+          headers: {
+            'content-type': 'application/json',
+            'x-csrf-token': decodeURIComponent(
+              document.cookie.match(/(?:^|; )warka_csrf=([^;]+)/)?.[1] ?? '',
+            ),
+          },
           body: JSON.stringify(body),
         })
         return response.status

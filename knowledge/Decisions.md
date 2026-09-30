@@ -66,3 +66,10 @@ Spreadsheet formulas and executable transformations are rejected. Imports never 
 - Missing package metadata is reported as unknown and needs a package-specific review note; it is not evidence of malicious behavior.
 - CycloneDX 1.6 SBOMs are generated from the locked graph and kept as ephemeral build output.
 - SHA-256 release checksums provide integrity evidence and are not digital signatures.
+
+## Security hardening policy
+
+- Apply headers, origin checks, CSRF, body limits, proxy trust, and external URL validation in shared server boundaries.
+- Rotate sessions after privileged authentication changes and preserve the HttpOnly cookie model.
+- Treat the authorization matrix as regression metadata backed by real domain route tests; it does not replace resource checks.
+- Report security posture as factual states and aggregate counts without scores, guarantees, secrets, or private event detail.

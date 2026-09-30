@@ -150,7 +150,13 @@ test('operator recovers safe interrupted work while ambiguous delivery stays hel
     await page.getByLabel('Email', { exact: true }).fill(adminEmail)
     await page.getByLabel('Password', { exact: true }).fill(password)
     await page.getByRole('button', { name: 'Sign in' }).click()
-    await expect(page.getByRole('heading', { name: 'Recovery' })).toHaveCount(0)
+    await expect(
+      page.getByText('Signed in as Recovery School Administrator'),
+    ).toBeVisible()
+    expect((await page.request.get('/api/operations/recovery')).status()).toBe(
+      403,
+    )
+    await expect(page.getByLabel('Interrupted executions')).toHaveCount(0)
   } finally {
     if (executionId || deliveryId)
       await database.scheduledTaskExecution.deleteMany({

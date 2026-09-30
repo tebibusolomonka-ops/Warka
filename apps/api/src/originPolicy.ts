@@ -7,7 +7,7 @@ export function trustedOrigins(env: NodeJS.ProcessEnv) {
     .split(',')
     .map((item) => item.trim())
     .filter(Boolean)
-  if (env.PUBLIC_BASE_URL) candidates.push(env.PUBLIC_BASE_URL)
+  if (env.PUBLIC_BASE_URL) candidates.push(new URL(env.PUBLIC_BASE_URL).origin)
   const production = environmentProfile(env).name === 'production'
   return new Set(
     candidates.map((candidate) => {

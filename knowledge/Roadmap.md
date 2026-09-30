@@ -49,3 +49,7 @@ Localization and the first controlled student-registration interoperability path
 ## Completed supply chain foundation
 
 Main-branch CI coverage, action pinning, least-privilege permissions, dependency policy, metadata inventory, SBOM generation, frozen installs, release checksums, and the combined `pnpm security:check` entry point are implemented.
+
+## Batch 401–420 completion
+
+Software supply chain policy and application security hardening are complete: shared HTTP boundaries, session and CSRF controls, request and outbound URL safeguards, authorization regression coverage, a safe operator posture view, and focused browser journeys. Environment-specific penetration testing, edge proxy configuration, credential rotation, and advisory review remain deployment operations.

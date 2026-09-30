@@ -12,7 +12,7 @@ export function requestTimeoutConfiguration(
     return value
   }
   return {
-    interactiveMs: parse('WARKA_REQUEST_TIMEOUT_MS', 15_000),
+    interactiveMs: parse('WARKA_REQUEST_TIMEOUT_MS', 30_000),
     backgroundMs: parse('WARKA_BACKGROUND_REQUEST_TIMEOUT_MS', 60_000),
   }
 }
@@ -52,13 +52,26 @@ export function installRequestTimeouts(
     const timeoutMs =
       category === 'background' ? config.backgroundMs : config.interactiveMs
     const timer = setTimeout(() => {
-      if (reply.sent) return
-      void reply.code(504).send({
-        error: {
-          code: 'REQUEST_TIMEOUT',
-          message: 'The request exceeded its processing time limit',
-        },
-      })
+      if (
+        reply.sent ||
+        reply.raw.headersSent ||
+        reply.raw.writableEnded ||
+        reply.raw.destroyed
+      )
+        return
+      reply.hijack()
+      reply.raw.statusCode = 504
+      reply.raw.setHeader('content-type', 'application/json; charset=utf-8')
+      reply.raw.setHeader('cache-control', 'no-store')
+      reply.raw.setHeader('x-content-type-options', 'nosniff')
+      reply.raw.end(
+        JSON.stringify({
+          error: {
+            code: 'REQUEST_TIMEOUT',
+            message: 'The request exceeded its processing time limit',
+          },
+        }),
+      )
     }, timeoutMs)
     timer.unref()
     timers.set(request, timer)

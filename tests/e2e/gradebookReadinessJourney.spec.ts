@@ -26,10 +26,17 @@ test('teacher gradebook, moderation history, lock readiness and assignment bound
         const response = await fetch(path, {
           method: 'POST',
           credentials: 'include',
+          headers: {
+            'x-csrf-token': decodeURIComponent(
+              document.cookie.match(/(?:^|; )warka_csrf=([^;]+)/)?.[1] ?? '',
+            ),
+            ...(body === undefined
+              ? {}
+              : { 'content-type': 'application/json' }),
+          },
           ...(body === undefined
             ? {}
             : {
-                headers: { 'content-type': 'application/json' },
                 body: JSON.stringify(body),
               }),
         })

@@ -8,6 +8,10 @@ import {
 
 describe('API request timeouts', () => {
   it('validates separate interactive and background limits', () => {
+    expect(requestTimeoutConfiguration({})).toEqual({
+      interactiveMs: 30_000,
+      backgroundMs: 60_000,
+    })
     expect(
       requestTimeoutConfiguration({
         WARKA_REQUEST_TIMEOUT_MS: '100',
@@ -41,6 +45,8 @@ describe('API request timeouts', () => {
       },
     })
     expect(response.body).not.toContain('stack')
+    expect(response.headers['cache-control']).toBe('no-store')
+    expect(response.headers['x-content-type-options']).toBe('nosniff')
     await app.close()
   })
 })

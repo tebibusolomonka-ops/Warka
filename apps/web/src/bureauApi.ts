@@ -1,29 +1,16 @@
-import { ApiError } from './api'
+import { ApiError, requestJson } from './api'
 
 async function request<T>(
   baseUrl: string,
   path: string,
   init?: RequestInit,
 ): Promise<T> {
-  const response = await fetch(baseUrl + path, {
+  return (await requestJson(baseUrl, path, {
     ...init,
-    credentials: 'include',
     ...(init?.body === undefined
-      ? init?.headers
-        ? { headers: init.headers }
-        : {}
+      ? {}
       : { headers: { 'content-type': 'application/json', ...init?.headers } }),
-  })
-  const body = (await response.json()) as T & {
-    error?: { code: string; message: string }
-  }
-  if (!response.ok)
-    throw new ApiError(
-      body.error?.message ?? 'Request failed',
-      response.status,
-      body.error?.code ?? 'REQUEST_FAILED',
-    )
-  return body
+  })) as T
 }
 
 export type BureauAccess = {

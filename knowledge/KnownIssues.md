@@ -50,3 +50,5 @@ XLSX formulas and macros are intentionally unsupported. Exchange packages implem
 Prisma's optional CLI graph currently carries time-limited exceptions for `effect` GHSA-38f7-945m-qr2g and `deepmerge-ts` GHSA-ggr8-5vv4-36mx. The transitive `buffers@0.1.1` package has no declared license metadata and is reported as unknown pending an upstream dependency change.
 
 Commit 400 did produce GitHub Actions run 36710589456. The workflow triggered correctly and failed in Playwright after earlier validation and build steps succeeded; the earlier issue was run visibility, not a missing push trigger.
+
+The security posture view reports configured controls and aggregate evidence; it is not a penetration test, certification, risk score, or guarantee. Trusted proxy and origin values still require deployment-specific review. The focused hardening journey requires the same disposable PostgreSQL browser environment as the rest of Playwright and therefore relies on CI when no local server is available.
