@@ -32,6 +32,7 @@
     "metrics:code": "node scripts/code-metrics.mjs",
     "i18n:check": "pnpm build:shared && node scripts/i18n-check.mjs",
     "ci:check": "node scripts/ci-check.mjs",
+    "security:audit": "node scripts/security-audit.mjs",
     "db:up": "docker compose up -d --wait",
     "db:down": "docker compose down",
     "db:migrate": "pnpm db:deploy",

@@ -39,6 +39,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm ci:check
+      - run: pnpm security:audit
       - run: pnpm db:generate
       - run: pnpm db:deploy
       - run: pnpm db:preflight

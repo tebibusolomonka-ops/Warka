@@ -20,7 +20,7 @@
     "@warka/shared": "workspace:*",
     "fastify": "^5.6.0",
     "file-type": "^22.1.1",
-    "nodemailer": "7.0.0",
+    "nodemailer": "10.0.9",
     "pdf-lib": "1.17.1",
     "pg": "^8.23.0",
     "qrcode": "^1.5.4",
@@ -28,7 +28,6 @@
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
-    "@types/nodemailer": "7.0.0",
     "@types/pg": "^8.23.1",
     "@types/qrcode": "^1.5.6",
     "tsx": "^4.20.0",

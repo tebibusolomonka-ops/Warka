@@ -1,0 +1,18 @@
+{
+  "exceptions": [
+    {
+      "package": "effect",
+      "advisory": "GHSA-38f7-945m-qr2g",
+      "reason": "Optional Prisma CLI configuration dependency; Warka does not execute Effect RPC in the deployed application.",
+      "reviewContext": "Remove when Prisma resolves effect to 3.20.0 or newer.",
+      "expiresOn": "2026-12-31"
+    },
+    {
+      "package": "deepmerge-ts",
+      "advisory": "GHSA-ggr8-5vv4-36mx",
+      "reason": "Optional Prisma CLI configuration dependency; Warka does not merge user-controlled recursive graphs with this package.",
+      "reviewContext": "Remove when Prisma resolves deepmerge-ts to 8.0.0 or newer.",
+      "expiresOn": "2026-12-31"
+    }
+  ]
+}
