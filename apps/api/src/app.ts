@@ -231,6 +231,7 @@ import { registerParentPortalRoutes } from './parentPortalRoutes.js'
 import { registerFamilyConversationRoutes } from './familyConversationRoutes.js'
 import { registerBureauRoutes } from './bureauRoutes.js'
 import { ImportPayloadError, registerImportRoutes } from './importRoutes.js'
+import { registerInteroperabilityRoutes } from './interoperabilityRoutes.js'
 import { registerSchoolExportRoutes } from './schoolExportRoutes.js'
 import { registerNotificationRoutes } from './notificationRoutes.js'
 import { registerSchoolDocumentProfileRoutes } from './schoolDocumentProfileRoutes.js'
@@ -490,6 +491,7 @@ export function buildApp(
     registerParentServiceRoutes(app, getDatabase, authenticate)
     registerBureauRoutes(app, getDatabase, authenticate)
     registerImportRoutes(app, getDatabase, authenticate)
+    registerInteroperabilityRoutes(app, getDatabase, authenticate)
     registerSchoolExportRoutes(app, getDatabase, authenticate)
     registerNotificationRoutes(app, getDatabase, authenticate)
     registerSchoolDocumentProfileRoutes(app, getDatabase, authenticate)
