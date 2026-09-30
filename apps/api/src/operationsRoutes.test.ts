@@ -46,6 +46,7 @@ function fixture(owner: boolean) {
       ]),
     },
     scheduledTaskExecution: { count: vi.fn().mockResolvedValue(1) },
+    loginAttemptBucket: { count: vi.fn().mockResolvedValue(2) },
   } as unknown as PrismaClient
   const app = Fastify()
   app.decorateRequest('currentUser', null)
@@ -82,6 +83,7 @@ describe('operations status API', () => {
     expect((await app.inject('/operations/build')).statusCode).toBe(401)
     expect((await app.inject('/operations/deployment')).statusCode).toBe(401)
     expect((await app.inject('/operations/supply-chain')).statusCode).toBe(401)
+    expect((await app.inject('/operations/security')).statusCode).toBe(401)
     expect(
       (
         await app.inject({
@@ -158,6 +160,13 @@ describe('operations status API', () => {
     expect(supplyChain.statusCode).toBe(200)
     expect(supplyChain.json()).toHaveProperty('workflowPolicyVersion', 1)
     expect(supplyChain.body).not.toContain('TOKEN')
+    const security = await app.inject({
+      url: '/operations/security',
+      headers: { 'x-user': actorId },
+    })
+    expect(security.statusCode).toBe(200)
+    expect(security.json()).toHaveProperty('csrfProtection', 'enabled')
+    expect(security.body).not.toMatch(/password|token|credential/i)
     const response = await app.inject({
       url: '/operations/status',
       headers: { 'x-user': actorId },

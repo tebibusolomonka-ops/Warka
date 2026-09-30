@@ -16,6 +16,7 @@ import {
   getOperationsStatus,
   getDeploymentStatus,
   getSupplyChainStatus,
+  getSecurityPosture,
   getStorageSummary,
   listBackups,
   listIncidents,
@@ -34,6 +35,7 @@ import {
   type OperationsStatus,
   type DeploymentStatus,
   type SupplyChainStatus,
+  type SecurityPosture,
   type SchedulerState,
   type ScheduledExecution,
   type DueBackupPolicy,
@@ -45,6 +47,7 @@ export function OperationsWorkspace({ baseUrl }: { baseUrl: string }) {
   const [status, setStatus] = useState<OperationsStatus>()
   const [deployment, setDeployment] = useState<DeploymentStatus>()
   const [supplyChain, setSupplyChain] = useState<SupplyChainStatus>()
+  const [security, setSecurity] = useState<SecurityPosture>()
   const [backups, setBackups] = useState<Backup[]>([])
   const [incidents, setIncidents] = useState<Incident[]>([])
   const [maintenance, setMaintenance] = useState<Maintenance[]>([])
@@ -71,6 +74,7 @@ export function OperationsWorkspace({ baseUrl }: { baseUrl: string }) {
       getOperationsStatus(baseUrl),
       getDeploymentStatus(baseUrl),
       getSupplyChainStatus(baseUrl),
+      getSecurityPosture(baseUrl),
       listBackups(baseUrl),
       listIncidents(baseUrl),
       listMaintenance(baseUrl),
@@ -84,6 +88,7 @@ export function OperationsWorkspace({ baseUrl }: { baseUrl: string }) {
           nextStatus,
           nextDeployment,
           nextSupplyChain,
+          nextSecurity,
           nextBackups,
           nextIncidents,
           nextMaintenance,
@@ -97,6 +102,7 @@ export function OperationsWorkspace({ baseUrl }: { baseUrl: string }) {
           setStatus(nextStatus)
           setDeployment(nextDeployment)
           setSupplyChain(nextSupplyChain)
+          setSecurity(nextSecurity)
           setBackups(nextBackups)
           setIncidents(nextIncidents)
           setMaintenance(nextMaintenance)
@@ -174,6 +180,7 @@ export function OperationsWorkspace({ baseUrl }: { baseUrl: string }) {
         <a href="#operations-status">System status</a>{' '}
         <a href="#operations-deployment">Deployment</a>{' '}
         <a href="#operations-supply-chain">Supply chain</a>{' '}
+        <a href="#operations-security">Security</a>{' '}
         <a href="#operations-backups">Backups</a>{' '}
         <a href="#operations-rehearsals">Restore rehearsals</a>{' '}
         <a href="#operations-scheduled">Scheduled tasks</a>{' '}
@@ -215,6 +222,23 @@ export function OperationsWorkspace({ baseUrl }: { baseUrl: string }) {
             <li key={reason}>Reason: {reason}</li>
           ))}
         </ul>
+      </section>
+      <section id="operations-security" aria-label="Security posture">
+        <h3>Security</h3>
+        <p>CSRF protection: {security?.csrfProtection ?? 'unknown'}</p>
+        <p>
+          Trusted origin policy: {security?.trustedOriginPolicy ?? 'unknown'}
+        </p>
+        <p>Security headers: {security?.securityHeaders ?? 'unknown'}</p>
+        <p>
+          Secure production cookies:{' '}
+          {security?.secureCookieProductionPolicy ?? 'unknown'}
+        </p>
+        <p>Malware scanner: {security?.malwareScanner ?? 'unknown'}</p>
+        <p>Dependency audit: {security?.dependencyAudit ?? 'unknown'}</p>
+        <p>SBOM available: {security?.sbomAvailable ? 'yes' : 'no'}</p>
+        <p>Recent throttling: {security?.recentAccountThrottlingCount ?? 0}</p>
+        <p>Quarantined files: {security?.recentQuarantinedFileCount ?? 0}</p>
       </section>
       <section
         id="operations-supply-chain"

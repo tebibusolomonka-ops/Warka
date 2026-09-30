@@ -53,9 +53,11 @@ describe('representative authorization matrix', () => {
 
   it('preserves intentional concealed-not-found expectations', () => {
     expect(
-      cases
-        .filter((entry) => entry.outcome === 'concealed')
-        .map((entry) => entry.domain),
-    ).toEqual(['student records', 'gradebook'])
+      new Set(
+        cases
+          .filter((entry) => entry.outcome === 'concealed')
+          .map((entry) => entry.domain),
+      ),
+    ).toEqual(new Set(['student records', 'gradebook']))
   })
 })

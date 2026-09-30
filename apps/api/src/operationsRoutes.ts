@@ -18,6 +18,7 @@ import { buildMetadata } from './buildMetadata.js'
 import { evaluateDeploymentReadiness } from './deploymentReadiness.js'
 import { startupReconciliationStatus } from './startupReconciliation.js'
 import { supplyChainStatus } from './supplyChainStatus.js'
+import { securityPosture } from './securityPosture.js'
 
 const idParams = z.strictObject({ id: z.uuid() })
 const updateBody = z.strictObject({
@@ -40,6 +41,21 @@ export function registerOperationsRoutes(
 ) {
   const operator = async (request: Parameters<preHandlerHookHandler>[0]) =>
     requireOperator(getDatabase(), authenticatedUser(request).id)
+  app.get(
+    '/operations/security',
+    { preHandler: authenticate },
+    async (request) => {
+      await operator(request)
+      const database = getDatabase()
+      const [throttled, quarantined] = await Promise.all([
+        database.loginAttemptBucket.count({
+          where: { blockedUntil: { gt: new Date() } },
+        }),
+        database.fileAsset.count({ where: { status: 'quarantined' } }),
+      ])
+      return securityPosture(process.env, { throttled, quarantined })
+    },
+  )
   app.get(
     '/operations/supply-chain',
     { preHandler: authenticate },

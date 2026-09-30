@@ -150,6 +150,23 @@ const supplyChain = z.object({
 export type SupplyChainStatus = z.infer<typeof supplyChain>
 export const getSupplyChainStatus = async (baseUrl: string) =>
   supplyChain.parse(await requestJson(baseUrl, '/operations/supply-chain'))
+const securityPostureSchema = z.object({
+  csrfProtection: z.string(),
+  trustedOriginPolicy: z.string(),
+  securityHeaders: z.string(),
+  secureCookieProductionPolicy: z.string(),
+  malwareScanner: z.string(),
+  dependencyAudit: z.string(),
+  sbomAvailable: z.boolean(),
+  recentAccountThrottlingCount: z.number(),
+  recentQuarantinedFileCount: z.number(),
+  authorizationRegressionSuite: z.string(),
+})
+export type SecurityPosture = z.infer<typeof securityPostureSchema>
+export const getSecurityPosture = async (baseUrl: string) =>
+  securityPostureSchema.parse(
+    await requestJson(baseUrl, '/operations/security'),
+  )
 const timeline = incident.extend({
   updates: z.array(
     z.object({
