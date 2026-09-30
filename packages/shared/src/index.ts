@@ -5,6 +5,7 @@ import { CalendarPreferenceSchema } from './calendar.js'
 export * from './localization.js'
 export * from './formatting.js'
 export * from './calendar.js'
+export * from './i18nValidation.js'
 
 export const HealthResponseSchema = z.object({
   status: z.literal('ok'),
