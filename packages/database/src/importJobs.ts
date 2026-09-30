@@ -31,6 +31,7 @@ export const NormalizedStudentImportRowSchema = z.strictObject({
   rowNumber: z.number().int().positive(),
   givenName: z.string().trim().min(1).max(100),
   familyName: z.string().trim().min(1).max(100).optional(),
+  externalStudentId: z.string().trim().min(1).max(160).optional(),
   dateOfBirth: z.iso.date().optional(),
   academicYearId: z.uuid(),
   gradeLevelId: z.uuid(),

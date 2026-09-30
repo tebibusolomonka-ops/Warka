@@ -82,6 +82,7 @@ export {
   createImportDryRun,
   importConfigurationChecksum,
 } from './importDryRuns.js'
+export { applyValidatedImport } from './controlledImportApplication.js'
 
 export type { PrismaClient }
 export {
