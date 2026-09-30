@@ -81,10 +81,19 @@ describe('operations status API', () => {
     expect((await app.inject('/operations/storage')).statusCode).toBe(401)
     expect((await app.inject('/operations/build')).statusCode).toBe(401)
     expect((await app.inject('/operations/deployment')).statusCode).toBe(401)
+    expect((await app.inject('/operations/supply-chain')).statusCode).toBe(401)
     expect(
       (
         await app.inject({
           url: '/operations/status',
+          headers: { 'x-user': actorId },
+        })
+      ).statusCode,
+    ).toBe(403)
+    expect(
+      (
+        await app.inject({
+          url: '/operations/supply-chain',
           headers: { 'x-user': actorId },
         })
       ).statusCode,
@@ -142,6 +151,13 @@ describe('operations status API', () => {
     expect(deployment.json()).toHaveProperty('features.emailOutbox')
     expect(deployment.body).not.toContain('DATABASE_URL')
     expect(deployment.body).not.toContain('SMTP_PASSWORD')
+    const supplyChain = await app.inject({
+      url: '/operations/supply-chain',
+      headers: { 'x-user': actorId },
+    })
+    expect(supplyChain.statusCode).toBe(200)
+    expect(supplyChain.json()).toHaveProperty('workflowPolicyVersion', 1)
+    expect(supplyChain.body).not.toContain('TOKEN')
     const response = await app.inject({
       url: '/operations/status',
       headers: { 'x-user': actorId },

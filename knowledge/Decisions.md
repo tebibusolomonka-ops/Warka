@@ -30,6 +30,7 @@
 - Transactional templates are server owned and render escaped text and HTML only in memory. SMTP credentials come from validated server configuration. Recovery tokens are derived from a server key and request ID, hashed at rest, and reconstructed only for delivery; outbox metadata contains no token. Only known safe provider failures retry, with a fixed attempt cap and backoff. Ambiguous SMTP outcomes require review.
 
 See [[Security]] for the resulting invariants.
+
 - Communication choices are per user and category. Account-security in-app notices cannot be disabled. Immediate email uses only selected event types and minimal template text; daily/weekly digests are opt-in and deduplicated by user/window.
 - Email links use a validated Warka base URL and normal authentication. Self-service delivery history omits addresses, provider IDs, failure internals, and message bodies. Operations is limited to transactional delivery administration; arbitrary bulk sending is out of scope.
 - Timetable conflicts are explicit blockers. Creation and publication do not move lessons automatically. Teacher and class collisions, expired assignments, and cross-school scope are checked before publication; archived versions retain their entries.
@@ -43,6 +44,7 @@ See [[Security]] for the resulting invariants.
 - A gradebook lock requires complete marks, closed entry windows, and resolved moderation. Locking differs from result submission and publication. Readiness reports blockers but never publishes. Academic progress summaries use published facts without ranking, prediction, or student risk scores.
 - Coursework publication blocks until every active assignment attachment has a clean scan. Submission files may still be scanning at submission; the student's submittedAt is recorded immediately and scanner completion never changes it. Extensions apply per student. Coursework scores remain separate from official marks until an explicit transfer into the existing mark service. Transfer respects entry windows, gradebook locks, result state, and duplicate mark protection.
 - Rubrics freeze after first scoring and scores retain versions. Plain-text feedback is private until release. Verified guardians have read-only coursework access. Factual counts never rank students or infer engagement, failure, or behavioral risk.
+
 ## Recovery and performance decisions
 
 - Preserve interrupted executions and require evidence before replaying uncertain external effects.
@@ -53,6 +55,14 @@ See [[Security]] for the resulting invariants.
 - Localize application-owned labels and controlled status displays through the shared catalogs. Preserve API codes and enum values. Do not automatically translate names, announcements, feedback, coursework instructions, meeting reasons, family messages, or other authored content.
 - Use English fallback for unsupported locales and noncritical missing translations. Critical navigation, authentication, recovery, results, document, attendance, and reporting keys must exist in every supported catalog.
 - Keep locale and calendar preferences independent. Ethiopic calendar rendering is presentation and input assistance rather than a certified civil calendar implementation; higher-risk dates include Gregorian context and canonical ISO values remain authoritative.
+
 # Interoperability decisions
 
 Spreadsheet formulas and executable transformations are rejected. Imports never merge likely duplicates automatically. Application requires the exact successful file, mapping, and transformation version. Exchange packages use a Warka-native format and do not claim unsupported external compatibility.
+
+## Supply chain policy
+
+- High and critical production dependency advisories fail `pnpm security:audit` unless an exact, reasoned, expiring exception exists.
+- Missing package metadata is reported as unknown and needs a package-specific review note; it is not evidence of malicious behavior.
+- CycloneDX 1.6 SBOMs are generated from the locked graph and kept as ephemeral build output.
+- SHA-256 release checksums provide integrity evidence and are not digital signatures.

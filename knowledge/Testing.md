@@ -42,11 +42,13 @@ Later coursework tests cover review, versioned rubric scoring, feedback release,
 ## Canonical implementation metrics
 
 Run `pnpm metrics:code` for the committed `HEAD`, or `pnpm metrics:code <revision>` for a historical commit. The repository-owned utility reads Git tree blobs, so only committed tracked files are counted. It includes files under `apps/`, `packages/`, and `scripts/` with `.ts`, `.tsx`, `.js`, `.jsx`, `.mjs`, `.cjs`, `.css`, `.scss`, `.sql`, or `.prisma` extensions. It excludes test/spec files, `__tests__`, `__mocks__`, generated/vendor folders, `node_modules`, `dist`, `build`, `coverage`, `.next`, and `.turbo`. This includes production TypeScript and TSX, JavaScript utilities, CSS, Prisma schema, and SQL migrations; it excludes documentation, knowledge notes, test implementation, root tooling configuration, and local files. LOC counts lines containing any non-whitespace character. The baseline at commit 300 (`98a2a9c`) is **453 implementation files and 59,114 nonempty implementation LOC**. Earlier LOC reports used incompatible methods and should not be compared with this baseline.
+
 ## Load reliability
 
 `pnpm test:load` runs the repository owned autocannon harness. It requires `WARKA_LOAD_TARGET`, `WARKA_LOAD_ENV`, and a matching `WARKA_LOAD_ACK`; production targets also require `WARKA_ALLOW_PRODUCTION_LOAD=true`. Authentication comes from `WARKA_LOAD_COOKIE`, and scenario identifiers must refer to seeded synthetic fixtures.
 
 The `representativeReads` profile covers portal and notification reads, student search, teacher gradebook, attendance roster, and reporting dashboard paths. It sends read requests only and reports throughput, p50/p95/p99 latency, errors, and timeouts. Results are written to standard output for ephemeral CI or operator capture and are not committed. These measurements describe the tested environment and are not universal service level guarantees.
+
 ## Reliability regression gates
 
 Deterministic tests assert bounded notification and attendance query structure instead of wall-clock timing. The final browser journey verifies the safe Performance view for an operator and denial for a school administrator. Normal CI runs `pnpm test:load:config`; sustained load requires an explicitly acknowledged external target.
@@ -54,6 +56,11 @@ Deterministic tests assert bounded notification and attendance query structure i
 ## Localization regression gates
 
 Run `pnpm i18n:check` for locale identifiers, duplicate keys, critical coverage, placeholder parity, unknown keys, and HTML markup. Unit tests cover fallback, interpolation, locale formatting, Ethiopic boundaries, and preference independence. Focused Playwright journeys cover persisted language choice, authored-content preservation, recovery neutrality, keyboard navigation, and canonical-date preservation.
+
 # Interoperability verification
 
 Tests cover clean scanned XLSX parsing and resource limits, approved mapping targets, deterministic transformations, dry-run write boundaries, exact-version application, idempotency, manifest checksums, path safety, exclusions, and representative authorization boundaries.
+
+## Supply chain validation
+
+Use `pnpm ci:check`, `pnpm install:check`, `pnpm security:dependencies`, `pnpm security:sbom`, and `pnpm security:check`. CI installs with `--frozen-lockfile`; the combined security command is non-mutating and includes secret patterns, dependency audit, metadata, SBOM, workflow policy, and release checksum validation.

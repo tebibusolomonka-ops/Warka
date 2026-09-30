@@ -134,6 +134,22 @@ const deployment = z.object({
 export type DeploymentStatus = z.infer<typeof deployment>
 export const getDeploymentStatus = async (baseUrl: string) =>
   deployment.parse(await requestJson(baseUrl, '/operations/deployment'))
+const supplyChain = z.object({
+  buildCommit: z.string().nullable(),
+  dependencyAudit: z.object({
+    status: z.enum(['passed', 'failed', 'unknown']),
+    checkedAt: date.nullable(),
+  }),
+  sbom: z.object({
+    available: z.boolean(),
+    specification: z.string().nullable(),
+  }),
+  workflowPolicyVersion: z.number(),
+  dependencyMetadataWarningCount: z.number().nullable(),
+})
+export type SupplyChainStatus = z.infer<typeof supplyChain>
+export const getSupplyChainStatus = async (baseUrl: string) =>
+  supplyChain.parse(await requestJson(baseUrl, '/operations/supply-chain'))
 const timeline = incident.extend({
   updates: z.array(
     z.object({

@@ -15,6 +15,7 @@ import {
   getIncident,
   getOperationsStatus,
   getDeploymentStatus,
+  getSupplyChainStatus,
   getStorageSummary,
   listBackups,
   listIncidents,
@@ -32,6 +33,7 @@ import {
   type Maintenance,
   type OperationsStatus,
   type DeploymentStatus,
+  type SupplyChainStatus,
   type SchedulerState,
   type ScheduledExecution,
   type DueBackupPolicy,
@@ -42,6 +44,7 @@ export function OperationsWorkspace({ baseUrl }: { baseUrl: string }) {
   const [available, setAvailable] = useState(false)
   const [status, setStatus] = useState<OperationsStatus>()
   const [deployment, setDeployment] = useState<DeploymentStatus>()
+  const [supplyChain, setSupplyChain] = useState<SupplyChainStatus>()
   const [backups, setBackups] = useState<Backup[]>([])
   const [incidents, setIncidents] = useState<Incident[]>([])
   const [maintenance, setMaintenance] = useState<Maintenance[]>([])
@@ -67,6 +70,7 @@ export function OperationsWorkspace({ baseUrl }: { baseUrl: string }) {
     Promise.all([
       getOperationsStatus(baseUrl),
       getDeploymentStatus(baseUrl),
+      getSupplyChainStatus(baseUrl),
       listBackups(baseUrl),
       listIncidents(baseUrl),
       listMaintenance(baseUrl),
@@ -79,6 +83,7 @@ export function OperationsWorkspace({ baseUrl }: { baseUrl: string }) {
         ([
           nextStatus,
           nextDeployment,
+          nextSupplyChain,
           nextBackups,
           nextIncidents,
           nextMaintenance,
@@ -91,6 +96,7 @@ export function OperationsWorkspace({ baseUrl }: { baseUrl: string }) {
           setAvailable(true)
           setStatus(nextStatus)
           setDeployment(nextDeployment)
+          setSupplyChain(nextSupplyChain)
           setBackups(nextBackups)
           setIncidents(nextIncidents)
           setMaintenance(nextMaintenance)
@@ -167,6 +173,7 @@ export function OperationsWorkspace({ baseUrl }: { baseUrl: string }) {
       <nav aria-label="Operations sections">
         <a href="#operations-status">System status</a>{' '}
         <a href="#operations-deployment">Deployment</a>{' '}
+        <a href="#operations-supply-chain">Supply chain</a>{' '}
         <a href="#operations-backups">Backups</a>{' '}
         <a href="#operations-rehearsals">Restore rehearsals</a>{' '}
         <a href="#operations-scheduled">Scheduled tasks</a>{' '}
@@ -208,6 +215,33 @@ export function OperationsWorkspace({ baseUrl }: { baseUrl: string }) {
             <li key={reason}>Reason: {reason}</li>
           ))}
         </ul>
+      </section>
+      <section
+        id="operations-supply-chain"
+        aria-labelledby="supply-chain-heading"
+      >
+        <h3 id="supply-chain-heading">Supply chain</h3>
+        <p>Build commit: {supplyChain?.buildCommit ?? 'Unavailable'}</p>
+        <p>
+          Dependency audit: {supplyChain?.dependencyAudit.status ?? 'unknown'}
+        </p>
+        <p>
+          Audit time: {supplyChain?.dependencyAudit.checkedAt ?? 'Unavailable'}
+        </p>
+        <p>
+          SBOM:{' '}
+          {supplyChain?.sbom.available
+            ? supplyChain.sbom.specification
+            : 'Unavailable'}
+        </p>
+        <p>
+          Workflow security policy: version{' '}
+          {supplyChain?.workflowPolicyVersion ?? 'unknown'}
+        </p>
+        <p>
+          Dependency metadata warnings:{' '}
+          {supplyChain?.dependencyMetadataWarningCount ?? 'Unavailable'}
+        </p>
       </section>
       <section id="operations-status">
         <h3>System status</h3>

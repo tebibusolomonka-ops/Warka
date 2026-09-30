@@ -36,6 +36,7 @@ Assessment scheduling references existing `Assessment` definitions. School-scope
 Gradebook services enforce mark-entry windows, completeness, moderation, locking, and publication readiness in the database layer. Scoped Fastify routes feed the staff workspace; student and guardian progress summaries derive from published results and explicit assessment activity.
 Coursework uses separate assignment, audience, submission, revision, extension, and attachment services. Fastify exposes explicit staff and student actions; the teacher React workspace consumes scoped routes. Both attachment types use the shared FileAsset scanner and private delivery gateway.
 Rubric scoring, controlled feedback release, and an explicit transactional transfer to the existing Mark service extend coursework without creating another official grade store. The student and guardian portals use scoped read paths; guardian writes are absent. Coursework events use existing notification preferences and digest routing.
+
 ## Recovery and performance reliability
 
 Scheduled work uses database leases with bounded heartbeats and domain-specific startup reconciliation. Ownership loss creates an interrupted state; only work classified safe to retry can be replayed. External effects with uncertain outcomes enter reconciliation or manual review.
@@ -45,6 +46,11 @@ API observability aggregates normalized route categories and query operation cat
 ## Localization
 
 `@warka/shared` owns locale selection, the `en`, `am`, and `om` catalogs, interpolation, locale formatting, Ethiopic calendar display, and deterministic catalog validation. React surfaces consume this shared layer. English is the fallback for unsupported locales and lower-priority missing translations. User language and calendar choices are separate persisted preferences. Canonical timestamps and numeric values cross API and database boundaries unchanged.
+
 # Interoperability architecture
 
 Controlled imports progress through scanned parsing, strict mapping, deterministic transformation, immutable dry run, and transactional exact-version application. Warka exchange packages are structured, versioned manifests with per-file checksums rather than database dumps.
+
+## Supply chain controls (commit 410)
+
+The main CI workflow covers pushes to `main` and pull requests, uses immutable action revisions, read-only token permissions, frozen pnpm installs, and a repository-owned policy check. Operations users can read only validated build and CI status through `/operations/supply-chain`; dependency internals and credentials are not exposed.

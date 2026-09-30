@@ -23,6 +23,7 @@ Notification delivery preferences, safe notification email routing, digest sched
 Production storage configuration and operational deployment decisions remain environment-specific. No delivery commitment is implied.
 Communication preference controls, safe notification email routing, daily/weekly digests, owned delivery history, and controlled browser journeys are implemented through commit 240. Deployment still requires PostgreSQL migration, a stable recovery key, a public app URL, and configured SMTP.
 Timetable calendar, periods, class versions, conflict validation, administrator API/workspace, teacher view, and browser journey are implemented through commit 250. Attendance capture and family views follow in commits 251–260.
+
 - Batch 241–260 adds school timetable and attendance foundations, administration and teacher workflows, family attendance visibility, and factual summaries. Deployment validation still requires migrations and PostgreSQL-backed CI.
 - Commits 261–270 add assessment rooms, schedules, conflict checks, sessions, participation, make-up review, invigilation, API/workspace, and a browser journey. Gradebook control and result readiness follow in 271–280.
 - Commits 271–280 add server-enforced entry windows, completeness, moderation history, gradebook locks, readiness, staff controls, scoped family progress summaries, and a browser journey. Deployment still requires PostgreSQL migration and CI-backed browser validation.
@@ -32,6 +33,7 @@ Timetable calendar, periods, class versions, conflict validation, administrator 
 # Batch 321–340 checkpoint
 
 Data quality, reporting windows/readiness, versioned school submissions, bureau review, discrepancy notes, aggregate validation/exports, deadline notices, and both reporting workspaces are implemented. Browser journeys and clean migration execution depend on a PostgreSQL environment. See [[Batches/321-340]].
+
 ## Completed reliability phase
 
 Interrupted work recovery, disaster recovery evidence, query and request instrumentation, reviewed indexes, stable pagination, request and pool safeguards, representative load scenarios, and operator performance views are implemented. Future tuning should use observed production-safe aggregates and environment-specific load results rather than universal latency promises.
@@ -39,6 +41,11 @@ Interrupted work recovery, disaster recovery evidence, query and request instrum
 ## Completed localization phase
 
 Localization foundation, preferences, locale formatting, Ethiopic calendar presentation, representative portals and workflows, catalog checks, and browser journeys are implemented for English, Amharic, and Afaan Oromo. Professional linguistic certification remains future work.
+
 # Batch 381–400 completion
 
 Localization and the first controlled student-registration interoperability path are complete. Future source formats and entity types require explicit schemas, authorization, limits, and compatibility evidence.
+
+## Completed supply chain foundation
+
+Main-branch CI coverage, action pinning, least-privilege permissions, dependency policy, metadata inventory, SBOM generation, frozen installs, release checksums, and the combined `pnpm security:check` entry point are implemented.

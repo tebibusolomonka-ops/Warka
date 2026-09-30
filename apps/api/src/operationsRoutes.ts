@@ -17,6 +17,7 @@ import { checkCommunicationSchedulingReadiness } from './communicationScheduling
 import { buildMetadata } from './buildMetadata.js'
 import { evaluateDeploymentReadiness } from './deploymentReadiness.js'
 import { startupReconciliationStatus } from './startupReconciliation.js'
+import { supplyChainStatus } from './supplyChainStatus.js'
 
 const idParams = z.strictObject({ id: z.uuid() })
 const updateBody = z.strictObject({
@@ -39,6 +40,14 @@ export function registerOperationsRoutes(
 ) {
   const operator = async (request: Parameters<preHandlerHookHandler>[0]) =>
     requireOperator(getDatabase(), authenticatedUser(request).id)
+  app.get(
+    '/operations/supply-chain',
+    { preHandler: authenticate },
+    async (request) => {
+      await operator(request)
+      return supplyChainStatus(process.env)
+    },
+  )
   app.get(
     '/operations/build',
     { preHandler: authenticate },

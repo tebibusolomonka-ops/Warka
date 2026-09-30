@@ -33,6 +33,7 @@ Assessment administrators manage schedules and make-up review; teachers need a c
 Gradebook staff routes require current school membership and an exact active teaching assignment for teachers. Reviewer and administrator transitions remain separate. Entry windows, locks, and published-result state are server-checked; moderation cannot bypass correction history. Student summaries require the student's linked account, and guardian summaries require a verified eligible child relationship with school scope. Neither route exposes classmates, rankings, predictions, or risk labels.
 Coursework staff actions require current school and class/subject authority. Student assignment and submission routes derive identity from the signed-in account and current eligible enrollment; no client student ID controls student writes. Assignment files require publication and clean scans; teacher access to submission files requires a submitted revision and clean scan. Quarantined files remain unavailable. Draft and removed attachments never grant download access. Plain-text instructions and responses reject HTML.
 Guardian coursework reads reuse verified child and current enrollment checks; no guardian mutation route exists. Draft feedback and rubric scores stay private until release, and attachment metadata is excluded from the guardian response. Mark transfer is an explicit staff action into the existing Mark service and cannot overwrite a mark or bypass an entry window, gradebook lock, or published result. Coursework notices carry neutral text and follow the learning-material notification preference and digest rules.
+
 ## Localization boundaries
 
 Locale and calendar preferences do not grant access or change authorization queries. Public recovery remains account-enumeration neutral in every supported locale. Tokens, addresses, identifiers, resource references, API codes, stored enum values, and authored user content are not translated. Catalog strings render as text and HTML markup is rejected by the repository translation check.
@@ -40,6 +41,11 @@ Locale and calendar preferences do not grant access or change authorization quer
 ## Recovery and performance data boundaries
 
 Recovery records store controlled reason codes and safe references, never email bodies, tokens, file contents, credentials, storage paths, or database URLs. Performance metrics use broad route and query categories and exclude raw SQL, parameters, personal identifiers, request identifiers, and employee or school rankings. Load credentials remain environment supplied, synthetic fixture IDs are required, and production targets are blocked without a separate override.
+
 # Interoperability boundaries
 
 External IDs are private scoped aliases and never authentication or merge keys. Bulk import/export requires school or organization administration. Dry runs cannot create domain records. Formula execution, macros, arbitrary code, traversal paths, storage keys, credentials, security records, and unrelated private data are excluded.
+
+## CI and software supply chain
+
+The CI workflow must cover source pushes to `main`, pin external actions to immutable SHAs, and retain explicit read-only GitHub token permissions. `pnpm security:audit` rejects undocumented high or critical advisories. Exceptions identify the package and advisory, explain reachability, state review context, and expire. Dependency metadata exceptions are package-specific. SBOM output uses CycloneDX 1.6 and frozen lockfile input. Supply chain status is restricted to configured Operations owners and contains only safe aggregate metadata.

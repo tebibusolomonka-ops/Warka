@@ -19,6 +19,7 @@
 - Outbound email remains disabled until operators supply validated SMTP settings, a stable recovery derivation key, and the public application URL. Local PostgreSQL and SMTP services are unavailable, so outbox persistence and real delivery require CI or deployment validation. Ambiguous SMTP outcomes are held for operator review rather than automatically resent.
 
 Resolved prior validation failures are recorded in [[Batches/141-160]].
+
 - Local PostgreSQL is unavailable for live browser journeys; Playwright discovery is local, while execution depends on CI or a dedicated PostgreSQL service. SMTP delivery and production configuration remain deployment checks.
 - Commit 241 corrected the FileScan test teardown order without weakening the production foreign key. Local PostgreSQL remains unavailable, so the live integration test and CI confirmation are pending final validation.
 - Attendance summaries use currently approved class enrollments when calculating unrecorded counts for historical sessions. Enrollment changes can alter that historical denominator; a future roster snapshot would make it immutable.
@@ -31,6 +32,7 @@ Resolved prior validation failures are recorded in [[Batches/141-160]].
 # Reporting batch notes
 
 Local PostgreSQL and Docker are unavailable, so migration deployment, database integration, and live Playwright journeys await CI. Legacy reporting submissions are backfilled as version 1 from their last stored snapshot; older overwritten attempts cannot be reconstructed, and those backfilled versions have no checksum. Scheduled reporting reminders run with the enabled email outbox scheduler; deployments with that scheduler disabled do not send them.
+
 ## Remaining recovery and performance limits
 
 Forced shutdown can still leave external side effects whose outcome cannot be inferred. Warka now records these as interrupted or unknown and requires reconciliation or controlled operator review; it does not guarantee automatic recovery. Local performance results depend on fixtures, hardware, and deployment topology. The load profiles provide comparative evidence and do not establish universal service levels.
@@ -38,6 +40,13 @@ Forced shutdown can still leave external side effects whose outcome cannot be in
 ## Localization limits
 
 Amharic and Afaan Oromo catalogs have engineering review only; they have not received professional linguistic certification. Ethiopic calendar display uses the platform `Intl` implementation and is not presented as government-certified conversion.
+
 # Interoperability limitations
 
 XLSX formulas and macros are intentionally unsupported. Exchange packages implement only Warka `studentTransferPackage` version 1.0. Import duplicate findings require staff review and are not resolved automatically.
+
+## Dependency review items
+
+Prisma's optional CLI graph currently carries time-limited exceptions for `effect` GHSA-38f7-945m-qr2g and `deepmerge-ts` GHSA-ggr8-5vv4-36mx. The transitive `buffers@0.1.1` package has no declared license metadata and is reported as unknown pending an upstream dependency change.
+
+Commit 400 did produce GitHub Actions run 36710589456. The workflow triggered correctly and failed in Playwright after earlier validation and build steps succeeded; the earlier issue was run visibility, not a missing push trigger.

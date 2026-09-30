@@ -17,6 +17,7 @@ vi.mock('./PerformanceWorkspace', () => ({
 import {
   getOperationsStatus,
   getDeploymentStatus,
+  getSupplyChainStatus,
   getStorageSummary,
   listBackups,
   listIncidents,
@@ -35,6 +36,7 @@ import {
 vi.mock('./operationsApi', () => ({
   getOperationsStatus: vi.fn(),
   getDeploymentStatus: vi.fn(),
+  getSupplyChainStatus: vi.fn(),
   getStorageSummary: vi.fn(),
   listBackups: vi.fn(),
   listIncidents: vi.fn(),
@@ -85,6 +87,16 @@ it('shows safe operational sections and runs backup, verification, and rehearsal
       fileScanning: false,
       emailOutbox: false,
     },
+  })
+  vi.mocked(getSupplyChainStatus).mockResolvedValue({
+    buildCommit: 'a'.repeat(40),
+    dependencyAudit: {
+      status: 'passed',
+      checkedAt: '2026-09-30T00:00:00.000Z',
+    },
+    sbom: { available: true, specification: 'CycloneDX 1.6' },
+    workflowPolicyVersion: 1,
+    dependencyMetadataWarningCount: 1,
   })
   vi.mocked(getOperationsStatus).mockResolvedValue({
     readiness: { status: 'ready', dependencies: { database: 'ready' } },
@@ -159,6 +171,8 @@ it('shows safe operational sections and runs backup, verification, and rehearsal
   await screen.findByRole('heading', { name: 'Operations' })
   expect(screen.getByText('Application version: 0.1.0')).toBeTruthy()
   expect(screen.getByText('Migration status: unavailable')).toBeTruthy()
+  expect(screen.getByText('Dependency audit: passed')).toBeTruthy()
+  expect(screen.getByText('SBOM: CycloneDX 1.6')).toBeTruthy()
   expect(screen.getByText('email: disabled')).toBeTruthy()
   expect(screen.getByText('Available assets: 2')).toBeTruthy()
   expect(screen.getByText('Latest: succeeded')).toBeTruthy()
