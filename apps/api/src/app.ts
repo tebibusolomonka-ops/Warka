@@ -141,6 +141,7 @@ import { registerSearchRoutes } from './searchRoutes.js'
 import { registerResponseCompression } from './responseCompression.js'
 import { installDefaultCachePolicy } from './cachePolicy.js'
 import { registerSecurityHeaders } from './securityHeaders.js'
+import { registerOriginPolicy } from './originPolicy.js'
 import { registerSchedulerRoutes } from './schedulerRoutes.js'
 import { registerRecoveryRoutes } from './recoveryRoutes.js'
 import { operationsTestActions } from './operationsTestAdapter.js'
@@ -379,6 +380,7 @@ export function buildApp(
 
   app.register(cookie)
   registerSecurityHeaders(app)
+  registerOriginPolicy(app)
   registerResponseCompression(app)
   installDefaultCachePolicy(app)
   app.decorateRequest('currentUser', null)

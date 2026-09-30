@@ -5,6 +5,7 @@ import { smtpConfiguration } from './smtpEmailProvider.js'
 import { schedulerConfiguration } from './backupScheduler.js'
 import { emailOutboxConfiguration } from './emailOutboxScheduler.js'
 import { environmentProfile } from './environmentProfile.js'
+import { trustedOrigins } from './originPolicy.js'
 
 export type ConfigurationIssue = {
   category: 'requiredCore' | 'requiredWhenEnabled'
@@ -36,6 +37,10 @@ export function validateProductionConfiguration(
   requireValue('requiredCore', ['PUBLIC_BASE_URL'], () => {
     const url = new URL(env.PUBLIC_BASE_URL ?? '')
     return url.protocol === 'https:' && !url.username && !url.password
+  })
+  requireValue('requiredCore', ['WARKA_ALLOWED_ORIGINS'], () => {
+    trustedOrigins(env)
+    return true
   })
   requireValue('requiredCore', ['PORT'], () => !!serverConfig(env))
   requireValue(
