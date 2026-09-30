@@ -39,3 +39,6 @@ Interrupted work recovery, disaster recovery evidence, query and request instrum
 ## Completed localization phase
 
 Localization foundation, preferences, locale formatting, Ethiopic calendar presentation, representative portals and workflows, catalog checks, and browser journeys are implemented for English, Amharic, and Afaan Oromo. Professional linguistic certification remains future work.
+# Batch 381–400 completion
+
+Localization and the first controlled student-registration interoperability path are complete. Future source formats and entity types require explicit schemas, authorization, limits, and compatibility evidence.

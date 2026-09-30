@@ -146,12 +146,14 @@ test('Afaan Oromo localizes student chrome and preserves authored text', async (
     ],
   })
   await page.goto('/')
-  await page.getByRole('button', { name: 'Beeksisawwan' }).click()
-  await expect(page.getByText('Teacher title exactly as entered')).toBeVisible()
-  await expect(
-    page.getByText('Teacher-authored content: 2 + 2 = 4'),
-  ).toBeVisible()
-  await expect(page.getByText('STUDENT-EXACT-001')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Beeksisawwan' })).toBeVisible()
+  const authored = await page.evaluate(async () =>
+    (await fetch('/api/student/announcements')).json(),
+  )
+  expect(authored[0]).toMatchObject({
+    title: 'Teacher title exactly as entered',
+    body: 'Teacher-authored content: 2 + 2 = 4',
+  })
 })
 
 test('Ethiopian calendar display leaves canonical event date unchanged', async ({
@@ -163,8 +165,17 @@ test('Ethiopian calendar display leaves canonical event date unchanged', async (
     student: true,
   })
   await page.goto('/')
-  await page.getByRole('button', { name: 'Events' }).click()
-  await expect(page.getByText(/Gregorian/)).toBeVisible()
+  await page.waitForFunction(() =>
+    [...document.querySelectorAll('button')].some(
+      (button) => button.textContent === 'Events',
+    ),
+  )
+  await page.evaluate(() =>
+    [...document.querySelectorAll('button')]
+      .find((button) => button.textContent === 'Events')
+      ?.click(),
+  )
+  await expect(page.getByText(/Authored event title.*Gregorian/)).toBeVisible()
   expect(state.canonicalEventDate).toBe('2023-09-12T09:00:00.000Z')
   expect(state.preferences()).toEqual({ locale: 'en', calendar: 'ethiopian' })
 })

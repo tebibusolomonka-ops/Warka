@@ -40,3 +40,6 @@ Locale and calendar preferences do not grant access or change authorization quer
 ## Recovery and performance data boundaries
 
 Recovery records store controlled reason codes and safe references, never email bodies, tokens, file contents, credentials, storage paths, or database URLs. Performance metrics use broad route and query categories and exclude raw SQL, parameters, personal identifiers, request identifiers, and employee or school rankings. Load credentials remain environment supplied, synthetic fixture IDs are required, and production targets are blocked without a separate override.
+# Interoperability boundaries
+
+External IDs are private scoped aliases and never authentication or merge keys. Bulk import/export requires school or organization administration. Dry runs cannot create domain records. Formula execution, macros, arbitrary code, traversal paths, storage keys, credentials, security records, and unrelated private data are excluded.

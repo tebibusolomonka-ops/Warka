@@ -38,3 +38,6 @@ Forced shutdown can still leave external side effects whose outcome cannot be in
 ## Localization limits
 
 Amharic and Afaan Oromo catalogs have engineering review only; they have not received professional linguistic certification. Ethiopic calendar display uses the platform `Intl` implementation and is not presented as government-certified conversion.
+# Interoperability limitations
+
+XLSX formulas and macros are intentionally unsupported. Exchange packages implement only Warka `studentTransferPackage` version 1.0. Import duplicate findings require staff review and are not resolved automatically.

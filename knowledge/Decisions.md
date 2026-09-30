@@ -53,3 +53,6 @@ See [[Security]] for the resulting invariants.
 - Localize application-owned labels and controlled status displays through the shared catalogs. Preserve API codes and enum values. Do not automatically translate names, announcements, feedback, coursework instructions, meeting reasons, family messages, or other authored content.
 - Use English fallback for unsupported locales and noncritical missing translations. Critical navigation, authentication, recovery, results, document, attendance, and reporting keys must exist in every supported catalog.
 - Keep locale and calendar preferences independent. Ethiopic calendar rendering is presentation and input assistance rather than a certified civil calendar implementation; higher-risk dates include Gregorian context and canonical ISO values remain authoritative.
+# Interoperability decisions
+
+Spreadsheet formulas and executable transformations are rejected. Imports never merge likely duplicates automatically. Application requires the exact successful file, mapping, and transformation version. Exchange packages use a Warka-native format and do not claim unsupported external compatibility.

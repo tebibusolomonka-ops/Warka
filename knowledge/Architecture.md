@@ -45,3 +45,6 @@ API observability aggregates normalized route categories and query operation cat
 ## Localization
 
 `@warka/shared` owns locale selection, the `en`, `am`, and `om` catalogs, interpolation, locale formatting, Ethiopic calendar display, and deterministic catalog validation. React surfaces consume this shared layer. English is the fallback for unsupported locales and lower-priority missing translations. User language and calendar choices are separate persisted preferences. Canonical timestamps and numeric values cross API and database boundaries unchanged.
+# Interoperability architecture
+
+Controlled imports progress through scanned parsing, strict mapping, deterministic transformation, immutable dry run, and transactional exact-version application. Warka exchange packages are structured, versioned manifests with per-file checksums rather than database dumps.

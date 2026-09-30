@@ -6,14 +6,12 @@ describe('interoperability administration', () => {
     const apply = vi.fn().mockResolvedValue(undefined)
     render(
       <InteroperabilityWorkspace
-        onRunDryRun={vi
-          .fn()
-          .mockResolvedValue({
-            validRows: 2,
-            invalidRows: 0,
-            warnings: 1,
-            possibleDuplicates: 1,
-          })}
+        onRunDryRun={vi.fn().mockResolvedValue({
+          validRows: 2,
+          invalidRows: 0,
+          warnings: 1,
+          possibleDuplicates: 1,
+        })}
         onApply={apply}
         onGenerateExchange={vi.fn().mockResolvedValue({ version: '1.0' })}
       />,

@@ -54,3 +54,6 @@ Deterministic tests assert bounded notification and attendance query structure i
 ## Localization regression gates
 
 Run `pnpm i18n:check` for locale identifiers, duplicate keys, critical coverage, placeholder parity, unknown keys, and HTML markup. Unit tests cover fallback, interpolation, locale formatting, Ethiopic boundaries, and preference independence. Focused Playwright journeys cover persisted language choice, authored-content preservation, recovery neutrality, keyboard navigation, and canonical-date preservation.
+# Interoperability verification
+
+Tests cover clean scanned XLSX parsing and resource limits, approved mapping targets, deterministic transformations, dry-run write boundaries, exact-version application, idempotency, manifest checksums, path safety, exclusions, and representative authorization boundaries.
