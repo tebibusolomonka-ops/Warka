@@ -7,6 +7,7 @@ import {
   type PrismaClient,
 } from '@warka/database'
 import { z } from 'zod'
+import { safeExternalUrl } from '@warka/shared'
 import { validateUpload } from './fileValidation.js'
 import { configuredFileStorage } from './objectFileStorage.js'
 import type { FileStorage } from './fileStorage.js'
@@ -29,7 +30,7 @@ export const LearningMaterialInputSchema = z.discriminatedUnion(
       resourceLocation: z
         .url()
         .refine(
-          (value) => new URL(value).protocol === 'https:',
+          (value) => safeExternalUrl(value) !== null,
           'Resource URL must use HTTPS',
         ),
       publish: z.boolean().default(true),

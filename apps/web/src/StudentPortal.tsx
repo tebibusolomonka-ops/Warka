@@ -5,14 +5,16 @@ import { AttendanceHistoryView } from './AttendanceHistoryView'
 import { StudentCourseworkWorkspace } from './StudentCourseworkWorkspace'
 import { FamilyEventWorkspace } from './FamilyEventWorkspace'
 import { getOwnStudentAttendance } from './attendanceApi'
-import { createTranslator, formatPercentage } from '@warka/shared'
-import { browserLocale } from './LocalizedNavigation'
-import type {
-  StudentPortalIdentity,
-  StudentResult,
-  StudentMaterial,
-  StudentAnnouncement,
+import {
+  createTranslator,
+  formatPercentage,
+  safeExternalUrl,
+  type StudentPortalIdentity,
+  type StudentResult,
+  type StudentMaterial,
+  type StudentAnnouncement,
 } from '@warka/shared'
+import { browserLocale } from './LocalizedNavigation'
 import {
   ApiError,
   getStudentResults,
@@ -302,7 +304,7 @@ export function StudentPortal({
                         Download file
                       </a>
                     ) : (
-                      new URL(item.resourceLocation).protocol === 'https:' && (
+                      safeExternalUrl(item.resourceLocation) && (
                         <a
                           href={item.resourceLocation}
                           target="_blank"

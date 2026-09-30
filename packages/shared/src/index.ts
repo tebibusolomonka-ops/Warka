@@ -479,3 +479,4 @@ export const TeacherContactSchema = z.object({
   subject: z.string(),
 })
 export type TeacherContact = z.infer<typeof TeacherContactSchema>
+export { safeExternalUrl } from './externalUrl.js'

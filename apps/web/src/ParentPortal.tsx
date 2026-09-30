@@ -10,6 +10,7 @@ import type {
   TeacherContact,
 } from '@warka/shared'
 import { createTranslator } from '@warka/shared'
+import { safeExternalUrl } from '@warka/shared'
 import { browserLocale } from './LocalizedNavigation'
 import { ApiError } from './api'
 import { AttendanceHistoryView } from './AttendanceHistoryView'
@@ -45,13 +46,7 @@ type Section =
   | 'Meetings'
   | 'Events'
 
-function safeResource(url: string) {
-  try {
-    return new URL(url).protocol === 'https:'
-  } catch {
-    return false
-  }
-}
+const safeResource = (url: string) => safeExternalUrl(url) !== null
 
 export function ParentPortal({
   baseUrl,
