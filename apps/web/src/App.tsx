@@ -55,6 +55,7 @@ import { CommunicationPreferencesWorkspace } from './CommunicationPreferencesWor
 import { PublicRecovery } from './PublicRecovery'
 import { SearchWorkspace } from './SearchWorkspace'
 import { LocalizedNavigation, browserLocale } from './LocalizedNavigation'
+import { StaffWorkflowNavigation } from './StaffWorkflowNavigation'
 
 type Authentication =
   | { status: 'checking' }
@@ -388,6 +389,7 @@ function SignedInShell({
       {workspaceChoices}
       <WorkspaceFocus name="Staff workspace" />
       <LocalizedNavigation locale={user.preferredLocale} />
+      <StaffWorkflowNavigation locale={user.preferredLocale} />
       <div className="account">
         <p>Signed in as {user.displayName}</p>
         <button type="button" onClick={onSignOut}>
