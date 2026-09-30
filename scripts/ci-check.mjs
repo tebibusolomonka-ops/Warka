@@ -31,6 +31,34 @@ export function validateCiWorkflow(source) {
   if (!events || !Object.prototype.hasOwnProperty.call(events, 'pull_request'))
     errors.push('CI must run for pull requests')
   const jobs = Object.values(workflow?.jobs ?? {})
+  const dangerousPermissions = [
+    'actions',
+    'attestations',
+    'checks',
+    'contents',
+    'deployments',
+    'id-token',
+    'issues',
+    'packages',
+    'pages',
+    'pull-requests',
+    'security-events',
+    'statuses',
+  ]
+  const validatePermissions = (permissions, scope) => {
+    if (!permissions || typeof permissions !== 'object') {
+      errors.push(`${scope} must declare explicit token permissions`)
+      return
+    }
+    for (const [permission, access] of Object.entries(permissions))
+      if (dangerousPermissions.includes(permission) && access === 'write')
+        errors.push(
+          `${scope} grants prohibited ${permission}: write permission`,
+        )
+  }
+  validatePermissions(workflow?.permissions, 'Workflow')
+  for (const [name, job] of Object.entries(workflow?.jobs ?? {}))
+    if (job?.permissions) validatePermissions(job.permissions, `Job ${name}`)
   if (!jobs.length) errors.push('CI must define at least one job')
   const commands = jobs.flatMap((job) =>
     Array.isArray(job?.steps)

@@ -19,6 +19,8 @@ on:
   push:
     branches: [main]
   pull_request:
+permissions:
+  contents: read
 jobs:
   validate:
     runs-on: ubuntu-latest
@@ -56,5 +58,18 @@ test('rejects floating workflow action tags', () => {
     errors.includes(
       'Workflow action must use an immutable commit SHA: actions/checkout@v4',
     ),
+  )
+})
+
+test('rejects implicit or broad token permissions', () => {
+  assert.ok(
+    validateCiWorkflow(
+      valid.replace('permissions:\n  contents: read\n', ''),
+    ).includes('Workflow must declare explicit token permissions'),
+  )
+  assert.ok(
+    validateCiWorkflow(
+      valid.replace('contents: read', 'contents: write'),
+    ).includes('Workflow grants prohibited contents: write permission'),
   )
 })
