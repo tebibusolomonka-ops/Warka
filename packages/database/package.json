@@ -20,12 +20,13 @@
   },
   "dependencies": {
     "@prisma/client": "6.19.2",
+    "exceljs": "4.4.0",
     "zod": "^4.0.0"
   },
   "devDependencies": {
+    "@types/node": "^24.0.0",
     "prisma": "6.19.2",
     "typescript": "^5.9.3",
-    "@types/node": "^24.0.0",
     "vitest": "^3.2.0"
   }
 }

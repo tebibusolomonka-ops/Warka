@@ -63,6 +63,11 @@ export {
   ImportSourceProfileInputSchema,
   createImportSourceProfile,
 } from './importSourceProfiles.js'
+export {
+  XLSX_LIMITS,
+  SpreadsheetImportError,
+  parseSpreadsheetImport,
+} from './spreadsheetImports.js'
 
 export type { PrismaClient }
 export {
