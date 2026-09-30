@@ -25,6 +25,7 @@ import {
   type PrismaClient,
   type User,
 } from '@warka/database'
+import type { SupportedLocale } from '@warka/shared'
 import { enqueueTransactionalEmail } from './emailOutbox.js'
 
 export type AuthService = {
@@ -50,6 +51,10 @@ export type AuthService = {
   ): Promise<{ user: User; token: string } | null>
   currentUser(token: string): Promise<User | null>
   logout(token: string): Promise<void>
+  setPreferredLocale?(
+    token: string,
+    locale: SupportedLocale,
+  ): Promise<SupportedLocale | null>
 }
 
 export function createAuthService(
@@ -129,6 +134,16 @@ export function createAuthService(
     },
     currentUser: (token) => resolveSession(database, token),
     logout: (token) => revokeSession(database, token),
+    async setPreferredLocale(token, locale) {
+      const user = await resolveSession(database, token)
+      if (!user) return null
+      await database.$executeRaw`
+        UPDATE "User"
+        SET "preferredLocale" = ${locale}::"PreferredLocale", "updatedAt" = NOW()
+        WHERE "id" = ${user.id}
+      `
+      return locale
+    },
     async passwordState(token) {
       const user = await resolveSession(database, token)
       return user ? mustChangePassword(database, user.id) : false

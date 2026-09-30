@@ -15,6 +15,7 @@ const token = 'x'.repeat(43)
 
 function testAuth() {
   const sessions = new Map<string, User>()
+  let preferredLocale: 'en' | 'am' | 'om' = 'en'
   const auth: AuthService = {
     async login(email, password) {
       if (email !== user.email || password !== 'correct password') return null
@@ -22,16 +23,59 @@ function testAuth() {
       return { user, token }
     },
     async currentUser(value) {
-      return sessions.get(value) ?? null
+      const current = sessions.get(value)
+      return current
+        ? ({ ...current, preferredLocale } as User)
+        : null
     },
     async logout(value) {
       sessions.delete(value)
+    },
+    async setPreferredLocale(value, locale) {
+      if (!sessions.has(value)) return null
+      preferredLocale = locale
+      return locale
     },
   }
   return { auth, sessions }
 }
 
 describe('authentication routes', () => {
+  it('lets only the signed-in user read and update their language preference', async () => {
+    const { auth } = testAuth()
+    const app = buildApp({ auth })
+    try {
+      expect((await app.inject('/me/language-preference')).statusCode).toBe(401)
+      const login = await app.inject({
+        method: 'POST',
+        url: '/auth/login',
+        payload: { email: user.email, password: 'correct password' },
+      })
+      const cookie = String(login.headers['set-cookie']).split(';')[0]!
+      const updated = await app.inject({
+        method: 'PUT',
+        url: '/me/language-preference',
+        headers: { cookie },
+        payload: { preferredLocale: 'am' },
+      })
+      expect(updated.json()).toEqual({ preferredLocale: 'am' })
+      expect(
+        (await app.inject({ url: '/me/language-preference', headers: { cookie } })).json(),
+      ).toEqual({ preferredLocale: 'am' })
+      expect(
+        (
+          await app.inject({
+            method: 'PUT',
+            url: '/me/language-preference',
+            headers: { cookie },
+            payload: { preferredLocale: 'fr', userId: user.id },
+          })
+        ).statusCode,
+      ).toBe(400)
+    } finally {
+      await app.close()
+    }
+  })
   it('requires a session and current password to change a password', async () => {
     const { auth, sessions } = testAuth()
     let forced = true

@@ -3,6 +3,8 @@ import type { FastifyInstance } from 'fastify'
 import { PasswordSchema, SESSION_LIFETIME_SECONDS } from '@warka/auth'
 import {
   ErrorResponseSchema,
+  LanguagePreferenceResponseSchema,
+  LanguagePreferenceSchema,
   LoginCredentialsSchema,
   UserIdentitySchema,
 } from '@warka/shared'
@@ -155,6 +157,32 @@ export function registerAuthRoutes(
       ...userIdentity(user),
       mustChangePassword: (await getAuth().passwordState?.(token!)) ?? false,
     })
+  })
+
+  app.get('/me/language-preference', async (request, reply) => {
+    const token = request.cookies[sessionCookieName]
+    const user = token ? await getAuth().currentUser(token) : null
+    if (!user) return reply.code(401).send(unauthorized())
+    return LanguagePreferenceResponseSchema.parse({
+      preferredLocale:
+        (user as typeof user & { preferredLocale?: string }).preferredLocale ??
+        'en',
+    })
+  })
+
+  app.put('/me/language-preference', async (request, reply) => {
+    const token = request.cookies[sessionCookieName]
+    if (!token || !(await getAuth().currentUser(token)))
+      return reply.code(401).send(unauthorized())
+    const body = z
+      .strictObject({ preferredLocale: LanguagePreferenceSchema })
+      .parse(request.body)
+    const preferredLocale = await getAuth().setPreferredLocale?.(
+      token,
+      body.preferredLocale,
+    )
+    if (!preferredLocale) return reply.code(401).send(unauthorized())
+    return LanguagePreferenceResponseSchema.parse({ preferredLocale })
   })
 
   app.post('/auth/change-password', async (request, reply) => {

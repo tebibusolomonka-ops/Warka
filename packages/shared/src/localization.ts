@@ -1,3 +1,5 @@
+import { z } from 'zod'
+
 export const supportedLocales = ['en', 'am', 'om'] as const
 
 export type SupportedLocale = (typeof supportedLocales)[number]
@@ -5,6 +7,11 @@ export type TranslationCatalog = Readonly<Record<string, string>>
 export type TranslationValues = Readonly<Record<string, string | number>>
 
 export const defaultLocale: SupportedLocale = 'en'
+
+export const LanguagePreferenceSchema = z.enum(supportedLocales)
+export const LanguagePreferenceResponseSchema = z.strictObject({
+  preferredLocale: LanguagePreferenceSchema,
+})
 
 const englishCatalog = {
   'common.cancel': 'Cancel',

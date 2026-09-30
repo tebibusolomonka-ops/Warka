@@ -58,6 +58,12 @@ enum AccountStatus {
   deactivated
 }
 
+enum PreferredLocale {
+  en
+  am
+  om
+}
+
 enum EmailDeliveryStatus {
   queued
   sending
@@ -688,6 +694,7 @@ model User {
   id                           String                   @id @default(uuid())
   email                        String                   @unique
   displayName                  String
+  preferredLocale             PreferredLocale @default(en)
   accountStatus                AccountStatus @default(active)
   createdAt                    DateTime                 @default(now())
   updatedAt                    DateTime                 @updatedAt
