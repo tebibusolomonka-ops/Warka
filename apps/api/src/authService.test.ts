@@ -134,16 +134,20 @@ describe('password changes', () => {
     await expect(
       auth.changePassword!(first.token, 'initial password', 'short'),
     ).rejects.toThrow()
-    expect(
-      await auth.changePassword!(
-        first.token,
-        'initial password',
-        'new long password',
-      ),
-    ).toBe('changed')
-    expect(await auth.passwordState!(first.token)).toBe(false)
-    expect(await auth.currentUser(first.token)).toEqual(user)
+    const changed = await auth.changePassword!(
+      first.token,
+      'initial password',
+      'new long password',
+    )
+    expect(changed).toMatchObject({ status: 'changed' })
+    expect(await auth.currentUser(first.token)).toBeNull()
     expect(await auth.currentUser(other.token)).toBeNull()
+    expect(
+      await auth.passwordState!((changed as { token: string }).token),
+    ).toBe(false)
+    expect(
+      await auth.currentUser((changed as { token: string }).token),
+    ).toEqual(user)
     expect(
       await auth.changePassword!(
         other.token,

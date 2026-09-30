@@ -161,7 +161,10 @@ describe('authentication routes', () => {
       if (currentPassword !== 'correct password') return 'invalid-current'
       if (newPassword.length < 12) throw new Error('Invalid new password')
       forced = false
-      return 'changed'
+      const token = 'r'.repeat(43)
+      sessions.set(token, user)
+      sessions.delete(_token)
+      return { status: 'changed', token }
     }
     const app = buildApp({ auth })
     try {
@@ -224,12 +227,23 @@ describe('authentication routes', () => {
         },
       })
       expect(success.statusCode).toBe(204)
+      const rotatedCookie = String(success.headers['set-cookie']).split(';')[0]!
+      expect(rotatedCookie).not.toBe(cookie)
       const after = await app.inject({
         method: 'GET',
         url: '/auth/me',
-        headers: { cookie },
+        headers: { cookie: rotatedCookie },
       })
       expect(after.json().mustChangePassword).toBe(false)
+      expect(
+        (
+          await app.inject({
+            method: 'GET',
+            url: '/auth/me',
+            headers: { cookie },
+          })
+        ).statusCode,
+      ).toBe(401)
       sessions.clear()
     } finally {
       await app.close()

@@ -7,7 +7,6 @@ import {
   revokeOtherSessions,
   hashPassword,
   PasswordSchema,
-  hashSessionToken,
   resolveSession,
   revokeSession,
   verifyPassword,
@@ -44,7 +43,9 @@ export type AuthService = {
     token: string,
     currentPassword: string,
     newPassword: string,
-  ): Promise<'changed' | 'invalid-current' | 'unauthenticated'>
+  ): Promise<
+    { status: 'changed'; token: string } | 'invalid-current' | 'unauthenticated'
+  >
   login(
     email: string,
     password: string,
@@ -175,14 +176,10 @@ export function createAuthService(
           where: { userId: user.id },
           data: { passwordHash, mustChangePassword: false },
         }),
-        database.session.deleteMany({
-          where: {
-            userId: user.id,
-            tokenHash: { not: hashSessionToken(token) },
-          },
-        }),
+        database.session.deleteMany({ where: { userId: user.id } }),
       ])
-      return 'changed'
+      const rotated = await createSession(database, user.id)
+      return { status: 'changed', token: rotated.token }
     },
   }
 }

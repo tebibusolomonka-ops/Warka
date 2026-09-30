@@ -254,6 +254,16 @@ export function registerAuthRoutes(
           },
         }),
       )
+    if (typeof result === 'object') {
+      reply.setCookie(sessionCookieName, result.token, {
+        ...cookieOptions,
+        maxAge: SESSION_LIFETIME_SECONDS,
+      })
+      reply.setCookie(csrfCookieName, csrfTokenForSession(result.token), {
+        ...csrfCookieOptions,
+        maxAge: SESSION_LIFETIME_SECONDS,
+      })
+    }
     return reply.code(204).send()
   })
 }
