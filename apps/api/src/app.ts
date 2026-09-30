@@ -144,6 +144,7 @@ import { registerSecurityHeaders } from './securityHeaders.js'
 import { registerOriginPolicy } from './originPolicy.js'
 import { registerCsrfProtection } from './csrfProtection.js'
 import { trustedProxyConfiguration } from './proxyTrust.js'
+import { REQUEST_LIMITS } from './requestLimits.js'
 import { registerSchedulerRoutes } from './schedulerRoutes.js'
 import { registerRecoveryRoutes } from './recoveryRoutes.js'
 import { operationsTestActions } from './operationsTestAdapter.js'
@@ -330,7 +331,10 @@ export function buildApp(
     production?: boolean
   } = {},
 ) {
-  const app = Fastify({ trustProxy: trustedProxyConfiguration(process.env) })
+  const app = Fastify({
+    trustProxy: trustedProxyConfiguration(process.env),
+    bodyLimit: REQUEST_LIMITS.jsonBytes,
+  })
   const testRecoveryTokens = new Map<string, string>()
   const testRecoveryEnabled =
     process.env.NODE_ENV === 'test' &&

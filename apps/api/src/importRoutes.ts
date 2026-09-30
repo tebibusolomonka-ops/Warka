@@ -10,6 +10,7 @@ import {
 } from '@warka/database'
 import { z } from 'zod'
 import { authenticatedUser } from './authenticateRequest.js'
+import { REQUEST_LIMITS } from './requestLimits.js'
 
 export class ImportPayloadError extends Error {
   constructor(message: string) {
@@ -31,7 +32,7 @@ function checkedCsv(body: unknown) {
     !data.originalFileName.toLowerCase().endsWith('.csv')
   )
     throw new ImportPayloadError('Only CSV files are supported')
-  if (Buffer.byteLength(data.csv, 'utf8') > 1_000_000)
+  if (Buffer.byteLength(data.csv, 'utf8') > REQUEST_LIMITS.importCsvBytes)
     throw new ImportPayloadError('CSV exceeds the size limit')
   return data
 }
@@ -62,7 +63,7 @@ export function registerImportRoutes(
   )
   app.post(
     '/schools/:schoolId/imports',
-    { preHandler: authenticate, bodyLimit: 1_100_000 },
+    { preHandler: authenticate, bodyLimit: REQUEST_LIMITS.importBodyBytes },
     async (request) => {
       const { schoolId } = SchoolParams.parse(request.params)
       const data = checkedCsv(request.body)
@@ -101,7 +102,7 @@ export function registerImportRoutes(
   )
   app.post(
     '/schools/:schoolId/imports/:jobId/validate',
-    { preHandler: authenticate, bodyLimit: 1_100_000 },
+    { preHandler: authenticate, bodyLimit: REQUEST_LIMITS.importBodyBytes },
     async (request) => {
       const { schoolId, jobId } = JobParams.parse(request.params)
       const data = checkedCsv(request.body)
