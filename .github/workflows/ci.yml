@@ -41,6 +41,7 @@ jobs:
       - run: pnpm ci:check
       - run: pnpm security:audit
       - run: pnpm security:dependencies
+      - run: pnpm security:sbom
       - run: pnpm db:generate
       - run: pnpm db:deploy
       - run: pnpm db:preflight
