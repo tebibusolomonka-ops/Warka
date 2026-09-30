@@ -25,7 +25,7 @@ import {
   type PrismaClient,
   type User,
 } from '@warka/database'
-import type { SupportedLocale } from '@warka/shared'
+import type { CalendarPreference, SupportedLocale } from '@warka/shared'
 import { enqueueTransactionalEmail } from './emailOutbox.js'
 
 export type AuthService = {
@@ -55,6 +55,10 @@ export type AuthService = {
     token: string,
     locale: SupportedLocale,
   ): Promise<SupportedLocale | null>
+  setPreferredCalendar?(
+    token: string,
+    calendar: CalendarPreference,
+  ): Promise<CalendarPreference | null>
 }
 
 export function createAuthService(
@@ -143,6 +147,16 @@ export function createAuthService(
         WHERE "id" = ${user.id}
       `
       return locale
+    },
+    async setPreferredCalendar(token, calendar) {
+      const user = await resolveSession(database, token)
+      if (!user) return null
+      await database.$executeRaw`
+        UPDATE "User"
+        SET "preferredCalendar" = ${calendar}::"CalendarPreference", "updatedAt" = NOW()
+        WHERE "id" = ${user.id}
+      `
+      return calendar
     },
     async passwordState(token) {
       const user = await resolveSession(database, token)

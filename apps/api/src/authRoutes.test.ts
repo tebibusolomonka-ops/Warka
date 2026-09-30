@@ -16,15 +16,21 @@ const token = 'x'.repeat(43)
 function testAuth() {
   const sessions = new Map<string, User>()
   let preferredLocale: 'en' | 'am' | 'om' = 'en'
+  let preferredCalendar: 'gregorian' | 'ethiopian' = 'gregorian'
   const auth: AuthService = {
     async login(email, password) {
       if (email !== user.email || password !== 'correct password') return null
       sessions.set(token, user)
-      return { user: { ...user, preferredLocale } as User, token }
+      return {
+        user: { ...user, preferredLocale, preferredCalendar } as User,
+        token,
+      }
     },
     async currentUser(value) {
       const current = sessions.get(value)
-      return current ? ({ ...current, preferredLocale } as User) : null
+      return current
+        ? ({ ...current, preferredLocale, preferredCalendar } as User)
+        : null
     },
     async logout(value) {
       sessions.delete(value)
@@ -34,11 +40,53 @@ function testAuth() {
       preferredLocale = locale
       return locale
     },
+    async setPreferredCalendar(value, calendar) {
+      if (!sessions.has(value)) return null
+      preferredCalendar = calendar
+      return calendar
+    },
   }
   return { auth, sessions }
 }
 
 describe('authentication routes', () => {
+  it('stores calendar preference independently from language', async () => {
+    const { auth } = testAuth()
+    const app = buildApp({ auth })
+    try {
+      const login = await app.inject({
+        method: 'POST',
+        url: '/auth/login',
+        payload: { email: user.email, password: 'correct password' },
+      })
+      const cookie = String(login.headers['set-cookie']).split(';')[0]!
+      const calendar = await app.inject({
+        method: 'PUT',
+        url: '/me/calendar-preference',
+        headers: { cookie },
+        payload: { preferredCalendar: 'ethiopian' },
+      })
+      expect(calendar.json()).toEqual({ preferredCalendar: 'ethiopian' })
+      expect(
+        (
+          await app.inject({
+            url: '/me/calendar-preference',
+            headers: { cookie },
+          })
+        ).json(),
+      ).toEqual({ preferredCalendar: 'ethiopian' })
+      expect(
+        (
+          await app.inject({
+            url: '/me/language-preference',
+            headers: { cookie },
+          })
+        ).json(),
+      ).toEqual({ preferredLocale: 'en' })
+    } finally {
+      await app.close()
+    }
+  })
   it('keeps public recovery responses neutral across supported languages', async () => {
     const { auth } = testAuth()
     auth.requestRecovery = async () => undefined
@@ -240,6 +288,7 @@ describe('authentication routes', () => {
         email: user.email,
         displayName: user.displayName,
         preferredLocale: 'en',
+        preferredCalendar: 'gregorian',
       })
       expect(login.body).not.toContain(token)
       const setCookie = String(login.headers['set-cookie'])

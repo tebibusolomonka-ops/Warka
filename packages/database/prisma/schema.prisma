@@ -64,6 +64,11 @@ enum PreferredLocale {
   om
 }
 
+enum CalendarPreference {
+  gregorian
+  ethiopian
+}
+
 enum EmailDeliveryStatus {
   queued
   sending
@@ -566,38 +571,38 @@ enum MaintenanceWindowStatus {
 }
 
 model School {
-  dataQualityIssues DataQualityIssue[]
-  dataQualityRuns DataQualityRun[]
-  events SchoolEvent[]
-  meetingAvailability TeacherMeetingAvailability[]
-  meetingRequests ParentTeacherMeetingRequest[]
-  courseworkAssignments CourseworkAssignment[]
-  gradebookLocks GradebookLock[]
-  markCorrections MarkCorrection[]
-  markModerationRequests MarkModerationRequest[]
-  markEntryWindows MarkEntryWindow[]
-  assessmentInvigilations AssessmentInvigilation[]
-  makeUpAssessments MakeUpAssessment[]
-  assessmentParticipations AssessmentParticipation[]
-  assessmentRooms AssessmentRoom[]
-  assessmentSchedules AssessmentSchedule[]
-  assessmentSessions AssessmentSession[]
-  calendarDays SchoolCalendarDay[]
-  timetablePeriods TimetablePeriod[]
-  timetableEntries ClassTimetableEntry[]
-  timetables ClassTimetable[]
-  attendanceSessions AttendanceSession[]
-  fileAssets FileAsset[]
+  dataQualityIssues             DataQualityIssue[]
+  dataQualityRuns               DataQualityRun[]
+  events                        SchoolEvent[]
+  meetingAvailability           TeacherMeetingAvailability[]
+  meetingRequests               ParentTeacherMeetingRequest[]
+  courseworkAssignments         CourseworkAssignment[]
+  gradebookLocks                GradebookLock[]
+  markCorrections               MarkCorrection[]
+  markModerationRequests        MarkModerationRequest[]
+  markEntryWindows              MarkEntryWindow[]
+  assessmentInvigilations       AssessmentInvigilation[]
+  makeUpAssessments             MakeUpAssessment[]
+  assessmentParticipations      AssessmentParticipation[]
+  assessmentRooms               AssessmentRoom[]
+  assessmentSchedules           AssessmentSchedule[]
+  assessmentSessions            AssessmentSession[]
+  calendarDays                  SchoolCalendarDay[]
+  timetablePeriods              TimetablePeriod[]
+  timetableEntries              ClassTimetableEntry[]
+  timetables                    ClassTimetable[]
+  attendanceSessions            AttendanceSession[]
+  fileAssets                    FileAsset[]
   resultSets                    ResultSet[]
   publishedResults              PublishedResult[]
   learningMaterials             LearningMaterial[]
   announcements                 Announcement[]
-  id                            String                 @id @default(uuid())
+  id                            String                        @id @default(uuid())
   organizationId                String
   name                          String
-  createdAt                     DateTime               @default(now())
-  updatedAt                     DateTime               @updatedAt
-  organization                  Organization           @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  createdAt                     DateTime                      @default(now())
+  updatedAt                     DateTime                      @updatedAt
+  organization                  Organization                  @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   staff                         SchoolMembership[]
   academicYears                 AcademicYear[]
   gradeLevels                   GradeLevel[]
@@ -610,8 +615,8 @@ model School {
   marks                         Mark[]
   gradingScheme                 GradingScheme?
   issuedDocuments               IssuedDocument[]
-  outgoingTransfers             TransferRequest[]      @relation("SendingTransfers")
-  incomingTransfers             TransferRequest[]      @relation("ReceivingTransfers")
+  outgoingTransfers             TransferRequest[]             @relation("SendingTransfers")
+  incomingTransfers             TransferRequest[]             @relation("ReceivingTransfers")
   verifiedGuardianRelationships StudentGuardian[]
   serviceAccess                 SchoolServiceAccess?
   familyConversations           FamilyConversation[]
@@ -619,165 +624,166 @@ model School {
   reportingSubmissions          ReportingSubmission[]
   verificationEvents            VerificationEvent[]
   importJobs                    ImportJob[]
-  documentProfile              SchoolDocumentProfile?
-  progressionPlans             ProgressionPlan[]
-  documentRequests             DocumentRequest[]
-  onboarding                   SchoolOnboarding?
-  contacts                     SchoolContact[]
-  trainingRecords              TrainingRecord[]
-  correctionRequests           StudentCorrectionRequest[]
-  enrollmentCorrectionRequests EnrollmentCorrectionRequest[]
-  privacyRequests              PrivacyRequest[]
-  processingRestrictions       ProcessingRestriction[]
-  supportRequests              SupportRequest[]
+  documentProfile               SchoolDocumentProfile?
+  progressionPlans              ProgressionPlan[]
+  documentRequests              DocumentRequest[]
+  onboarding                    SchoolOnboarding?
+  contacts                      SchoolContact[]
+  trainingRecords               TrainingRecord[]
+  correctionRequests            StudentCorrectionRequest[]
+  enrollmentCorrectionRequests  EnrollmentCorrectionRequest[]
+  privacyRequests               PrivacyRequest[]
+  processingRestrictions        ProcessingRestriction[]
+  supportRequests               SupportRequest[]
 
   @@index([organizationId])
 }
 
 model User {
-  reportingNotesAuthored ReportingReviewNote[]
-  reportingVersionsSubmitted ReportingSubmissionVersion[] @relation("ReportingVersionSubmitter")
-  dismissedDataQualityIssues DataQualityIssue[] @relation("DataQualityIssueDismisser")
-  resolvedDataQualityIssues DataQualityIssue[] @relation("DataQualityIssueResolver")
-  eventResponses EventResponse[]
-  eventResponseHistory EventResponseHistory[]
-  eventAttachmentsCreated EventAttachment[]
-  schoolEventsCreated SchoolEvent[]
-  meetingEvents MeetingEvent[]
-  meetingAvailability TeacherMeetingAvailability[]
-  meetingRequestsMade ParentTeacherMeetingRequest[] @relation("MeetingGuardianUser")
-  meetingRequestsAssigned ParentTeacherMeetingRequest[] @relation("MeetingTeacher")
-  courseworkMarkTransfersCreated CourseworkMarkTransfer[] @relation("CourseworkMarkTransferCreator")
-  courseworkFeedbackAuthored CourseworkFeedback[] @relation("CourseworkFeedbackAuthor")
-  courseworkScoresCreated RubricScore[] @relation("RubricScorer")
-  courseworkRubricsCreated CourseworkRubric[] @relation("CourseworkRubricCreator")
-  submissionReviewsCompleted SubmissionReview[] @relation("SubmissionReviewer")
-  assignmentExtensionsCreated AssignmentExtension[] @relation("AssignmentExtensionCreator")
-  courseworkAttachmentsCreated CourseworkAttachment[] @relation("CourseworkAttachmentCreator")
-  courseworkAssignmentsCreated CourseworkAssignment[] @relation("CourseworkAssignmentCreator")
-  gradebookLockActors GradebookLockEvent[]
-  reviewedMarkCorrections MarkCorrection[]
-  requestedMarkModerations MarkModerationRequest[] @relation("ModerationRequester")
-  reviewedMarkModerations MarkModerationRequest[] @relation("ModerationReviewer")
-  createdMarkEntryWindows MarkEntryWindow[]
-  assessmentInvigilations AssessmentInvigilation[]
-  assignedInvigilations AssessmentInvigilation[] @relation("InvigilationAssigner")
-  makeUpCreated MakeUpAssessment[] @relation("MakeUpCreator")
-  makeUpApproved MakeUpAssessment[] @relation("MakeUpApprover")
-  assessmentParticipations AssessmentParticipation[] @relation("AssessmentParticipationRecorder")
-  performedAttendanceCorrections AttendanceCorrection[] @relation("AttendanceCorrectionPerformer")
-  approvedAttendanceCorrections AttendanceCorrection[] @relation("AttendanceCorrectionApprover")
-  openedAttendanceSessions AttendanceSession[]
-  recordedAttendance StudentAttendanceRecord[]
-  createdFileAssets FileAsset[] @relation("FileAssetCreatedBy")
-  ownedFileAssets FileAsset[] @relation("FileAssetOwner")
-  createdBackups               BackupRecord[] @relation("BackupCreatedBy")
-  performedRestoreRehearsals RestoreRehearsal[] @relation("RestoreRehearsalPerformedBy")
-  updatedBackupPolicies BackupPolicy[] @relation("BackupPolicyUpdatedBy")
-  createdOperationalIncidents OperationalIncident[] @relation("OperationalIncidentCreatedBy")
-  resolvedOperationalIncidents OperationalIncident[] @relation("OperationalIncidentResolvedBy")
-  operationalIncidentUpdates OperationalIncidentUpdate[]
-  createdMaintenanceWindows MaintenanceWindow[]
-  submittedResultSets          ResultSet[]              @relation("ResultSetSubmittedBy")
-  issuedDocuments              IssuedDocument[]
-  requestedTransfers           TransferRequest[]
-  approvedTransfers            TransferRequest[]        @relation("TransferApprovedBy")
-  acceptedTransfers            TransferRequest[]        @relation("TransferAcceptedBy")
-  rejectedTransfers            TransferRequest[]        @relation("TransferRejectedBy")
-  cancelledTransfers           TransferRequest[]        @relation("TransferCancelledBy")
-  correctedDocuments           IssuedDocument[]         @relation("DocumentCorrectedBy")
-  withdrawnDocuments           IssuedDocument[]         @relation("DocumentWithdrawnBy")
-  publishedResultSets          ResultSet[]              @relation("ResultSetPublishedBy")
-  resultCorrections            ResultCorrection[]
-  learningMaterials            LearningMaterial[]
-  announcements                Announcement[]
-  id                           String                   @id @default(uuid())
-  email                        String                   @unique
-  displayName                  String
-  preferredLocale             PreferredLocale @default(en)
-  accountStatus                AccountStatus @default(active)
-  createdAt                    DateTime                 @default(now())
-  updatedAt                    DateTime                 @updatedAt
-  organizationMemberships      OrganizationMembership[]
-  schoolMemberships            SchoolMembership[]
-  bureauAccesses               BureauAccess[]
-  passwordCredential           PasswordCredential?
-  studentAccess                StudentAccess?
-  guardianVerifications        StudentGuardian[]        @relation("GuardianVerifiedBy")
-  guardianRevocations          StudentGuardian[]        @relation("GuardianRevokedBy")
-  schoolServiceUpdates         SchoolServiceAccess[]
-  familyMessages               FamilyMessage[]
-  teacherConversations         FamilyConversation[]     @relation("FamilyConversationTeacher")
-  closedFamilyConversations    FamilyConversation[]     @relation("FamilyConversationClosedBy")
-  escalatedFamilyConversations FamilyConversation[]     @relation("FamilyConversationEscalatedBy")
-  guardianAccess               GuardianAccess?
-  recoveryRequests             AccountRecoveryRequest[]
-  emailDeliveries              EmailDelivery[]
-  notificationPreferences      NotificationPreference[]
-  emailDigests                 EmailDigest[]
-  resolvedRecoveryReviews      RecoveryReview[] @relation("RecoveryReviewResolver")
-  startedOnboardings            SchoolOnboarding[] @relation("OnboardingStartedBy")
-  completedOnboardings          SchoolOnboarding[] @relation("OnboardingCompletedBy")
-  completedChecklistItems       OnboardingChecklistItem[]
-  trainingRecords               TrainingRecord[] @relation("TrainingUser")
-  recordedTraining              TrainingRecord[] @relation("TrainingRecordedBy")
-  createdSupportRequests        SupportRequest[] @relation("SupportRequestCreatedBy")
-  assignedSupportRequests       SupportRequest[] @relation("SupportRequestAssignedTo")
-  supportRequestMessages        SupportRequestMessage[]
-  sessions                     Session[]
-  supportIdentity              SupportIdentity?
-  approvedEnrollments          Enrollment[]             @relation("EnrollmentApprovedBy")
-  withdrawnEnrollments         Enrollment[]             @relation("EnrollmentWithdrawnBy")
-  createdImportJobs            ImportJob[]
-  requestedDocuments           DocumentRequest[]
-  performedEnrollmentEvents    EnrollmentHistoryEvent[]
-  closedAcademicYears          AcademicYear[] @relation("AcademicYearClosedBy")
-  createdProgressionPlans      ProgressionPlan[] @relation("ProgressionPlanCreatedBy")
-  reviewedProgressionPlans     ProgressionPlan[] @relation("ProgressionPlanReviewedBy")
-  appliedProgressionPlans      ProgressionPlan[] @relation("ProgressionPlanAppliedBy")
-  resolvedProgressionExceptions ProgressionException[] @relation("ProgressionExceptionResolvedBy")
-  notifications                Notification[]
-  teachingAssignments          TeachingAssignment[]
-  requestedStudentCorrections  StudentCorrectionRequest[] @relation("StudentCorrectionRequestedBy")
-  reviewedStudentCorrections   StudentCorrectionRequest[] @relation("StudentCorrectionReviewedBy")
+  reportingNotesAuthored         ReportingReviewNote[]
+  reportingVersionsSubmitted     ReportingSubmissionVersion[]  @relation("ReportingVersionSubmitter")
+  dismissedDataQualityIssues     DataQualityIssue[]            @relation("DataQualityIssueDismisser")
+  resolvedDataQualityIssues      DataQualityIssue[]            @relation("DataQualityIssueResolver")
+  eventResponses                 EventResponse[]
+  eventResponseHistory           EventResponseHistory[]
+  eventAttachmentsCreated        EventAttachment[]
+  schoolEventsCreated            SchoolEvent[]
+  meetingEvents                  MeetingEvent[]
+  meetingAvailability            TeacherMeetingAvailability[]
+  meetingRequestsMade            ParentTeacherMeetingRequest[] @relation("MeetingGuardianUser")
+  meetingRequestsAssigned        ParentTeacherMeetingRequest[] @relation("MeetingTeacher")
+  courseworkMarkTransfersCreated CourseworkMarkTransfer[]      @relation("CourseworkMarkTransferCreator")
+  courseworkFeedbackAuthored     CourseworkFeedback[]          @relation("CourseworkFeedbackAuthor")
+  courseworkScoresCreated        RubricScore[]                 @relation("RubricScorer")
+  courseworkRubricsCreated       CourseworkRubric[]            @relation("CourseworkRubricCreator")
+  submissionReviewsCompleted     SubmissionReview[]            @relation("SubmissionReviewer")
+  assignmentExtensionsCreated    AssignmentExtension[]         @relation("AssignmentExtensionCreator")
+  courseworkAttachmentsCreated   CourseworkAttachment[]        @relation("CourseworkAttachmentCreator")
+  courseworkAssignmentsCreated   CourseworkAssignment[]        @relation("CourseworkAssignmentCreator")
+  gradebookLockActors            GradebookLockEvent[]
+  reviewedMarkCorrections        MarkCorrection[]
+  requestedMarkModerations       MarkModerationRequest[]       @relation("ModerationRequester")
+  reviewedMarkModerations        MarkModerationRequest[]       @relation("ModerationReviewer")
+  createdMarkEntryWindows        MarkEntryWindow[]
+  assessmentInvigilations        AssessmentInvigilation[]
+  assignedInvigilations          AssessmentInvigilation[]      @relation("InvigilationAssigner")
+  makeUpCreated                  MakeUpAssessment[]            @relation("MakeUpCreator")
+  makeUpApproved                 MakeUpAssessment[]            @relation("MakeUpApprover")
+  assessmentParticipations       AssessmentParticipation[]     @relation("AssessmentParticipationRecorder")
+  performedAttendanceCorrections AttendanceCorrection[]        @relation("AttendanceCorrectionPerformer")
+  approvedAttendanceCorrections  AttendanceCorrection[]        @relation("AttendanceCorrectionApprover")
+  openedAttendanceSessions       AttendanceSession[]
+  recordedAttendance             StudentAttendanceRecord[]
+  createdFileAssets              FileAsset[]                   @relation("FileAssetCreatedBy")
+  ownedFileAssets                FileAsset[]                   @relation("FileAssetOwner")
+  createdBackups                 BackupRecord[]                @relation("BackupCreatedBy")
+  performedRestoreRehearsals     RestoreRehearsal[]            @relation("RestoreRehearsalPerformedBy")
+  updatedBackupPolicies          BackupPolicy[]                @relation("BackupPolicyUpdatedBy")
+  createdOperationalIncidents    OperationalIncident[]         @relation("OperationalIncidentCreatedBy")
+  resolvedOperationalIncidents   OperationalIncident[]         @relation("OperationalIncidentResolvedBy")
+  operationalIncidentUpdates     OperationalIncidentUpdate[]
+  createdMaintenanceWindows      MaintenanceWindow[]
+  submittedResultSets            ResultSet[]                   @relation("ResultSetSubmittedBy")
+  issuedDocuments                IssuedDocument[]
+  requestedTransfers             TransferRequest[]
+  approvedTransfers              TransferRequest[]             @relation("TransferApprovedBy")
+  acceptedTransfers              TransferRequest[]             @relation("TransferAcceptedBy")
+  rejectedTransfers              TransferRequest[]             @relation("TransferRejectedBy")
+  cancelledTransfers             TransferRequest[]             @relation("TransferCancelledBy")
+  correctedDocuments             IssuedDocument[]              @relation("DocumentCorrectedBy")
+  withdrawnDocuments             IssuedDocument[]              @relation("DocumentWithdrawnBy")
+  publishedResultSets            ResultSet[]                   @relation("ResultSetPublishedBy")
+  resultCorrections              ResultCorrection[]
+  learningMaterials              LearningMaterial[]
+  announcements                  Announcement[]
+  id                             String                        @id @default(uuid())
+  email                          String                        @unique
+  displayName                    String
+  preferredLocale                PreferredLocale               @default(en)
+  preferredCalendar              CalendarPreference            @default(gregorian)
+  accountStatus                  AccountStatus                 @default(active)
+  createdAt                      DateTime                      @default(now())
+  updatedAt                      DateTime                      @updatedAt
+  organizationMemberships        OrganizationMembership[]
+  schoolMemberships              SchoolMembership[]
+  bureauAccesses                 BureauAccess[]
+  passwordCredential             PasswordCredential?
+  studentAccess                  StudentAccess?
+  guardianVerifications          StudentGuardian[]             @relation("GuardianVerifiedBy")
+  guardianRevocations            StudentGuardian[]             @relation("GuardianRevokedBy")
+  schoolServiceUpdates           SchoolServiceAccess[]
+  familyMessages                 FamilyMessage[]
+  teacherConversations           FamilyConversation[]          @relation("FamilyConversationTeacher")
+  closedFamilyConversations      FamilyConversation[]          @relation("FamilyConversationClosedBy")
+  escalatedFamilyConversations   FamilyConversation[]          @relation("FamilyConversationEscalatedBy")
+  guardianAccess                 GuardianAccess?
+  recoveryRequests               AccountRecoveryRequest[]
+  emailDeliveries                EmailDelivery[]
+  notificationPreferences        NotificationPreference[]
+  emailDigests                   EmailDigest[]
+  resolvedRecoveryReviews        RecoveryReview[]              @relation("RecoveryReviewResolver")
+  startedOnboardings             SchoolOnboarding[]            @relation("OnboardingStartedBy")
+  completedOnboardings           SchoolOnboarding[]            @relation("OnboardingCompletedBy")
+  completedChecklistItems        OnboardingChecklistItem[]
+  trainingRecords                TrainingRecord[]              @relation("TrainingUser")
+  recordedTraining               TrainingRecord[]              @relation("TrainingRecordedBy")
+  createdSupportRequests         SupportRequest[]              @relation("SupportRequestCreatedBy")
+  assignedSupportRequests        SupportRequest[]              @relation("SupportRequestAssignedTo")
+  supportRequestMessages         SupportRequestMessage[]
+  sessions                       Session[]
+  supportIdentity                SupportIdentity?
+  approvedEnrollments            Enrollment[]                  @relation("EnrollmentApprovedBy")
+  withdrawnEnrollments           Enrollment[]                  @relation("EnrollmentWithdrawnBy")
+  createdImportJobs              ImportJob[]
+  requestedDocuments             DocumentRequest[]
+  performedEnrollmentEvents      EnrollmentHistoryEvent[]
+  closedAcademicYears            AcademicYear[]                @relation("AcademicYearClosedBy")
+  createdProgressionPlans        ProgressionPlan[]             @relation("ProgressionPlanCreatedBy")
+  reviewedProgressionPlans       ProgressionPlan[]             @relation("ProgressionPlanReviewedBy")
+  appliedProgressionPlans        ProgressionPlan[]             @relation("ProgressionPlanAppliedBy")
+  resolvedProgressionExceptions  ProgressionException[]        @relation("ProgressionExceptionResolvedBy")
+  notifications                  Notification[]
+  teachingAssignments            TeachingAssignment[]
+  requestedStudentCorrections    StudentCorrectionRequest[]    @relation("StudentCorrectionRequestedBy")
+  reviewedStudentCorrections     StudentCorrectionRequest[]    @relation("StudentCorrectionReviewedBy")
   requestedEnrollmentCorrections EnrollmentCorrectionRequest[] @relation("EnrollmentCorrectionRequestedBy")
   reviewedEnrollmentCorrections  EnrollmentCorrectionRequest[] @relation("EnrollmentCorrectionReviewedBy")
-  privacyRequests              PrivacyRequest[] @relation("PrivacyRequestRequester")
-  reviewedPrivacyRequests      PrivacyRequest[] @relation("PrivacyRequestReviewer")
-  approvedRestrictions         ProcessingRestriction[] @relation("RestrictionApprovedBy")
-  endedRestrictions            ProcessingRestriction[] @relation("RestrictionEndedBy")
-  createdRetentionHolds         RetentionHold[] @relation("RetentionHoldCreatedBy")
-  releasedRetentionHolds        RetentionHold[] @relation("RetentionHoldReleasedBy")
-  marks                        Mark[]
+  privacyRequests                PrivacyRequest[]              @relation("PrivacyRequestRequester")
+  reviewedPrivacyRequests        PrivacyRequest[]              @relation("PrivacyRequestReviewer")
+  approvedRestrictions           ProcessingRestriction[]       @relation("RestrictionApprovedBy")
+  endedRestrictions              ProcessingRestriction[]       @relation("RestrictionEndedBy")
+  createdRetentionHolds          RetentionHold[]               @relation("RetentionHoldCreatedBy")
+  releasedRetentionHolds         RetentionHold[]               @relation("RetentionHoldReleasedBy")
+  marks                          Mark[]
 }
 
 model FileAsset {
-  eventAttachment EventAttachment?
+  eventAttachment      EventAttachment?
   courseworkAttachment CourseworkAttachment?
   submissionAttachment SubmissionAttachment?
-  id String @id @default(uuid())
-  schoolId String?
-  ownerUserId String?
-  purpose FileAssetPurpose
-  originalFileName String
-  contentType String
-  sizeBytes BigInt
-  checksum String
-  storageKey String @unique
-  status FileAssetStatus @default(pending)
-  scanRequired Boolean @default(false)
-  createdAt DateTime @default(now())
-  createdById String
-  deletedAt DateTime?
-  learningMaterialId String? @unique
-  issuedDocumentId String? @unique
-  school School? @relation(fields: [schoolId], references: [id], onDelete: Restrict)
-  ownerUser User? @relation("FileAssetOwner", fields: [ownerUserId], references: [id], onDelete: Restrict)
-  createdBy User @relation("FileAssetCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
-  learningMaterial LearningMaterial? @relation(fields: [learningMaterialId], references: [id], onDelete: Restrict)
-  issuedDocument IssuedDocument? @relation(fields: [issuedDocumentId], references: [id], onDelete: Restrict)
-  activeLogoFor SchoolDocumentProfile? @relation("ActiveSchoolLogo")
-  scans FileScan[]
+  id                   String                 @id @default(uuid())
+  schoolId             String?
+  ownerUserId          String?
+  purpose              FileAssetPurpose
+  originalFileName     String
+  contentType          String
+  sizeBytes            BigInt
+  checksum             String
+  storageKey           String                 @unique
+  status               FileAssetStatus        @default(pending)
+  scanRequired         Boolean                @default(false)
+  createdAt            DateTime               @default(now())
+  createdById          String
+  deletedAt            DateTime?
+  learningMaterialId   String?                @unique
+  issuedDocumentId     String?                @unique
+  school               School?                @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  ownerUser            User?                  @relation("FileAssetOwner", fields: [ownerUserId], references: [id], onDelete: Restrict)
+  createdBy            User                   @relation("FileAssetCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  learningMaterial     LearningMaterial?      @relation(fields: [learningMaterialId], references: [id], onDelete: Restrict)
+  issuedDocument       IssuedDocument?        @relation(fields: [issuedDocumentId], references: [id], onDelete: Restrict)
+  activeLogoFor        SchoolDocumentProfile? @relation("ActiveSchoolLogo")
+  scans                FileScan[]
 
   @@index([schoolId, purpose, status])
   @@index([ownerUserId, purpose, status])
@@ -785,158 +791,158 @@ model FileAsset {
 }
 
 model FileScan {
-  id String @id @default(uuid())
+  id          String          @id @default(uuid())
   fileAssetId String
-  scanner String
-  status FileScanStatus @default(pending)
-  startedAt DateTime?
+  scanner     String
+  status      FileScanStatus  @default(pending)
+  startedAt   DateTime?
   completedAt DateTime?
-  result FileScanResult?
+  result      FileScanResult?
   failureCode String?
-  createdAt DateTime @default(now())
-  fileAsset FileAsset @relation(fields: [fileAssetId], references: [id], onDelete: Restrict)
+  createdAt   DateTime        @default(now())
+  fileAsset   FileAsset       @relation(fields: [fileAssetId], references: [id], onDelete: Restrict)
 
   @@index([fileAssetId, createdAt])
   @@index([status, createdAt])
 }
 
 model MaintenanceWindow {
-  id String @id @default(uuid())
-  title String
-  reason String
-  startsAt DateTime
-  endsAt DateTime
-  status MaintenanceWindowStatus @default(scheduled)
+  id          String                  @id @default(uuid())
+  title       String
+  reason      String
+  startsAt    DateTime
+  endsAt      DateTime
+  status      MaintenanceWindowStatus @default(scheduled)
   createdById String
-  createdAt DateTime @default(now())
-  createdBy User @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  createdAt   DateTime                @default(now())
+  createdBy   User                    @relation(fields: [createdById], references: [id], onDelete: Restrict)
 
   @@index([status, startsAt])
 }
 
 model OperationalIncident {
-  id String @id @default(uuid())
-  severity OperationalIncidentSeverity
-  title String
-  summary String
-  status OperationalIncidentStatus @default(open)
-  startedAt DateTime @default(now())
-  resolvedAt DateTime?
-  createdById String
+  id           String                      @id @default(uuid())
+  severity     OperationalIncidentSeverity
+  title        String
+  summary      String
+  status       OperationalIncidentStatus   @default(open)
+  startedAt    DateTime                    @default(now())
+  resolvedAt   DateTime?
+  createdById  String
   resolvedById String?
-  createdBy User @relation("OperationalIncidentCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
-  resolvedBy User? @relation("OperationalIncidentResolvedBy", fields: [resolvedById], references: [id], onDelete: Restrict)
-  updates OperationalIncidentUpdate[]
+  createdBy    User                        @relation("OperationalIncidentCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  resolvedBy   User?                       @relation("OperationalIncidentResolvedBy", fields: [resolvedById], references: [id], onDelete: Restrict)
+  updates      OperationalIncidentUpdate[]
 
   @@index([status, startedAt])
   @@index([severity, startedAt])
 }
 
 model OperationalIncidentUpdate {
-  id String @id @default(uuid())
-  incidentId String
-  status OperationalIncidentStatus
-  message String
+  id          String                    @id @default(uuid())
+  incidentId  String
+  status      OperationalIncidentStatus
+  message     String
   createdById String
-  createdAt DateTime @default(now())
-  incident OperationalIncident @relation(fields: [incidentId], references: [id], onDelete: Restrict)
-  createdBy User @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  createdAt   DateTime                  @default(now())
+  incident    OperationalIncident       @relation(fields: [incidentId], references: [id], onDelete: Restrict)
+  createdBy   User                      @relation(fields: [createdById], references: [id], onDelete: Restrict)
 
   @@index([incidentId, createdAt])
 }
 
 model BackupPolicy {
-  id String @id @default("database")
-  enabled Boolean @default(false)
-  frequency BackupFrequency @default(daily)
-  retentionCount Int @default(7)
-  verificationRequired Boolean @default(true)
-  updatedById String
-  updatedAt DateTime @updatedAt
-  updatedBy User @relation("BackupPolicyUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
+  id                   String          @id @default("database")
+  enabled              Boolean         @default(false)
+  frequency            BackupFrequency @default(daily)
+  retentionCount       Int             @default(7)
+  verificationRequired Boolean         @default(true)
+  updatedById          String
+  updatedAt            DateTime        @updatedAt
+  updatedBy            User            @relation("BackupPolicyUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
 }
 
 model ScheduledTaskExecution {
-  id String @id @default(uuid())
-  seriesId String @default(uuid())
-  taskType ScheduledTaskType
-  scope String
-  resourceId String?
-  scheduledFor DateTime
-  startedAt DateTime?
-  completedAt DateTime?
-  interruptedAt DateTime?
-  status ScheduledTaskStatus @default(pending)
+  id                  String                   @id @default(uuid())
+  seriesId            String                   @default(uuid())
+  taskType            ScheduledTaskType
+  scope               String
+  resourceId          String?
+  scheduledFor        DateTime
+  startedAt           DateTime?
+  completedAt         DateTime?
+  interruptedAt       DateTime?
+  status              ScheduledTaskStatus      @default(pending)
   recoveryDisposition TaskRecoveryDisposition?
-  recoveryReason String?
-  claimedAt DateTime?
-  leaseExpiresAt DateTime?
-  heartbeatAt DateTime?
-  workerId String?
-  attempt Int @default(1)
-  failureCode String?
-  eligibleCount Int?
-  oldestEligibleAt DateTime?
-  createdAt DateTime @default(now())
+  recoveryReason      String?
+  claimedAt           DateTime?
+  leaseExpiresAt      DateTime?
+  heartbeatAt         DateTime?
+  workerId            String?
+  attempt             Int                      @default(1)
+  failureCode         String?
+  eligibleCount       Int?
+  oldestEligibleAt    DateTime?
+  createdAt           DateTime                 @default(now())
 
+  @@unique([seriesId, attempt])
   @@index([taskType, scope, scheduledFor])
   @@index([status, createdAt])
   @@index([status, startedAt])
   @@index([status, leaseExpiresAt])
   @@index([taskType, status, scheduledFor])
-  @@unique([seriesId, attempt])
 }
 
 model RecoveryReview {
-  id String @id @default(uuid())
-  domain RecoveryDomain
-  resourceType String
+  id                String               @id @default(uuid())
+  domain            RecoveryDomain
+  resourceType      String
   resourceReference String
-  reasonCode String
-  status RecoveryReviewStatus @default(open)
-  createdAt DateTime @default(now())
-  resolvedAt DateTime?
-  resolvedById String?
-  resolution String?
-  resolvedBy User? @relation("RecoveryReviewResolver", fields: [resolvedById], references: [id], onDelete: Restrict)
+  reasonCode        String
+  status            RecoveryReviewStatus @default(open)
+  createdAt         DateTime             @default(now())
+  resolvedAt        DateTime?
+  resolvedById      String?
+  resolution        String?
+  resolvedBy        User?                @relation("RecoveryReviewResolver", fields: [resolvedById], references: [id], onDelete: Restrict)
 
   @@index([status, createdAt])
   @@index([domain, resourceReference])
 }
 
 model BackupRecord {
-  id               String       @id @default(uuid())
-  scope            BackupScope  @default(database)
-  status           BackupStatus @default(pending)
-  startedAt        DateTime?
-  completedAt      DateTime?
-  createdAt        DateTime     @default(now())
-  createdById      String
-  sizeBytes        BigInt?
-  checksum         String?
-  storageReference String?
-  failureReason    String?
-  verifiedAt       DateTime?
+  id                 String                    @id @default(uuid())
+  scope              BackupScope               @default(database)
+  status             BackupStatus              @default(pending)
+  startedAt          DateTime?
+  completedAt        DateTime?
+  createdAt          DateTime                  @default(now())
+  createdById        String
+  sizeBytes          BigInt?
+  checksum           String?
+  storageReference   String?
+  failureReason      String?
+  verifiedAt         DateTime?
   verificationResult BackupVerificationResult?
   verificationReason String?
-  deletedAt DateTime?
-  createdBy        User         @relation("BackupCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
-  rehearsals       RestoreRehearsal[]
+  deletedAt          DateTime?
+  createdBy          User                      @relation("BackupCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  rehearsals         RestoreRehearsal[]
 
   @@index([createdAt])
   @@index([status, createdAt])
 }
 
 model RestoreRehearsal {
-  id String @id @default(uuid())
-  backupId String
-  startedAt DateTime @default(now())
-  completedAt DateTime?
-  status RestoreRehearsalStatus @default(running)
+  id            String                 @id @default(uuid())
+  backupId      String
+  startedAt     DateTime               @default(now())
+  completedAt   DateTime?
+  status        RestoreRehearsalStatus @default(running)
   failureReason String?
   performedById String
-  backup BackupRecord @relation(fields: [backupId], references: [id], onDelete: Restrict)
-  performedBy User @relation("RestoreRehearsalPerformedBy", fields: [performedById], references: [id], onDelete: Restrict)
+  backup        BackupRecord           @relation(fields: [backupId], references: [id], onDelete: Restrict)
+  performedBy   User                   @relation("RestoreRehearsalPerformedBy", fields: [performedById], references: [id], onDelete: Restrict)
 
   @@index([backupId, startedAt])
   @@index([status, startedAt])
@@ -988,9 +994,9 @@ model BureauAccess {
 }
 
 model ReportingPeriod {
-  opensAt DateTime?
-  dueAt DateTime?
-  closesAt DateTime?
+  opensAt         DateTime?
+  dueAt           DateTime?
+  closesAt        DateTime?
   id              String                 @id @default(uuid())
   organizationId  String
   name            String
@@ -1021,11 +1027,11 @@ model ReportingRequirement {
 }
 
 model ReportingSubmission {
-  id                String                    @id @default(uuid())
+  id                String                       @id @default(uuid())
   reportingPeriodId String
   schoolId          String
-  status            ReportingSubmissionStatus @default(draft)
-  currentVersion    Int                       @default(0)
+  status            ReportingSubmissionStatus    @default(draft)
+  currentVersion    Int                          @default(0)
   acceptedVersion   Int?
   snapshot          Json
   submittedAt       DateTime?
@@ -1035,10 +1041,10 @@ model ReportingSubmission {
   returnedAt        DateTime?
   returnedById      String?
   returnReason      String?
-  createdAt         DateTime                  @default(now())
-  updatedAt         DateTime                  @updatedAt
-  reportingPeriod   ReportingPeriod           @relation(fields: [reportingPeriodId], references: [id], onDelete: Cascade)
-  school            School                    @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  createdAt         DateTime                     @default(now())
+  updatedAt         DateTime                     @updatedAt
+  reportingPeriod   ReportingPeriod              @relation(fields: [reportingPeriodId], references: [id], onDelete: Cascade)
+  school            School                       @relation(fields: [schoolId], references: [id], onDelete: Restrict)
   versions          ReportingSubmissionVersion[]
 
   @@unique([reportingPeriodId, schoolId])
@@ -1047,21 +1053,21 @@ model ReportingSubmission {
 }
 
 model ReportingSubmissionVersion {
-  id                String                    @id @default(uuid())
-  submissionId      String
-  version           Int
-  snapshot          Json
-  snapshotChecksum  String? @db.VarChar(64)
-  provenance        ReportingVersionProvenance @default(nativeVersion)
-  integrityState    ReportingVersionIntegrity @default(verified)
-  validationSummary Json
-  resubmissionReason String? @db.VarChar(500)
-  status            ReportingSubmissionStatus @default(submitted)
-  submittedAt       DateTime                  @default(now())
-  submittedById     String
-  submission        ReportingSubmission       @relation(fields: [submissionId], references: [id], onDelete: Cascade)
-  submittedBy       User                      @relation("ReportingVersionSubmitter", fields: [submittedById], references: [id], onDelete: Restrict)
-  reviewNotes       ReportingReviewNote[]
+  id                 String                     @id @default(uuid())
+  submissionId       String
+  version            Int
+  snapshot           Json
+  snapshotChecksum   String?                    @db.VarChar(64)
+  provenance         ReportingVersionProvenance @default(nativeVersion)
+  integrityState     ReportingVersionIntegrity  @default(verified)
+  validationSummary  Json
+  resubmissionReason String?                    @db.VarChar(500)
+  status             ReportingSubmissionStatus  @default(submitted)
+  submittedAt        DateTime                   @default(now())
+  submittedById      String
+  submission         ReportingSubmission        @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  submittedBy        User                       @relation("ReportingVersionSubmitter", fields: [submittedById], references: [id], onDelete: Restrict)
+  reviewNotes        ReportingReviewNote[]
 
   @@unique([submissionId, version])
   @@index([submittedById])
@@ -1078,57 +1084,57 @@ enum ReportingVersionIntegrity {
 }
 
 model ReportingReviewNote {
-  id String @id @default(uuid())
-  submissionId String
-  version Int
-  authorUserId String
-  visibility ReportingNoteVisibility
-  body String @db.VarChar(2000)
-  createdAt DateTime @default(now())
+  id            String                     @id @default(uuid())
+  submissionId  String
+  version       Int
+  authorUserId  String
+  visibility    ReportingNoteVisibility
+  body          String                     @db.VarChar(2000)
+  createdAt     DateTime                   @default(now())
   versionRecord ReportingSubmissionVersion @relation(fields: [submissionId, version], references: [submissionId, version], onDelete: Cascade)
-  authorUser User @relation(fields: [authorUserId], references: [id], onDelete: Restrict)
+  authorUser    User                       @relation(fields: [authorUserId], references: [id], onDelete: Restrict)
 
   @@index([submissionId, createdAt])
   @@index([authorUserId])
 }
 
 model DataQualityIssue {
-  id String @id @default(uuid())
-  schoolId String
-  category String @db.VarChar(40)
-  severity DataQualitySeverity
-  code String @db.VarChar(80)
-  status DataQualityIssueStatus @default(open)
-  entityType String? @db.VarChar(40)
-  entityId String?
-  summary String @db.VarChar(240)
-  detectedAt DateTime @default(now())
-  resolvedAt DateTime?
-  resolvedById String?
-  dismissedAt DateTime?
-  dismissedById String?
-  dismissalReason String? @db.VarChar(500)
-  school School @relation(fields: [schoolId], references: [id], onDelete: Restrict)
-  resolvedBy User? @relation("DataQualityIssueResolver", fields: [resolvedById], references: [id], onDelete: Restrict)
-  dismissedBy User? @relation("DataQualityIssueDismisser", fields: [dismissedById], references: [id], onDelete: Restrict)
+  id              String                 @id @default(uuid())
+  schoolId        String
+  category        String                 @db.VarChar(40)
+  severity        DataQualitySeverity
+  code            String                 @db.VarChar(80)
+  status          DataQualityIssueStatus @default(open)
+  entityType      String?                @db.VarChar(40)
+  entityId        String?
+  summary         String                 @db.VarChar(240)
+  detectedAt      DateTime               @default(now())
+  resolvedAt      DateTime?
+  resolvedById    String?
+  dismissedAt     DateTime?
+  dismissedById   String?
+  dismissalReason String?                @db.VarChar(500)
+  school          School                 @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  resolvedBy      User?                  @relation("DataQualityIssueResolver", fields: [resolvedById], references: [id], onDelete: Restrict)
+  dismissedBy     User?                  @relation("DataQualityIssueDismisser", fields: [dismissedById], references: [id], onDelete: Restrict)
 
   @@index([schoolId, status, severity, detectedAt])
   @@index([schoolId, category, code])
 }
 
 model DataQualityRun {
-  id String @id @default(uuid())
-  schoolId String
-  trigger DataQualityRunTrigger
-  status DataQualityRunStatus @default(running)
+  id             String                @id @default(uuid())
+  schoolId       String
+  trigger        DataQualityRunTrigger
+  status         DataQualityRunStatus  @default(running)
   checksExecuted String[]
-  infoCount Int @default(0)
-  warningCount Int @default(0)
-  blockingCount Int @default(0)
-  startedAt DateTime @default(now())
-  completedAt DateTime?
-  failureCode String? @db.VarChar(80)
-  school School @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  infoCount      Int                   @default(0)
+  warningCount   Int                   @default(0)
+  blockingCount  Int                   @default(0)
+  startedAt      DateTime              @default(now())
+  completedAt    DateTime?
+  failureCode    String?               @db.VarChar(80)
+  school         School                @relation(fields: [schoolId], references: [id], onDelete: Restrict)
 
   @@index([schoolId, startedAt])
 }
@@ -1267,36 +1273,36 @@ model PasswordCredential {
 }
 
 model Session {
-  id        String   @id @default(uuid())
-  userId    String
-  tokenHash String   @unique
-  managementId String @unique @default(uuid())
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id           String   @id @default(uuid())
+  userId       String
+  tokenHash    String   @unique
+  managementId String   @unique @default(uuid())
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([expiresAt])
 }
 
 model SupportRequest {
-  id          String                 @id @default(uuid())
-  schoolId    String
-  createdById String
-  category    SupportRequestCategory
-  severity    SupportRequestSeverity @default(normal)
-  title       String
-  description String
-  status      SupportRequestStatus   @default(open)
-  createdAt   DateTime               @default(now())
-  updatedAt   DateTime               @updatedAt
-  closedAt    DateTime?
-  school      School                 @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  createdBy   User                   @relation("SupportRequestCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  id                    String                  @id @default(uuid())
+  schoolId              String
+  createdById           String
+  category              SupportRequestCategory
+  severity              SupportRequestSeverity  @default(normal)
+  title                 String
+  description           String
+  status                SupportRequestStatus    @default(open)
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+  closedAt              DateTime?
+  school                School                  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  createdBy             User                    @relation("SupportRequestCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
   assignedSupportUserId String?
-  assignedSupportUser User? @relation("SupportRequestAssignedTo", fields: [assignedSupportUserId], references: [id], onDelete: SetNull)
-  resolutionSummary String?
-  messages SupportRequestMessage[]
+  assignedSupportUser   User?                   @relation("SupportRequestAssignedTo", fields: [assignedSupportUserId], references: [id], onDelete: SetNull)
+  resolutionSummary     String?
+  messages              SupportRequestMessage[]
 
   @@index([schoolId, status, createdAt])
   @@index([createdById, createdAt])
@@ -1348,16 +1354,16 @@ model SchoolContact {
 }
 
 model SchoolOnboarding {
-  id            String                 @id @default(uuid())
-  schoolId      String                 @unique
-  status        SchoolOnboardingStatus @default(notStarted)
-  startedAt     DateTime?
-  startedById   String?
-  completedAt   DateTime?
-  completedById String?
-  school        School                 @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  startedBy     User?                  @relation("OnboardingStartedBy", fields: [startedById], references: [id], onDelete: SetNull)
-  completedBy   User?                  @relation("OnboardingCompletedBy", fields: [completedById], references: [id], onDelete: SetNull)
+  id             String                    @id @default(uuid())
+  schoolId       String                    @unique
+  status         SchoolOnboardingStatus    @default(notStarted)
+  startedAt      DateTime?
+  startedById    String?
+  completedAt    DateTime?
+  completedById  String?
+  school         School                    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  startedBy      User?                     @relation("OnboardingStartedBy", fields: [startedById], references: [id], onDelete: SetNull)
+  completedBy    User?                     @relation("OnboardingCompletedBy", fields: [completedById], references: [id], onDelete: SetNull)
   checklistItems OnboardingChecklistItem[]
 }
 
@@ -1375,25 +1381,25 @@ model OnboardingChecklistItem {
 }
 
 model LoginAttemptBucket {
-  emailHash      String   @id
-  failures       Int      @default(0)
+  emailHash      String    @id
+  failures       Int       @default(0)
   windowStartsAt DateTime
   blockedUntil   DateTime?
-  updatedAt      DateTime @updatedAt
+  updatedAt      DateTime  @updatedAt
 
   @@index([blockedUntil])
 }
 
 model AccountRecoveryRequest {
-  id          String                @id @default(uuid())
-  userId      String
-  status      AccountRecoveryStatus @default(pending)
-  createdAt   DateTime              @default(now())
-  expiresAt   DateTime
-  completedAt DateTime?
-  cancelledAt DateTime?
-  tokenHash   String?               @unique
-  user        User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id            String                @id @default(uuid())
+  userId        String
+  status        AccountRecoveryStatus @default(pending)
+  createdAt     DateTime              @default(now())
+  expiresAt     DateTime
+  completedAt   DateTime?
+  cancelledAt   DateTime?
+  tokenHash     String?               @unique
+  user          User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   emailDelivery EmailDelivery?
 
   @@index([userId, status])
@@ -1401,26 +1407,26 @@ model AccountRecoveryRequest {
 }
 
 model EmailDelivery {
-  id                 String              @id @default(uuid())
-  recipientUserId    String?
-  recoveryRequestId  String?             @unique
-  notificationId     String?             @unique
-  digestId           String?             @unique
-  recipientAddress   String
-  templateKey        String
-  status             EmailDeliveryStatus @default(queued)
-  createdAt          DateTime            @default(now())
-  scheduledAt        DateTime            @default(now())
-  startedAt          DateTime?
-  sentAt             DateTime?
-  failedAt           DateTime?
-  attemptCount       Int                 @default(0)
-  providerMessageId  String?
-  failureCode        String?
-  recipientUser      User?               @relation(fields: [recipientUserId], references: [id], onDelete: SetNull)
-  recoveryRequest    AccountRecoveryRequest? @relation(fields: [recoveryRequestId], references: [id], onDelete: SetNull)
-  notification       Notification?       @relation(fields: [notificationId], references: [id], onDelete: SetNull)
-  digest             EmailDigest?        @relation(fields: [digestId], references: [id], onDelete: SetNull)
+  id                String                  @id @default(uuid())
+  recipientUserId   String?
+  recoveryRequestId String?                 @unique
+  notificationId    String?                 @unique
+  digestId          String?                 @unique
+  recipientAddress  String
+  templateKey       String
+  status            EmailDeliveryStatus     @default(queued)
+  createdAt         DateTime                @default(now())
+  scheduledAt       DateTime                @default(now())
+  startedAt         DateTime?
+  sentAt            DateTime?
+  failedAt          DateTime?
+  attemptCount      Int                     @default(0)
+  providerMessageId String?
+  failureCode       String?
+  recipientUser     User?                   @relation(fields: [recipientUserId], references: [id], onDelete: SetNull)
+  recoveryRequest   AccountRecoveryRequest? @relation(fields: [recoveryRequestId], references: [id], onDelete: SetNull)
+  notification      Notification?           @relation(fields: [notificationId], references: [id], onDelete: SetNull)
+  digest            EmailDigest?            @relation(fields: [digestId], references: [id], onDelete: SetNull)
 
   @@index([status, scheduledAt])
   @@index([status, failureCode, failedAt])
@@ -1428,37 +1434,37 @@ model EmailDelivery {
 }
 
 model AcademicYear {
-  courseworkAssignments CourseworkAssignment[]
-  gradebookLocks GradebookLock[]
-  assessmentSchedules AssessmentSchedule[]
-  calendarDays SchoolCalendarDay[]
-  timetableEntries ClassTimetableEntry[]
-  timetables ClassTimetable[]
-  attendanceSessions AttendanceSession[]
-  status              AcademicYearStatus @default(active)
-  closingStartedAt    DateTime?
-  closedAt            DateTime?
-  closedById          String?
-  closedBy            User? @relation("AcademicYearClosedBy", fields: [closedById], references: [id], onDelete: SetNull)
-  resultSets          ResultSet[]
-  issuedDocuments     IssuedDocument[]
-  documentRequests    DocumentRequest[]
-  sourceProgressionPlans ProgressionPlan[] @relation("ProgressionSourceYear")
-  targetProgressionPlans ProgressionPlan[] @relation("ProgressionTargetYear")
-  learningMaterials   LearningMaterial[]
-  id                  String               @id @default(uuid())
-  schoolId            String
-  name                String
-  startsOn            DateTime             @db.Date
-  endsOn              DateTime             @db.Date
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @updatedAt
-  school              School               @relation(fields: [schoolId], references: [id], onDelete: Restrict)
-  classes             SchoolClass[]
-  teachingAssignments TeachingAssignment[]
-  gradingPeriods      GradingPeriod[]
-  enrollments         Enrollment[]
-  assessments         Assessment[]
+  courseworkAssignments  CourseworkAssignment[]
+  gradebookLocks         GradebookLock[]
+  assessmentSchedules    AssessmentSchedule[]
+  calendarDays           SchoolCalendarDay[]
+  timetableEntries       ClassTimetableEntry[]
+  timetables             ClassTimetable[]
+  attendanceSessions     AttendanceSession[]
+  status                 AcademicYearStatus     @default(active)
+  closingStartedAt       DateTime?
+  closedAt               DateTime?
+  closedById             String?
+  closedBy               User?                  @relation("AcademicYearClosedBy", fields: [closedById], references: [id], onDelete: SetNull)
+  resultSets             ResultSet[]
+  issuedDocuments        IssuedDocument[]
+  documentRequests       DocumentRequest[]
+  sourceProgressionPlans ProgressionPlan[]      @relation("ProgressionSourceYear")
+  targetProgressionPlans ProgressionPlan[]      @relation("ProgressionTargetYear")
+  learningMaterials      LearningMaterial[]
+  id                     String                 @id @default(uuid())
+  schoolId               String
+  name                   String
+  startsOn               DateTime               @db.Date
+  endsOn                 DateTime               @db.Date
+  createdAt              DateTime               @default(now())
+  updatedAt              DateTime               @updatedAt
+  school                 School                 @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  classes                SchoolClass[]
+  teachingAssignments    TeachingAssignment[]
+  gradingPeriods         GradingPeriod[]
+  enrollments            Enrollment[]
+  assessments            Assessment[]
 
   @@unique([schoolId, name])
   @@unique([id, schoolId])
@@ -1467,33 +1473,33 @@ model AcademicYear {
 }
 
 model SchoolCalendarDay {
-  id String @id @default(uuid())
-  schoolId String
+  id             String                @id @default(uuid())
+  schoolId       String
   academicYearId String
-  date DateTime @db.Date
-  dayType SchoolCalendarDayType
-  label String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  school School @relation(fields: [schoolId], references: [id], onDelete: Restrict)
-  academicYear AcademicYear @relation(fields: [academicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  date           DateTime              @db.Date
+  dayType        SchoolCalendarDayType
+  label          String?
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+  school         School                @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  academicYear   AcademicYear          @relation(fields: [academicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
 
   @@unique([schoolId, date])
   @@index([schoolId, academicYearId, date])
 }
 
 model TimetablePeriod {
-  id String @id @default(uuid())
-  schoolId String
-  name String
-  startTime String @db.VarChar(5)
-  endTime String @db.VarChar(5)
-  sortOrder Int
-  instructional Boolean @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  school School @relation(fields: [schoolId], references: [id], onDelete: Restrict)
-  timetableEntries ClassTimetableEntry[]
+  id                 String                @id @default(uuid())
+  schoolId           String
+  name               String
+  startTime          String                @db.VarChar(5)
+  endTime            String                @db.VarChar(5)
+  sortOrder          Int
+  instructional      Boolean               @default(true)
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+  school             School                @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  timetableEntries   ClassTimetableEntry[]
   attendanceSessions AttendanceSession[]
 
   @@unique([schoolId, name])
@@ -1504,44 +1510,44 @@ model TimetablePeriod {
 
 model GradeLevel {
   eventAudiences SchoolEventAudience[]
-  id          String        @id @default(uuid())
-  schoolId    String
-  name        String
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  school      School        @relation(fields: [schoolId], references: [id], onDelete: Restrict)
-  classes     SchoolClass[]
-  enrollments Enrollment[]
+  id             String                @id @default(uuid())
+  schoolId       String
+  name           String
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+  school         School                @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  classes        SchoolClass[]
+  enrollments    Enrollment[]
 
   @@unique([schoolId, name])
   @@unique([id, schoolId])
 }
 
 model SchoolClass {
-  eventAudiences SchoolEventAudience[]
+  eventAudiences        SchoolEventAudience[]
   courseworkAssignments CourseworkAssignment[]
-  gradebookLocks GradebookLock[]
-  assessmentSchedules AssessmentSchedule[]
-  assessmentSessions AssessmentSession[]
-  timetableEntries ClassTimetableEntry[]
-  timetables ClassTimetable[]
-  attendanceSessions AttendanceSession[]
-  resultSets          ResultSet[]
-  learningMaterials   LearningMaterial[]
-  announcements       Announcement[]
-  id                  String               @id @default(uuid())
-  schoolId            String
-  academicYearId      String
-  gradeLevelId        String
-  name                String
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @updatedAt
-  school              School               @relation(fields: [schoolId], references: [id], onDelete: Restrict)
-  academicYear        AcademicYear         @relation(fields: [academicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
-  gradeLevel          GradeLevel           @relation(fields: [gradeLevelId, schoolId], references: [id, schoolId], onDelete: Restrict)
-  enrollments         Enrollment[]
-  teachingAssignments TeachingAssignment[]
-  assessments         Assessment[]
+  gradebookLocks        GradebookLock[]
+  assessmentSchedules   AssessmentSchedule[]
+  assessmentSessions    AssessmentSession[]
+  timetableEntries      ClassTimetableEntry[]
+  timetables            ClassTimetable[]
+  attendanceSessions    AttendanceSession[]
+  resultSets            ResultSet[]
+  learningMaterials     LearningMaterial[]
+  announcements         Announcement[]
+  id                    String                 @id @default(uuid())
+  schoolId              String
+  academicYearId        String
+  gradeLevelId          String
+  name                  String
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  school                School                 @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  academicYear          AcademicYear           @relation(fields: [academicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  gradeLevel            GradeLevel             @relation(fields: [gradeLevelId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  enrollments           Enrollment[]
+  teachingAssignments   TeachingAssignment[]
+  assessments           Assessment[]
 
   @@unique([schoolId, academicYearId, gradeLevelId, name])
   @@unique([id, schoolId])
@@ -1550,55 +1556,55 @@ model SchoolClass {
 }
 
 model Student {
-  eventResponses EventResponse[]
-  meetingRequests ParentTeacherMeetingRequest[]
-  assignmentExtensions AssignmentExtension[]
-  courseworkSubmissions CourseworkSubmission[]
-  makeUpAssessments MakeUpAssessment[]
+  eventResponses           EventResponse[]
+  meetingRequests          ParentTeacherMeetingRequest[]
+  assignmentExtensions     AssignmentExtension[]
+  courseworkSubmissions    CourseworkSubmission[]
+  makeUpAssessments        MakeUpAssessment[]
   assessmentParticipations AssessmentParticipation[]
-  attendanceRecords StudentAttendanceRecord[]
-  transferRequests    TransferRequest[]
-  issuedDocuments     IssuedDocument[]
-  documentRequests    DocumentRequest[]
-  publishedResults    PublishedResult[]
-  progressionEntries  ProgressionEntry[]
-  id                  String               @id @default(uuid())
-  studentReference    String               @unique
-  givenName           String
-  familyName          String?
-  dateOfBirth         DateTime?            @db.Date
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @updatedAt
-  guardians           StudentGuardian[]
-  familyConversations FamilyConversation[]
-  studentAccess       StudentAccess?
-  enrollments         Enrollment[]
-  marks               Mark[]
-  correctionRequests  StudentCorrectionRequest[]
-  privacyRequests     PrivacyRequest[]
-  processingRestrictions ProcessingRestriction[]
-  retentionHolds RetentionHold[]
+  attendanceRecords        StudentAttendanceRecord[]
+  transferRequests         TransferRequest[]
+  issuedDocuments          IssuedDocument[]
+  documentRequests         DocumentRequest[]
+  publishedResults         PublishedResult[]
+  progressionEntries       ProgressionEntry[]
+  id                       String                        @id @default(uuid())
+  studentReference         String                        @unique
+  givenName                String
+  familyName               String?
+  dateOfBirth              DateTime?                     @db.Date
+  createdAt                DateTime                      @default(now())
+  updatedAt                DateTime                      @updatedAt
+  guardians                StudentGuardian[]
+  familyConversations      FamilyConversation[]
+  studentAccess            StudentAccess?
+  enrollments              Enrollment[]
+  marks                    Mark[]
+  correctionRequests       StudentCorrectionRequest[]
+  privacyRequests          PrivacyRequest[]
+  processingRestrictions   ProcessingRestriction[]
+  retentionHolds           RetentionHold[]
 }
 
 model StudentCorrectionRequest {
-  id             String                  @id @default(uuid())
-  studentId      String
-  schoolId       String
-  field          StudentCorrectionField
-  previousValue  String?
-  proposedValue  String?
-  reason         String
-  status         CorrectionRequestStatus @default(pending)
-  requestedById  String
-  requestedAt    DateTime                @default(now())
-  reviewReason   String?
-  effectiveAt    DateTime?
-  reviewedAt     DateTime?
-  reviewedById   String?
-  student        Student                 @relation(fields: [studentId], references: [id], onDelete: Restrict)
-  school         School                  @relation(fields: [schoolId], references: [id], onDelete: Restrict)
-  requestedBy    User                    @relation("StudentCorrectionRequestedBy", fields: [requestedById], references: [id], onDelete: Restrict)
-  reviewedBy     User?                   @relation("StudentCorrectionReviewedBy", fields: [reviewedById], references: [id], onDelete: Restrict)
+  id              String                  @id @default(uuid())
+  studentId       String
+  schoolId        String
+  field           StudentCorrectionField
+  previousValue   String?
+  proposedValue   String?
+  reason          String
+  status          CorrectionRequestStatus @default(pending)
+  requestedById   String
+  requestedAt     DateTime                @default(now())
+  reviewReason    String?
+  effectiveAt     DateTime?
+  reviewedAt      DateTime?
+  reviewedById    String?
+  student         Student                 @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  school          School                  @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  requestedBy     User                    @relation("StudentCorrectionRequestedBy", fields: [requestedById], references: [id], onDelete: Restrict)
+  reviewedBy      User?                   @relation("StudentCorrectionReviewedBy", fields: [reviewedById], references: [id], onDelete: Restrict)
   privacyRequests PrivacyRequest[]
 
   @@index([schoolId, status, requestedAt])
@@ -1616,13 +1622,13 @@ model StudentAccess {
 }
 
 model Guardian {
-  meetingRequests ParentTeacherMeetingRequest[]
-  id                  String               @id @default(uuid())
+  meetingRequests     ParentTeacherMeetingRequest[]
+  id                  String                        @id @default(uuid())
   name                String
   phone               String?
   email               String?
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @updatedAt
+  createdAt           DateTime                      @default(now())
+  updatedAt           DateTime                      @updatedAt
   students            StudentGuardian[]
   access              GuardianAccess?
   familyConversations FamilyConversation[]
@@ -1663,38 +1669,38 @@ model StudentGuardian {
 }
 
 model Enrollment {
-  assignmentExtensions AssignmentExtension[]
-  courseworkSubmissions CourseworkSubmission[]
+  assignmentExtensions     AssignmentExtension[]
+  courseworkSubmissions    CourseworkSubmission[]
   assessmentParticipations AssessmentParticipation[]
-  attendanceRecords StudentAttendanceRecord[]
-  receivingTransfer TransferRequest?  @relation("TransferDestination")
-  sourceTransfers   TransferRequest[] @relation("TransferSource")
-  publishedResults  PublishedResult[]
-  id                String            @id @default(uuid())
-  studentId         String
-  schoolId          String
-  academicYearId    String
-  gradeLevelId      String
-  schoolClassId     String?
-  status            EnrollmentStatus  @default(draft)
-  approvedAt        DateTime?
-  approvedById      String?
-  withdrawnAt       DateTime?
-  withdrawnById     String?
-  withdrawalReason  String?
-  createdAt         DateTime          @default(now())
-  updatedAt         DateTime          @updatedAt
-  student           Student           @relation(fields: [studentId], references: [id], onDelete: Restrict)
-  school            School            @relation(fields: [schoolId], references: [id], onDelete: Restrict)
-  academicYear      AcademicYear      @relation(fields: [academicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
-  gradeLevel        GradeLevel        @relation(fields: [gradeLevelId, schoolId], references: [id, schoolId], onDelete: Restrict)
-  schoolClass       SchoolClass?      @relation(fields: [schoolClassId, schoolId], references: [id, schoolId], onDelete: Restrict)
-  approvedBy        User?             @relation("EnrollmentApprovedBy", fields: [approvedById], references: [id], onDelete: Restrict)
-  withdrawnBy       User?             @relation("EnrollmentWithdrawnBy", fields: [withdrawnById], references: [id], onDelete: Restrict)
-  marks             Mark[]
-  historyEvents     EnrollmentHistoryEvent[]
-  correctionRequests EnrollmentCorrectionRequest[]
-  progressionEntries ProgressionEntry[]
+  attendanceRecords        StudentAttendanceRecord[]
+  receivingTransfer        TransferRequest?              @relation("TransferDestination")
+  sourceTransfers          TransferRequest[]             @relation("TransferSource")
+  publishedResults         PublishedResult[]
+  id                       String                        @id @default(uuid())
+  studentId                String
+  schoolId                 String
+  academicYearId           String
+  gradeLevelId             String
+  schoolClassId            String?
+  status                   EnrollmentStatus              @default(draft)
+  approvedAt               DateTime?
+  approvedById             String?
+  withdrawnAt              DateTime?
+  withdrawnById            String?
+  withdrawalReason         String?
+  createdAt                DateTime                      @default(now())
+  updatedAt                DateTime                      @updatedAt
+  student                  Student                       @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  school                   School                        @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  academicYear             AcademicYear                  @relation(fields: [academicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  gradeLevel               GradeLevel                    @relation(fields: [gradeLevelId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  schoolClass              SchoolClass?                  @relation(fields: [schoolClassId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  approvedBy               User?                         @relation("EnrollmentApprovedBy", fields: [approvedById], references: [id], onDelete: Restrict)
+  withdrawnBy              User?                         @relation("EnrollmentWithdrawnBy", fields: [withdrawnById], references: [id], onDelete: Restrict)
+  marks                    Mark[]
+  historyEvents            EnrollmentHistoryEvent[]
+  correctionRequests       EnrollmentCorrectionRequest[]
+  progressionEntries       ProgressionEntry[]
 
   @@unique([studentId, schoolId, academicYearId])
   @@unique([id, schoolId, studentId])
@@ -1707,47 +1713,47 @@ model Enrollment {
 }
 
 model EnrollmentCorrectionRequest {
-  id                        String                  @id @default(uuid())
-  enrollmentId              String
-  schoolId                  String
-  academicYearId            String
-  previousGradeLevelId      String
-  previousSchoolClassId     String?
-  proposedGradeLevelId      String
-  proposedSchoolClassId     String?
-  reason                    String
-  status                    CorrectionRequestStatus @default(pending)
-  requestedById             String
-  requestedAt               DateTime                @default(now())
-  reviewReason   String?
-  effectiveAt    DateTime?
-  reviewedAt                DateTime?
-  reviewedById              String?
-  enrollment                Enrollment              @relation(fields: [enrollmentId], references: [id], onDelete: Restrict)
-  school                    School                  @relation(fields: [schoolId], references: [id], onDelete: Restrict)
-  requestedBy               User                    @relation("EnrollmentCorrectionRequestedBy", fields: [requestedById], references: [id], onDelete: Restrict)
-  reviewedBy                User?                   @relation("EnrollmentCorrectionReviewedBy", fields: [reviewedById], references: [id], onDelete: Restrict)
+  id                    String                  @id @default(uuid())
+  enrollmentId          String
+  schoolId              String
+  academicYearId        String
+  previousGradeLevelId  String
+  previousSchoolClassId String?
+  proposedGradeLevelId  String
+  proposedSchoolClassId String?
+  reason                String
+  status                CorrectionRequestStatus @default(pending)
+  requestedById         String
+  requestedAt           DateTime                @default(now())
+  reviewReason          String?
+  effectiveAt           DateTime?
+  reviewedAt            DateTime?
+  reviewedById          String?
+  enrollment            Enrollment              @relation(fields: [enrollmentId], references: [id], onDelete: Restrict)
+  school                School                  @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  requestedBy           User                    @relation("EnrollmentCorrectionRequestedBy", fields: [requestedById], references: [id], onDelete: Restrict)
+  reviewedBy            User?                   @relation("EnrollmentCorrectionReviewedBy", fields: [reviewedById], references: [id], onDelete: Restrict)
 
   @@index([schoolId, status, requestedAt])
   @@index([enrollmentId, requestedAt])
 }
 
 model EnrollmentHistoryEvent {
-  id                       String                @id @default(uuid())
-  enrollmentId             String
-  eventType                EnrollmentHistoryType
-  effectiveAt              DateTime
-  performedById            String?
-  reason                   String?
-  previousAcademicYearId   String?
-  previousGradeLevelId     String?
-  previousSchoolClassId    String?
-  newAcademicYearId        String?
-  newGradeLevelId          String?
-  newSchoolClassId         String?
-  createdAt                DateTime              @default(now())
-  enrollment               Enrollment            @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
-  performedBy              User?                 @relation(fields: [performedById], references: [id], onDelete: SetNull)
+  id                     String                @id @default(uuid())
+  enrollmentId           String
+  eventType              EnrollmentHistoryType
+  effectiveAt            DateTime
+  performedById          String?
+  reason                 String?
+  previousAcademicYearId String?
+  previousGradeLevelId   String?
+  previousSchoolClassId  String?
+  newAcademicYearId      String?
+  newGradeLevelId        String?
+  newSchoolClassId       String?
+  createdAt              DateTime              @default(now())
+  enrollment             Enrollment            @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  performedBy            User?                 @relation(fields: [performedById], references: [id], onDelete: SetNull)
 
   @@index([enrollmentId, effectiveAt])
   @@index([performedById])
@@ -1755,21 +1761,21 @@ model EnrollmentHistoryEvent {
 
 model Subject {
   courseworkAssignments CourseworkAssignment[]
-  gradebookLocks GradebookLock[]
-  assessmentSchedules AssessmentSchedule[]
-  timetableEntries ClassTimetableEntry[]
-  attendanceSessions AttendanceSession[]
-  resultSets          ResultSet[]
-  learningMaterials   LearningMaterial[]
-  id                  String               @id @default(uuid())
-  schoolId            String
-  name                String
-  code                String?
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @updatedAt
-  school              School               @relation(fields: [schoolId], references: [id], onDelete: Restrict)
-  teachingAssignments TeachingAssignment[]
-  assessments         Assessment[]
+  gradebookLocks        GradebookLock[]
+  assessmentSchedules   AssessmentSchedule[]
+  timetableEntries      ClassTimetableEntry[]
+  attendanceSessions    AttendanceSession[]
+  resultSets            ResultSet[]
+  learningMaterials     LearningMaterial[]
+  id                    String                 @id @default(uuid())
+  schoolId              String
+  name                  String
+  code                  String?
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  school                School                 @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  teachingAssignments   TeachingAssignment[]
+  assessments           Assessment[]
 
   @@unique([schoolId, name])
   @@unique([schoolId, code])
@@ -1777,7 +1783,7 @@ model Subject {
 }
 
 model LearningMaterial {
-  fileAsset FileAsset?
+  fileAsset        FileAsset?
   id               String       @id @default(uuid())
   schoolId         String
   academicYearId   String
@@ -1822,29 +1828,29 @@ model Announcement {
 }
 
 model TeachingAssignment {
-  meetingRequests ParentTeacherMeetingRequest[]
+  meetingRequests       ParentTeacherMeetingRequest[]
   courseworkAssignments CourseworkAssignment[]
-  timetableEntries ClassTimetableEntry[]
-  attendanceSessions AttendanceSession[]
-  id             String       @id @default(uuid())
-  schoolId       String
-  userId         String
-  academicYearId String
-  schoolClassId  String
-  subjectId      String
-  startsAt       DateTime     @default(now())
-  endsAt         DateTime?
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  school         School       @relation(fields: [schoolId], references: [id], onDelete: Restrict)
-  user           User         @relation(fields: [userId], references: [id], onDelete: Restrict)
-  academicYear   AcademicYear @relation(fields: [academicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
-  schoolClass    SchoolClass  @relation(fields: [schoolClassId, schoolId, academicYearId], references: [id, schoolId, academicYearId], onDelete: Restrict)
-  subject        Subject      @relation(fields: [subjectId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  timetableEntries      ClassTimetableEntry[]
+  attendanceSessions    AttendanceSession[]
+  id                    String                        @id @default(uuid())
+  schoolId              String
+  userId                String
+  academicYearId        String
+  schoolClassId         String
+  subjectId             String
+  startsAt              DateTime                      @default(now())
+  endsAt                DateTime?
+  createdAt             DateTime                      @default(now())
+  updatedAt             DateTime                      @updatedAt
+  school                School                        @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  user                  User                          @relation(fields: [userId], references: [id], onDelete: Restrict)
+  academicYear          AcademicYear                  @relation(fields: [academicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  schoolClass           SchoolClass                   @relation(fields: [schoolClassId, schoolId, academicYearId], references: [id, schoolId, academicYearId], onDelete: Restrict)
+  subject               Subject                       @relation(fields: [subjectId, schoolId], references: [id, schoolId], onDelete: Restrict)
 
+  @@unique([id, schoolId, academicYearId, schoolClassId, subjectId], map: "TeachingAssignment_timetable_scope_key")
   @@index([schoolId, academicYearId, userId])
   @@index([schoolId, schoolClassId, subjectId])
-  @@unique([id, schoolId, academicYearId, schoolClassId, subjectId], map: "TeachingAssignment_timetable_scope_key")
 }
 
 enum ParentTeacherMeetingStatus {
@@ -1862,44 +1868,44 @@ enum MeetingMethod {
 }
 
 model TeacherMeetingAvailability {
-  id String @id @default(uuid())
-  schoolId String
+  id        String        @id @default(uuid())
+  schoolId  String
   teacherId String
-  startsAt DateTime
-  endsAt DateTime
-  method MeetingMethod
-  active Boolean @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  school School @relation(fields: [schoolId], references: [id], onDelete: Restrict)
-  teacher User @relation(fields: [teacherId], references: [id], onDelete: Restrict)
+  startsAt  DateTime
+  endsAt    DateTime
+  method    MeetingMethod
+  active    Boolean       @default(true)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  school    School        @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  teacher   User          @relation(fields: [teacherId], references: [id], onDelete: Restrict)
 
   @@index([schoolId, teacherId, startsAt])
 }
 
 model ParentTeacherMeetingRequest {
-  events MeetingEvent[]
-  id String @id @default(uuid())
-  schoolId String
-  studentId String
-  guardianId String
-  guardianUserId String
-  teacherId String
+  events               MeetingEvent[]
+  id                   String                     @id @default(uuid())
+  schoolId             String
+  studentId            String
+  guardianId           String
+  guardianUserId       String
+  teacherId            String
   teachingAssignmentId String
-  topic String @db.VarChar(300)
-  status ParentTeacherMeetingStatus @default(requested)
-  scheduledStartAt DateTime?
-  scheduledEndAt DateTime?
-  meetingMethod MeetingMethod?
-  schoolLocation String? @db.VarChar(200)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  school School @relation(fields: [schoolId], references: [id], onDelete: Restrict)
-  student Student @relation(fields: [studentId], references: [id], onDelete: Restrict)
-  guardian Guardian @relation(fields: [guardianId], references: [id], onDelete: Restrict)
-  guardianUser User @relation("MeetingGuardianUser", fields: [guardianUserId], references: [id], onDelete: Restrict)
-  teacher User @relation("MeetingTeacher", fields: [teacherId], references: [id], onDelete: Restrict)
-  teachingAssignment TeachingAssignment @relation(fields: [teachingAssignmentId], references: [id], onDelete: Restrict)
+  topic                String                     @db.VarChar(300)
+  status               ParentTeacherMeetingStatus @default(requested)
+  scheduledStartAt     DateTime?
+  scheduledEndAt       DateTime?
+  meetingMethod        MeetingMethod?
+  schoolLocation       String?                    @db.VarChar(200)
+  createdAt            DateTime                   @default(now())
+  updatedAt            DateTime                   @updatedAt
+  school               School                     @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  student              Student                    @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  guardian             Guardian                   @relation(fields: [guardianId], references: [id], onDelete: Restrict)
+  guardianUser         User                       @relation("MeetingGuardianUser", fields: [guardianUserId], references: [id], onDelete: Restrict)
+  teacher              User                       @relation("MeetingTeacher", fields: [teacherId], references: [id], onDelete: Restrict)
+  teachingAssignment   TeachingAssignment         @relation(fields: [teachingAssignmentId], references: [id], onDelete: Restrict)
 
   @@index([schoolId, teacherId, status, createdAt])
   @@index([schoolId, teacherId, scheduledStartAt])
@@ -1923,26 +1929,26 @@ enum SchoolEventStatus {
 }
 
 model SchoolEvent {
-  responses EventResponse[]
-  rsvpEnabled Boolean @default(false)
-  attachments EventAttachment[]
-  audience SchoolEventAudience?
-  id String @id @default(uuid())
-  schoolId String
-  createdById String
-  title String @db.VarChar(200)
-  description String @db.Text
-  startsAt DateTime
-  endsAt DateTime
-  schoolLocation String? @db.VarChar(200)
-  status SchoolEventStatus @default(draft)
-  publishedAt DateTime?
-  cancelledAt DateTime?
-  completedAt DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  school School @relation(fields: [schoolId], references: [id], onDelete: Restrict)
-  createdBy User @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  responses      EventResponse[]
+  rsvpEnabled    Boolean              @default(false)
+  attachments    EventAttachment[]
+  audience       SchoolEventAudience?
+  id             String               @id @default(uuid())
+  schoolId       String
+  createdById    String
+  title          String               @db.VarChar(200)
+  description    String               @db.Text
+  startsAt       DateTime
+  endsAt         DateTime
+  schoolLocation String?              @db.VarChar(200)
+  status         SchoolEventStatus    @default(draft)
+  publishedAt    DateTime?
+  cancelledAt    DateTime?
+  completedAt    DateTime?
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+  school         School               @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  createdBy      User                 @relation(fields: [createdById], references: [id], onDelete: Restrict)
 
   @@unique([id, schoolId])
   @@index([schoolId, status, startsAt])
@@ -1954,48 +1960,48 @@ enum EventResponseStatus {
 }
 
 model EventResponse {
-  id String @id @default(uuid())
-  eventId String
-  schoolId String
+  id               String                 @id @default(uuid())
+  eventId          String
+  schoolId         String
   respondentUserId String
-  subjectKey String @db.VarChar(100)
-  studentId String?
-  status EventResponseStatus
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  event SchoolEvent @relation(fields: [eventId, schoolId], references: [id, schoolId], onDelete: Restrict)
-  respondent User @relation(fields: [respondentUserId], references: [id], onDelete: Restrict)
-  student Student? @relation(fields: [studentId], references: [id], onDelete: Restrict)
-  history EventResponseHistory[]
+  subjectKey       String                 @db.VarChar(100)
+  studentId        String?
+  status           EventResponseStatus
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+  event            SchoolEvent            @relation(fields: [eventId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  respondent       User                   @relation(fields: [respondentUserId], references: [id], onDelete: Restrict)
+  student          Student?               @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  history          EventResponseHistory[]
 
   @@unique([eventId, respondentUserId, subjectKey])
   @@index([schoolId, eventId, status])
 }
 
 model EventResponseHistory {
-  id String @id @default(uuid())
-  responseId String
-  actorId String
+  id             String               @id @default(uuid())
+  responseId     String
+  actorId        String
   previousStatus EventResponseStatus?
-  newStatus EventResponseStatus
-  createdAt DateTime @default(now())
-  response EventResponse @relation(fields: [responseId], references: [id], onDelete: Restrict)
-  actor User @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  newStatus      EventResponseStatus
+  createdAt      DateTime             @default(now())
+  response       EventResponse        @relation(fields: [responseId], references: [id], onDelete: Restrict)
+  actor          User                 @relation(fields: [actorId], references: [id], onDelete: Restrict)
 
   @@index([responseId, createdAt])
 }
 
 model EventAttachment {
-  id String @id @default(uuid())
-  schoolId String
-  eventId String
-  fileAssetId String @unique
+  id          String      @id @default(uuid())
+  schoolId    String
+  eventId     String
+  fileAssetId String      @unique
   createdById String
-  createdAt DateTime @default(now())
-  removedAt DateTime?
-  event SchoolEvent @relation(fields: [eventId, schoolId], references: [id, schoolId], onDelete: Restrict)
-  fileAsset FileAsset @relation(fields: [fileAssetId], references: [id], onDelete: Restrict)
-  createdBy User @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  createdAt   DateTime    @default(now())
+  removedAt   DateTime?
+  event       SchoolEvent @relation(fields: [eventId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  fileAsset   FileAsset   @relation(fields: [fileAssetId], references: [id], onDelete: Restrict)
+  createdBy   User        @relation(fields: [createdById], references: [id], onDelete: Restrict)
 
   @@index([schoolId, eventId, removedAt])
 }
@@ -2010,74 +2016,74 @@ enum SchoolEventAudienceScope {
 }
 
 model SchoolEventAudience {
-  id String @id @default(uuid())
-  eventId String @unique
-  schoolId String
-  scope SchoolEventAudienceScope
-  gradeLevelId String?
+  id            String                   @id @default(uuid())
+  eventId       String                   @unique
+  schoolId      String
+  scope         SchoolEventAudienceScope
+  gradeLevelId  String?
   schoolClassId String?
-  event SchoolEvent @relation(fields: [eventId, schoolId], references: [id, schoolId], onDelete: Restrict)
-  gradeLevel GradeLevel? @relation(fields: [gradeLevelId, schoolId], references: [id, schoolId], onDelete: Restrict)
-  schoolClass SchoolClass? @relation(fields: [schoolClassId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  event         SchoolEvent              @relation(fields: [eventId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  gradeLevel    GradeLevel?              @relation(fields: [gradeLevelId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  schoolClass   SchoolClass?             @relation(fields: [schoolClassId, schoolId], references: [id, schoolId], onDelete: Restrict)
 
-  @@index([schoolId, scope])
   @@unique([eventId, schoolId])
+  @@index([schoolId, scope])
 }
 
 model MeetingEvent {
-  id String @id @default(uuid())
-  requestId String
-  actorId String
-  kind MeetingEventKind
-  reason String? @db.VarChar(300)
+  id              String                      @id @default(uuid())
+  requestId       String
+  actorId         String
+  kind            MeetingEventKind
+  reason          String?                     @db.VarChar(300)
   previousStartAt DateTime?
-  previousEndAt DateTime?
-  newStartAt DateTime?
-  newEndAt DateTime?
-  createdAt DateTime @default(now())
-  request ParentTeacherMeetingRequest @relation(fields: [requestId], references: [id], onDelete: Restrict)
-  actor User @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  previousEndAt   DateTime?
+  newStartAt      DateTime?
+  newEndAt        DateTime?
+  createdAt       DateTime                    @default(now())
+  request         ParentTeacherMeetingRequest @relation(fields: [requestId], references: [id], onDelete: Restrict)
+  actor           User                        @relation(fields: [actorId], references: [id], onDelete: Restrict)
 
   @@index([requestId, createdAt])
 }
 
 model ClassTimetable {
-  id String @id @default(uuid())
-  schoolId String
+  id             String                @id @default(uuid())
+  schoolId       String
   academicYearId String
-  schoolClassId String
-  status TimetableStatus @default(draft)
-  createdAt DateTime @default(now())
-  publishedAt DateTime?
-  archivedAt DateTime?
-  school School @relation(fields: [schoolId], references: [id], onDelete: Restrict)
-  academicYear AcademicYear @relation(fields: [academicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
-  schoolClass SchoolClass @relation(fields: [schoolClassId, schoolId, academicYearId], references: [id, schoolId, academicYearId], onDelete: Restrict)
-  entries ClassTimetableEntry[]
+  schoolClassId  String
+  status         TimetableStatus       @default(draft)
+  createdAt      DateTime              @default(now())
+  publishedAt    DateTime?
+  archivedAt     DateTime?
+  school         School                @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  academicYear   AcademicYear          @relation(fields: [academicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  schoolClass    SchoolClass           @relation(fields: [schoolClassId, schoolId, academicYearId], references: [id, schoolId, academicYearId], onDelete: Restrict)
+  entries        ClassTimetableEntry[]
 
   @@unique([id, schoolId, academicYearId, schoolClassId], map: "ClassTimetable_scope_key")
   @@index([schoolId, academicYearId, schoolClassId, status])
 }
 
 model ClassTimetableEntry {
-  id String @id @default(uuid())
-  timetableId String
-  schoolId String
-  academicYearId String
-  schoolClassId String
-  subjectId String
+  id                   String             @id @default(uuid())
+  timetableId          String
+  schoolId             String
+  academicYearId       String
+  schoolClassId        String
+  subjectId            String
   teachingAssignmentId String
-  timetablePeriodId String
-  weekday Int
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  school School @relation(fields: [schoolId], references: [id], onDelete: Restrict)
-  timetable ClassTimetable @relation(fields: [timetableId, schoolId, academicYearId, schoolClassId], references: [id, schoolId, academicYearId, schoolClassId], onDelete: Restrict, map: "ClassTimetableEntry_timetable_scope_fkey")
-  academicYear AcademicYear @relation(fields: [academicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
-  schoolClass SchoolClass @relation(fields: [schoolClassId, schoolId, academicYearId], references: [id, schoolId, academicYearId], onDelete: Restrict)
-  subject Subject @relation(fields: [subjectId, schoolId], references: [id, schoolId], onDelete: Restrict)
-  teachingAssignment TeachingAssignment @relation(fields: [teachingAssignmentId, schoolId, academicYearId, schoolClassId, subjectId], references: [id, schoolId, academicYearId, schoolClassId, subjectId], onDelete: Restrict, map: "ClassTimetableEntry_assignment_scope_fkey")
-  timetablePeriod TimetablePeriod @relation(fields: [timetablePeriodId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  timetablePeriodId    String
+  weekday              Int
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  school               School             @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  timetable            ClassTimetable     @relation(fields: [timetableId, schoolId, academicYearId, schoolClassId], references: [id, schoolId, academicYearId, schoolClassId], onDelete: Restrict, map: "ClassTimetableEntry_timetable_scope_fkey")
+  academicYear         AcademicYear       @relation(fields: [academicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  schoolClass          SchoolClass        @relation(fields: [schoolClassId, schoolId, academicYearId], references: [id, schoolId, academicYearId], onDelete: Restrict)
+  subject              Subject            @relation(fields: [subjectId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  teachingAssignment   TeachingAssignment @relation(fields: [teachingAssignmentId, schoolId, academicYearId, schoolClassId, subjectId], references: [id, schoolId, academicYearId, schoolClassId, subjectId], onDelete: Restrict, map: "ClassTimetableEntry_assignment_scope_fkey")
+  timetablePeriod      TimetablePeriod    @relation(fields: [timetablePeriodId, schoolId], references: [id, schoolId], onDelete: Restrict)
 
   @@unique([timetableId, weekday, timetablePeriodId], map: "ClassTimetableEntry_plan_slot_key")
   @@index([schoolId, academicYearId, weekday])
@@ -2085,28 +2091,28 @@ model ClassTimetableEntry {
 }
 
 model AttendanceSession {
-  id String @id @default(uuid())
-  schoolId String
-  academicYearId String
-  schoolClassId String
-  date DateTime @db.Date
-  timetablePeriodId String?
-  subjectId String?
+  id                   String                    @id @default(uuid())
+  schoolId             String
+  academicYearId       String
+  schoolClassId        String
+  date                 DateTime                  @db.Date
+  timetablePeriodId    String?
+  subjectId            String?
   teachingAssignmentId String?
-  status AttendanceSessionStatus @default(open)
-  createdById String
-  createdAt DateTime @default(now())
-  submittedAt DateTime?
-  finalizedAt DateTime?
-  cancelledAt DateTime?
-  school School @relation(fields: [schoolId], references: [id], onDelete: Restrict)
-  academicYear AcademicYear @relation(fields: [academicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
-  schoolClass SchoolClass @relation(fields: [schoolClassId, schoolId, academicYearId], references: [id, schoolId, academicYearId], onDelete: Restrict)
-  timetablePeriod TimetablePeriod? @relation(fields: [timetablePeriodId, schoolId], references: [id, schoolId], onDelete: Restrict)
-  subject Subject? @relation(fields: [subjectId, schoolId], references: [id, schoolId], onDelete: Restrict)
-  teachingAssignment TeachingAssignment? @relation(fields: [teachingAssignmentId, schoolId, academicYearId, schoolClassId, subjectId], references: [id, schoolId, academicYearId, schoolClassId, subjectId], onDelete: Restrict, map: "AttendanceSession_assignment_scope_fkey")
-  createdBy User @relation(fields: [createdById], references: [id], onDelete: Restrict)
-  records StudentAttendanceRecord[]
+  status               AttendanceSessionStatus   @default(open)
+  createdById          String
+  createdAt            DateTime                  @default(now())
+  submittedAt          DateTime?
+  finalizedAt          DateTime?
+  cancelledAt          DateTime?
+  school               School                    @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  academicYear         AcademicYear              @relation(fields: [academicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  schoolClass          SchoolClass               @relation(fields: [schoolClassId, schoolId, academicYearId], references: [id, schoolId, academicYearId], onDelete: Restrict)
+  timetablePeriod      TimetablePeriod?          @relation(fields: [timetablePeriodId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  subject              Subject?                  @relation(fields: [subjectId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  teachingAssignment   TeachingAssignment?       @relation(fields: [teachingAssignmentId, schoolId, academicYearId, schoolClassId, subjectId], references: [id, schoolId, academicYearId, schoolClassId, subjectId], onDelete: Restrict, map: "AttendanceSession_assignment_scope_fkey")
+  createdBy            User                      @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  records              StudentAttendanceRecord[]
 
   @@unique([id, schoolId, academicYearId, schoolClassId], map: "AttendanceSession_record_scope_key")
   @@index([schoolId, academicYearId, schoolClassId, date])
@@ -2114,60 +2120,60 @@ model AttendanceSession {
 }
 
 model StudentAttendanceRecord {
-  id String @id @default(uuid())
-  sessionId String
-  schoolId String
+  id             String                  @id @default(uuid())
+  sessionId      String
+  schoolId       String
   academicYearId String
-  schoolClassId String
-  studentId String
-  enrollmentId String
-  status StudentAttendanceStatus
-  note String?
-  recordedById String
-  recordedAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  session AttendanceSession @relation(fields: [sessionId, schoolId, academicYearId, schoolClassId], references: [id, schoolId, academicYearId, schoolClassId], onDelete: Restrict, map: "StudentAttendanceRecord_session_scope_fkey")
-  student Student @relation(fields: [studentId], references: [id], onDelete: Restrict)
-  enrollment Enrollment @relation(fields: [enrollmentId, schoolId, academicYearId, schoolClassId, studentId], references: [id, schoolId, academicYearId, schoolClassId, studentId], onDelete: Restrict, map: "StudentAttendanceRecord_enrollment_scope_fkey")
-  recordedBy User @relation(fields: [recordedById], references: [id], onDelete: Restrict)
-  corrections AttendanceCorrection[]
+  schoolClassId  String
+  studentId      String
+  enrollmentId   String
+  status         StudentAttendanceStatus
+  note           String?
+  recordedById   String
+  recordedAt     DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
+  session        AttendanceSession       @relation(fields: [sessionId, schoolId, academicYearId, schoolClassId], references: [id, schoolId, academicYearId, schoolClassId], onDelete: Restrict, map: "StudentAttendanceRecord_session_scope_fkey")
+  student        Student                 @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  enrollment     Enrollment              @relation(fields: [enrollmentId, schoolId, academicYearId, schoolClassId, studentId], references: [id, schoolId, academicYearId, schoolClassId, studentId], onDelete: Restrict, map: "StudentAttendanceRecord_enrollment_scope_fkey")
+  recordedBy     User                    @relation(fields: [recordedById], references: [id], onDelete: Restrict)
+  corrections    AttendanceCorrection[]
 
   @@unique([sessionId, studentId])
   @@index([schoolId, studentId, recordedAt])
 }
 
 model AttendanceCorrection {
-  id String @id @default(uuid())
-  recordId String
+  id             String                  @id @default(uuid())
+  recordId       String
   previousStatus StudentAttendanceStatus
-  newStatus StudentAttendanceStatus
-  reason String
-  performedById String
-  approvedById String?
-  effectiveAt DateTime @default(now())
-  record StudentAttendanceRecord @relation(fields: [recordId], references: [id], onDelete: Restrict)
-  performedBy User @relation("AttendanceCorrectionPerformer", fields: [performedById], references: [id], onDelete: Restrict)
-  approvedBy User? @relation("AttendanceCorrectionApprover", fields: [approvedById], references: [id], onDelete: Restrict)
+  newStatus      StudentAttendanceStatus
+  reason         String
+  performedById  String
+  approvedById   String?
+  effectiveAt    DateTime                @default(now())
+  record         StudentAttendanceRecord @relation(fields: [recordId], references: [id], onDelete: Restrict)
+  performedBy    User                    @relation("AttendanceCorrectionPerformer", fields: [performedById], references: [id], onDelete: Restrict)
+  approvedBy     User?                   @relation("AttendanceCorrectionApprover", fields: [approvedById], references: [id], onDelete: Restrict)
 
   @@index([recordId, effectiveAt])
 }
 
 model GradingPeriod {
   courseworkAssignments CourseworkAssignment[]
-  gradebookLocks GradebookLock[]
-  assessmentSchedules AssessmentSchedule[]
-  resultSets     ResultSet[]
-  id             String       @id @default(uuid())
-  schoolId       String
-  academicYearId String
-  name           String
-  startsOn       DateTime     @db.Date
-  endsOn         DateTime     @db.Date
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  school         School       @relation(fields: [schoolId], references: [id], onDelete: Restrict)
-  academicYear   AcademicYear @relation(fields: [academicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
-  assessments    Assessment[]
+  gradebookLocks        GradebookLock[]
+  assessmentSchedules   AssessmentSchedule[]
+  resultSets            ResultSet[]
+  id                    String                 @id @default(uuid())
+  schoolId              String
+  academicYearId        String
+  name                  String
+  startsOn              DateTime               @db.Date
+  endsOn                DateTime               @db.Date
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  school                School                 @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  academicYear          AcademicYear           @relation(fields: [academicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  assessments           Assessment[]
 
   @@unique([schoolId, academicYearId, name])
   @@unique([id, schoolId, academicYearId])
@@ -2176,26 +2182,26 @@ model GradingPeriod {
 
 model Assessment {
   courseworkAssignments CourseworkAssignment[]
-  markEntryWindow MarkEntryWindow?
-  schedules AssessmentSchedule[]
-  id              String        @id @default(uuid())
-  schoolId        String
-  academicYearId  String
-  gradingPeriodId String
-  schoolClassId   String
-  subjectId       String
-  name            String
-  maximumScore    Decimal       @db.Decimal(8, 2)
-  weight          Decimal       @db.Decimal(5, 2)
-  position        Int
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-  school          School        @relation(fields: [schoolId], references: [id], onDelete: Restrict)
-  academicYear    AcademicYear  @relation(fields: [academicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
-  gradingPeriod   GradingPeriod @relation(fields: [gradingPeriodId, schoolId, academicYearId], references: [id, schoolId, academicYearId], onDelete: Restrict)
-  schoolClass     SchoolClass   @relation(fields: [schoolClassId, schoolId, academicYearId], references: [id, schoolId, academicYearId], onDelete: Restrict)
-  subject         Subject       @relation(fields: [subjectId, schoolId], references: [id, schoolId], onDelete: Restrict)
-  marks           Mark[]
+  markEntryWindow       MarkEntryWindow?
+  schedules             AssessmentSchedule[]
+  id                    String                 @id @default(uuid())
+  schoolId              String
+  academicYearId        String
+  gradingPeriodId       String
+  schoolClassId         String
+  subjectId             String
+  name                  String
+  maximumScore          Decimal                @db.Decimal(8, 2)
+  weight                Decimal                @db.Decimal(5, 2)
+  position              Int
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  school                School                 @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  academicYear          AcademicYear           @relation(fields: [academicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  gradingPeriod         GradingPeriod          @relation(fields: [gradingPeriodId, schoolId, academicYearId], references: [id, schoolId, academicYearId], onDelete: Restrict)
+  schoolClass           SchoolClass            @relation(fields: [schoolClassId, schoolId, academicYearId], references: [id, schoolId, academicYearId], onDelete: Restrict)
+  subject               Subject                @relation(fields: [subjectId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  marks                 Mark[]
 
   @@unique([id, schoolId])
   @@unique([schoolId, academicYearId, gradingPeriodId, schoolClassId, subjectId, name], map: "Assessment_context_name_key")
@@ -2204,38 +2210,38 @@ model Assessment {
 }
 
 model CourseworkAssignment {
-  markTransfers CourseworkMarkTransfer[]
-  rubric CourseworkRubric?
-  extensions AssignmentExtension[]
-  attachments CourseworkAttachment[]
-  submissions CourseworkSubmission[]
-  id String @id @default(uuid())
-  schoolId String
-  academicYearId String
-  gradingPeriodId String?
-  schoolClassId String
-  subjectId String
+  markTransfers        CourseworkMarkTransfer[]
+  rubric               CourseworkRubric?
+  extensions           AssignmentExtension[]
+  attachments          CourseworkAttachment[]
+  submissions          CourseworkSubmission[]
+  id                   String                     @id @default(uuid())
+  schoolId             String
+  academicYearId       String
+  gradingPeriodId      String?
+  schoolClassId        String
+  subjectId            String
   teachingAssignmentId String
-  assessmentId String?
-  createdById String
-  title String @db.VarChar(200)
-  instructions String @db.Text
-  assignedAt DateTime?
-  dueAt DateTime
-  status CourseworkAssignmentStatus @default(draft)
-  publishedAt DateTime?
-  closedAt DateTime?
-  cancelledAt DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  school School @relation(fields: [schoolId], references: [id], onDelete: Restrict)
-  academicYear AcademicYear @relation(fields: [academicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
-  gradingPeriod GradingPeriod? @relation(fields: [gradingPeriodId, schoolId, academicYearId], references: [id, schoolId, academicYearId], onDelete: Restrict)
-  schoolClass SchoolClass @relation(fields: [schoolClassId, schoolId, academicYearId], references: [id, schoolId, academicYearId], onDelete: Restrict)
-  subject Subject @relation(fields: [subjectId, schoolId], references: [id, schoolId], onDelete: Restrict)
-  teachingAssignment TeachingAssignment @relation(fields: [teachingAssignmentId, schoolId, academicYearId, schoolClassId, subjectId], references: [id, schoolId, academicYearId, schoolClassId, subjectId], onDelete: Restrict)
-  assessment Assessment? @relation(fields: [assessmentId, schoolId], references: [id, schoolId], onDelete: Restrict)
-  createdBy User @relation("CourseworkAssignmentCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  assessmentId         String?
+  createdById          String
+  title                String                     @db.VarChar(200)
+  instructions         String                     @db.Text
+  assignedAt           DateTime?
+  dueAt                DateTime
+  status               CourseworkAssignmentStatus @default(draft)
+  publishedAt          DateTime?
+  closedAt             DateTime?
+  cancelledAt          DateTime?
+  createdAt            DateTime                   @default(now())
+  updatedAt            DateTime                   @updatedAt
+  school               School                     @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  academicYear         AcademicYear               @relation(fields: [academicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  gradingPeriod        GradingPeriod?             @relation(fields: [gradingPeriodId, schoolId, academicYearId], references: [id, schoolId, academicYearId], onDelete: Restrict)
+  schoolClass          SchoolClass                @relation(fields: [schoolClassId, schoolId, academicYearId], references: [id, schoolId, academicYearId], onDelete: Restrict)
+  subject              Subject                    @relation(fields: [subjectId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  teachingAssignment   TeachingAssignment         @relation(fields: [teachingAssignmentId, schoolId, academicYearId, schoolClassId, subjectId], references: [id, schoolId, academicYearId, schoolClassId, subjectId], onDelete: Restrict)
+  assessment           Assessment?                @relation(fields: [assessmentId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  createdBy            User                       @relation("CourseworkAssignmentCreator", fields: [createdById], references: [id], onDelete: Restrict)
 
   @@unique([id, schoolId])
   @@index([schoolId, academicYearId, schoolClassId, subjectId, status])
@@ -2244,120 +2250,120 @@ model CourseworkAssignment {
 }
 
 model CourseworkRubric {
-  scores RubricScore[]
-  id String @id @default(uuid())
-  schoolId String
+  scores       RubricScore[]
+  id           String               @id @default(uuid())
+  schoolId     String
   assignmentId String
-  title String @db.VarChar(200)
-  createdById String
-  frozenAt DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  assignment CourseworkAssignment @relation(fields: [assignmentId, schoolId], references: [id, schoolId], onDelete: Restrict)
-  createdBy User @relation("CourseworkRubricCreator", fields: [createdById], references: [id], onDelete: Restrict)
-  criteria RubricCriterion[]
+  title        String               @db.VarChar(200)
+  createdById  String
+  frozenAt     DateTime?
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  assignment   CourseworkAssignment @relation(fields: [assignmentId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  createdBy    User                 @relation("CourseworkRubricCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  criteria     RubricCriterion[]
 
   @@unique([assignmentId, schoolId])
   @@index([schoolId, createdAt])
 }
 
 model RubricCriterion {
-  scores RubricCriterionScore[]
-  id String @id @default(uuid())
-  rubricId String
-  title String @db.VarChar(200)
-  description String @db.VarChar(1000)
-  maxPoints Decimal @db.Decimal(7, 2)
-  sortOrder Int
-  rubric CourseworkRubric @relation(fields: [rubricId], references: [id], onDelete: Restrict)
+  scores      RubricCriterionScore[]
+  id          String                 @id @default(uuid())
+  rubricId    String
+  title       String                 @db.VarChar(200)
+  description String                 @db.VarChar(1000)
+  maxPoints   Decimal                @db.Decimal(7, 2)
+  sortOrder   Int
+  rubric      CourseworkRubric       @relation(fields: [rubricId], references: [id], onDelete: Restrict)
 
   @@unique([rubricId, sortOrder])
 }
 
 model RubricScore {
   markTransfers CourseworkMarkTransfer[]
-  id String @id @default(uuid())
-  revisionId String
-  rubricId String
-  version Int
-  totalPoints Decimal @db.Decimal(9, 2)
-  scoredById String
-  createdAt DateTime @default(now())
-  revision SubmissionRevision @relation(fields: [revisionId], references: [id], onDelete: Restrict)
-  rubric CourseworkRubric @relation(fields: [rubricId], references: [id], onDelete: Restrict)
-  scoredBy User @relation("RubricScorer", fields: [scoredById], references: [id], onDelete: Restrict)
-  criteria RubricCriterionScore[]
+  id            String                   @id @default(uuid())
+  revisionId    String
+  rubricId      String
+  version       Int
+  totalPoints   Decimal                  @db.Decimal(9, 2)
+  scoredById    String
+  createdAt     DateTime                 @default(now())
+  revision      SubmissionRevision       @relation(fields: [revisionId], references: [id], onDelete: Restrict)
+  rubric        CourseworkRubric         @relation(fields: [rubricId], references: [id], onDelete: Restrict)
+  scoredBy      User                     @relation("RubricScorer", fields: [scoredById], references: [id], onDelete: Restrict)
+  criteria      RubricCriterionScore[]
 
   @@unique([revisionId, version])
   @@index([rubricId, createdAt])
 }
 
 model RubricCriterionScore {
-  id String @id @default(uuid())
-  scoreId String
+  id          String          @id @default(uuid())
+  scoreId     String
   criterionId String
-  points Decimal @db.Decimal(7, 2)
-  score RubricScore @relation(fields: [scoreId], references: [id], onDelete: Restrict)
-  criterion RubricCriterion @relation(fields: [criterionId], references: [id], onDelete: Restrict)
+  points      Decimal         @db.Decimal(7, 2)
+  score       RubricScore     @relation(fields: [scoreId], references: [id], onDelete: Restrict)
+  criterion   RubricCriterion @relation(fields: [criterionId], references: [id], onDelete: Restrict)
 
   @@unique([scoreId, criterionId])
 }
 
 model CourseworkMarkTransfer {
-  id String @id @default(uuid())
-  schoolId String
-  assignmentId String
-  revisionId String
-  rubricScoreId String
-  markId String @unique
-  scoreTransferred Decimal @db.Decimal(9, 2)
-  createdById String
-  createdAt DateTime @default(now())
-  assignment CourseworkAssignment @relation(fields: [assignmentId, schoolId], references: [id, schoolId], onDelete: Restrict)
-  revision SubmissionRevision @relation(fields: [revisionId], references: [id], onDelete: Restrict)
-  rubricScore RubricScore @relation(fields: [rubricScoreId], references: [id], onDelete: Restrict)
-  mark Mark @relation(fields: [markId], references: [id], onDelete: Restrict)
-  createdBy User @relation("CourseworkMarkTransferCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  id               String               @id @default(uuid())
+  schoolId         String
+  assignmentId     String
+  revisionId       String
+  rubricScoreId    String
+  markId           String               @unique
+  scoreTransferred Decimal              @db.Decimal(9, 2)
+  createdById      String
+  createdAt        DateTime             @default(now())
+  assignment       CourseworkAssignment @relation(fields: [assignmentId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  revision         SubmissionRevision   @relation(fields: [revisionId], references: [id], onDelete: Restrict)
+  rubricScore      RubricScore          @relation(fields: [rubricScoreId], references: [id], onDelete: Restrict)
+  mark             Mark                 @relation(fields: [markId], references: [id], onDelete: Restrict)
+  createdBy        User                 @relation("CourseworkMarkTransferCreator", fields: [createdById], references: [id], onDelete: Restrict)
 
   @@index([schoolId, assignmentId, createdAt])
   @@index([revisionId, createdAt])
 }
 
 model AssignmentExtension {
-  id String @id @default(uuid())
-  schoolId String
-  assignmentId String
-  studentId String
-  enrollmentId String
+  id            String               @id @default(uuid())
+  schoolId      String
+  assignmentId  String
+  studentId     String
+  enrollmentId  String
   originalDueAt DateTime
   extendedDueAt DateTime
-  reason String @db.VarChar(500)
-  createdById String
-  createdAt DateTime @default(now())
-  assignment CourseworkAssignment @relation(fields: [assignmentId, schoolId], references: [id, schoolId], onDelete: Restrict)
-  student Student @relation(fields: [studentId], references: [id], onDelete: Restrict)
-  enrollment Enrollment @relation(fields: [enrollmentId, schoolId, studentId], references: [id, schoolId, studentId], onDelete: Restrict)
-  createdBy User @relation("AssignmentExtensionCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  reason        String               @db.VarChar(500)
+  createdById   String
+  createdAt     DateTime             @default(now())
+  assignment    CourseworkAssignment @relation(fields: [assignmentId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  student       Student              @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  enrollment    Enrollment           @relation(fields: [enrollmentId, schoolId, studentId], references: [id, schoolId, studentId], onDelete: Restrict)
+  createdBy     User                 @relation("AssignmentExtensionCreator", fields: [createdById], references: [id], onDelete: Restrict)
 
   @@index([assignmentId, studentId, createdAt])
   @@index([schoolId, createdAt])
 }
 
 model CourseworkSubmission {
-  revisions SubmissionRevision[]
-  id String @id @default(uuid())
-  schoolId String
+  revisions    SubmissionRevision[]
+  id           String                     @id @default(uuid())
+  schoolId     String
   assignmentId String
-  studentId String
+  studentId    String
   enrollmentId String
-  status CourseworkSubmissionStatus @default(draft)
-  startedAt DateTime @default(now())
-  submittedAt DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  assignment CourseworkAssignment @relation(fields: [assignmentId, schoolId], references: [id, schoolId], onDelete: Restrict)
-  student Student @relation(fields: [studentId], references: [id], onDelete: Restrict)
-  enrollment Enrollment @relation(fields: [enrollmentId, schoolId, studentId], references: [id, schoolId, studentId], onDelete: Restrict)
+  status       CourseworkSubmissionStatus @default(draft)
+  startedAt    DateTime                   @default(now())
+  submittedAt  DateTime?
+  createdAt    DateTime                   @default(now())
+  updatedAt    DateTime                   @updatedAt
+  assignment   CourseworkAssignment       @relation(fields: [assignmentId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  student      Student                    @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  enrollment   Enrollment                 @relation(fields: [enrollmentId, schoolId, studentId], references: [id, schoolId, studentId], onDelete: Restrict)
 
   @@unique([assignmentId, studentId])
   @@index([schoolId, assignmentId, status])
@@ -2365,114 +2371,114 @@ model CourseworkSubmission {
 }
 
 model SubmissionRevision {
-  markTransfers CourseworkMarkTransfer[]
-  feedback CourseworkFeedback?
-  rubricScores RubricScore[]
-  review SubmissionReview?
-  attachments SubmissionAttachment[]
-  id String @id @default(uuid())
-  submissionId String
+  markTransfers  CourseworkMarkTransfer[]
+  feedback       CourseworkFeedback?
+  rubricScores   RubricScore[]
+  review         SubmissionReview?
+  attachments    SubmissionAttachment[]
+  id             String                   @id @default(uuid())
+  submissionId   String
   revisionNumber Int
-  textResponse String @db.Text
-  submittedAt DateTime?
-  createdAt DateTime @default(now())
-  submission CourseworkSubmission @relation(fields: [submissionId], references: [id], onDelete: Restrict)
+  textResponse   String                   @db.Text
+  submittedAt    DateTime?
+  createdAt      DateTime                 @default(now())
+  submission     CourseworkSubmission     @relation(fields: [submissionId], references: [id], onDelete: Restrict)
 
   @@unique([submissionId, revisionNumber])
   @@index([submissionId, submittedAt])
 }
 
 model CourseworkFeedback {
-  id String @id @default(uuid())
-  revisionId String @unique
-  text String @db.Text
-  status CourseworkFeedbackStatus @default(draft)
-  authorId String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String                   @id @default(uuid())
+  revisionId String                   @unique
+  text       String                   @db.Text
+  status     CourseworkFeedbackStatus @default(draft)
+  authorId   String
+  createdAt  DateTime                 @default(now())
+  updatedAt  DateTime                 @updatedAt
   releasedAt DateTime?
-  revision SubmissionRevision @relation(fields: [revisionId], references: [id], onDelete: Restrict)
-  author User @relation("CourseworkFeedbackAuthor", fields: [authorId], references: [id], onDelete: Restrict)
+  revision   SubmissionRevision       @relation(fields: [revisionId], references: [id], onDelete: Restrict)
+  author     User                     @relation("CourseworkFeedbackAuthor", fields: [authorId], references: [id], onDelete: Restrict)
 
   @@index([status, releasedAt])
 }
 
 model SubmissionReview {
-  id String @id @default(uuid())
-  revisionId String @unique
-  status SubmissionReviewStatus @default(pending)
-  reviewedById String?
-  reviewedAt DateTime?
-  resubmissionAllowed Boolean @default(false)
-  resubmissionDueAt DateTime?
-  createdAt DateTime @default(now())
-  revision SubmissionRevision @relation(fields: [revisionId], references: [id], onDelete: Restrict)
-  reviewedBy User? @relation("SubmissionReviewer", fields: [reviewedById], references: [id], onDelete: Restrict)
+  id                  String                 @id @default(uuid())
+  revisionId          String                 @unique
+  status              SubmissionReviewStatus @default(pending)
+  reviewedById        String?
+  reviewedAt          DateTime?
+  resubmissionAllowed Boolean                @default(false)
+  resubmissionDueAt   DateTime?
+  createdAt           DateTime               @default(now())
+  revision            SubmissionRevision     @relation(fields: [revisionId], references: [id], onDelete: Restrict)
+  reviewedBy          User?                  @relation("SubmissionReviewer", fields: [reviewedById], references: [id], onDelete: Restrict)
 
   @@index([status, createdAt])
 }
 
 model SubmissionAttachment {
-  id String @id @default(uuid())
-  schoolId String
-  revisionId String
-  fileAssetId String @unique
-  createdAt DateTime @default(now())
-  removedAt DateTime?
-  revision SubmissionRevision @relation(fields: [revisionId], references: [id], onDelete: Restrict)
-  fileAsset FileAsset @relation(fields: [fileAssetId], references: [id], onDelete: Restrict)
+  id          String             @id @default(uuid())
+  schoolId    String
+  revisionId  String
+  fileAssetId String             @unique
+  createdAt   DateTime           @default(now())
+  removedAt   DateTime?
+  revision    SubmissionRevision @relation(fields: [revisionId], references: [id], onDelete: Restrict)
+  fileAsset   FileAsset          @relation(fields: [fileAssetId], references: [id], onDelete: Restrict)
 
   @@index([revisionId, removedAt])
   @@index([schoolId, createdAt])
 }
 
 model CourseworkAttachment {
-  id String @id @default(uuid())
-  schoolId String
+  id           String               @id @default(uuid())
+  schoolId     String
   assignmentId String
-  fileAssetId String @unique
-  createdById String
-  createdAt DateTime @default(now())
-  removedAt DateTime?
-  assignment CourseworkAssignment @relation(fields: [assignmentId, schoolId], references: [id, schoolId], onDelete: Restrict)
-  fileAsset FileAsset @relation(fields: [fileAssetId], references: [id], onDelete: Restrict)
-  createdBy User @relation("CourseworkAttachmentCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  fileAssetId  String               @unique
+  createdById  String
+  createdAt    DateTime             @default(now())
+  removedAt    DateTime?
+  assignment   CourseworkAssignment @relation(fields: [assignmentId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  fileAsset    FileAsset            @relation(fields: [fileAssetId], references: [id], onDelete: Restrict)
+  createdBy    User                 @relation("CourseworkAttachmentCreator", fields: [createdById], references: [id], onDelete: Restrict)
 
   @@index([assignmentId, removedAt])
   @@index([schoolId, createdAt])
 }
 
 model MarkEntryWindow {
-  id String @id @default(uuid())
-  schoolId String
-  academicYearId String
+  id              String                @id @default(uuid())
+  schoolId        String
+  academicYearId  String
   gradingPeriodId String
-  assessmentId String @unique
-  opensAt DateTime
-  closesAt DateTime
-  status MarkEntryWindowStatus @default(scheduled)
-  createdById String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  school School @relation(fields: [schoolId], references: [id], onDelete: Restrict)
-  assessment Assessment @relation(fields: [assessmentId, schoolId], references: [id, schoolId], onDelete: Restrict)
-  createdBy User @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  assessmentId    String                @unique
+  opensAt         DateTime
+  closesAt        DateTime
+  status          MarkEntryWindowStatus @default(scheduled)
+  createdById     String
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+  school          School                @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  assessment      Assessment            @relation(fields: [assessmentId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  createdBy       User                  @relation(fields: [createdById], references: [id], onDelete: Restrict)
 
-  @@index([schoolId, academicYearId, gradingPeriodId])
   @@unique([assessmentId, schoolId])
+  @@index([schoolId, academicYearId, gradingPeriodId])
 }
 
 model AssessmentRoom {
   schedules AssessmentSchedule[]
-  id        String   @id @default(uuid())
+  id        String               @id @default(uuid())
   schoolId  String
   name      String
   code      String
   capacity  Int?
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  school    School   @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  active    Boolean              @default(true)
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+  school    School               @relation(fields: [schoolId], references: [id], onDelete: Restrict)
 
   @@unique([schoolId, name])
   @@unique([schoolId, code])
@@ -2481,28 +2487,28 @@ model AssessmentRoom {
 }
 
 model AssessmentSchedule {
-  sessions AssessmentSession[]
-  id String @id @default(uuid())
-  schoolId String
-  academicYearId String
+  sessions        AssessmentSession[]
+  id              String                   @id @default(uuid())
+  schoolId        String
+  academicYearId  String
   gradingPeriodId String
-  schoolClassId String
-  subjectId String
-  assessmentId String
-  roomId String?
-  scheduledDate DateTime @db.Date
-  startTime String @db.VarChar(5)
-  endTime String @db.VarChar(5)
-  status AssessmentScheduleStatus @default(draft)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  school School @relation(fields: [schoolId], references: [id], onDelete: Restrict)
-  academicYear AcademicYear @relation(fields: [academicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
-  gradingPeriod GradingPeriod @relation(fields: [gradingPeriodId, schoolId, academicYearId], references: [id, schoolId, academicYearId], onDelete: Restrict)
-  schoolClass SchoolClass @relation(fields: [schoolClassId, schoolId, academicYearId], references: [id, schoolId, academicYearId], onDelete: Restrict)
-  subject Subject @relation(fields: [subjectId, schoolId], references: [id, schoolId], onDelete: Restrict)
-  assessment Assessment @relation(fields: [assessmentId, schoolId], references: [id, schoolId], onDelete: Restrict)
-  room AssessmentRoom? @relation(fields: [roomId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  schoolClassId   String
+  subjectId       String
+  assessmentId    String
+  roomId          String?
+  scheduledDate   DateTime                 @db.Date
+  startTime       String                   @db.VarChar(5)
+  endTime         String                   @db.VarChar(5)
+  status          AssessmentScheduleStatus @default(draft)
+  createdAt       DateTime                 @default(now())
+  updatedAt       DateTime                 @updatedAt
+  school          School                   @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  academicYear    AcademicYear             @relation(fields: [academicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  gradingPeriod   GradingPeriod            @relation(fields: [gradingPeriodId, schoolId, academicYearId], references: [id, schoolId, academicYearId], onDelete: Restrict)
+  schoolClass     SchoolClass              @relation(fields: [schoolClassId, schoolId, academicYearId], references: [id, schoolId, academicYearId], onDelete: Restrict)
+  subject         Subject                  @relation(fields: [subjectId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  assessment      Assessment               @relation(fields: [assessmentId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  room            AssessmentRoom?          @relation(fields: [roomId, schoolId], references: [id, schoolId], onDelete: Restrict)
 
   @@unique([id, schoolId])
   @@index([schoolId, scheduledDate, startTime])
@@ -2510,24 +2516,24 @@ model AssessmentSchedule {
 }
 
 model AssessmentSession {
-  invigilations AssessmentInvigilation[]
-  participations AssessmentParticipation[]
+  invigilations     AssessmentInvigilation[]
+  participations    AssessmentParticipation[]
   makeUpAssessments MakeUpAssessment[]
-  id String @id @default(uuid())
-  schoolId String
-  scheduleId String
-  schoolClassId String
-  sessionDate DateTime @db.Date
-  startTime String @db.VarChar(5)
-  endTime String @db.VarChar(5)
-  status AssessmentSessionStatus @default(planned)
-  openedAt DateTime?
-  completedAt DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  school School @relation(fields: [schoolId], references: [id], onDelete: Restrict)
-  schedule AssessmentSchedule @relation(fields: [scheduleId, schoolId], references: [id, schoolId], onDelete: Restrict)
-  schoolClass SchoolClass @relation(fields: [schoolClassId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  id                String                    @id @default(uuid())
+  schoolId          String
+  scheduleId        String
+  schoolClassId     String
+  sessionDate       DateTime                  @db.Date
+  startTime         String                    @db.VarChar(5)
+  endTime           String                    @db.VarChar(5)
+  status            AssessmentSessionStatus   @default(planned)
+  openedAt          DateTime?
+  completedAt       DateTime?
+  createdAt         DateTime                  @default(now())
+  updatedAt         DateTime                  @updatedAt
+  school            School                    @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  schedule          AssessmentSchedule        @relation(fields: [scheduleId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  schoolClass       SchoolClass               @relation(fields: [schoolClassId, schoolId], references: [id, schoolId], onDelete: Restrict)
 
   @@unique([id, schoolId])
   @@unique([scheduleId])
@@ -2535,16 +2541,16 @@ model AssessmentSession {
 }
 
 model AssessmentInvigilation {
-  id String @id @default(uuid())
-  schoolId String
-  sessionId String
-  userId String
+  id           String            @id @default(uuid())
+  schoolId     String
+  sessionId    String
+  userId       String
   assignedById String
-  createdAt DateTime @default(now())
-  school School @relation(fields: [schoolId], references: [id], onDelete: Restrict)
-  session AssessmentSession @relation(fields: [sessionId, schoolId], references: [id, schoolId], onDelete: Restrict)
-  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
-  assignedBy User @relation("InvigilationAssigner", fields: [assignedById], references: [id], onDelete: Restrict)
+  createdAt    DateTime          @default(now())
+  school       School            @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  session      AssessmentSession @relation(fields: [sessionId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  user         User              @relation(fields: [userId], references: [id], onDelete: Restrict)
+  assignedBy   User              @relation("InvigilationAssigner", fields: [assignedById], references: [id], onDelete: Restrict)
 
   @@unique([sessionId, userId])
   @@index([schoolId, userId])
@@ -2552,50 +2558,50 @@ model AssessmentInvigilation {
 
 model AssessmentParticipation {
   makeUpAssessments MakeUpAssessment[]
-  id String @id @default(uuid())
-  schoolId String
-  sessionId String
-  studentId String
-  enrollmentId String
-  academicYearId String
-  schoolClassId String
-  status AssessmentParticipationStatus
-  recordedById String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  school School @relation(fields: [schoolId], references: [id], onDelete: Restrict)
-  session AssessmentSession @relation(fields: [sessionId, schoolId], references: [id, schoolId], onDelete: Restrict)
-  student Student @relation(fields: [studentId], references: [id], onDelete: Restrict)
-  enrollment Enrollment @relation(fields: [enrollmentId, schoolId, academicYearId, schoolClassId, studentId], references: [id, schoolId, academicYearId, schoolClassId, studentId], onDelete: Restrict)
-  recordedBy User @relation("AssessmentParticipationRecorder", fields: [recordedById], references: [id], onDelete: Restrict)
+  id                String                        @id @default(uuid())
+  schoolId          String
+  sessionId         String
+  studentId         String
+  enrollmentId      String
+  academicYearId    String
+  schoolClassId     String
+  status            AssessmentParticipationStatus
+  recordedById      String
+  createdAt         DateTime                      @default(now())
+  updatedAt         DateTime                      @updatedAt
+  school            School                        @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  session           AssessmentSession             @relation(fields: [sessionId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  student           Student                       @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  enrollment        Enrollment                    @relation(fields: [enrollmentId, schoolId, academicYearId, schoolClassId, studentId], references: [id, schoolId, academicYearId, schoolClassId, studentId], onDelete: Restrict)
+  recordedBy        User                          @relation("AssessmentParticipationRecorder", fields: [recordedById], references: [id], onDelete: Restrict)
 
   @@unique([sessionId, studentId])
   @@index([schoolId, studentId])
 }
 
 model MakeUpAssessment {
-  id String @id @default(uuid())
-  schoolId String
-  originalSessionId String
+  id                      String                  @id @default(uuid())
+  schoolId                String
+  originalSessionId       String
   originalParticipationId String
-  studentId String
-  reason String
-  status MakeUpAssessmentStatus @default(requested)
-  scheduledDate DateTime? @db.Date
-  startTime String? @db.VarChar(5)
-  endTime String? @db.VarChar(5)
-  createdById String
-  approvedById String?
-  reviewedAt DateTime?
-  completedAt DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  school School @relation(fields: [schoolId], references: [id], onDelete: Restrict)
-  originalSession AssessmentSession @relation(fields: [originalSessionId, schoolId], references: [id, schoolId], onDelete: Restrict)
-  originalParticipation AssessmentParticipation @relation(fields: [originalParticipationId], references: [id], onDelete: Restrict)
-  student Student @relation(fields: [studentId], references: [id], onDelete: Restrict)
-  createdBy User @relation("MakeUpCreator", fields: [createdById], references: [id], onDelete: Restrict)
-  approvedBy User? @relation("MakeUpApprover", fields: [approvedById], references: [id], onDelete: Restrict)
+  studentId               String
+  reason                  String
+  status                  MakeUpAssessmentStatus  @default(requested)
+  scheduledDate           DateTime?               @db.Date
+  startTime               String?                 @db.VarChar(5)
+  endTime                 String?                 @db.VarChar(5)
+  createdById             String
+  approvedById            String?
+  reviewedAt              DateTime?
+  completedAt             DateTime?
+  createdAt               DateTime                @default(now())
+  updatedAt               DateTime                @updatedAt
+  school                  School                  @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  originalSession         AssessmentSession       @relation(fields: [originalSessionId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  originalParticipation   AssessmentParticipation @relation(fields: [originalParticipationId], references: [id], onDelete: Restrict)
+  student                 Student                 @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  createdBy               User                    @relation("MakeUpCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  approvedBy              User?                   @relation("MakeUpApprover", fields: [approvedById], references: [id], onDelete: Restrict)
 
   @@unique([originalParticipationId])
   @@index([schoolId, status])
@@ -2604,21 +2610,21 @@ model MakeUpAssessment {
 model Mark {
   courseworkTransfer CourseworkMarkTransfer?
   moderationRequests MarkModerationRequest[]
-  corrections MarkCorrection[]
-  id           String     @id @default(uuid())
-  schoolId     String
-  studentId    String
-  enrollmentId String
-  assessmentId String
-  score        Decimal    @db.Decimal(8, 2)
-  recordedById String
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-  school       School     @relation(fields: [schoolId], references: [id], onDelete: Restrict)
-  student      Student    @relation(fields: [studentId], references: [id], onDelete: Restrict)
-  enrollment   Enrollment @relation(fields: [enrollmentId, schoolId, studentId], references: [id, schoolId, studentId], onDelete: Restrict)
-  assessment   Assessment @relation(fields: [assessmentId, schoolId], references: [id, schoolId], onDelete: Restrict)
-  recordedBy   User       @relation(fields: [recordedById], references: [id], onDelete: Restrict)
+  corrections        MarkCorrection[]
+  id                 String                  @id @default(uuid())
+  schoolId           String
+  studentId          String
+  enrollmentId       String
+  assessmentId       String
+  score              Decimal                 @db.Decimal(8, 2)
+  recordedById       String
+  createdAt          DateTime                @default(now())
+  updatedAt          DateTime                @updatedAt
+  school             School                  @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  student            Student                 @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  enrollment         Enrollment              @relation(fields: [enrollmentId, schoolId, studentId], references: [id, schoolId, studentId], onDelete: Restrict)
+  assessment         Assessment              @relation(fields: [assessmentId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  recordedBy         User                    @relation(fields: [recordedById], references: [id], onDelete: Restrict)
 
   @@unique([enrollmentId, assessmentId])
   @@index([schoolId, assessmentId])
@@ -2626,76 +2632,76 @@ model Mark {
 }
 
 model MarkModerationRequest {
-  correction MarkCorrection?
-  id String @id @default(uuid())
-  schoolId String
-  markId String
-  originalScore Decimal @db.Decimal(8, 2)
-  proposedScore Decimal @db.Decimal(8, 2)
-  reason String
-  status MarkModerationStatus @default(pending)
+  correction    MarkCorrection?
+  id            String               @id @default(uuid())
+  schoolId      String
+  markId        String
+  originalScore Decimal              @db.Decimal(8, 2)
+  proposedScore Decimal              @db.Decimal(8, 2)
+  reason        String
+  status        MarkModerationStatus @default(pending)
   requestedById String
-  reviewedAt DateTime?
-  reviewedById String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  school School @relation(fields: [schoolId], references: [id], onDelete: Restrict)
-  mark Mark @relation(fields: [markId], references: [id], onDelete: Restrict)
-  requestedBy User @relation("ModerationRequester", fields: [requestedById], references: [id], onDelete: Restrict)
-  reviewedBy User? @relation("ModerationReviewer", fields: [reviewedById], references: [id], onDelete: Restrict)
+  reviewedAt    DateTime?
+  reviewedById  String?
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  school        School               @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  mark          Mark                 @relation(fields: [markId], references: [id], onDelete: Restrict)
+  requestedBy   User                 @relation("ModerationRequester", fields: [requestedById], references: [id], onDelete: Restrict)
+  reviewedBy    User?                @relation("ModerationReviewer", fields: [reviewedById], references: [id], onDelete: Restrict)
 
   @@index([schoolId, status])
   @@index([markId, createdAt])
 }
 
 model MarkCorrection {
-  id String @id @default(uuid())
-  schoolId String
-  markId String
-  moderationRequestId String @unique
-  previousScore Decimal @db.Decimal(8, 2)
-  newScore Decimal @db.Decimal(8, 2)
-  reviewerId String
-  reason String
-  effectiveAt DateTime @default(now())
-  school School @relation(fields: [schoolId], references: [id], onDelete: Restrict)
-  mark Mark @relation(fields: [markId], references: [id], onDelete: Restrict)
-  moderationRequest MarkModerationRequest @relation(fields: [moderationRequestId], references: [id], onDelete: Restrict)
-  reviewer User @relation(fields: [reviewerId], references: [id], onDelete: Restrict)
+  id                  String                @id @default(uuid())
+  schoolId            String
+  markId              String
+  moderationRequestId String                @unique
+  previousScore       Decimal               @db.Decimal(8, 2)
+  newScore            Decimal               @db.Decimal(8, 2)
+  reviewerId          String
+  reason              String
+  effectiveAt         DateTime              @default(now())
+  school              School                @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  mark                Mark                  @relation(fields: [markId], references: [id], onDelete: Restrict)
+  moderationRequest   MarkModerationRequest @relation(fields: [moderationRequestId], references: [id], onDelete: Restrict)
+  reviewer            User                  @relation(fields: [reviewerId], references: [id], onDelete: Restrict)
 
   @@index([schoolId, markId, effectiveAt])
 }
 
 model GradebookLock {
-  id String @id @default(uuid())
-  schoolId String
-  academicYearId String
+  id              String               @id @default(uuid())
+  schoolId        String
+  academicYearId  String
   gradingPeriodId String
-  schoolClassId String
-  subjectId String
-  locked Boolean @default(false)
-  lockedAt DateTime?
-  updatedAt DateTime @updatedAt
-  school School @relation(fields: [schoolId], references: [id], onDelete: Restrict)
-  academicYear AcademicYear @relation(fields: [academicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
-  gradingPeriod GradingPeriod @relation(fields: [gradingPeriodId, schoolId, academicYearId], references: [id, schoolId, academicYearId], onDelete: Restrict)
-  schoolClass SchoolClass @relation(fields: [schoolClassId, schoolId, academicYearId], references: [id, schoolId, academicYearId], onDelete: Restrict)
-  subject Subject @relation(fields: [subjectId, schoolId], references: [id, schoolId], onDelete: Restrict)
-  events GradebookLockEvent[]
+  schoolClassId   String
+  subjectId       String
+  locked          Boolean              @default(false)
+  lockedAt        DateTime?
+  updatedAt       DateTime             @updatedAt
+  school          School               @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  academicYear    AcademicYear         @relation(fields: [academicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  gradingPeriod   GradingPeriod        @relation(fields: [gradingPeriodId, schoolId, academicYearId], references: [id, schoolId, academicYearId], onDelete: Restrict)
+  schoolClass     SchoolClass          @relation(fields: [schoolClassId, schoolId, academicYearId], references: [id, schoolId, academicYearId], onDelete: Restrict)
+  subject         Subject              @relation(fields: [subjectId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  events          GradebookLockEvent[]
 
   @@unique([schoolId, academicYearId, gradingPeriodId, schoolClassId, subjectId], name: "GradebookLock_context_key", map: "GradebookLock_context_key")
   @@index([schoolId, locked])
 }
 
 model GradebookLockEvent {
-  id String @id @default(uuid())
-  lockId String
-  action GradebookLockAction
-  actorId String
-  reason String?
-  effectiveAt DateTime @default(now())
-  lock GradebookLock @relation(fields: [lockId], references: [id], onDelete: Restrict)
-  actor User @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  id          String              @id @default(uuid())
+  lockId      String
+  action      GradebookLockAction
+  actorId     String
+  reason      String?
+  effectiveAt DateTime            @default(now())
+  lock        GradebookLock       @relation(fields: [lockId], references: [id], onDelete: Restrict)
+  actor       User                @relation(fields: [actorId], references: [id], onDelete: Restrict)
 
   @@index([lockId, effectiveAt])
 }
@@ -2789,7 +2795,7 @@ model ResultCorrection {
 }
 
 model IssuedDocument {
-  fileAsset FileAsset?
+  fileAsset             FileAsset?
   id                    String              @id @default(uuid())
   studentId             String
   schoolId              String
@@ -2817,7 +2823,7 @@ model IssuedDocument {
   withdrawnBy           User?               @relation("DocumentWithdrawnBy", fields: [withdrawnById], references: [id], onDelete: Restrict)
   supersedes            IssuedDocument?     @relation("DocumentVersion", fields: [supersedesId], references: [id], onDelete: Restrict)
   replacedBy            IssuedDocument?     @relation("DocumentVersion")
-  retentionHolds       RetentionHold[]
+  retentionHolds        RetentionHold[]
   verificationEvents    VerificationEvent[]
   documentRequest       DocumentRequest?
 
@@ -2949,21 +2955,21 @@ enum ImportIssueSeverity {
 }
 
 model ImportJob {
-  id               String          @id @default(uuid())
+  id               String           @id @default(uuid())
   schoolId         String
   createdById      String
-  type             ImportJobType   @default(studentRegistration)
-  status           ImportJobStatus @default(uploaded)
+  type             ImportJobType    @default(studentRegistration)
+  status           ImportJobStatus  @default(uploaded)
   originalFileName String?
-  totalRows        Int             @default(0)
-  validRows        Int             @default(0)
-  invalidRows      Int             @default(0)
-  normalizedRows   Json            @default("[]")
-  createdAt        DateTime        @default(now())
+  totalRows        Int              @default(0)
+  validRows        Int              @default(0)
+  invalidRows      Int              @default(0)
+  normalizedRows   Json             @default("[]")
+  createdAt        DateTime         @default(now())
   validatedAt      DateTime?
   appliedAt        DateTime?
-  school           School          @relation(fields: [schoolId], references: [id], onDelete: Restrict)
-  createdBy        User            @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  school           School           @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  createdBy        User             @relation(fields: [createdById], references: [id], onDelete: Restrict)
   issues           ImportRowIssue[]
 
   @@index([schoolId, createdAt])
@@ -2980,19 +2986,20 @@ model ImportRowIssue {
 
   @@index([jobId, rowNumber])
 }
+
 model Notification {
-  id           String    @id @default(uuid())
-  userId       String
-  type         String
-  title        String
-  message      String
-  resourceType String?
-  resourceId   String?
-  dedupeKey    String?   @unique
-  createdAt    DateTime  @default(now())
-  readAt       DateTime?
+  id            String         @id @default(uuid())
+  userId        String
+  type          String
+  title         String
+  message       String
+  resourceType  String?
+  resourceId    String?
+  dedupeKey     String?        @unique
+  createdAt     DateTime       @default(now())
+  readAt        DateTime?
   emailRoutedAt DateTime?
-  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   emailDelivery EmailDelivery?
 
   @@index([userId, createdAt, id])
@@ -3001,15 +3008,15 @@ model Notification {
 }
 
 model NotificationPreference {
-  id              String               @id @default(uuid())
-  userId          String
-  category        NotificationCategory
-  inAppEnabled    Boolean              @default(true)
-  emailEnabled    Boolean              @default(false)
-  digestCadence   DigestCadence        @default(off)
-  createdAt       DateTime             @default(now())
-  updatedAt       DateTime             @updatedAt
-  user            User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id            String               @id @default(uuid())
+  userId        String
+  category      NotificationCategory
+  inAppEnabled  Boolean              @default(true)
+  emailEnabled  Boolean              @default(false)
+  digestCadence DigestCadence        @default(off)
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, category])
 }
@@ -3029,8 +3036,9 @@ model EmailDigest {
   @@unique([userId, windowStartAt, windowEndAt])
   @@index([status, createdAt])
 }
+
 model SchoolDocumentProfile {
-  schoolId       String   @id
+  schoolId       String     @id
   officialName   String?
   addressLine    String?
   city           String?
@@ -3039,11 +3047,12 @@ model SchoolDocumentProfile {
   email          String?
   website        String?
   documentFooter String?
-  logoAssetId String? @unique
-  updatedAt      DateTime @updatedAt
-  school         School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  logoAsset FileAsset? @relation("ActiveSchoolLogo", fields: [logoAssetId], references: [id], onDelete: Restrict)
+  logoAssetId    String?    @unique
+  updatedAt      DateTime   @updatedAt
+  school         School     @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  logoAsset      FileAsset? @relation("ActiveSchoolLogo", fields: [logoAssetId], references: [id], onDelete: Restrict)
 }
+
 model DocumentRequest {
   id               String                @id @default(uuid())
   studentId        String
@@ -3070,25 +3079,25 @@ model DocumentRequest {
 }
 
 model ProgressionPlan {
-  id                   String                @id @default(uuid())
+  id                   String                 @id @default(uuid())
   schoolId             String
   sourceAcademicYearId String
   targetAcademicYearId String
   createdById          String
-  status               ProgressionPlanStatus @default(draft)
+  status               ProgressionPlanStatus  @default(draft)
   reviewedById         String?
   reviewedAt           DateTime?
   appliedById          String?
   appliedAt            DateTime?
   cancelledAt          DateTime?
-  createdAt            DateTime              @default(now())
-  updatedAt            DateTime              @updatedAt
-  school               School                @relation(fields: [schoolId], references: [id], onDelete: Restrict)
-  sourceAcademicYear   AcademicYear          @relation("ProgressionSourceYear", fields: [sourceAcademicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
-  targetAcademicYear   AcademicYear          @relation("ProgressionTargetYear", fields: [targetAcademicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
-  createdBy            User                  @relation("ProgressionPlanCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
-  reviewedBy           User?                 @relation("ProgressionPlanReviewedBy", fields: [reviewedById], references: [id], onDelete: Restrict)
-  appliedBy            User?                 @relation("ProgressionPlanAppliedBy", fields: [appliedById], references: [id], onDelete: Restrict)
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+  school               School                 @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  sourceAcademicYear   AcademicYear           @relation("ProgressionSourceYear", fields: [sourceAcademicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  targetAcademicYear   AcademicYear           @relation("ProgressionTargetYear", fields: [targetAcademicYearId, schoolId], references: [id, schoolId], onDelete: Restrict)
+  createdBy            User                   @relation("ProgressionPlanCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  reviewedBy           User?                  @relation("ProgressionPlanReviewedBy", fields: [reviewedById], references: [id], onDelete: Restrict)
+  appliedBy            User?                  @relation("ProgressionPlanAppliedBy", fields: [appliedById], references: [id], onDelete: Restrict)
   entries              ProgressionEntry[]
   exceptions           ProgressionException[]
 
@@ -3097,68 +3106,68 @@ model ProgressionPlan {
 }
 
 model ProgressionEntry {
-  id                   String            @id @default(uuid())
-  planId               String
-  studentId            String
-  sourceEnrollmentId   String
-  action               ProgressionAction @default(manualReview)
-  targetGradeLevelId   String?
-  targetSchoolClassId  String?
-  createdAt            DateTime          @default(now())
-  updatedAt            DateTime          @updatedAt
-  plan                 ProgressionPlan   @relation(fields: [planId], references: [id], onDelete: Cascade)
-  student              Student           @relation(fields: [studentId], references: [id], onDelete: Restrict)
-  sourceEnrollment     Enrollment        @relation(fields: [sourceEnrollmentId], references: [id], onDelete: Restrict)
-  exceptions           ProgressionException[]
+  id                  String                 @id @default(uuid())
+  planId              String
+  studentId           String
+  sourceEnrollmentId  String
+  action              ProgressionAction      @default(manualReview)
+  targetGradeLevelId  String?
+  targetSchoolClassId String?
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
+  plan                ProgressionPlan        @relation(fields: [planId], references: [id], onDelete: Cascade)
+  student             Student                @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  sourceEnrollment    Enrollment             @relation(fields: [sourceEnrollmentId], references: [id], onDelete: Restrict)
+  exceptions          ProgressionException[]
 
   @@unique([planId, studentId])
   @@index([sourceEnrollmentId])
 }
 
 model ProgressionException {
-  id              String                     @id @default(uuid())
-  planId          String
-  entryId         String
-  kind            ProgressionExceptionKind
-  status          ProgressionExceptionStatus @default(open)
-  detectedAt      DateTime                   @default(now())
-  resolvedAt      DateTime?
-  resolvedById    String?
-  resolutionNote  String?
-  plan            ProgressionPlan            @relation(fields: [planId], references: [id], onDelete: Cascade)
-  entry           ProgressionEntry           @relation(fields: [entryId], references: [id], onDelete: Cascade)
-  resolvedBy      User?                      @relation("ProgressionExceptionResolvedBy", fields: [resolvedById], references: [id], onDelete: SetNull)
+  id             String                     @id @default(uuid())
+  planId         String
+  entryId        String
+  kind           ProgressionExceptionKind
+  status         ProgressionExceptionStatus @default(open)
+  detectedAt     DateTime                   @default(now())
+  resolvedAt     DateTime?
+  resolvedById   String?
+  resolutionNote String?
+  plan           ProgressionPlan            @relation(fields: [planId], references: [id], onDelete: Cascade)
+  entry          ProgressionEntry           @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  resolvedBy     User?                      @relation("ProgressionExceptionResolvedBy", fields: [resolvedById], references: [id], onDelete: SetNull)
 
   @@index([planId, status])
   @@index([entryId, kind])
 }
 
 model PrivacyRequest {
-  id                  String @id @default(uuid())
-  schoolId            String
-  studentId           String
-  requesterUserId     String
-  requesterKind       PrivacyRequesterKind
-  type                PrivacyRequestType
-  status              PrivacyRequestStatus @default(submitted)
-  details             String
-  correctionField     StudentCorrectionField?
-  correctionValue     String?
-  restrictionCategory PrivacyRestrictionCategory?
-  createdAt           DateTime @default(now())
-  reviewedAt          DateTime?
-  reviewedById        String?
-  reviewReason        String?
-  fulfilledAt         DateTime?
-  accessPackage       Json?
+  id                          String                      @id @default(uuid())
+  schoolId                    String
+  studentId                   String
+  requesterUserId             String
+  requesterKind               PrivacyRequesterKind
+  type                        PrivacyRequestType
+  status                      PrivacyRequestStatus        @default(submitted)
+  details                     String
+  correctionField             StudentCorrectionField?
+  correctionValue             String?
+  restrictionCategory         PrivacyRestrictionCategory?
+  createdAt                   DateTime                    @default(now())
+  reviewedAt                  DateTime?
+  reviewedById                String?
+  reviewReason                String?
+  fulfilledAt                 DateTime?
+  accessPackage               Json?
   officialCorrectionRequestId String?
-  officialCorrectionRequest StudentCorrectionRequest? @relation(fields: [officialCorrectionRequestId], references: [id], onDelete: Restrict)
-  processingRestrictions ProcessingRestriction[]
-  retentionHolds RetentionHold[]
-  school              School @relation(fields: [schoolId], references: [id], onDelete: Restrict)
-  student             Student @relation(fields: [studentId], references: [id], onDelete: Restrict)
-  requester           User @relation("PrivacyRequestRequester", fields: [requesterUserId], references: [id], onDelete: Restrict)
-  reviewedBy          User? @relation("PrivacyRequestReviewer", fields: [reviewedById], references: [id], onDelete: Restrict)
+  officialCorrectionRequest   StudentCorrectionRequest?   @relation(fields: [officialCorrectionRequestId], references: [id], onDelete: Restrict)
+  processingRestrictions      ProcessingRestriction[]
+  retentionHolds              RetentionHold[]
+  school                      School                      @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  student                     Student                     @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  requester                   User                        @relation("PrivacyRequestRequester", fields: [requesterUserId], references: [id], onDelete: Restrict)
+  reviewedBy                  User?                       @relation("PrivacyRequestReviewer", fields: [reviewedById], references: [id], onDelete: Restrict)
 
   @@index([schoolId, status, createdAt])
   @@index([requesterUserId, createdAt])
@@ -3166,22 +3175,22 @@ model PrivacyRequest {
 }
 
 model ProcessingRestriction {
-  id String @id @default(uuid())
-  schoolId String
-  studentId String
+  id               String                     @id @default(uuid())
+  schoolId         String
+  studentId        String
   privacyRequestId String
-  category PrivacyRestrictionCategory
-  status PrivacyRestrictionState
-  effectiveAt DateTime?
-  endedAt DateTime?
-  approvedById String
-  endedById String?
-  createdAt DateTime @default(now())
-  school School @relation(fields: [schoolId], references: [id], onDelete: Restrict)
-  student Student @relation(fields: [studentId], references: [id], onDelete: Restrict)
-  privacyRequest PrivacyRequest @relation(fields: [privacyRequestId], references: [id], onDelete: Restrict)
-  approvedBy User @relation("RestrictionApprovedBy", fields: [approvedById], references: [id], onDelete: Restrict)
-  endedBy User? @relation("RestrictionEndedBy", fields: [endedById], references: [id], onDelete: Restrict)
+  category         PrivacyRestrictionCategory
+  status           PrivacyRestrictionState
+  effectiveAt      DateTime?
+  endedAt          DateTime?
+  approvedById     String
+  endedById        String?
+  createdAt        DateTime                   @default(now())
+  school           School                     @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  student          Student                    @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  privacyRequest   PrivacyRequest             @relation(fields: [privacyRequestId], references: [id], onDelete: Restrict)
+  approvedBy       User                       @relation("RestrictionApprovedBy", fields: [approvedById], references: [id], onDelete: Restrict)
+  endedBy          User?                      @relation("RestrictionEndedBy", fields: [endedById], references: [id], onDelete: Restrict)
 
   @@unique([privacyRequestId, category])
   @@index([schoolId, studentId, category, status])
@@ -3194,23 +3203,23 @@ enum RetentionHoldScope {
 }
 
 model RetentionHold {
-  id String @id @default(uuid())
-  organizationId String
-  scope RetentionHoldScope
-  studentId String?
+  id               String             @id @default(uuid())
+  organizationId   String
+  scope            RetentionHoldScope
+  studentId        String?
   privacyRequestId String?
   issuedDocumentId String?
-  reason String
-  createdById String
-  createdAt DateTime @default(now())
-  releasedById String?
-  releasedAt DateTime?
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
-  student Student? @relation(fields: [studentId], references: [id], onDelete: Restrict)
-  privacyRequest PrivacyRequest? @relation(fields: [privacyRequestId], references: [id], onDelete: Restrict)
-  issuedDocument IssuedDocument? @relation(fields: [issuedDocumentId], references: [id], onDelete: Restrict)
-  createdBy User @relation("RetentionHoldCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
-  releasedBy User? @relation("RetentionHoldReleasedBy", fields: [releasedById], references: [id], onDelete: Restrict)
+  reason           String
+  createdById      String
+  createdAt        DateTime           @default(now())
+  releasedById     String?
+  releasedAt       DateTime?
+  organization     Organization       @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  student          Student?           @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  privacyRequest   PrivacyRequest?    @relation(fields: [privacyRequestId], references: [id], onDelete: Restrict)
+  issuedDocument   IssuedDocument?    @relation(fields: [issuedDocumentId], references: [id], onDelete: Restrict)
+  createdBy        User               @relation("RetentionHoldCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  releasedBy       User?              @relation("RetentionHoldReleasedBy", fields: [releasedById], references: [id], onDelete: Restrict)
 
   @@index([organizationId, scope, releasedAt])
   @@index([studentId, releasedAt])

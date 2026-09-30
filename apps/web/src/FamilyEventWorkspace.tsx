@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { formatDateTime } from '@warka/shared'
+import { formatAdministrativeDate, formatDateTime } from '@warka/shared'
 import { browserLocale } from './LocalizedNavigation'
 import {
   eventDownloadUrl,
@@ -15,14 +15,17 @@ export function FamilyEventWorkspace({
   studentId,
   childName,
   locale,
+  calendar,
 }: {
   baseUrl: string
   schoolId: string
   studentId?: string
   childName?: string
   locale?: string | undefined
+  calendar?: 'gregorian' | 'ethiopian' | undefined
 }) {
   const displayLocale = locale ?? browserLocale()
+  const displayCalendar = calendar ?? 'gregorian'
   const [events, setEvents] = useState<SchoolEvent[]>([])
   const [selectedId, setSelectedId] = useState('')
   const [detail, setDetail] = useState<SchoolEvent | null>(null)
@@ -103,7 +106,14 @@ export function FamilyEventWorkspace({
                 <button type="button" onClick={() => setSelectedId(event.id)}>
                   {event.title}
                 </button>{' '}
-                — {formatDateTime(event.startsAt, displayLocale)}
+                —{' '}
+                {displayCalendar === 'ethiopian'
+                  ? formatAdministrativeDate(
+                      event.startsAt,
+                      displayLocale,
+                      displayCalendar,
+                    )
+                  : formatDateTime(event.startsAt, displayLocale)}
               </li>
             ))}
           </ul>
@@ -114,8 +124,21 @@ export function FamilyEventWorkspace({
           <h4>{detail.title}</h4>
           <p>{detail.description}</p>
           <p>
-            {formatDateTime(detail.startsAt, displayLocale)} –{' '}
-            {formatDateTime(detail.endsAt, displayLocale)}
+            {displayCalendar === 'ethiopian'
+              ? formatAdministrativeDate(
+                  detail.startsAt,
+                  displayLocale,
+                  displayCalendar,
+                )
+              : formatDateTime(detail.startsAt, displayLocale)}{' '}
+            –{' '}
+            {displayCalendar === 'ethiopian'
+              ? formatAdministrativeDate(
+                  detail.endsAt,
+                  displayLocale,
+                  displayCalendar,
+                )
+              : formatDateTime(detail.endsAt, displayLocale)}
           </p>
           {detail.schoolLocation && (
             <p>School location: {detail.schoolLocation}</p>

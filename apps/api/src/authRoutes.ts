@@ -3,6 +3,7 @@ import type { FastifyInstance } from 'fastify'
 import { PasswordSchema, SESSION_LIFETIME_SECONDS } from '@warka/auth'
 import {
   ErrorResponseSchema,
+  CalendarPreferenceSchema,
   LanguagePreferenceResponseSchema,
   LanguagePreferenceSchema,
   LoginCredentialsSchema,
@@ -183,6 +184,32 @@ export function registerAuthRoutes(
     )
     if (!preferredLocale) return reply.code(401).send(unauthorized())
     return LanguagePreferenceResponseSchema.parse({ preferredLocale })
+  })
+
+  app.get('/me/calendar-preference', async (request, reply) => {
+    const token = request.cookies[sessionCookieName]
+    const user = token ? await getAuth().currentUser(token) : null
+    if (!user) return reply.code(401).send(unauthorized())
+    return {
+      preferredCalendar:
+        (user as typeof user & { preferredCalendar?: string })
+          .preferredCalendar ?? 'gregorian',
+    }
+  })
+
+  app.put('/me/calendar-preference', async (request, reply) => {
+    const token = request.cookies[sessionCookieName]
+    if (!token || !(await getAuth().currentUser(token)))
+      return reply.code(401).send(unauthorized())
+    const { preferredCalendar } = z
+      .strictObject({ preferredCalendar: CalendarPreferenceSchema })
+      .parse(request.body)
+    const saved = await getAuth().setPreferredCalendar?.(
+      token,
+      preferredCalendar,
+    )
+    if (!saved) return reply.code(401).send(unauthorized())
+    return { preferredCalendar: saved }
   })
 
   app.post('/auth/change-password', async (request, reply) => {

@@ -1,8 +1,10 @@
 import { z } from 'zod'
 import { LanguagePreferenceSchema } from './localization.js'
+import { CalendarPreferenceSchema } from './calendar.js'
 
 export * from './localization.js'
 export * from './formatting.js'
+export * from './calendar.js'
 
 export const HealthResponseSchema = z.object({
   status: z.literal('ok'),
@@ -67,6 +69,7 @@ export const UserIdentitySchema = z.object({
   displayName: z.string(),
   mustChangePassword: z.boolean().optional(),
   preferredLocale: LanguagePreferenceSchema.optional(),
+  preferredCalendar: CalendarPreferenceSchema.optional(),
 })
 
 export type UserIdentity = z.infer<typeof UserIdentitySchema>

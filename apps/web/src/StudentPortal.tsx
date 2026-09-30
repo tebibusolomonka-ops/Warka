@@ -41,12 +41,14 @@ export function StudentPortal({
   onSessionExpired,
   onSignOut,
   locale,
+  calendar,
 }: {
   baseUrl: string
   identity: StudentPortalIdentity
   onSessionExpired: () => void
   onSignOut: () => void
   locale?: string | undefined
+  calendar?: 'gregorian' | 'ethiopian' | undefined
 }) {
   const [section, setSection] = useState<Section>('Overview')
   const [results, setResults] = useState<ResultState>({ status: 'loading' })
@@ -190,6 +192,7 @@ export function StudentPortal({
           baseUrl={baseUrl}
           schoolId={identity.currentEnrollment.schoolId}
           locale={locale}
+          calendar={calendar}
         />
       )}
       {section === 'Overview' && (
