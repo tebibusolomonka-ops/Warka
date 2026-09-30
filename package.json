@@ -31,6 +31,7 @@
     "format:check": "prettier --check package.json apps packages tests playwright.config.ts",
     "metrics:code": "node scripts/code-metrics.mjs",
     "i18n:check": "pnpm build:shared && node scripts/i18n-check.mjs",
+    "ci:check": "node scripts/ci-check.mjs",
     "db:up": "docker compose up -d --wait",
     "db:down": "docker compose down",
     "db:migrate": "pnpm db:deploy",
@@ -52,6 +53,7 @@
     "eslint": "^9.36.0",
     "globals": "^16.4.0",
     "prettier": "^3.6.0",
-    "typescript-eslint": "^8.46.0"
+    "typescript-eslint": "^8.46.0",
+    "yaml": "2.8.1"
   }
 }
