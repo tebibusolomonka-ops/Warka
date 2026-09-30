@@ -68,6 +68,11 @@ export {
   SpreadsheetImportError,
   parseSpreadsheetImport,
 } from './spreadsheetImports.js'
+export {
+  STUDENT_IMPORT_FIELDS,
+  StudentColumnMappingSchema,
+  previewStudentColumnMapping,
+} from './studentImportMapping.js'
 
 export type { PrismaClient }
 export {
