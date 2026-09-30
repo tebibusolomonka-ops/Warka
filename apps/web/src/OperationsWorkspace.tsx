@@ -1,4 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import { formatFileSize } from '@warka/shared'
+import { browserLocale } from './LocalizedNavigation'
 import { ApiError } from './api'
 import { FileSecurityWorkspace } from './FileSecurityWorkspace'
 import { EmailDeliveryWorkspace } from './EmailDeliveryWorkspace'
@@ -257,8 +259,10 @@ export function OperationsWorkspace({ baseUrl }: { baseUrl: string }) {
           {backups.map((item) => (
             <li key={item.id}>
               {item.createdAt} · {item.status} ·{' '}
-              {item.sizeBytes ?? 'Size pending'} bytes · verification{' '}
-              {item.verificationResult ?? 'pending'}{' '}
+              {item.sizeBytes
+                ? formatFileSize(BigInt(item.sizeBytes), browserLocale())
+                : 'Size pending'}{' '}
+              · verification {item.verificationResult ?? 'pending'}{' '}
               {item.status === 'completed' && (
                 <button
                   type="button"

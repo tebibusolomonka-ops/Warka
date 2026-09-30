@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { changePassword } from './api'
-import { createTranslator } from '@warka/shared'
+import { createTranslator, formatDateTime } from '@warka/shared'
 import { browserLocale } from './LocalizedNavigation'
 import {
   assistRecovery,
@@ -92,10 +92,9 @@ export function AccountSecurity({
           <ul>
             {sessions.map((session) => (
               <li key={session.managementId}>
-                {t('auth.created')}{' '}
-                {new Date(session.createdAt).toLocaleString()} ·{' '}
-                {t('auth.expires')}{' '}
-                {new Date(session.expiresAt).toLocaleString()}{' '}
+                {t('auth.created')} {formatDateTime(session.createdAt, locale)}{' '}
+                · {t('auth.expires')}{' '}
+                {formatDateTime(session.expiresAt, locale)}{' '}
                 {session.current ? `· ${t('auth.currentSession')}` : ''}
                 {!session.current && (
                   <button

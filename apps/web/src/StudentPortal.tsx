@@ -5,6 +5,7 @@ import { AttendanceHistoryView } from './AttendanceHistoryView'
 import { StudentCourseworkWorkspace } from './StudentCourseworkWorkspace'
 import { FamilyEventWorkspace } from './FamilyEventWorkspace'
 import { getOwnStudentAttendance } from './attendanceApi'
+import { formatPercentage } from '@warka/shared'
 import type {
   StudentPortalIdentity,
   StudentResult,
@@ -39,11 +40,13 @@ export function StudentPortal({
   identity,
   onSessionExpired,
   onSignOut,
+  locale,
 }: {
   baseUrl: string
   identity: StudentPortalIdentity
   onSessionExpired: () => void
   onSignOut: () => void
+  locale?: string | undefined
 }) {
   const [section, setSection] = useState<Section>('Overview')
   const [results, setResults] = useState<ResultState>({ status: 'loading' })
@@ -186,6 +189,7 @@ export function StudentPortal({
         <FamilyEventWorkspace
           baseUrl={baseUrl}
           schoolId={identity.currentEnrollment.schoolId}
+          locale={locale}
         />
       )}
       {section === 'Overview' && (
@@ -237,7 +241,8 @@ export function StudentPortal({
               <ul>
                 {rows.map((row) => (
                   <li key={row.subject + row.publishedAt}>
-                    {row.subject}: {row.percentage}% � {row.gradeLabel}
+                    {row.subject}: {formatPercentage(row.percentage, locale)} ·{' '}
+                    {row.gradeLabel}
                     {row.corrected && <span> � Corrected</span>}
                   </li>
                 ))}

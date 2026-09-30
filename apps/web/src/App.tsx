@@ -358,6 +358,7 @@ function SignedInShell({
           identity={portal.identity}
           onSessionExpired={sessionExpired}
           onSignOut={onSignOut}
+          locale={user.preferredLocale}
         />
         <PrivacyWorkspace
           baseUrl={baseUrl}
