@@ -789,6 +789,7 @@ enum ImportSourceFormat {
 }
 
 model ImportSourceProfile {
+  dryRuns        ImportDryRun[]
   id             String             @id @default(uuid())
   name           String
   schoolId       String?
@@ -3007,6 +3008,7 @@ enum ImportIssueSeverity {
 }
 
 model ImportJob {
+  dryRuns          ImportDryRun[]
   id               String           @id @default(uuid())
   schoolId         String
   createdById      String
@@ -3025,6 +3027,32 @@ model ImportJob {
   issues           ImportRowIssue[]
 
   @@index([schoolId, createdAt])
+}
+
+enum ImportDryRunStatus {
+  successful
+  invalid
+  superseded
+  applied
+}
+
+model ImportDryRun {
+  id                 String              @id @default(uuid())
+  importJobId        String
+  version            Int
+  status             ImportDryRunStatus
+  fileChecksum       String
+  sourceProfileId    String
+  mappingChecksum    String
+  transformChecksum  String
+  result             Json
+  createdAt          DateTime            @default(now())
+  appliedAt          DateTime?
+  importJob          ImportJob           @relation(fields: [importJobId], references: [id], onDelete: Cascade)
+  sourceProfile      ImportSourceProfile @relation(fields: [sourceProfileId], references: [id], onDelete: Restrict)
+
+  @@unique([importJobId, version])
+  @@index([sourceProfileId, createdAt])
 }
 
 model ImportRowIssue {

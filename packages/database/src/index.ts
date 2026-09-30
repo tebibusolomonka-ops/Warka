@@ -78,6 +78,10 @@ export {
   transformImportRow,
   previewImportTransformations,
 } from './importTransformations.js'
+export {
+  createImportDryRun,
+  importConfigurationChecksum,
+} from './importDryRuns.js'
 
 export type { PrismaClient }
 export {
