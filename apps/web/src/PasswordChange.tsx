@@ -1,15 +1,20 @@
 import { useState, type FormEvent } from 'react'
 import { ApiError, changePassword } from './api'
+import { createTranslator } from '@warka/shared'
+import { browserLocale } from './LocalizedNavigation'
 
 export function PasswordChange({
   baseUrl,
   onChanged,
   onSignOut,
+  locale,
 }: {
   baseUrl: string
   onChanged: () => Promise<void>
   onSignOut: () => void
+  locale?: string | undefined
 }) {
+  const t = createTranslator({ locale: locale ?? browserLocale() })
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmation, setConfirmation] = useState('')
@@ -19,7 +24,7 @@ export function PasswordChange({
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (newPassword.length < 12 || newPassword !== confirmation) {
-      setError('Use at least 12 characters and confirm the new password.')
+      setError(t('auth.passwordValidation'))
       return
     }
     setBusy(true)
@@ -33,8 +38,8 @@ export function PasswordChange({
     } catch (cause) {
       setError(
         cause instanceof ApiError && cause.code === 'INVALID_CURRENT_PASSWORD'
-          ? 'Current password is incorrect.'
-          : 'Could not change password. Try again.',
+          ? t('auth.currentPasswordIncorrect')
+          : t('auth.passwordChangeFailed'),
       )
     } finally {
       setBusy(false)
@@ -44,15 +49,15 @@ export function PasswordChange({
   return (
     <section aria-labelledby="password-change-heading">
       <div className="account">
-        <h2 id="password-change-heading">Change your password</h2>
+        <h2 id="password-change-heading">{t('auth.changePasswordHeading')}</h2>
         <button type="button" onClick={onSignOut}>
-          Sign out
+          {t('navigation.signOut')}
         </button>
       </div>
-      <p>Choose a new password to continue.</p>
+      <p>{t('auth.changePasswordPrompt')}</p>
       <form onSubmit={submit}>
         <label className="field">
-          Current password
+          {t('auth.currentPassword')}
           <input
             type="password"
             autoComplete="current-password"
@@ -62,7 +67,7 @@ export function PasswordChange({
           />
         </label>
         <label className="field">
-          New password
+          {t('auth.newPassword')}
           <input
             type="password"
             autoComplete="new-password"
@@ -73,7 +78,7 @@ export function PasswordChange({
           />
         </label>
         <label className="field">
-          Confirm new password
+          {t('auth.confirmPassword')}
           <input
             type="password"
             autoComplete="new-password"
@@ -83,7 +88,7 @@ export function PasswordChange({
           />
         </label>
         <button type="submit" disabled={busy}>
-          {busy ? 'Changing password' : 'Change password'}
+          {busy ? t('auth.changingPassword') : t('auth.changePassword')}
         </button>
       </form>
       {error && <p role="alert">{error}</p>}

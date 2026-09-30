@@ -20,13 +20,11 @@ function testAuth() {
     async login(email, password) {
       if (email !== user.email || password !== 'correct password') return null
       sessions.set(token, user)
-      return { user, token }
+      return { user: { ...user, preferredLocale } as User, token }
     },
     async currentUser(value) {
       const current = sessions.get(value)
-      return current
-        ? ({ ...current, preferredLocale } as User)
-        : null
+      return current ? ({ ...current, preferredLocale } as User) : null
     },
     async logout(value) {
       sessions.delete(value)
@@ -41,6 +39,32 @@ function testAuth() {
 }
 
 describe('authentication routes', () => {
+  it('keeps public recovery responses neutral across supported languages', async () => {
+    const { auth } = testAuth()
+    auth.requestRecovery = async () => undefined
+    const app = buildApp({ auth })
+    try {
+      for (const language of ['en', 'am', 'om']) {
+        const known = await app.inject({
+          method: 'POST',
+          url: '/auth/recovery/request',
+          headers: { 'accept-language': language },
+          payload: { email: user.email },
+        })
+        const unknown = await app.inject({
+          method: 'POST',
+          url: '/auth/recovery/request',
+          headers: { 'accept-language': language },
+          payload: { email: `unknown-${language}@example.test` },
+        })
+        expect(known.statusCode).toBe(202)
+        expect(unknown.statusCode).toBe(202)
+        expect(known.json()).toEqual(unknown.json())
+      }
+    } finally {
+      await app.close()
+    }
+  })
   it('lets only the signed-in user read and update their language preference', async () => {
     const { auth } = testAuth()
     const app = buildApp({ auth })
@@ -60,7 +84,12 @@ describe('authentication routes', () => {
       })
       expect(updated.json()).toEqual({ preferredLocale: 'am' })
       expect(
-        (await app.inject({ url: '/me/language-preference', headers: { cookie } })).json(),
+        (
+          await app.inject({
+            url: '/me/language-preference',
+            headers: { cookie },
+          })
+        ).json(),
       ).toEqual({ preferredLocale: 'am' })
       expect(
         (
@@ -210,6 +239,7 @@ describe('authentication routes', () => {
         id: user.id,
         email: user.email,
         displayName: user.displayName,
+        preferredLocale: 'en',
       })
       expect(login.body).not.toContain(token)
       const setCookie = String(login.headers['set-cookie'])

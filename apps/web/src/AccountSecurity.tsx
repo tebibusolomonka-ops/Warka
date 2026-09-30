@@ -1,5 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { changePassword } from './api'
+import { createTranslator } from '@warka/shared'
+import { browserLocale } from './LocalizedNavigation'
 import {
   assistRecovery,
   getOwnSessions,
@@ -8,7 +10,14 @@ import {
   type SafeSession,
 } from './securityApi'
 
-export function AccountSecurity({ baseUrl }: { baseUrl: string }) {
+export function AccountSecurity({
+  baseUrl,
+  locale,
+}: {
+  baseUrl: string
+  locale?: string | undefined
+}) {
+  const t = createTranslator({ locale: locale ?? browserLocale() })
   const [open, setOpen] = useState(false)
   const [sessions, setSessions] = useState<SafeSession[]>([])
   const [currentPassword, setCurrentPassword] = useState('')
@@ -19,12 +28,12 @@ export function AccountSecurity({ baseUrl }: { baseUrl: string }) {
     if (open)
       void getOwnSessions(baseUrl)
         .then(setSessions)
-        .catch(() => setMessage('Could not load sessions'))
+        .catch(() => setMessage(t('auth.sessionsLoadFailed')))
   }, [open, baseUrl])
   async function change(event: FormEvent) {
     event.preventDefault()
     if (newPassword.length < 12 || newPassword !== confirmation) {
-      setMessage('Confirm a password of at least 12 characters')
+      setMessage(t('auth.passwordValidation'))
       return
     }
     try {
@@ -32,23 +41,23 @@ export function AccountSecurity({ baseUrl }: { baseUrl: string }) {
       setCurrentPassword('')
       setNewPassword('')
       setConfirmation('')
-      setMessage('Password changed')
+      setMessage(t('auth.passwordChanged'))
       setSessions(await getOwnSessions(baseUrl))
     } catch {
-      setMessage('Could not change password')
+      setMessage(t('auth.passwordChangeFailed'))
     }
   }
   return (
-    <section id="account-security" aria-label="Account security">
+    <section id="account-security" aria-label={t('auth.accountSecurity')}>
       <button type="button" aria-expanded={open} onClick={() => setOpen(!open)}>
-        Account security
+        {t('auth.accountSecurity')}
       </button>
       {open && (
         <>
-          <h2>Account security</h2>
+          <h2>{t('auth.accountSecurity')}</h2>
           <form onSubmit={(event) => void change(event)}>
             <label>
-              Current password
+              {t('auth.currentPassword')}
               <input
                 type="password"
                 autoComplete="current-password"
@@ -58,7 +67,7 @@ export function AccountSecurity({ baseUrl }: { baseUrl: string }) {
               />
             </label>
             <label>
-              New password
+              {t('auth.newPassword')}
               <input
                 type="password"
                 autoComplete="new-password"
@@ -68,7 +77,7 @@ export function AccountSecurity({ baseUrl }: { baseUrl: string }) {
               />
             </label>
             <label>
-              Confirm new password
+              {t('auth.confirmPassword')}
               <input
                 type="password"
                 autoComplete="new-password"
@@ -77,15 +86,17 @@ export function AccountSecurity({ baseUrl }: { baseUrl: string }) {
                 required
               />
             </label>
-            <button type="submit">Change password</button>
+            <button type="submit">{t('auth.changePassword')}</button>
           </form>
-          <h3>Active sessions</h3>
+          <h3>{t('auth.activeSessions')}</h3>
           <ul>
             {sessions.map((session) => (
               <li key={session.managementId}>
-                Created {new Date(session.createdAt).toLocaleString()} � Expires{' '}
+                {t('auth.created')}{' '}
+                {new Date(session.createdAt).toLocaleString()} ·{' '}
+                {t('auth.expires')}{' '}
                 {new Date(session.expiresAt).toLocaleString()}{' '}
-                {session.current ? '� Current session' : ''}
+                {session.current ? `· ${t('auth.currentSession')}` : ''}
                 {!session.current && (
                   <button
                     type="button"
@@ -94,10 +105,10 @@ export function AccountSecurity({ baseUrl }: { baseUrl: string }) {
                         .then(async () =>
                           setSessions(await getOwnSessions(baseUrl)),
                         )
-                        .catch(() => setMessage('Could not revoke session'))
+                        .catch(() => setMessage(t('auth.sessionRevokeFailed')))
                     }
                   >
-                    Revoke session
+                    {t('auth.revokeSession')}
                   </button>
                 )}
               </li>
@@ -114,7 +125,7 @@ export function AccountSecurity({ baseUrl }: { baseUrl: string }) {
                 .catch(() => setMessage('Could not revoke sessions'))
             }
           >
-            Revoke all other sessions
+            {t('auth.revokeOthers')}
           </button>
           {message && <p role="status">{message}</p>}
         </>

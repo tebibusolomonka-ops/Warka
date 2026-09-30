@@ -104,7 +104,9 @@ function SignedInShell({
   onSignedOut: (message?: string) => void
   onSignOut: () => void
 }) {
-  const t = createTranslator({ locale: user.preferredLocale ?? browserLocale() })
+  const t = createTranslator({
+    locale: user.preferredLocale ?? browserLocale(),
+  })
   const [organizations, setOrganizations] = useState<Organizations>({
     status: 'loading',
   })
@@ -801,7 +803,7 @@ function AuthenticatedApp() {
             )}
             <form onSubmit={signIn}>
               <div className="field">
-                <label htmlFor="email">Email</label>
+                <label htmlFor="email">{publicTranslator('auth.email')}</label>
                 <input
                   id="email"
                   aria-invalid={!!formError}
@@ -814,7 +816,9 @@ function AuthenticatedApp() {
                 />
               </div>
               <div className="field">
-                <label htmlFor="password">Password</label>
+                <label htmlFor="password">
+                  {publicTranslator('auth.password')}
+                </label>
                 <input
                   id="password"
                   aria-invalid={!!formError}
@@ -827,7 +831,9 @@ function AuthenticatedApp() {
                 />
               </div>
               <button type="submit" disabled={busy || signingOut || !baseUrl}>
-                {busy ? 'Signing in' : 'Sign in'}
+                {busy
+                  ? publicTranslator('auth.signingIn')
+                  : publicTranslator('navigation.signIn')}
               </button>
             </form>
             <FormErrorSummary id="signin-error" message={formError} />
@@ -839,6 +845,7 @@ function AuthenticatedApp() {
           authentication.user.mustChangePassword && (
             <PasswordChange
               baseUrl={baseUrl}
+              locale={authentication.user.preferredLocale}
               onSignOut={() => void signOut()}
               onChanged={async () => {
                 const user = await getCurrentUser(baseUrl)
@@ -850,7 +857,10 @@ function AuthenticatedApp() {
           baseUrl &&
           !authentication.user.mustChangePassword && (
             <>
-              <AccountSecurity baseUrl={baseUrl} />
+              <AccountSecurity
+                baseUrl={baseUrl}
+                locale={authentication.user.preferredLocale}
+              />
               <CommunicationPreferencesWorkspace baseUrl={baseUrl} />
               <SupportWorkspace baseUrl={baseUrl} />
               <NotificationCenter baseUrl={baseUrl} />
