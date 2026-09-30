@@ -10,8 +10,12 @@ import {
   UserIdentitySchema,
 } from '@warka/shared'
 import type { AuthService } from './authService.js'
-
-export const sessionCookieName = 'warka_session'
+import {
+  csrfCookieName,
+  csrfTokenForSession,
+  sessionCookieName,
+} from './sessionSecurity.js'
+export { sessionCookieName } from './sessionSecurity.js'
 
 function unauthorized() {
   return ErrorResponseSchema.parse({
@@ -48,6 +52,7 @@ export function registerAuthRoutes(
     sameSite: 'strict' as const,
     secure: production,
   }
+  const csrfCookieOptions = { ...cookieOptions, httpOnly: false }
 
   app.get('/auth/sessions', async (request, reply) => {
     const token = request.cookies[sessionCookieName]
@@ -114,6 +119,7 @@ export function registerAuthRoutes(
         },
       })
     reply.clearCookie(sessionCookieName, cookieOptions)
+    reply.clearCookie(csrfCookieName, csrfCookieOptions)
     return reply.code(204).send()
   })
 
@@ -135,6 +141,10 @@ export function registerAuthRoutes(
       ...cookieOptions,
       maxAge: SESSION_LIFETIME_SECONDS,
     })
+    reply.setCookie(csrfCookieName, csrfTokenForSession(result.token), {
+      ...csrfCookieOptions,
+      maxAge: SESSION_LIFETIME_SECONDS,
+    })
     return userIdentity(result.user)
   })
 
@@ -144,6 +154,7 @@ export function registerAuthRoutes(
       await getAuth().logout(token)
     }
     reply.clearCookie(sessionCookieName, cookieOptions)
+    reply.clearCookie(csrfCookieName, csrfCookieOptions)
     return reply.code(204).send()
   })
 
@@ -152,8 +163,13 @@ export function registerAuthRoutes(
     const user = token ? await getAuth().currentUser(token) : null
     if (!user) {
       reply.clearCookie(sessionCookieName, cookieOptions)
+      reply.clearCookie(csrfCookieName, csrfCookieOptions)
       return reply.code(401).send(unauthorized())
     }
+    reply.setCookie(csrfCookieName, csrfTokenForSession(token!), {
+      ...csrfCookieOptions,
+      maxAge: SESSION_LIFETIME_SECONDS,
+    })
     return UserIdentitySchema.parse({
       ...userIdentity(user),
       mustChangePassword: (await getAuth().passwordState?.(token!)) ?? false,

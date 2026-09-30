@@ -44,6 +44,15 @@ export class ApiError extends Error {
   }
 }
 
+function browserCsrfToken() {
+  if (typeof document === 'undefined') return null
+  const value = document.cookie
+    .split(';')
+    .map((part) => part.trim())
+    .find((part) => part.startsWith('warka_csrf='))
+  return value ? decodeURIComponent(value.slice('warka_csrf='.length)) : null
+}
+
 export function apiBaseUrl(value: string | undefined, origin: string): string {
   if (!value?.trim()) {
     throw new Error('VITE_API_URL is required')
@@ -68,8 +77,15 @@ export async function requestJson(
   options: RequestInit = {},
   request: typeof fetch = fetch,
 ): Promise<unknown> {
+  const method = (options.method ?? 'GET').toUpperCase()
+  const token = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)
+    ? browserCsrfToken()
+    : null
+  const headers = token ? new Headers(options.headers) : undefined
+  if (headers && token) headers.set('x-csrf-token', token)
   const response = await request(baseUrl + path, {
     ...options,
+    ...(headers ? { headers } : {}),
     credentials: 'include',
   })
 

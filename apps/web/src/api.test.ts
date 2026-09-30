@@ -14,6 +14,7 @@ import {
   logout,
   postSchool,
   registerStudent,
+  requestJson,
 } from './api'
 
 const baseUrl = 'http://localhost:5173/api'
@@ -45,6 +46,14 @@ function response(body: unknown, status = 200) {
 }
 
 describe('authenticated API client', () => {
+  it('sends the readable session-bound CSRF value on browser mutations', async () => {
+    document.cookie = 'warka_csrf=csrf-test; path=/'
+    const request = vi.fn().mockResolvedValue({ ok: true, status: 204 })
+    await requestJson(baseUrl, '/mutation', { method: 'POST' }, request)
+    const headers = request.mock.calls[0]?.[1]?.headers as Headers
+    expect(headers.get('x-csrf-token')).toBe('csrf-test')
+    document.cookie = 'warka_csrf=; max-age=0; path=/'
+  })
   it('requires a same-origin API URL', () => {
     expect(apiBaseUrl('/api', 'http://localhost:5173')).toBe(baseUrl)
     expect(() => apiBaseUrl(undefined, 'http://localhost:5173')).toThrow()
