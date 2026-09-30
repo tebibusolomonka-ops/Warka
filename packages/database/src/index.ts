@@ -59,6 +59,10 @@ export {
   createExternalRecordReference,
   findExternalRecordReference,
 } from './externalRecordReferences.js'
+export {
+  ImportSourceProfileInputSchema,
+  createImportSourceProfile,
+} from './importSourceProfiles.js'
 
 export type { PrismaClient }
 export {

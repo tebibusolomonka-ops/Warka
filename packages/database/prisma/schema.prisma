@@ -441,6 +441,7 @@ enum EnrollmentHistoryType {
 }
 
 model Organization {
+  importSourceProfiles ImportSourceProfile[]
   id               String                   @id @default(uuid())
   name             String
   createdAt        DateTime                 @default(now())
@@ -571,6 +572,7 @@ enum MaintenanceWindowStatus {
 }
 
 model School {
+  importSourceProfiles            ImportSourceProfile[]
   dataQualityIssues             DataQualityIssue[]
   dataQualityRuns               DataQualityRun[]
   events                        SchoolEvent[]
@@ -640,6 +642,8 @@ model School {
 }
 
 model User {
+  importSourceProfilesCreated     ImportSourceProfile[]        @relation("ImportSourceProfileCreator")
+  importSourceProfilesUpdated     ImportSourceProfile[]        @relation("ImportSourceProfileUpdater")
   externalRecordReferences      ExternalRecordReference[]
   reportingNotesAuthored         ReportingReviewNote[]
   reportingVersionsSubmitted     ReportingSubmissionVersion[]  @relation("ReportingVersionSubmitter")
@@ -777,6 +781,32 @@ model ExternalRecordReference {
   @@unique([sourceSystem, entityType, externalId])
   @@index([entityType, entityId])
   @@index([createdById, createdAt])
+}
+
+enum ImportSourceFormat {
+  csv
+  xlsx
+}
+
+model ImportSourceProfile {
+  id             String             @id @default(uuid())
+  name           String
+  schoolId       String?
+  organizationId String?
+  format         ImportSourceFormat
+  entityType     ExternalEntityType
+  mapping        Json
+  createdById    String
+  updatedById    String
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  school         School?            @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  organization   Organization?      @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  createdBy      User               @relation("ImportSourceProfileCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  updatedBy      User               @relation("ImportSourceProfileUpdater", fields: [updatedById], references: [id], onDelete: Restrict)
+
+  @@index([schoolId, entityType])
+  @@index([organizationId, entityType])
 }
 
 model FileAsset {
