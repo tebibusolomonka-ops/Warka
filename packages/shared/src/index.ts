@@ -1,5 +1,7 @@
 import { z } from 'zod'
 
+export * from './localization.js'
+
 export const HealthResponseSchema = z.object({
   status: z.literal('ok'),
 })
