@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { LanguagePreferenceSchema } from './localization.js'
 
 export * from './localization.js'
 
@@ -64,6 +65,7 @@ export const UserIdentitySchema = z.object({
   email: z.email(),
   displayName: z.string(),
   mustChangePassword: z.boolean().optional(),
+  preferredLocale: LanguagePreferenceSchema.optional(),
 })
 
 export type UserIdentity = z.infer<typeof UserIdentitySchema>

@@ -3,6 +3,7 @@ import { WorkspaceFocus } from './WorkspaceFocus'
 import { FormErrorSummary } from './FormErrorSummary'
 import {
   LoginCredentialsSchema,
+  createTranslator,
   type AccessibleSchool,
   type OrganizationAccess,
   type UserIdentity,
@@ -53,6 +54,7 @@ import { AccountSecurity, AdminRecovery } from './AccountSecurity'
 import { CommunicationPreferencesWorkspace } from './CommunicationPreferencesWorkspace'
 import { PublicRecovery } from './PublicRecovery'
 import { SearchWorkspace } from './SearchWorkspace'
+import { LocalizedNavigation, browserLocale } from './LocalizedNavigation'
 
 type Authentication =
   | { status: 'checking' }
@@ -102,6 +104,7 @@ function SignedInShell({
   onSignedOut: (message?: string) => void
   onSignOut: () => void
 }) {
+  const t = createTranslator({ locale: user.preferredLocale ?? browserLocale() })
   const [organizations, setOrganizations] = useState<Organizations>({
     status: 'loading',
   })
@@ -378,10 +381,11 @@ function SignedInShell({
     <>
       {workspaceChoices}
       <WorkspaceFocus name="Staff workspace" />
+      <LocalizedNavigation locale={user.preferredLocale} />
       <div className="account">
         <p>Signed in as {user.displayName}</p>
         <button type="button" onClick={onSignOut}>
-          Sign out
+          {t('navigation.signOut')}
         </button>
       </div>
       {selectedSchool?.capabilities.canRegister &&
@@ -656,6 +660,7 @@ function SignedInShell({
 }
 
 function AuthenticatedApp() {
+  const publicTranslator = createTranslator({ locale: browserLocale() })
   const [authentication, setAuthentication] = useState<Authentication>({
     status: 'checking',
   })
@@ -760,7 +765,7 @@ function AuthenticatedApp() {
   return (
     <>
       <a className="skip-link" href="#main-content">
-        Skip to main content
+        {publicTranslator('navigation.skip')}
       </a>
       <main className="shell" id="main-content" tabIndex={-1}>
         <header>
@@ -772,7 +777,7 @@ function AuthenticatedApp() {
         )}
         {authentication.status === 'signedOut' && (
           <section aria-labelledby="signin-heading">
-            <h2 id="signin-heading">Sign in</h2>
+            <h2 id="signin-heading">{publicTranslator('navigation.signIn')}</h2>
             {authentication.message && (
               <div role="alert">
                 <p>{authentication.message}</p>
