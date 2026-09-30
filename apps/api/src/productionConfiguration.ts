@@ -6,6 +6,7 @@ import { schedulerConfiguration } from './backupScheduler.js'
 import { emailOutboxConfiguration } from './emailOutboxScheduler.js'
 import { environmentProfile } from './environmentProfile.js'
 import { trustedOrigins } from './originPolicy.js'
+import { trustedProxyConfiguration } from './proxyTrust.js'
 
 export type ConfigurationIssue = {
   category: 'requiredCore' | 'requiredWhenEnabled'
@@ -43,6 +44,10 @@ export function validateProductionConfiguration(
     return true
   })
   requireValue('requiredCore', ['PORT'], () => !!serverConfig(env))
+  requireValue('requiredCore', ['WARKA_TRUSTED_PROXIES'], () => {
+    trustedProxyConfiguration(env)
+    return true
+  })
   requireValue(
     'requiredCore',
     ['FILE_STORAGE_BACKEND'],

@@ -143,6 +143,7 @@ import { installDefaultCachePolicy } from './cachePolicy.js'
 import { registerSecurityHeaders } from './securityHeaders.js'
 import { registerOriginPolicy } from './originPolicy.js'
 import { registerCsrfProtection } from './csrfProtection.js'
+import { trustedProxyConfiguration } from './proxyTrust.js'
 import { registerSchedulerRoutes } from './schedulerRoutes.js'
 import { registerRecoveryRoutes } from './recoveryRoutes.js'
 import { operationsTestActions } from './operationsTestAdapter.js'
@@ -329,7 +330,7 @@ export function buildApp(
     production?: boolean
   } = {},
 ) {
-  const app = Fastify()
+  const app = Fastify({ trustProxy: trustedProxyConfiguration(process.env) })
   const testRecoveryTokens = new Map<string, string>()
   const testRecoveryEnabled =
     process.env.NODE_ENV === 'test' &&
