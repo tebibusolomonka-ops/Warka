@@ -83,6 +83,12 @@ export {
   importConfigurationChecksum,
 } from './importDryRuns.js'
 export { applyValidatedImport } from './controlledImportApplication.js'
+export {
+  WARKA_EXCHANGE_FORMAT,
+  WARKA_EXCHANGE_VERSION,
+  generateStudentTransferExchange,
+  validateExchangeFiles,
+} from './exchangePackages.js'
 
 export type { PrismaClient }
 export {
