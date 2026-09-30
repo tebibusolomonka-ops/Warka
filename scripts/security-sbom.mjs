@@ -1,6 +1,5 @@
 import { execFileSync } from 'node:child_process'
 import { readFileSync, rmSync } from 'node:fs'
-import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -19,7 +18,8 @@ export function validateSbom(document) {
 
 function main() {
   const root = fileURLToPath(new URL('../', import.meta.url))
-  const output = join(tmpdir(), `warka-sbom-${process.pid}.cdx.json`)
+  const fileName = `.warka-sbom-${process.pid}.cdx.json`
+  const output = join(root, fileName)
   try {
     const executable =
       process.platform === 'win32' ? process.env.ComSpec : 'pnpm'
@@ -29,7 +29,7 @@ function main() {
             '/d',
             '/s',
             '/c',
-            `pnpm exec cdxgen -t js --no-install-deps --validate --spec-version 1.6 -o "${output}" .`,
+            `pnpm exec cdxgen -t js --no-install-deps --validate --spec-version 1.6 -o ${fileName} .`,
           ]
         : [
             'exec',
@@ -44,7 +44,13 @@ function main() {
             output,
             '.',
           ]
-    execFileSync(executable, args, { cwd: root, stdio: 'inherit' })
+    const env = Object.fromEntries(
+      Object.entries(process.env).filter(
+        ([name]) =>
+          name !== 'NODE_PATH' && !/(?:TOKEN|KEY|SECRET|PASSWORD)$/i.test(name),
+      ),
+    )
+    execFileSync(executable, args, { cwd: root, env, stdio: 'inherit' })
     const document = JSON.parse(readFileSync(output, 'utf8'))
     const errors = validateSbom(document)
     if (errors.length) throw new Error(errors.join('\n'))

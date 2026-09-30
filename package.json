@@ -35,6 +35,7 @@
     "security:audit": "node scripts/security-audit.mjs",
     "security:dependencies": "node scripts/dependency-metadata.mjs",
     "security:sbom": "node scripts/security-sbom.mjs",
+    "install:check": "node scripts/reproducible-install.mjs",
     "db:up": "docker compose up -d --wait",
     "db:down": "docker compose down",
     "db:migrate": "pnpm db:deploy",

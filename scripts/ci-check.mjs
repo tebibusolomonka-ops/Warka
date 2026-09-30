@@ -5,6 +5,7 @@ import { parseDocument } from 'yaml'
 
 export const REQUIRED_VALIDATION_COMMANDS = [
   'pnpm install --frozen-lockfile',
+  'pnpm install:check',
   'pnpm db:deploy',
   'pnpm lint',
   'pnpm format:check',
