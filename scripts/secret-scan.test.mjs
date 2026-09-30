@@ -7,5 +7,8 @@ test('recognizes credential formats without matching ordinary configuration', ()
     findSecretPatterns('DATABASE_URL=postgresql://localhost/warka').length,
     0,
   )
-  assert.equal(findSecretPatterns('-----BEGIN PRIVATE KEY-----').length, 1)
+  assert.equal(
+    findSecretPatterns(['-----BEGIN', 'PRIVATE KEY-----'].join(' ')).length,
+    1,
+  )
 })

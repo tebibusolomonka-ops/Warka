@@ -75,6 +75,8 @@ describe('document download route', () => {
       expect(reply.rawPayload).toEqual(bytes)
       expect(reply.headers['content-length']).toBe(String(bytes.length))
       expect(reply.headers['cache-control']).toBe('private, no-store')
+      expect(reply.headers['x-content-type-options']).toBe('nosniff')
+      expect(reply.headers['content-disposition']).toContain('attachment')
     } finally {
       await app.close()
     }

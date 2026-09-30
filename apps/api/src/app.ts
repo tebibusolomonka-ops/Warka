@@ -140,6 +140,7 @@ import type { FakeEmailProvider } from './emailProvider.js'
 import { registerSearchRoutes } from './searchRoutes.js'
 import { registerResponseCompression } from './responseCompression.js'
 import { installDefaultCachePolicy } from './cachePolicy.js'
+import { registerSecurityHeaders } from './securityHeaders.js'
 import { registerSchedulerRoutes } from './schedulerRoutes.js'
 import { registerRecoveryRoutes } from './recoveryRoutes.js'
 import { operationsTestActions } from './operationsTestAdapter.js'
@@ -377,6 +378,7 @@ export function buildApp(
   const authenticate = authenticateRequest(getAuth)
 
   app.register(cookie)
+  registerSecurityHeaders(app)
   registerResponseCompression(app)
   installDefaultCachePolicy(app)
   app.decorateRequest('currentUser', null)

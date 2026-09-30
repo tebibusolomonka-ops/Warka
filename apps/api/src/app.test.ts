@@ -13,6 +13,10 @@ describe('GET /health', () => {
     const response = await app.inject('/health')
 
     expect(response.statusCode).toBe(200)
+    expect(response.headers['x-content-type-options']).toBe('nosniff')
+    expect(response.headers['content-security-policy']).toContain(
+      "frame-ancestors 'none'",
+    )
     expect(response.json()).toEqual({ status: 'ok' })
   })
 })

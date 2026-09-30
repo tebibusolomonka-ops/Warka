@@ -46,6 +46,10 @@ describe('public document verification', () => {
         url: '/verify/documents/' + activeReference,
       })
       expect(active.statusCode).toBe(200)
+      expect(active.headers['x-frame-options']).toBe('DENY')
+      expect(active.headers['content-security-policy']).not.toContain(
+        "'unsafe-inline'",
+      )
       expect(active.json()).toEqual({
         status: 'active',
         documentType: 'transcript',
