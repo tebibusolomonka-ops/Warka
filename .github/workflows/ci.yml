@@ -40,9 +40,6 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm install:check
       - run: pnpm ci:check
-      - run: pnpm security:audit
-      - run: pnpm security:dependencies
-      - run: pnpm security:sbom
       - run: pnpm db:generate
       - run: pnpm db:deploy
       - run: pnpm db:preflight
@@ -54,5 +51,6 @@ jobs:
       - run: pnpm test
       - run: pnpm build
       - run: pnpm release:checksums -- --verify
+      - run: pnpm security:check
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm exec playwright test

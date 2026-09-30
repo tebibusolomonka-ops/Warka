@@ -90,19 +90,24 @@ function main() {
     relationship: direct.has(item.name) ? 'direct' : 'transitive',
   }))
   const result = evaluateMetadata(packages, policy)
-  console.log(
-    JSON.stringify(
-      {
-        generatedFrom: 'installed locked dependency graph',
-        packageCount: packages.length,
-        warningCount: result.warnings.length,
-        warnings: result.warnings,
-        packages,
-      },
-      null,
-      2,
-    ),
-  )
+  const report = {
+    generatedFrom: 'installed locked dependency graph',
+    packageCount: packages.length,
+    warningCount: result.warnings.length,
+    warnings: result.warnings,
+    packages,
+  }
+  if (process.argv.includes('--json'))
+    console.log(JSON.stringify(report, null, 2))
+  else {
+    console.log(
+      `Dependency metadata inventory passed (${packages.length} packages, ${result.warnings.length} documented warning).`,
+    )
+    for (const warning of result.warnings)
+      console.log(
+        `- ${warning.name}@${warning.version}: license metadata unavailable (documented: ${warning.documented})`,
+      )
+  }
   if (result.errors.length) {
     console.error(result.errors.join('\n'))
     process.exitCode = 1
