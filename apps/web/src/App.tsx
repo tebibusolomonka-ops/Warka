@@ -340,6 +340,8 @@ function SignedInShell({
           identity={parent.identity}
           onSessionExpired={sessionExpired}
           onSignOut={onSignOut}
+          locale={user.preferredLocale}
+          calendar={user.preferredCalendar}
         />
         <PrivacyWorkspace
           baseUrl={baseUrl}

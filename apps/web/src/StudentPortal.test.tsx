@@ -32,6 +32,28 @@ beforeEach(() => {
 afterEach(cleanup)
 
 describe('student resources', () => {
+  it.each([
+    ['en', 'Student portal', 'Overview'],
+    ['am', 'የተማሪ መግቢያ', 'አጠቃላይ እይታ'],
+    ['om', 'Karra barataa', 'Ilaalcha waliigalaa'],
+  ])('localizes portal chrome for %s', (locale, heading, overview) => {
+    render(
+      <StudentPortal
+        baseUrl={baseUrl}
+        identity={identity}
+        locale={locale}
+        onSessionExpired={vi.fn()}
+        onSignOut={vi.fn()}
+      />,
+    )
+    expect(screen.getByRole('heading', { name: heading })).toBeTruthy()
+    expect(
+      screen
+        .getByRole('button', { name: overview })
+        .getAttribute('aria-current'),
+    ).toBe('page')
+    expect(screen.getByText(/WKA-SYNTHETIC/)).toBeTruthy()
+  })
   it('links uploaded material to the authenticated Warka download route', async () => {
     vi.mocked(getStudentMaterials).mockResolvedValue([
       {

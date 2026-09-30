@@ -5,7 +5,8 @@ import { AttendanceHistoryView } from './AttendanceHistoryView'
 import { StudentCourseworkWorkspace } from './StudentCourseworkWorkspace'
 import { FamilyEventWorkspace } from './FamilyEventWorkspace'
 import { getOwnStudentAttendance } from './attendanceApi'
-import { formatPercentage } from '@warka/shared'
+import { createTranslator, formatPercentage } from '@warka/shared'
+import { browserLocale } from './LocalizedNavigation'
 import type {
   StudentPortalIdentity,
   StudentResult,
@@ -50,6 +51,17 @@ export function StudentPortal({
   locale?: string | undefined
   calendar?: 'gregorian' | 'ethiopian' | undefined
 }) {
+  const t = createTranslator({ locale: locale ?? browserLocale() })
+  const sectionLabel: Record<Section, string> = {
+    Overview: t('portal.overview'),
+    Results: t('portal.results'),
+    Materials: t('portal.materials'),
+    Announcements: t('portal.announcements'),
+    Documents: t('portal.documents'),
+    Attendance: t('portal.attendance'),
+    Coursework: t('portal.coursework'),
+    Events: t('portal.events'),
+  }
   const [section, setSection] = useState<Section>('Overview')
   const [results, setResults] = useState<ResultState>({ status: 'loading' })
   const [materials, setMaterials] = useState<LoadState<StudentMaterial[]>>({
@@ -141,12 +153,12 @@ export function StudentPortal({
       className="student-portal"
     >
       <div className="account">
-        <h2 id="student-portal-heading">Student portal</h2>
+        <h2 id="student-portal-heading">{t('portal.student')}</h2>
         <button type="button" onClick={onSignOut}>
-          Sign out
+          {t('navigation.signOut')}
         </button>
       </div>
-      <nav aria-label="Student portal" className="workspace-nav">
+      <nav aria-label={t('portal.student')} className="workspace-nav">
         {(
           [
             'Overview',
@@ -165,7 +177,7 @@ export function StudentPortal({
             aria-current={section === item ? 'page' : undefined}
             onClick={() => setSection(item)}
           >
-            {item}
+            {sectionLabel[item]}
           </button>
         ))}
       </nav>
@@ -201,15 +213,15 @@ export function StudentPortal({
           <p>Student reference: {identity.studentReference}</p>
           {identity.currentEnrollment ? (
             <dl>
-              <dt>School</dt>
+              <dt>{t('portal.school')}</dt>
               <dd>{identity.currentEnrollment.school}</dd>
-              <dt>Academic year</dt>
+              <dt>{t('portal.academicYear')}</dt>
               <dd>{identity.currentEnrollment.academicYear}</dd>
-              <dt>Grade</dt>
+              <dt>{t('portal.grade')}</dt>
               <dd>{identity.currentEnrollment.gradeLevel}</dd>
               {identity.currentEnrollment.schoolClass && (
                 <>
-                  <dt>Class</dt>
+                  <dt>{t('portal.class')}</dt>
                   <dd>{identity.currentEnrollment.schoolClass}</dd>
                 </>
               )}
@@ -222,7 +234,7 @@ export function StudentPortal({
       )}
       {section === 'Results' && (
         <div className="academic-panel">
-          <h3>Published results</h3>
+          <h3>{t('portal.publishedResults')}</h3>
           {results.status === 'loading' && <p role="status">Loading results</p>}
           {results.status === 'error' && (
             <div role="alert">
@@ -256,7 +268,7 @@ export function StudentPortal({
       )}
       {section === 'Materials' && (
         <div className="academic-panel">
-          <h3>Materials</h3>
+          <h3>{t('portal.materials')}</h3>
           {materials.status === 'loading' && (
             <p role="status">Loading materials</p>
           )}
@@ -309,7 +321,7 @@ export function StudentPortal({
       )}
       {section === 'Announcements' && (
         <div className="academic-panel">
-          <h3>Announcements</h3>
+          <h3>{t('portal.announcements')}</h3>
           {announcements.status === 'loading' && (
             <p role="status">Loading announcements</p>
           )}

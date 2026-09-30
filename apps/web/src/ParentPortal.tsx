@@ -9,6 +9,8 @@ import type {
   FamilyConversationDetail,
   TeacherContact,
 } from '@warka/shared'
+import { createTranslator } from '@warka/shared'
+import { browserLocale } from './LocalizedNavigation'
 import { ApiError } from './api'
 import { AttendanceHistoryView } from './AttendanceHistoryView'
 import { AcademicProgressSummary } from './AcademicProgressSummary'
@@ -56,12 +58,28 @@ export function ParentPortal({
   identity,
   onSessionExpired,
   onSignOut,
+  locale,
+  calendar,
 }: {
   baseUrl: string
   identity: ParentIdentity
   onSessionExpired: () => void
   onSignOut: () => void
+  locale?: string | undefined
+  calendar?: 'gregorian' | 'ethiopian' | undefined
 }) {
+  const t = createTranslator({ locale: locale ?? browserLocale() })
+  const sectionLabel: Record<Section, string> = {
+    Overview: t('portal.overview'),
+    Results: t('portal.results'),
+    Materials: t('portal.materials'),
+    Announcements: t('portal.announcements'),
+    Coursework: t('portal.coursework'),
+    Messages: t('portal.messages'),
+    Attendance: t('portal.attendance'),
+    Meetings: t('portal.meetings'),
+    Events: t('portal.events'),
+  }
   const [children, setChildren] = useState<Load<ParentChild[]>>({
     status: 'loading',
   })
@@ -278,9 +296,9 @@ export function ParentPortal({
   return (
     <section className="parent-portal" aria-labelledby="parent-portal-heading">
       <div className="account">
-        <h2 id="parent-portal-heading">Parent portal</h2>
+        <h2 id="parent-portal-heading">{t('portal.parent')}</h2>
         <button type="button" onClick={onSignOut}>
-          Sign out
+          {t('navigation.signOut')}
         </button>
       </div>
       <p>Welcome, {identity.displayName}</p>
@@ -302,7 +320,7 @@ export function ParentPortal({
       {children.status === 'loaded' && children.data.length > 0 && (
         <>
           <label className="field">
-            Child
+            {t('portal.child')}
             <select
               value={selectedReference}
               onChange={(event) => {
@@ -321,7 +339,7 @@ export function ParentPortal({
               ))}
             </select>
           </label>
-          <nav className="workspace-nav" aria-label="Parent portal sections">
+          <nav className="workspace-nav" aria-label={t('portal.sections')}>
             {(
               [
                 'Overview',
@@ -341,7 +359,7 @@ export function ParentPortal({
                 aria-current={section === item ? 'page' : undefined}
                 onClick={() => setSection(item)}
               >
-                {item}
+                {sectionLabel[item]}
               </button>
             ))}
           </nav>
@@ -350,15 +368,15 @@ export function ParentPortal({
               <h3>{selected.displayName}</h3>
               <p>Warka reference: {selected.studentReference}</p>
               <dl>
-                <dt>School</dt>
+                <dt>{t('portal.school')}</dt>
                 <dd>{selected.school}</dd>
-                <dt>Academic year</dt>
+                <dt>{t('portal.academicYear')}</dt>
                 <dd>{selected.academicYear}</dd>
-                <dt>Grade</dt>
+                <dt>{t('portal.grade')}</dt>
                 <dd>{selected.gradeLevel}</dd>
-                <dt>Class</dt>
+                <dt>{t('portal.class')}</dt>
                 <dd>{selected.schoolClass ?? 'Not assigned'}</dd>
-                <dt>Relationship</dt>
+                <dt>{t('portal.relationship')}</dt>
                 <dd>{selected.relationship}</dd>
               </dl>
               <AcademicProgressSummary
@@ -394,6 +412,8 @@ export function ParentPortal({
               schoolId={selected.schoolId}
               studentId={selected.studentId}
               childName={selected.displayName}
+              locale={locale}
+              calendar={calendar}
             />
           )}
           {['Results', 'Materials', 'Announcements', 'Coursework'].includes(
