@@ -49,7 +49,8 @@
     "test:auth": "pnpm build:shared && pnpm build:database && pnpm --filter @warka/auth test",
     "test:e2e": "pnpm build && playwright test",
     "test:load": "node scripts/load-harness.mjs",
-    "test:load:config": "node --test scripts/load-harness.test.mjs"
+    "test:load:config": "node --test scripts/load-harness.test.mjs",
+    "container:check": "node scripts/container-check.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",

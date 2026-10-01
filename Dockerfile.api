@@ -1,0 +1,22 @@
+# syntax=docker/dockerfile:1.7
+FROM node:24.11.1-bookworm-slim AS build
+ENV PNPM_HOME=/pnpm
+ENV PATH=$PNPM_HOME:$PATH
+RUN corepack enable && corepack prepare pnpm@11.25.0 --activate
+WORKDIR /workspace
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/api/package.json apps/api/package.json
+COPY packages/auth/package.json packages/auth/package.json
+COPY packages/database/package.json packages/database/package.json
+COPY packages/shared/package.json packages/shared/package.json
+RUN pnpm install --frozen-lockfile
+COPY apps/api apps/api
+COPY packages packages
+RUN pnpm db:generate && pnpm build:api
+RUN pnpm --filter @warka/api deploy --prod --legacy /opt/warka-api
+
+FROM node:24.11.1-bookworm-slim AS runtime
+ENV NODE_ENV=production
+WORKDIR /app
+COPY --from=build /opt/warka-api/ ./
+CMD ["node", "dist/server.js"]
