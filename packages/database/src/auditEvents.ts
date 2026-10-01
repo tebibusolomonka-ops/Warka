@@ -89,6 +89,7 @@ export const AuditActionSchema = z.enum([
   'backupArtifact.deleted',
   'scheduler.retryRequested',
   'operationalIncident.created',
+  'operationalIncident.severityChanged',
   'operationalIncident.updated',
   'operationalIncident.resolved',
   'maintenanceWindow.created',

@@ -1,4 +1,8 @@
-import type { PrismaClient, OperationalIncidentStatus } from '@prisma/client'
+import type {
+  OperationalIncidentSeverity,
+  PrismaClient,
+  OperationalIncidentStatus,
+} from '@prisma/client'
 import { z } from 'zod'
 import { OperationalIncidentInputSchema } from './operationalIncidentInput.js'
 import { recordAuditEvent } from './auditEvents.js'
@@ -129,4 +133,52 @@ export function resolveOperationalIncident(
     'resolved',
     message,
   )
+}
+
+export const incidentSeverityMeaning: Record<
+  OperationalIncidentSeverity,
+  string
+> = {
+  critical:
+    'Platform unavailable or confirmed severe security or data-integrity impact',
+  high: 'Major capability unavailable with broad operational impact',
+  medium: 'Degraded capability with a viable operational workaround',
+  low: 'Limited operational impact requiring tracked follow-up',
+}
+
+export async function changeOperationalIncidentSeverity(
+  database: PrismaClient,
+  incidentId: string,
+  actorId: string,
+  severity: OperationalIncidentSeverity,
+  message: string,
+) {
+  const text = messageSchema.parse(message)
+  return database.$transaction(async (tx) => {
+    const incident = await tx.operationalIncident.findUnique({
+      where: { id: incidentId },
+    })
+    if (!incident || incident.status === 'resolved')
+      throw new Error('Incident is not open')
+    const updated = await tx.operationalIncident.update({
+      where: { id: incidentId },
+      data: { severity },
+    })
+    await tx.operationalIncidentUpdate.create({
+      data: {
+        incidentId,
+        status: incident.status,
+        message: text,
+        createdById: actorId,
+      },
+    })
+    await recordAuditEvent(tx, {
+      actorUserId: actorId,
+      action: 'operationalIncident.severityChanged',
+      resourceType: 'operationalIncident',
+      resourceId: incidentId,
+      metadata: { severity },
+    })
+    return updated
+  })
 }

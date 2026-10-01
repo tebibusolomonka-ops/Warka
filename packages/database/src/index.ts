@@ -178,6 +178,8 @@ export {
   postOperationalIncidentUpdate,
   changeOperationalIncidentStatus,
   resolveOperationalIncident,
+  changeOperationalIncidentSeverity,
+  incidentSeverityMeaning,
 } from './operationalIncidents.js'
 export {
   backupDue,
