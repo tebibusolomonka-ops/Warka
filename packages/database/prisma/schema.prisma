@@ -3305,3 +3305,27 @@ model RetentionHold {
   @@index([studentId, releasedAt])
   @@index([issuedDocumentId, releasedAt])
 }
+
+enum DeploymentStatus {
+  planned
+  deploying
+  healthy
+  failed
+  rolledBack
+}
+
+model DeploymentRecord {
+  id               String           @id @default(uuid())
+  releaseVersion   String
+  revision          String
+  environmentLabel String
+  startedAt         DateTime         @default(now())
+  completedAt       DateTime?
+  status            DeploymentStatus @default(planned)
+  initiatedBy       String?
+  manifestChecksum String
+  failureSummary   String?
+
+  @@index([environmentLabel, startedAt])
+  @@index([releaseVersion, revision])
+}
