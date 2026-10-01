@@ -8,6 +8,7 @@ services:
       target: migration
     environment:
       NODE_ENV: production
+      WARKA_HOSTING_PROFILE: singleHost
       DATABASE_URL: ${DATABASE_URL:?set DATABASE_URL}
     depends_on:
       postgres:
