@@ -55,7 +55,8 @@
     "deployment:smoke": "node scripts/deployment-smoke.mjs",
     "release:version": "node scripts/release-version.mjs",
     "release:check": "node scripts/release-version.mjs --check",
-    "deployment:manifest:check": "node scripts/deployment-manifest.mjs"
+    "deployment:manifest:check": "node scripts/deployment-manifest.mjs",
+    "deployment:rollout": "node scripts/deployment-rollout.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
