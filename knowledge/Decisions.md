@@ -77,6 +77,8 @@ Spreadsheet formulas and executable transformations are rejected. Imports never 
 - Permit secret files only for an explicit key allowlist. Explicit environment values take precedence.
 - Keep smoke checks read-only, explicit-target, and production-blocked unless the operator acknowledges the exact host.
 - Never reverse database migrations automatically during application rollback. Compatibility metadata classifies rollback as eligible, review-required, or blocked.
+- Prefer CSS responsive layout over viewport JavaScript. Keep critical table fields and accessible labels at every width.
+- Low-bandwidth behavior is an explicit account preference. Network type may suggest it but never persists it automatically or changes authorization or domain results.
 
 - Apply headers, origin checks, CSRF, body limits, proxy trust, and external URL validation in shared server boundaries.
 - Rotate sessions after privileged authentication changes and preserve the HttpOnly cookie model.

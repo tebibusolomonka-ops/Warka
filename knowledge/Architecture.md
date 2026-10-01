@@ -64,3 +64,5 @@ Fastify applies security headers, an allowlisted origin policy, session-bound CS
 Production uses separate non-root API and static-web images behind Caddy. The provider-neutral single-host Compose reference keeps PostgreSQL private and persistent data in named volumes. API startup, migrations, and deployment smoke checks are separate bounded processes. Approved secrets may be injected through files; `singleHost` and `managedServices` select configuration requirements without changing application code.
 
 One semantic version feeds API/browser build metadata and OCI labels. Machine-readable manifests, deployment history, health gates, and controlled rollout and rollback tools form the release path.
+
+Responsive CSS primitives provide fluid containers, stacks, grids, sidebars, toolbars, forms, and semantic tables. Mobile navigation renders the same authorized link model as desktop. Browser online state and API reachability remain separate signals.

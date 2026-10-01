@@ -74,3 +74,5 @@ Unit and route tests cover response headers, trusted origins, session-bound CSRF
 `pnpm container:check` validates image and topology policy statically. `pnpm deployment:smoke` requires `WARKA_SMOKE_TARGET`; non-local targets also require an explicit production override and exact expected host. Docker Compose and Caddy validation run when a local Docker engine is available.
 
 CI builds both runtime images, validates Compose and Caddy, checks release and manifest consistency, and rehearses rollout and rollback policy with synthetic dry runs. Focused Operations tests verify the operator boundary.
+
+Responsive component tests cover semantic layouts, mobile navigation focus, tables, touch targets, forms, network state, and request policy. Playwright discovers a narrow viewport journey without relying on screenshots.

@@ -58,3 +58,5 @@ The security posture view reports configured controls and aggregate evidence; it
 The Compose topology is a single-host reference and still requires operator-managed DNS, certificates, backups, monitoring, and host hardening. Managed-services profile adapters depend on externally supplied compatible services.
 
 Rollback metadata cannot prove arbitrary schema compatibility. Additive changes require review, incompatible changes block rollback, and database schema rollback is intentionally absent.
+
+Browser online state is only a hint and cannot establish API reachability. Narrow-screen coverage is representative rather than a guarantee for every embedded browser.
