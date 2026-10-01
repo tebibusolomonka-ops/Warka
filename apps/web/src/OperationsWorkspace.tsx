@@ -203,8 +203,12 @@ export function OperationsWorkspace({ baseUrl }: { baseUrl: string }) {
         <p>Commit SHA: {deployment?.build.commitSha ?? 'Unavailable'}</p>
         <p>Build timestamp: {deployment?.build.builtAt ?? 'Unavailable'}</p>
         <p>Environment: {deployment?.build.environment ?? 'Unknown'}</p>
+        <p>Hosting profile: {deployment?.profile ?? 'Unknown'}</p>
         <p>Deployment readiness: {deployment?.readiness.status ?? 'Unknown'}</p>
         <p>Migration status: {deployment?.readiness.migration ?? 'Unknown'}</p>
+        <p>
+          Rollback eligibility: {deployment?.rollbackEligibility ?? 'Unknown'}
+        </p>
         <ul>
           {Object.entries(deployment?.readiness.dependencies ?? {}).map(
             ([name, state]) => (
@@ -222,6 +226,20 @@ export function OperationsWorkspace({ baseUrl }: { baseUrl: string }) {
             <li key={reason}>Reason: {reason}</li>
           ))}
         </ul>
+        <h4>Release history</h4>
+        <ul>
+          {(deployment?.history ?? []).map((record) => (
+            <li key={record.id}>
+              {record.releaseVersion} ({record.revision.slice(0, 7)}):{' '}
+              {record.status}
+              {record.failureSummary ? ` — ${record.failureSummary}` : ''}
+            </li>
+          ))}
+        </ul>
+        <p>
+          Rollouts and rollbacks are performed with the repository operator
+          commands.
+        </p>
       </section>
       <section id="operations-security" aria-label="Security posture">
         <h3>Security</h3>

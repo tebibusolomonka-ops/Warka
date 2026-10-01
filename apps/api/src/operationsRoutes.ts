@@ -77,10 +77,29 @@ export function registerOperationsRoutes(
     { preHandler: authenticate },
     async (request) => {
       await operator(request)
+      const database = getDatabase()
+      const history = await (
+        database.deploymentRecord?.findMany({
+          orderBy: { startedAt: 'desc' },
+          take: 20,
+        }) ?? Promise.resolve([])
+      ).catch(() => [])
       return {
         build: buildMetadata(process.env),
+        profile: process.env.WARKA_HOSTING_PROFILE ?? 'singleHost',
+        history: history.map((record) => ({
+          id: record.id,
+          releaseVersion: record.releaseVersion,
+          revision: record.revision,
+          environmentLabel: record.environmentLabel,
+          startedAt: record.startedAt,
+          completedAt: record.completedAt,
+          status: record.status,
+          failureSummary: record.failureSummary,
+        })),
+        rollbackEligibility: history.length > 1 ? 'requiresReview' : 'blocked',
         readiness: await evaluateDeploymentReadiness({
-          database: getDatabase(),
+          database,
         }),
         features: {
           backupScheduler:
