@@ -84,3 +84,7 @@ Fault injection is instance scoped, deterministic, named, and rejected in produc
 ## Release candidate checkpoint 480
 
 The release-candidate profile uses strict security, private caching, isolated services, and deterministic test providers; production rejects test providers. Fictional canonical aliases drive identity, academic, coursework, document, reporting, and recovery acceptance. The upgrade matrix is upgrade-only, and `pnpm test:release-candidate` composes reliability, invariants, security, i18n, container, load, database-when-configured, and browser checks.
+
+## Operations response milestone 490
+
+Commit 481 repaired the mobile sign-in locator with an exact accessible label. Operational alert policies use bounded factual signals with warning and critical thresholds, lifecycle deduplication preserves acknowledgement separately from recovery, and transition routing avoids repeated notifications. Maintenance may suppress related availability notifications while readiness stays truthful; security and integrity alerts remain visible. Existing incidents now have controlled severity meanings, append-only typed timeline events, correction events, and evidence-based reviews that may retain an unknown root cause. Support escalation uses category, severity, elapsed time, impact, and configured support level. The operator-only Response workspace presents alerts, incidents, maintenance, reviews, and escalation actions without private school records.
