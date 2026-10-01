@@ -68,3 +68,7 @@ Use `pnpm ci:check`, `pnpm install:check`, `pnpm security:dependencies`, `pnpm s
 ## Security hardening validation
 
 Unit and route tests cover response headers, trusted origins, session-bound CSRF, privileged session rotation, proxy parsing, outbound URL rejection, request limits, authorization boundaries, and safe posture projection. `tests/e2e/securityHardening.spec.ts` verifies hardened headers, untrusted-origin rejection, CSRF denial, authentication requirements, and response secrecy against the running API. A local discovery run is not equivalent to execution with PostgreSQL.
+
+# Deployment validation
+
+`pnpm container:check` validates image and topology policy statically. `pnpm deployment:smoke` requires `WARKA_SMOKE_TARGET`; non-local targets also require an explicit production override and exact expected host. Docker Compose and Caddy validation run when a local Docker engine is available.

@@ -299,6 +299,7 @@ import {
   registerSchoolEventRoutes,
 } from './schoolEventRoutes.js'
 import { EventAttachmentError } from './eventAttachmentService.js'
+import { buildMetadata } from './buildMetadata.js'
 
 export function buildApp(
   options: {
@@ -400,6 +401,7 @@ export function buildApp(
   })
   app.after(() => {
     app.get('/health', async () => HealthResponseSchema.parse({ status: 'ok' }))
+    app.get('/build', async () => buildMetadata(process.env))
     app.get('/ready', async (_request, reply) => {
       if (options.startupState && options.startupState().state !== 'ready')
         return reply.code(503).send({ status: options.startupState().state })

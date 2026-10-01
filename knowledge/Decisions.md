@@ -69,6 +69,14 @@ Spreadsheet formulas and executable transformations are rejected. Imports never 
 
 ## Security hardening policy
 
+## Deployment policy
+
+- Run Prisma deployment migrations in a dedicated one-shot process before starting a release.
+- Terminate TLS at the configured gateway, replace client forwarding headers, and trust only the configured internal proxy network.
+- Keep runtime containers non-root and their root filesystems read-only; persist database, uploads, and backups outside disposable layers.
+- Permit secret files only for an explicit key allowlist. Explicit environment values take precedence.
+- Keep smoke checks read-only, explicit-target, and production-blocked unless the operator acknowledges the exact host.
+
 - Apply headers, origin checks, CSRF, body limits, proxy trust, and external URL validation in shared server boundaries.
 - Rotate sessions after privileged authentication changes and preserve the HttpOnly cookie model.
 - Treat the authorization matrix as regression metadata backed by real domain route tests; it does not replace resource checks.

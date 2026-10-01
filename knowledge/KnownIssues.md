@@ -52,3 +52,7 @@ Prisma's optional CLI graph currently carries time-limited exceptions for `effec
 Commit 400 did produce GitHub Actions run 36710589456. The workflow triggered correctly and failed in Playwright after earlier validation and build steps succeeded; the earlier issue was run visibility, not a missing push trigger.
 
 The security posture view reports configured controls and aggregate evidence; it is not a penetration test, certification, risk score, or guarantee. Trusted proxy and origin values still require deployment-specific review. The focused hardening journey requires the same disposable PostgreSQL browser environment as the rest of Playwright and therefore relies on CI when no local server is available.
+
+# Deployment
+
+The Compose topology is a single-host reference and still requires operator-managed DNS, certificates, backups, monitoring, and host hardening. Managed-services profile adapters depend on externally supplied compatible services.

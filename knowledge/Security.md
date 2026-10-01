@@ -49,3 +49,7 @@ External IDs are private scoped aliases and never authentication or merge keys. 
 ## CI and software supply chain
 
 The CI workflow must cover source pushes to `main`, pin external actions to immutable SHAs, and retain explicit read-only GitHub token permissions. `pnpm security:audit` rejects undocumented high or critical advisories. Exceptions identify the package and advisory, explain reachability, state review context, and expire. Dependency metadata exceptions are package-specific. SBOM output uses CycloneDX 1.6 and frozen lockfile input. Supply chain status is restricted to configured Operations owners and contains only safe aggregate metadata.
+
+# Deployment boundary
+
+Caddy is the public TLS boundary and replaces inbound forwarding headers before requests reach the API. PostgreSQL and application containers are not published. Secret-file loading is limited to approved sensitive keys and never sends those values to the browser or logs them.

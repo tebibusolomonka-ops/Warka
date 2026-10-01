@@ -58,3 +58,7 @@ The main CI workflow covers pushes to `main` and pull requests, uses immutable a
 ## Application security controls
 
 Fastify applies security headers, an allowlisted origin policy, session-bound CSRF validation, bounded request sizes, explicit proxy trust, and validated external URL rules at shared boundaries. Privileged authentication rotates sessions. The operator Security view combines controlled configuration facts with aggregate blocked-login and quarantined-file counts; it exposes no credentials, tokens, dependency graph, or private record details.
+
+## Production hosting
+
+Production uses separate non-root API and static-web images behind Caddy. The provider-neutral single-host Compose reference keeps PostgreSQL private and persistent data in named volumes. API startup, migrations, and deployment smoke checks are separate bounded processes. Approved secrets may be injected through files; `singleHost` and `managedServices` select configuration requirements without changing application code.

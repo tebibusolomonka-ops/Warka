@@ -53,3 +53,7 @@ Main-branch CI coverage, action pinning, least-privilege permissions, dependency
 ## Batch 401–420 completion
 
 Software supply chain policy and application security hardening are complete: shared HTTP boundaries, session and CSRF controls, request and outbound URL safeguards, authorization regression coverage, a safe operator posture view, and focused browser journeys. Environment-specific penetration testing, edge proxy configuration, credential rotation, and advisory review remain deployment operations.
+
+# Deployment hosting
+
+Production containers, the single-host reference topology, migration separation, secret files, startup gates, hosting profiles, and a safe smoke harness are implemented. Release manifests, rollout history, and rollback controls remain in the next phase.

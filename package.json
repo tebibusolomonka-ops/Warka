@@ -51,7 +51,8 @@
     "test:e2e": "pnpm build && playwright test",
     "test:load": "node scripts/load-harness.mjs",
     "test:load:config": "node --test scripts/load-harness.test.mjs",
-    "container:check": "node scripts/container-check.mjs"
+    "container:check": "node scripts/container-check.mjs",
+    "deployment:smoke": "node scripts/deployment-smoke.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
