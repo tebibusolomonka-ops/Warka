@@ -66,6 +66,10 @@ if (
       `${status.stdout ?? ''}\n${status.stderr ?? ''}`,
     )
     process.stdout.write(`Migration preflight: ${result}\n`)
-    if (result !== 'ready') process.exitCode = 1
+    if (
+      result !== 'ready' &&
+      !(process.argv.includes('--allow-pending') && result === 'pending')
+    )
+      process.exitCode = 1
   }
 }

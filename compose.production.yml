@@ -1,6 +1,25 @@
 name: warka-production
 
 services:
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+      target: migration
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL:?set DATABASE_URL}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: 'no'
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+
   gateway:
     image: caddy:2.10.2-alpine
     restart: unless-stopped
@@ -62,6 +81,8 @@ services:
       - file_data:/var/lib/warka/files
       - backup_data:/var/lib/warka/backups
     depends_on:
+      migrate:
+        condition: service_completed_successfully
       postgres:
         condition: service_healthy
     read_only: true

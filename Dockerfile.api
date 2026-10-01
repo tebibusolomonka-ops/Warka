@@ -12,8 +12,12 @@ COPY packages/shared/package.json packages/shared/package.json
 RUN pnpm install --frozen-lockfile
 COPY apps/api apps/api
 COPY packages packages
+COPY scripts scripts
 RUN pnpm db:generate && pnpm build:api
 RUN pnpm --filter @warka/api deploy --prod --legacy /opt/warka-api
+
+FROM build AS migration
+CMD ["node", "scripts/production-migrate.mjs"]
 
 FROM node:24.11.1-bookworm-slim AS runtime
 ENV NODE_ENV=production
