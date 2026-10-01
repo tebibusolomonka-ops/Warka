@@ -1,5 +1,46 @@
+{
+  admin off
+  servers {
+    max_header_size 1MB
+  }
+}
+
 {$WARKA_DOMAIN} {
-  respond /deployment-placeholder 404
-  reverse_proxy /api/* api:3000
-  reverse_proxy web:8080
+  request_body {
+    max_size 28MB
+  }
+
+  @api path /api /api/*
+  handle @api {
+    uri strip_prefix /api
+    reverse_proxy api:3000 {
+      header_up -X-Forwarded-For
+      header_up -X-Forwarded-Host
+      header_up -X-Forwarded-Proto
+      header_up X-Forwarded-For {remote_host}
+      header_up X-Forwarded-Host {host}
+      header_up X-Forwarded-Proto {scheme}
+      flush_interval -1
+    }
+  }
+
+  handle {
+    reverse_proxy web:8080 {
+      header_up -X-Forwarded-For
+      header_up -X-Forwarded-Host
+      header_up -X-Forwarded-Proto
+      header_up X-Forwarded-For {remote_host}
+      header_up X-Forwarded-Host {host}
+      header_up X-Forwarded-Proto {scheme}
+    }
+  }
+
+  encode zstd gzip
+
+  header {
+    Strict-Transport-Security "max-age=31536000; includeSubDomains"
+    X-Content-Type-Options nosniff
+    Referrer-Policy strict-origin-when-cross-origin
+    -Server
+  }
 }

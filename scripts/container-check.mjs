@@ -21,6 +21,10 @@ const ignore = await readFile(
   new URL('../.dockerignore', import.meta.url),
   'utf8',
 )
+const caddy = await readFile(
+  new URL('../deploy/gateway/Caddyfile', import.meta.url),
+  'utf8',
+)
 
 assert.match(api, /pnpm install --frozen-lockfile/)
 assert.match(api, /pnpm db:generate/)
@@ -45,6 +49,16 @@ assert.match(compose, /postgres_data:/)
 assert.match(compose, /file_data:/)
 assert.match(compose, /read_only: true/)
 assert.match(compose, /no-new-privileges:true/)
+assert.match(caddy, /\{\$WARKA_DOMAIN\}/)
+assert.match(caddy, /@api path \/api \/api\/\*/)
+assert.match(caddy, /uri strip_prefix \/api/)
+assert.match(caddy, /reverse_proxy api:3000/)
+assert.match(caddy, /reverse_proxy web:8080/)
+assert.match(caddy, /request_body \{[\s\S]*max_size 28MB/)
+assert.match(caddy, /flush_interval -1/)
+assert.match(caddy, /header_up -X-Forwarded-For/)
+assert.match(caddy, /header_up X-Forwarded-For \{remote_host\}/)
+assert.match(compose, /WARKA_TRUSTED_PROXIES: 172\.30\.0\.0\/24/)
 for (const entry of [
   '.git',
   '.env',

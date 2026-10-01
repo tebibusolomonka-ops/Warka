@@ -54,6 +54,7 @@ services:
       PUBLIC_BASE_URL: https://${WARKA_DOMAIN:?set WARKA_DOMAIN}/api
       WARKA_PUBLIC_APP_URL: https://${WARKA_DOMAIN:?set WARKA_DOMAIN}
       WARKA_OPERATOR_USER_IDS: ${WARKA_OPERATOR_USER_IDS:?set WARKA_OPERATOR_USER_IDS}
+      WARKA_TRUSTED_PROXIES: 172.30.0.0/24
       FILE_STORAGE_BACKEND: local
       FILE_STORAGE_DIR: /var/lib/warka/files
       BACKUP_STORAGE_DIR: /var/lib/warka/backups
@@ -99,3 +100,9 @@ volumes:
   backup_data:
   caddy_data:
   caddy_config:
+
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24
