@@ -3320,7 +3320,14 @@ enum DeploymentStatus {
   rolledBack
 }
 
-enum UploadSessionStatus { created uploading assembled completed cancelled expired }
+enum UploadSessionStatus {
+  created
+  uploading
+  assembled
+  completed
+  cancelled
+  expired
+}
 
 model UploadSession {
   id String @id @default(uuid())
