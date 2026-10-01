@@ -59,3 +59,7 @@ Deployment APIs are read-only and Operations-only. They expose safe release and 
 Low-bandwidth mode changes only optional request frequency and size. It never bypasses authorization, security checks, or official calculations, and network hints are not stored as user tracking data.
 
 Upload ownership and school scope are checked independently of the session identifier. Range handling follows authorization and clean-file checks. Service-worker matching excludes API and download routes.
+
+## Reliability checkpoint 461-470
+
+Fault injection is instance scoped, deterministic, named, and rejected in production. Database, storage, scanner, provider, and worker failures preserve truthful state; expired safe work is retryable while ambiguous external effects require review. Transaction tests assert rollback rather than partial linked records. `pnpm data:verify` is read only and emits structured identifiers without record contents. Restore success requires migration, table, checksum, and invariant evidence against an isolated target. Historical upgrade fixtures are synthetic milestone samples; the upgrade matrix verifies only data that existed at each milestone. Commit 460 CI failed at `format:check` for six files; commit 461 repaired them.

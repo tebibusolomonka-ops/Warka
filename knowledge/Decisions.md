@@ -86,3 +86,7 @@ Spreadsheet formulas and executable transformations are rejected. Imports never 
 - Rotate sessions after privileged authentication changes and preserve the HttpOnly cookie model.
 - Treat the authorization matrix as regression metadata backed by real domain route tests; it does not replace resource checks.
 - Report security posture as factual states and aggregate counts without scores, guarantees, secrets, or private event detail.
+
+## Reliability checkpoint 461-470
+
+Fault injection is instance scoped, deterministic, named, and rejected in production. Database, storage, scanner, provider, and worker failures preserve truthful state; expired safe work is retryable while ambiguous external effects require review. Transaction tests assert rollback rather than partial linked records. `pnpm data:verify` is read only and emits structured identifiers without record contents. Restore success requires migration, table, checksum, and invariant evidence against an isolated target. Historical upgrade fixtures are synthetic milestone samples; the upgrade matrix verifies only data that existed at each milestone. Commit 460 CI failed at `format:check` for six files; commit 461 repaired them.

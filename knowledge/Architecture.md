@@ -68,3 +68,7 @@ One semantic version feeds API/browser build metadata and OCI labels. Machine-re
 Responsive CSS primitives provide fluid containers, stacks, grids, sidebars, toolbars, forms, and semantic tables. Mobile navigation renders the same authorized link model as desktop. Browser online state and API reachability remain separate signals.
 
 The PWA boundary caches only named static shell assets. Upload sessions keep metadata in PostgreSQL and chunks in storage; assembly returns to the existing FileAsset validation and scanning lifecycle. Range delivery is applied only after authorization.
+
+## Reliability checkpoint 461-470
+
+Fault injection is instance scoped, deterministic, named, and rejected in production. Database, storage, scanner, provider, and worker failures preserve truthful state; expired safe work is retryable while ambiguous external effects require review. Transaction tests assert rollback rather than partial linked records. `pnpm data:verify` is read only and emits structured identifiers without record contents. Restore success requires migration, table, checksum, and invariant evidence against an isolated target. Historical upgrade fixtures are synthetic milestone samples; the upgrade matrix verifies only data that existed at each milestone. Commit 460 CI failed at `format:check` for six files; commit 461 repaired them.

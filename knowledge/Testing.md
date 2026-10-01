@@ -76,3 +76,7 @@ Unit and route tests cover response headers, trusted origins, session-bound CSRF
 CI builds both runtime images, validates Compose and Caddy, checks release and manifest consistency, and rehearses rollout and rollback policy with synthetic dry runs. Focused Operations tests verify the operator boundary.
 
 Responsive component tests cover semantic layouts, mobile navigation focus, tables, touch targets, forms, network state, and request policy. Playwright discovers a narrow viewport journey without relying on screenshots.
+
+## Reliability checkpoint 461-470
+
+Fault injection is instance scoped, deterministic, named, and rejected in production. Database, storage, scanner, provider, and worker failures preserve truthful state; expired safe work is retryable while ambiguous external effects require review. Transaction tests assert rollback rather than partial linked records. `pnpm data:verify` is read only and emits structured identifiers without record contents. Restore success requires migration, table, checksum, and invariant evidence against an isolated target. Historical upgrade fixtures are synthetic milestone samples; the upgrade matrix verifies only data that existed at each milestone. Commit 460 CI failed at `format:check` for six files; commit 461 repaired them.

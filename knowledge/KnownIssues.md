@@ -60,3 +60,7 @@ The Compose topology is a single-host reference and still requires operator-mana
 Rollback metadata cannot prove arbitrary schema compatibility. Additive changes require review, incompatible changes block rollback, and database schema rollback is intentionally absent.
 
 Browser online state is only a hint and cannot establish API reachability. Narrow-screen coverage is representative rather than a guarantee for every embedded browser.
+
+## Reliability checkpoint 461-470
+
+Fault injection is instance scoped, deterministic, named, and rejected in production. Database, storage, scanner, provider, and worker failures preserve truthful state; expired safe work is retryable while ambiguous external effects require review. Transaction tests assert rollback rather than partial linked records. `pnpm data:verify` is read only and emits structured identifiers without record contents. Restore success requires migration, table, checksum, and invariant evidence against an isolated target. Historical upgrade fixtures are synthetic milestone samples; the upgrade matrix verifies only data that existed at each milestone. Commit 460 CI failed at `format:check` for six files; commit 461 repaired them.
