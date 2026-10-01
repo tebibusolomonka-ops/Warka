@@ -6,7 +6,7 @@ test.describe('mobile responsiveness', () => {
     page,
   }) => {
     await page.goto('/')
-    await expect(page.getByRole('textbox', { name: /email/i })).toBeVisible()
+    await expect(page.getByLabel('Email', { exact: true })).toBeVisible()
     const overflow = await page.evaluate(
       () =>
         document.documentElement.scrollWidth >
