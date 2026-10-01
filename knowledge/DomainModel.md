@@ -41,3 +41,7 @@ Security posture is a derived operational projection rather than a durable score
 `DeploymentRecord` stores safe release, revision, environment, timing, status, manifest checksum, actor reference, and bounded failure summary. It contains no credentials or infrastructure control channel.
 
 `UploadSession` records owner, optional school, purpose, expected and received size, safe filename, content type, checksum expectation, expiry, and controlled status. File chunks are never stored in PostgreSQL.
+
+## Release candidate checkpoint 480
+
+The release-candidate profile uses strict security, private caching, isolated services, and deterministic test providers; production rejects test providers. Fictional canonical aliases drive identity, academic, coursework, document, reporting, and recovery acceptance. The upgrade matrix is upgrade-only, and `pnpm test:release-candidate` composes reliability, invariants, security, i18n, container, load, database-when-configured, and browser checks.

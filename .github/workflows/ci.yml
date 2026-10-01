@@ -62,4 +62,7 @@ jobs:
       - run: docker build --target runtime -f Dockerfile.web --build-arg WARKA_RELEASE_VERSION=0.1.0 --build-arg WARKA_REVISION=${{ github.sha }} --build-arg WARKA_BUILD_CREATED=2026-10-01T00:00:00Z -t warka-web:ci .
       - run: docker run --rm -e WARKA_DOMAIN=localhost -v "${{ github.workspace }}/deploy/gateway/Caddyfile:/etc/caddy/Caddyfile:ro" caddy:2.10.2-alpine caddy validate --config /etc/caddy/Caddyfile
       - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:release-candidate
+        env:
+          WARKA_RC_SKIP_BROWSER: '1'
       - run: pnpm exec playwright test
