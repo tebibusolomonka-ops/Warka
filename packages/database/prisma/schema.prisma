@@ -692,6 +692,7 @@ model User {
   createdOperationalIncidents    OperationalIncident[]         @relation("OperationalIncidentCreatedBy")
   resolvedOperationalIncidents   OperationalIncident[]         @relation("OperationalIncidentResolvedBy")
   operationalIncidentUpdates     OperationalIncidentUpdate[]
+  operationalIncidentReviews     OperationalIncidentReview[]
   createdMaintenanceWindows      MaintenanceWindow[]
   submittedResultSets            ResultSet[]                   @relation("ResultSetSubmittedBy")
   issuedDocuments                IssuedDocument[]
@@ -893,9 +894,26 @@ model OperationalIncident {
   createdBy    User                        @relation("OperationalIncidentCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
   resolvedBy   User?                       @relation("OperationalIncidentResolvedBy", fields: [resolvedById], references: [id], onDelete: Restrict)
   updates      OperationalIncidentUpdate[]
+  review       OperationalIncidentReview?
 
   @@index([status, startedAt])
   @@index([severity, startedAt])
+}
+
+model OperationalIncidentReview {
+  id               String              @id @default(uuid())
+  incidentId       String              @unique
+  impactSummary    String
+  rootCauseSummary String
+  detectionNotes   String
+  responseNotes    String
+  followUpActions  Json
+  reviewedAt       DateTime            @default(now())
+  reviewedById     String
+  incident         OperationalIncident @relation(fields: [incidentId], references: [id], onDelete: Restrict)
+  reviewedBy       User                @relation(fields: [reviewedById], references: [id], onDelete: Restrict)
+
+  @@index([reviewedAt])
 }
 
 model OperationalIncidentUpdate {

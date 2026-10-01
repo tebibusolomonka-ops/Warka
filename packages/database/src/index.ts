@@ -55,6 +55,11 @@ export function createDatabaseClient(
 }
 
 export {
+  IncidentReviewInputSchema,
+  prepareIncidentReview,
+} from './incidentReviews.js'
+
+export {
   ExternalRecordReferenceInputSchema,
   createExternalRecordReference,
   findExternalRecordReference,
