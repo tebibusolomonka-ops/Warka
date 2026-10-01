@@ -576,7 +576,17 @@ enum MaintenanceWindowStatus {
   cancelled
 }
 
+enum PilotReadinessStatus {
+  planned
+  preparing
+  ready
+  active
+  paused
+  completed
+}
+
 model School {
+  pilotReadiness                  PilotReadiness?
   importSourceProfiles            ImportSourceProfile[]
   dataQualityIssues             DataQualityIssue[]
   dataQualityRuns               DataQualityRun[]
@@ -647,6 +657,8 @@ model School {
 }
 
 model User {
+  createdPilotReadiness           PilotReadiness[]
+  pilotReadinessTransitions       PilotReadinessTransition[]
   importSourceProfilesCreated     ImportSourceProfile[]        @relation("ImportSourceProfileCreator")
   importSourceProfilesUpdated     ImportSourceProfile[]        @relation("ImportSourceProfileUpdater")
   externalRecordReferences      ExternalRecordReference[]
@@ -767,6 +779,44 @@ model User {
   createdRetentionHolds          RetentionHold[]               @relation("RetentionHoldCreatedBy")
   releasedRetentionHolds         RetentionHold[]               @relation("RetentionHoldReleasedBy")
   marks                          Mark[]
+}
+
+model PilotReadiness {
+  id                       String                     @id @default(uuid())
+  schoolId                 String                     @unique
+  status                   PilotReadinessStatus       @default(planned)
+  primaryContactConfirmed  Boolean                    @default(false)
+  supportContactConfirmed  Boolean                    @default(false)
+  academicYearConfigured   Boolean                    @default(false)
+  schoolStructureConfigured Boolean                   @default(false)
+  staffAccessPrepared      Boolean                    @default(false)
+  dataPreparationState     String                     @default("notStarted")
+  trainingState            String                     @default("notStarted")
+  goLiveStartsAt           DateTime?
+  goLiveEndsAt             DateTime?
+  supportCoverageState     String                     @default("notConfirmed")
+  createdById              String
+  createdAt                DateTime                   @default(now())
+  updatedAt                DateTime                   @updatedAt
+  school                   School                     @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  createdBy                User                       @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  transitions              PilotReadinessTransition[]
+
+  @@index([status, createdAt])
+}
+
+model PilotReadinessTransition {
+  id               String               @id @default(uuid())
+  pilotReadinessId String
+  fromStatus       PilotReadinessStatus?
+  toStatus         PilotReadinessStatus
+  reason           String
+  actorId          String
+  createdAt        DateTime             @default(now())
+  pilotReadiness   PilotReadiness       @relation(fields: [pilotReadinessId], references: [id], onDelete: Restrict)
+  actor            User                 @relation(fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([pilotReadinessId, createdAt])
 }
 
 enum ExternalEntityType {

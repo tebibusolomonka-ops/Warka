@@ -55,6 +55,11 @@ export function createDatabaseClient(
 }
 
 export {
+  pilotPrerequisites,
+  missingPilotPrerequisites,
+} from './pilotReadiness.js'
+
+export {
   SupportEscalationPolicySchema,
   evaluateSupportEscalation,
   appendEscalationHistory,
