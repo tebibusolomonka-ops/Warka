@@ -1,0 +1,101 @@
+name: warka-production
+
+services:
+  gateway:
+    image: caddy:2.10.2-alpine
+    restart: unless-stopped
+    ports:
+      - '${WARKA_HTTP_PORT:-80}:80'
+      - '${WARKA_HTTPS_PORT:-443}:443'
+    environment:
+      WARKA_DOMAIN: ${WARKA_DOMAIN:?set WARKA_DOMAIN}
+    volumes:
+      - ./deploy/gateway/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      web:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE]
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    restart: unless-stopped
+    environment:
+      WARKA_PUBLIC_API_BASE_URL: /api
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/cache/nginx
+      - /var/run
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    restart: unless-stopped
+    init: true
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL:?set DATABASE_URL}
+      PUBLIC_BASE_URL: https://${WARKA_DOMAIN:?set WARKA_DOMAIN}/api
+      WARKA_PUBLIC_APP_URL: https://${WARKA_DOMAIN:?set WARKA_DOMAIN}
+      WARKA_OPERATOR_USER_IDS: ${WARKA_OPERATOR_USER_IDS:?set WARKA_OPERATOR_USER_IDS}
+      FILE_STORAGE_BACKEND: local
+      FILE_STORAGE_DIR: /var/lib/warka/files
+      BACKUP_STORAGE_DIR: /var/lib/warka/backups
+    volumes:
+      - file_data:/var/lib/warka/files
+      - backup_data:/var/lib/warka/backups
+    depends_on:
+      postgres:
+        condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+
+  postgres:
+    image: postgres:17.6-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-warka}
+      POSTGRES_USER: ${POSTGRES_USER:-warka}
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+    secrets:
+      - postgres_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}']
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    security_opt:
+      - no-new-privileges:true
+
+secrets:
+  postgres_password:
+    file: ${POSTGRES_PASSWORD_FILE:?set POSTGRES_PASSWORD_FILE}
+
+volumes:
+  postgres_data:
+  file_data:
+  backup_data:
+  caddy_data:
+  caddy_config:

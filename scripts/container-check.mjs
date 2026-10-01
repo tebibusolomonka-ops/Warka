@@ -13,6 +13,10 @@ const nginx = await readFile(
   new URL('../deploy/web/nginx.conf', import.meta.url),
   'utf8',
 )
+const compose = await readFile(
+  new URL('../compose.production.yml', import.meta.url),
+  'utf8',
+)
 const ignore = await readFile(
   new URL('../.dockerignore', import.meta.url),
   'utf8',
@@ -36,6 +40,11 @@ assert.match(api, /HEALTHCHECK/)
 assert.match(web, /HEALTHCHECK/)
 assert.doesNotMatch(api, /--privileged|sudo /)
 assert.doesNotMatch(web, /--privileged|sudo /)
+assert.doesNotMatch(compose, /^\s+ports:[\s\S]{0,100}postgres/m)
+assert.match(compose, /postgres_data:/)
+assert.match(compose, /file_data:/)
+assert.match(compose, /read_only: true/)
+assert.match(compose, /no-new-privileges:true/)
 for (const entry of [
   '.git',
   '.env',
