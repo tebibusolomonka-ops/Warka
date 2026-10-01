@@ -6,5 +6,12 @@
   "display": "standalone",
   "theme_color": "#18543d",
   "background_color": "#f6f8f6",
-  "icons": [{ "src": "/warka-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+  "icons": [
+    {
+      "src": "/warka-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
 }
