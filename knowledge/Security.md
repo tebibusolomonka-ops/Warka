@@ -75,3 +75,7 @@ Commit 481 repaired the mobile sign-in locator with an exact accessible label. O
 ## Pre-release evidence milestone 499
 
 `pnpm readiness:check` reports required blockers, warnings, and unavailable evidence without a score or mutation. Recovery and incident drills require non-production targets and emit safe structured plans. `pnpm acceptance:check` maps critical capabilities to real repository evidence and retains partial or not-covered states. Pilot rollout stores factual prerequisites, explicit states, and append-only transitions; readiness never activates a school automatically. Nine validated runbooks reference repository commands and explicit stop conditions. `pnpm release:audit` composes existing policy, security, localization, container, deployment, acceptance, runbook, readiness, release-candidate, invariant, and historical-upgrade checks into safe machine-readable evidence.
+
+## Warka 500-commit release-readiness milestone
+
+Warka's planned implementation sequence ends with repository-owned operational evidence, selected historical upgrade coverage, controlled pilot rollout, validated runbooks, and a composable release audit. These controls report facts and limitations; they do not constitute external certification, professional accessibility review, penetration testing, or live-provider acceptance. Future work remains optional environment integration and evidence refresh rather than an implied completed certification.

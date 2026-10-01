@@ -207,6 +207,10 @@ export function OperationsWorkspace({ baseUrl }: { baseUrl: string }) {
         <p>Deployment readiness: {deployment?.readiness.status ?? 'Unknown'}</p>
         <p>Migration status: {deployment?.readiness.migration ?? 'Unknown'}</p>
         <p>
+          Release evidence uses the factual deployment, dependency, security,
+          backup, and recovery states shown in Operations.
+        </p>
+        <p>
           Rollback eligibility: {deployment?.rollbackEligibility ?? 'Unknown'}
         </p>
         <ul>
