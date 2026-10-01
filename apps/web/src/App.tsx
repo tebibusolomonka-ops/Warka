@@ -57,6 +57,7 @@ import { SearchWorkspace } from './SearchWorkspace'
 import { LocalizedNavigation, browserLocale } from './LocalizedNavigation'
 import { StaffWorkflowNavigation } from './StaffWorkflowNavigation'
 import { LocalizationSettings } from './LocalizationSettings'
+import { publicApiBaseUrl } from './runtimeConfig'
 
 type Authentication =
   | { status: 'checking' }
@@ -685,7 +686,10 @@ function AuthenticatedApp() {
   }, [authentication.status])
   const baseUrl = (() => {
     try {
-      return apiBaseUrl(import.meta.env.VITE_API_URL, window.location.origin)
+      return apiBaseUrl(
+        publicApiBaseUrl(import.meta.env.VITE_API_URL),
+        window.location.origin,
+      )
     } catch {
       return null
     }

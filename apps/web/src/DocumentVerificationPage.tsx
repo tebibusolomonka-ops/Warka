@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import type { DocumentVerification } from '@warka/shared'
 import { apiBaseUrl, verifyDocument } from './api'
+import { publicApiBaseUrl } from './runtimeConfig'
 
 type Result =
   | { status: 'idle' }
@@ -22,7 +23,10 @@ export function DocumentVerificationPage({
   }, [])
   const baseUrl = (() => {
     try {
-      return apiBaseUrl(import.meta.env.VITE_API_URL, window.location.origin)
+      return apiBaseUrl(
+        publicApiBaseUrl(import.meta.env.VITE_API_URL),
+        window.location.origin,
+      )
     } catch {
       return null
     }

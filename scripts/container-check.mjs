@@ -5,6 +5,14 @@ const api = await readFile(
   new URL('../Dockerfile.api', import.meta.url),
   'utf8',
 )
+const web = await readFile(
+  new URL('../Dockerfile.web', import.meta.url),
+  'utf8',
+)
+const nginx = await readFile(
+  new URL('../deploy/web/nginx.conf', import.meta.url),
+  'utf8',
+)
 const ignore = await readFile(
   new URL('../.dockerignore', import.meta.url),
   'utf8',
@@ -16,6 +24,12 @@ assert.match(api, /pnpm build:api/)
 assert.match(api, /deploy --prod/)
 assert.match(api, /CMD \["node", "dist\/server\.js"\]/)
 assert.doesNotMatch(api, /migrate (dev|deploy)|db:deploy/)
+assert.match(web, /pnpm build:web/)
+assert.match(web, /nginx:1\.29\.1-alpine/)
+assert.doesNotMatch(web, /vite.*--host|pnpm.*dev/)
+assert.match(nginx, /try_files \$uri \$uri\/ \/index\.html/)
+assert.match(nginx, /max-age=31536000, immutable/)
+assert.match(nginx, /no-cache/)
 for (const entry of [
   '.git',
   '.env',
