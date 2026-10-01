@@ -11,7 +11,7 @@ export function buildMetadata(env: NodeJS.ProcessEnv): BuildMetadata {
   const commitSha = env.WARKA_BUILD_COMMIT_SHA ?? ''
   const builtAt = env.WARKA_BUILD_TIMESTAMP ?? ''
   return {
-    version: '0.1.0',
+    version: env.WARKA_RELEASE_VERSION ?? '0.1.0',
     commitSha: /^[0-9a-f]{40}$/i.test(commitSha) ? commitSha : null,
     builtAt:
       builtAt && !Number.isNaN(Date.parse(builtAt))

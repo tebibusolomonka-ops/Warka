@@ -1,6 +1,6 @@
 declare global {
   interface Window {
-    __WARKA_PUBLIC_CONFIG__?: { apiBaseUrl?: string }
+    __WARKA_PUBLIC_CONFIG__?: { apiBaseUrl?: string; releaseVersion?: string }
   }
 }
 

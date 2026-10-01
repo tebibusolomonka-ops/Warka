@@ -52,7 +52,9 @@
     "test:load": "node scripts/load-harness.mjs",
     "test:load:config": "node --test scripts/load-harness.test.mjs",
     "container:check": "node scripts/container-check.mjs",
-    "deployment:smoke": "node scripts/deployment-smoke.mjs"
+    "deployment:smoke": "node scripts/deployment-smoke.mjs",
+    "release:version": "node scripts/release-version.mjs",
+    "release:check": "node scripts/release-version.mjs --check"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
