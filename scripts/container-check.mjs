@@ -25,11 +25,17 @@ assert.match(api, /deploy --prod/)
 assert.match(api, /CMD \["node", "dist\/server\.js"\]/)
 assert.doesNotMatch(api, /migrate (dev|deploy)|db:deploy/)
 assert.match(web, /pnpm build:web/)
-assert.match(web, /nginx:1\.29\.1-alpine/)
+assert.match(web, /nginxinc\/nginx-unprivileged:1\.29\.1-alpine/)
 assert.doesNotMatch(web, /vite.*--host|pnpm.*dev/)
 assert.match(nginx, /try_files \$uri \$uri\/ \/index\.html/)
 assert.match(nginx, /max-age=31536000, immutable/)
 assert.match(nginx, /no-cache/)
+assert.match(api, /USER node/)
+assert.match(web, /USER 101/)
+assert.match(api, /HEALTHCHECK/)
+assert.match(web, /HEALTHCHECK/)
+assert.doesNotMatch(api, /--privileged|sudo /)
+assert.doesNotMatch(web, /--privileged|sudo /)
 for (const entry of [
   '.git',
   '.env',
