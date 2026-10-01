@@ -1,0 +1,23 @@
+export const acceptanceFixture = {
+  seed: 'warka-release-candidate-v1',
+  organization: { alias: 'org-synthetic', name: 'Fictional Learning Trust' },
+  school: { alias: 'school-synthetic', name: 'Warka Test School' },
+  academicYear: { alias: 'year-current', label: '2099/2100' },
+  users: [
+    { alias: 'admin-alpha', role: 'SCHOOL_ADMIN' },
+    { alias: 'registrar-alpha', role: 'REGISTRAR' },
+    { alias: 'teacher-alpha', role: 'TEACHER' },
+    { alias: 'student-alpha', role: 'STUDENT' },
+    { alias: 'guardian-alpha', role: 'GUARDIAN' },
+    { alias: 'bureau-alpha', role: 'BUREAU' },
+    { alias: 'operations-alpha', role: 'OPERATIONS' },
+  ],
+  class: { alias: 'class-alpha' },
+  subject: { alias: 'subject-alpha' },
+  teachingAssignment: { alias: 'assignment-alpha' },
+  enrollment: { alias: 'enrollment-alpha' },
+  assessment: { alias: 'assessment-alpha' },
+  result: { alias: 'result-alpha' },
+  document: { alias: 'document-alpha' },
+  reportingPeriod: { alias: 'reporting-alpha' },
+} as const
