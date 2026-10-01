@@ -66,7 +66,8 @@
     "drill:recovery": "node scripts/recovery-drill.mjs",
     "drill:incident": "node scripts/incident-drill.mjs",
     "acceptance:check": "node scripts/acceptance-check.mjs",
-    "runbooks:check": "node scripts/runbooks-check.mjs"
+    "runbooks:check": "node scripts/runbooks-check.mjs",
+    "release:audit": "node scripts/release-audit.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",

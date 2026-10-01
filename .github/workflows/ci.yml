@@ -65,4 +65,8 @@ jobs:
       - run: pnpm test:release-candidate
         env:
           WARKA_RC_SKIP_BROWSER: '1'
+      - run: pnpm release:audit
+        env:
+          WARKA_RC_SKIP_BROWSER: '1'
+          WARKA_RELEASE_AUDIT_OUTPUT: .artifacts/release-audit.json
       - run: pnpm exec playwright test
