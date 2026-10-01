@@ -141,6 +141,8 @@ select {
 }
 
 button {
+  min-height: 2.75rem;
+  min-width: 2.75rem;
   padding: 0.6rem 0.9rem;
   border: 0;
   border-radius: 0.25rem;
@@ -148,6 +150,24 @@ button {
   color: white;
   cursor: pointer;
   font: inherit;
+}
+input[type='checkbox'],
+input[type='radio'] {
+  min-width: 1.5rem;
+  width: 1.5rem;
+  height: 1.5rem;
+}
+a,
+button,
+input,
+select,
+textarea {
+  touch-action: manipulation;
+}
+@media (hover: none) {
+  [title] {
+    text-decoration: underline dotted;
+  }
 }
 
 @media (prefers-reduced-motion: no-preference) {
