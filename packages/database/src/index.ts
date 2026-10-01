@@ -180,6 +180,7 @@ export {
   resolveOperationalIncident,
   changeOperationalIncidentSeverity,
   incidentSeverityMeaning,
+  appendIncidentTimelineEvent,
 } from './operationalIncidents.js'
 export {
   backupDue,

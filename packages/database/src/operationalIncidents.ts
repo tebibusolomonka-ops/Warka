@@ -17,6 +17,17 @@ const messageSchema = z
     'Use plain operational text',
   )
 
+const timelineEventSchema = z.enum([
+  'declared',
+  'severityChanged',
+  'alertLinked',
+  'maintenanceStarted',
+  'mitigationRecorded',
+  'serviceRecovered',
+  'resolved',
+  'correction',
+])
+
 const transitions: Record<
   OperationalIncidentStatus,
   OperationalIncidentStatus[]
@@ -41,6 +52,7 @@ export async function createOperationalIncident(
       data: {
         incidentId: incident.id,
         status: 'open',
+        eventType: 'declared',
         message: data.summary,
         createdById: actorId,
       },
@@ -53,6 +65,40 @@ export async function createOperationalIncident(
       metadata: { severity: data.severity },
     })
     return incident
+  })
+}
+
+export async function appendIncidentTimelineEvent(
+  database: PrismaClient,
+  incidentId: string,
+  actorId: string,
+  eventType: string,
+  note: string,
+) {
+  const type = timelineEventSchema.parse(eventType)
+  const message = messageSchema.parse(note)
+  return database.$transaction(async (tx) => {
+    const incident = await tx.operationalIncident.findUnique({
+      where: { id: incidentId },
+    })
+    if (!incident) throw new Error('Incident not found')
+    const event = await tx.operationalIncidentUpdate.create({
+      data: {
+        incidentId,
+        status: incident.status,
+        eventType: type,
+        message,
+        createdById: actorId,
+      },
+    })
+    await recordAuditEvent(tx, {
+      actorUserId: actorId,
+      action: 'operationalIncident.timelineAppended',
+      resourceType: 'operationalIncident',
+      resourceId: incidentId,
+      metadata: { eventType: type },
+    })
+    return event
   })
 }
 

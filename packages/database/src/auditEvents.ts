@@ -90,6 +90,7 @@ export const AuditActionSchema = z.enum([
   'scheduler.retryRequested',
   'operationalIncident.created',
   'operationalIncident.severityChanged',
+  'operationalIncident.timelineAppended',
   'operationalIncident.updated',
   'operationalIncident.resolved',
   'maintenanceWindow.created',

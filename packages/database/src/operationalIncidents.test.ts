@@ -41,6 +41,7 @@ describe('operational incident timeline', () => {
       data: {
         incidentId: 'incident',
         status: 'open',
+        eventType: 'declared',
         message: 'Connections are failing',
         createdById: '3e480e62-47d7-4525-9d88-b8891e56fac0',
       },
