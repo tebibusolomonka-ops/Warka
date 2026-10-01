@@ -32,7 +32,9 @@ export async function completeDeployment(
     data: {
       status,
       completedAt: new Date(),
-      failureSummary: failureSummary?.slice(0, 500),
+      ...(failureSummary
+        ? { failureSummary: failureSummary.slice(0, 500) }
+        : {}),
     },
   })
 }
