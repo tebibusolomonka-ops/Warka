@@ -1,0 +1,121 @@
+{
+  "capabilities": [
+    {
+      "id": "authentication",
+      "required": true,
+      "state": "covered",
+      "evidence": [
+        "apps/api/src/authRoutes.test.ts",
+        "tests/e2e/accountRecovery.spec.ts"
+      ]
+    },
+    {
+      "id": "account-lifecycle",
+      "required": true,
+      "state": "covered",
+      "evidence": ["apps/api/src/identityLifecycle.acceptance.test.ts"]
+    },
+    {
+      "id": "student-enrollment",
+      "required": true,
+      "state": "covered",
+      "evidence": [
+        "packages/database/src/students.test.ts",
+        "tests/e2e/yearRollover.spec.ts"
+      ]
+    },
+    {
+      "id": "attendance",
+      "required": true,
+      "state": "covered",
+      "evidence": ["tests/e2e/attendanceJourney.spec.ts"]
+    },
+    {
+      "id": "academic-results",
+      "required": true,
+      "state": "covered",
+      "evidence": ["tests/e2e/gradebookReadinessJourney.spec.ts"]
+    },
+    {
+      "id": "coursework",
+      "required": true,
+      "state": "covered",
+      "evidence": ["tests/e2e/courseworkJourney.spec.ts"]
+    },
+    {
+      "id": "documents",
+      "required": true,
+      "state": "covered",
+      "evidence": ["tests/e2e/documentJourney.spec.ts"]
+    },
+    {
+      "id": "family-access",
+      "required": true,
+      "state": "covered",
+      "evidence": ["tests/e2e/guardianPortal.spec.ts"]
+    },
+    {
+      "id": "reporting",
+      "required": true,
+      "state": "covered",
+      "evidence": ["tests/e2e/bureauReporting.spec.ts"]
+    },
+    {
+      "id": "imports",
+      "required": true,
+      "state": "covered",
+      "evidence": ["tests/e2e/interoperabilityJourneys.spec.ts"]
+    },
+    {
+      "id": "file-security",
+      "required": true,
+      "state": "covered",
+      "evidence": ["apps/api/src/fileScanWorkflow.test.ts"]
+    },
+    {
+      "id": "privacy",
+      "required": true,
+      "state": "covered",
+      "evidence": ["tests/e2e/privacyJourney.spec.ts"]
+    },
+    {
+      "id": "backup-recovery",
+      "required": true,
+      "state": "covered",
+      "evidence": ["apps/api/src/recoveryLifecycle.acceptance.test.ts"]
+    },
+    {
+      "id": "deployment",
+      "required": true,
+      "state": "covered",
+      "evidence": ["scripts/deployment-smoke.test.mjs"]
+    },
+    {
+      "id": "low-bandwidth",
+      "required": true,
+      "state": "covered",
+      "evidence": ["tests/e2e/low-bandwidth-reliability.spec.ts"]
+    },
+    {
+      "id": "accessibility",
+      "required": true,
+      "state": "partial",
+      "evidence": ["tests/e2e/accessibility.spec.ts"]
+    },
+    {
+      "id": "localization",
+      "required": true,
+      "state": "covered",
+      "evidence": ["tests/e2e/localizationJourneys.spec.ts"]
+    },
+    {
+      "id": "operations-security",
+      "required": true,
+      "state": "covered",
+      "evidence": [
+        "tests/e2e/operationsReliability.spec.ts",
+        "apps/api/src/securityPosture.test.ts"
+      ]
+    }
+  ]
+}
