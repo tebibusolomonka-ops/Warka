@@ -62,7 +62,8 @@
     "data:verify": "node scripts/data-verify.mjs",
     "test:upgrade-matrix": "node scripts/historical-fixtures.mjs && node scripts/upgrade-matrix.mjs && node --test scripts/upgrade-acceptance.test.mjs",
     "test:release-candidate": "node scripts/release-candidate.mjs",
-    "readiness:check": "node scripts/production-readiness.mjs"
+    "readiness:check": "node scripts/production-readiness.mjs",
+    "drill:recovery": "node scripts/recovery-drill.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
