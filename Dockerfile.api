@@ -20,7 +20,17 @@ FROM build AS migration
 CMD ["node", "scripts/production-migrate.mjs"]
 
 FROM node:24.11.1-bookworm-slim AS runtime
+ARG WARKA_RELEASE_VERSION
+ARG WARKA_REVISION
+ARG WARKA_BUILD_CREATED
+ARG WARKA_SOURCE_URL=https://github.com/tebibusolomonka-ops/Warka
+LABEL org.opencontainers.image.title="Warka API" \
+  org.opencontainers.image.version=$WARKA_RELEASE_VERSION \
+  org.opencontainers.image.revision=$WARKA_REVISION \
+  org.opencontainers.image.created=$WARKA_BUILD_CREATED \
+  org.opencontainers.image.source=$WARKA_SOURCE_URL
 ENV NODE_ENV=production
+ENV WARKA_RELEASE_VERSION=$WARKA_RELEASE_VERSION WARKA_BUILD_COMMIT_SHA=$WARKA_REVISION WARKA_BUILD_TIMESTAMP=$WARKA_BUILD_CREATED
 WORKDIR /app
 COPY --from=build /opt/warka-api/ ./
 USER node

@@ -42,6 +42,12 @@ assert.match(api, /USER node/)
 assert.match(web, /USER 101/)
 assert.match(api, /HEALTHCHECK/)
 assert.match(web, /HEALTHCHECK/)
+for (const image of [api, web]) {
+  assert.match(image, /org\.opencontainers\.image\.version=\$WARKA_RELEASE_VERSION/)
+  assert.match(image, /org\.opencontainers\.image\.revision=\$WARKA_REVISION/)
+  assert.match(image, /org\.opencontainers\.image\.created=\$WARKA_BUILD_CREATED/)
+  assert.match(image, /org\.opencontainers\.image\.source=\$WARKA_SOURCE_URL/)
+}
 assert.doesNotMatch(api, /--privileged|sudo /)
 assert.doesNotMatch(web, /--privileged|sudo /)
 assert.doesNotMatch(compose, /^\s+ports:[\s\S]{0,100}postgres/m)
