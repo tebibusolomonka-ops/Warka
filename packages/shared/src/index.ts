@@ -71,6 +71,7 @@ export const UserIdentitySchema = z.object({
   mustChangePassword: z.boolean().optional(),
   preferredLocale: LanguagePreferenceSchema.optional(),
   preferredCalendar: CalendarPreferenceSchema.optional(),
+  bandwidthPreference: z.enum(['standard', 'lowBandwidth']).optional(),
 })
 
 export type UserIdentity = z.infer<typeof UserIdentitySchema>

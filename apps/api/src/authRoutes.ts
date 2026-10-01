@@ -228,6 +228,33 @@ export function registerAuthRoutes(
     return { preferredCalendar: saved }
   })
 
+  app.get('/me/bandwidth-preference', async (request, reply) => {
+    const token = request.cookies[sessionCookieName]
+    const user = token ? await getAuth().currentUser(token) : null
+    if (!user) return reply.code(401).send(unauthorized())
+    return {
+      bandwidthPreference:
+        (user as typeof user & { bandwidthPreference?: string })
+          .bandwidthPreference ?? 'standard',
+    }
+  })
+
+  app.put('/me/bandwidth-preference', async (request, reply) => {
+    const token = request.cookies[sessionCookieName]
+    if (!token) return reply.code(401).send(unauthorized())
+    const { bandwidthPreference } = z
+      .strictObject({
+        bandwidthPreference: z.enum(['standard', 'lowBandwidth']),
+      })
+      .parse(request.body)
+    const saved = await getAuth().setBandwidthPreference?.(
+      token,
+      bandwidthPreference,
+    )
+    if (!saved) return reply.code(401).send(unauthorized())
+    return { bandwidthPreference: saved }
+  })
+
   app.post('/auth/change-password', async (request, reply) => {
     const token = request.cookies[sessionCookieName]
     if (!token || !(await getAuth().currentUser(token)))

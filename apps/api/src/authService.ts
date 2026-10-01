@@ -60,6 +60,10 @@ export type AuthService = {
     token: string,
     calendar: CalendarPreference,
   ): Promise<CalendarPreference | null>
+  setBandwidthPreference?(
+    token: string,
+    preference: 'standard' | 'lowBandwidth',
+  ): Promise<'standard' | 'lowBandwidth' | null>
 }
 
 export function createAuthService(
@@ -158,6 +162,12 @@ export function createAuthService(
         WHERE "id" = ${user.id}
       `
       return calendar
+    },
+    async setBandwidthPreference(token, preference) {
+      const user = await resolveSession(database, token)
+      if (!user) return null
+      await database.$executeRaw`UPDATE "User" SET "bandwidthPreference" = ${preference}::"BandwidthPreference", "updatedAt" = NOW() WHERE "id" = ${user.id}`
+      return preference
     },
     async passwordState(token) {
       const user = await resolveSession(database, token)

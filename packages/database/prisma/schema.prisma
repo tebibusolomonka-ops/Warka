@@ -69,6 +69,11 @@ enum CalendarPreference {
   ethiopian
 }
 
+enum BandwidthPreference {
+  standard
+  lowBandwidth
+}
+
 enum EmailDeliveryStatus {
   queued
   sending
@@ -706,6 +711,7 @@ model User {
   displayName                    String
   preferredLocale                PreferredLocale               @default(en)
   preferredCalendar              CalendarPreference            @default(gregorian)
+  bandwidthPreference            BandwidthPreference           @default(standard)
   accountStatus                  AccountStatus                 @default(active)
   createdAt                      DateTime                      @default(now())
   updatedAt                      DateTime                      @updatedAt
