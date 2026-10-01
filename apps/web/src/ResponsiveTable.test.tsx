@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { expect, it } from 'vitest'
 import { ResponsiveTable } from './ResponsiveTable'
 
 it('preserves table semantics and critical values', () => {

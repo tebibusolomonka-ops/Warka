@@ -66,3 +66,5 @@ Production uses separate non-root API and static-web images behind Caddy. The pr
 One semantic version feeds API/browser build metadata and OCI labels. Machine-readable manifests, deployment history, health gates, and controlled rollout and rollback tools form the release path.
 
 Responsive CSS primitives provide fluid containers, stacks, grids, sidebars, toolbars, forms, and semantic tables. Mobile navigation renders the same authorized link model as desktop. Browser online state and API reachability remain separate signals.
+
+The PWA boundary caches only named static shell assets. Upload sessions keep metadata in PostgreSQL and chunks in storage; assembly returns to the existing FileAsset validation and scanning lifecycle. Range delivery is applied only after authorization.

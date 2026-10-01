@@ -79,6 +79,8 @@ Spreadsheet formulas and executable transformations are rejected. Imports never 
 - Never reverse database migrations automatically during application rollback. Compatibility metadata classifies rollback as eligible, review-required, or blocked.
 - Prefer CSS responsive layout over viewport JavaScript. Keep critical table fields and accessible labels at every width.
 - Low-bandwidth behavior is an explicit account preference. Network type may suggest it but never persists it automatically or changes authorization or domain results.
+- Cache only public static shell assets. Never cache authenticated API responses or private downloads, and never claim full offline synchronization.
+- Retry safe reads only. Treat failed mutations as result-unknown until refreshed. Resumable assembly still requires normal validation and malware scanning.
 
 - Apply headers, origin checks, CSRF, body limits, proxy trust, and external URL validation in shared server boundaries.
 - Rotate sessions after privileged authentication changes and preserve the HttpOnly cookie model.

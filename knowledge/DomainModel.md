@@ -39,3 +39,5 @@ Search results are derived summaries, not a new durable identity or access grant
 Security posture is a derived operational projection rather than a durable score. It combines bounded configuration states with aggregate `LoginAttemptBucket` blocks and quarantined `FileAsset` counts. Authorization remains defined by current account, membership, assignment, student, guardian, bureau, support, and operator relationships.
 
 `DeploymentRecord` stores safe release, revision, environment, timing, status, manifest checksum, actor reference, and bounded failure summary. It contains no credentials or infrastructure control channel.
+
+`UploadSession` records owner, optional school, purpose, expected and received size, safe filename, content type, checksum expectation, expiry, and controlled status. File chunks are never stored in PostgreSQL.

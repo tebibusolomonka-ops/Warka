@@ -21,6 +21,7 @@ export function requestPolicy(preference: BandwidthPreference): RequestPolicy {
         refreshIntervalMs: 60_000,
       }
 }
-export function criticalMutationAllowed(_preference: BandwidthPreference) {
+export function criticalMutationAllowed(preference: BandwidthPreference) {
+  void preference
   return true
 }
