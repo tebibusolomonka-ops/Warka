@@ -120,6 +120,39 @@ form {
   gap: 0.75rem;
   margin: 1rem 0;
 }
+form > *,
+fieldset,
+.field,
+textarea {
+  min-width: 0;
+  max-width: 100%;
+}
+textarea {
+  width: min(100%, 32rem);
+}
+[role='alert'],
+.form-error-summary {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 36rem) {
+  form {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  input,
+  select,
+  textarea {
+    box-sizing: border-box;
+    min-width: 0;
+    width: 100%;
+  }
+  .dialog-panel {
+    box-sizing: border-box;
+    max-height: calc(100dvh - 2rem);
+    overflow: auto;
+    width: calc(100% - 2rem);
+  }
+}
 
 .field {
   display: flex;
