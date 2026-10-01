@@ -14,6 +14,7 @@ describe('maintenance windows', () => {
       MaintenanceWindowInputSchema.parse({
         title: 'Upgrade',
         reason: 'Routine update',
+        scope: 'platform',
         startsAt: '2026-01-02',
         endsAt: '2026-01-01',
       }),
@@ -22,6 +23,7 @@ describe('maintenance windows', () => {
       MaintenanceWindowInputSchema.parse({
         title: '<b>Upgrade</b>',
         reason: 'Routine update',
+        scope: 'platform',
         startsAt: '2026-01-01',
         endsAt: '2026-01-02',
       }),
@@ -42,6 +44,7 @@ describe('maintenance windows', () => {
     await createMaintenanceWindow(database, actorId, {
       title: 'Upgrade',
       reason: 'Routine update',
+      scope: 'platform',
       startsAt: '2026-01-01',
       endsAt: '2026-01-02',
     })

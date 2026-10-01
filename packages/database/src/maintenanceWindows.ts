@@ -16,6 +16,14 @@ export const MaintenanceWindowInputSchema = z
       .min(3)
       .max(500)
       .refine((value) => !/[<>\r\n]/.test(value)),
+    scope: z.enum([
+      'platform',
+      'database',
+      'storage',
+      'email',
+      'scanner',
+      'scheduler',
+    ]),
     startsAt: z.coerce.date(),
     endsAt: z.coerce.date(),
   })
@@ -41,6 +49,21 @@ export async function createMaintenanceWindow(
     })
     return window
   })
+}
+
+export function maintenanceEffect(
+  scope: string,
+  alert: {
+    signal: string
+    category: 'availability' | 'security' | 'integrity'
+  },
+) {
+  const affected = scope === 'platform' || alert.signal.startsWith(`${scope}_`)
+  return {
+    affected,
+    suppressNotification: affected && alert.category === 'availability',
+    underlyingHealthy: false,
+  }
 }
 
 export async function changeMaintenanceWindowStatus(

@@ -869,6 +869,7 @@ model MaintenanceWindow {
   id          String                  @id @default(uuid())
   title       String
   reason      String
+  scope       String                  @default("platform")
   startsAt    DateTime
   endsAt      DateTime
   status      MaintenanceWindowStatus @default(scheduled)
