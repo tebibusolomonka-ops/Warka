@@ -1,0 +1,5 @@
+{
+  "synthetic": true,
+  "files": [{ "alias": "file-alpha", "state": "AVAILABLE" }],
+  "tasks": [{ "alias": "task-alpha", "state": "COMPLETED" }]
+}

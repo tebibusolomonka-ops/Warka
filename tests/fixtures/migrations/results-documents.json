@@ -1,0 +1,5 @@
+{
+  "synthetic": true,
+  "results": [{ "alias": "result-alpha", "published": true }],
+  "documents": [{ "alias": "document-alpha", "snapshot": "result-alpha" }]
+}

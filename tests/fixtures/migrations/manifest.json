@@ -1,0 +1,24 @@
+{
+  "fixtures": [
+    {
+      "id": "student-enrollment",
+      "schemaVersion": "20260301000000",
+      "data": "student-enrollment.json"
+    },
+    {
+      "id": "results-documents",
+      "schemaVersion": "20260501000000",
+      "data": "results-documents.json"
+    },
+    {
+      "id": "reporting-governance",
+      "schemaVersion": "20260701000000",
+      "data": "reporting-governance.json"
+    },
+    {
+      "id": "storage-scheduler",
+      "schemaVersion": "20260901000000",
+      "data": "storage-scheduler.json"
+    }
+  ]
+}

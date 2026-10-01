@@ -1,0 +1,5 @@
+{
+  "synthetic": true,
+  "students": [{ "alias": "student-alpha", "stableReference": "SYN-001" }],
+  "enrollments": [{ "alias": "enrollment-alpha", "student": "student-alpha" }]
+}
