@@ -13,9 +13,11 @@ describe('mobile navigation', () => {
     )
     const trigger = screen.getByRole('button', { name: 'Navigation' })
     fireEvent.click(trigger)
-    expect(screen.getByRole('link', { name: 'Current' })).toHaveFocus()
+    expect(document.activeElement).toBe(
+      screen.getByRole('link', { name: 'Current' }),
+    )
     fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' })
     await new Promise((resolve) => requestAnimationFrame(resolve))
-    expect(trigger).toHaveFocus()
+    expect(document.activeElement).toBe(trigger)
   })
 })

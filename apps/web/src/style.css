@@ -309,6 +309,39 @@ li {
   overflow-x: auto;
   margin: 1rem 0;
 }
+.responsive-table {
+  max-width: 100%;
+  overflow-x: auto;
+}
+.responsive-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.responsive-table th,
+.responsive-table td {
+  padding: 0.6rem;
+  text-align: left;
+  border-bottom: 1px solid #cbd8ce;
+}
+@media (max-width: 36rem) {
+  .responsive-table[data-stack='true'] thead {
+    position: absolute;
+    clip: rect(0 0 0 0);
+  }
+  .responsive-table[data-stack='true'] tr {
+    display: block;
+    border: 1px solid #cbd8ce;
+    margin-block: 0.75rem;
+  }
+  .responsive-table[data-stack='true'] td {
+    display: grid;
+    grid-template-columns: minmax(7rem, 40%) 1fr;
+  }
+  .responsive-table[data-stack='true'] td::before {
+    content: attr(data-label);
+    font-weight: 600;
+  }
+}
 
 .academic-table-wrap table {
   width: 100%;
