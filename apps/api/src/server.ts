@@ -17,9 +17,13 @@ import { environmentProfile } from './environmentProfile.js'
 import { createApplicationShutdown } from './applicationShutdown.js'
 import { buildMetadata } from './buildMetadata.js'
 import { runStartupReconciliation } from './startupReconciliation.js'
+import { StartupGate } from './startupGate.js'
+import { evaluateDeploymentReadiness } from './deploymentReadiness.js'
 
 const profile = environmentProfile(process.env)
 assertProductionConfiguration(process.env)
+const startupGate = new StartupGate()
+const applicationDatabase = createDatabaseClient()
 
 const controlledEmail =
   process.env.NODE_ENV === 'test' &&
@@ -45,6 +49,8 @@ const emailScheduler = emailDatabase
   ? new EmailOutboxScheduler(emailDatabase, emailConfig, testEmailProvider)
   : undefined
 const app = buildApp({
+  database: applicationDatabase,
+  startupState: () => startupGate.snapshot(),
   production: profile.secureCookies,
   ...(testEmailProvider ? { testEmailProvider } : {}),
   testEmailTick: () => emailScheduler?.tick() ?? Promise.resolve(),
@@ -57,6 +63,7 @@ const shutdown = createApplicationShutdown({
 process.once('SIGTERM', () => void shutdown())
 process.once('SIGINT', () => void shutdown())
 app.addHook('onClose', async () => {
+  await applicationDatabase.$disconnect()
   await scheduler?.stop()
   await scanScheduler?.stop()
   await emailScheduler?.stop()
@@ -67,6 +74,11 @@ app.addHook('onClose', async () => {
 
 try {
   await app.listen(serverConfig(process.env))
+  void startupGate.run(
+    async () =>
+      (await evaluateDeploymentReadiness({ database: applicationDatabase }))
+        .status !== 'blocked',
+  )
   app.log.info({ build: buildMetadata(process.env) }, 'Warka started')
   const reconciliationDatabase =
     schedulerDatabase ?? scanDatabase ?? emailDatabase

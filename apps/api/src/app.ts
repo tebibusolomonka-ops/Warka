@@ -329,6 +329,7 @@ export function buildApp(
     testEmailProvider?: FakeEmailProvider
     testEmailTick?: () => Promise<void>
     production?: boolean
+    startupState?: () => { state: 'pending' | 'ready' | 'blocked' }
   } = {},
 ) {
   const app = Fastify({
@@ -400,6 +401,8 @@ export function buildApp(
   app.after(() => {
     app.get('/health', async () => HealthResponseSchema.parse({ status: 'ok' }))
     app.get('/ready', async (_request, reply) => {
+      if (options.startupState && options.startupState().state !== 'ready')
+        return reply.code(503).send({ status: options.startupState().state })
       const readiness = await checkReadiness({ database: getDatabase() })
       return reply
         .code(readiness.status === 'ready' ? 200 : 503)
