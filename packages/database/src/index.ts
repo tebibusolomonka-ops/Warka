@@ -55,6 +55,12 @@ export function createDatabaseClient(
 }
 
 export {
+  SupportEscalationPolicySchema,
+  evaluateSupportEscalation,
+  appendEscalationHistory,
+} from './supportEscalationPolicies.js'
+
+export {
   IncidentReviewInputSchema,
   prepareIncidentReview,
 } from './incidentReviews.js'
