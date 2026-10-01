@@ -3320,6 +3320,25 @@ enum DeploymentStatus {
   rolledBack
 }
 
+enum UploadSessionStatus { created uploading assembled completed cancelled expired }
+
+model UploadSession {
+  id String @id @default(uuid())
+  purpose String
+  ownerUserId String
+  schoolId String?
+  expectedSize BigInt
+  receivedSize BigInt @default(0)
+  contentType String
+  safeFilename String
+  status UploadSessionStatus @default(created)
+  expectedChecksum String?
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  @@index([ownerUserId, status])
+  @@index([schoolId, status])
+}
+
 model DeploymentRecord {
   id               String           @id @default(uuid())
   releaseVersion   String
