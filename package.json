@@ -58,7 +58,8 @@
     "release:check": "node scripts/release-version.mjs --check",
     "deployment:manifest:check": "node scripts/deployment-manifest.mjs",
     "deployment:rollout": "node scripts/deployment-rollout.mjs",
-    "deployment:rollback": "node scripts/deployment-rollback.mjs"
+    "deployment:rollback": "node scripts/deployment-rollback.mjs",
+    "data:verify": "node scripts/data-verify.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
