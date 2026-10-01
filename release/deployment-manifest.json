@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "releaseVersion": "0.1.0",
+  "revision": "19eec3133d3d038df0f01916d69bb430f3234610",
+  "images": {
+    "api": "warka-api:0.1.0",
+    "web": "warka-web:0.1.0"
+  },
+  "migrationCompatibility": "additive",
+  "requiredMigration": "current",
+  "profile": "singleHost",
+  "builtAt": "2026-10-01T00:00:00.000Z"
+}
