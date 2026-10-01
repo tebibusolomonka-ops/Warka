@@ -53,6 +53,7 @@ services:
     restart: unless-stopped
     environment:
       WARKA_PUBLIC_API_BASE_URL: /api
+      WARKA_RELEASE_VERSION: ${WARKA_RELEASE_VERSION:-0.1.0}
     read_only: true
     tmpfs:
       - /tmp
@@ -70,6 +71,8 @@ services:
     init: true
     environment:
       NODE_ENV: production
+      WARKA_HOSTING_PROFILE: ${WARKA_HOSTING_PROFILE:-singleHost}
+      WARKA_RELEASE_VERSION: ${WARKA_RELEASE_VERSION:-0.1.0}
       DATABASE_URL: ${DATABASE_URL:?set DATABASE_URL}
       PUBLIC_BASE_URL: https://${WARKA_DOMAIN:?set WARKA_DOMAIN}/api
       WARKA_PUBLIC_APP_URL: https://${WARKA_DOMAIN:?set WARKA_DOMAIN}

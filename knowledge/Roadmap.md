@@ -57,3 +57,5 @@ Software supply chain policy and application security hardening are complete: sh
 # Deployment hosting
 
 Production containers, the single-host reference topology, migration separation, secret files, startup gates, hosting profiles, and a safe smoke harness are implemented. Release manifests, rollout history, and rollback controls remain in the next phase.
+
+Release manifests, deployment history, health gates, controlled rollout, and application-only rollback controls are implemented. Multi-host orchestration remains provider-specific operator work.

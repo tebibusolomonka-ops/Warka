@@ -31,8 +31,11 @@ Search results are derived summaries, not a new durable identity or access grant
 `CourseworkRubric` owns ordered criteria and freezes after first scoring. Each `RubricScore` is versioned for a submitted revision. `CourseworkFeedback` is plain text and visible to students and guardians only after release. A `CourseworkMarkTransfer` records the assignment, submitted revision, rubric score version, official `Mark`, actor, and converted score. The official `Mark` remains authoritative; coursework summaries are derived counts.
 
 `User.preferredLocale` supports `en`, `am`, or `om`. `User.preferredCalendar` independently supports Gregorian or Ethiopian presentation. Neither preference changes identity, authorization, stored dates, domain enum values, or calculations.
+
 # Interoperability records
 
 `ExternalRecordReference` associates a source-scoped external identifier with a Warka entity without replacing its ID. `ImportSourceProfile` owns structured mappings; `ImportDryRun` records versioned checksums and factual results. Possible duplicates remain review findings.
 
 Security posture is a derived operational projection rather than a durable score. It combines bounded configuration states with aggregate `LoginAttemptBucket` blocks and quarantined `FileAsset` counts. Authorization remains defined by current account, membership, assignment, student, guardian, bureau, support, and operator relationships.
+
+`DeploymentRecord` stores safe release, revision, environment, timing, status, manifest checksum, actor reference, and bounded failure summary. It contains no credentials or infrastructure control channel.

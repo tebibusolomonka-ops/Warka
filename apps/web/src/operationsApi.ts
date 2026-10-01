@@ -130,10 +130,10 @@ const deployment = z.object({
     fileScanning: z.boolean(),
     emailOutbox: z.boolean(),
   }),
-  profile: z.string().default('singleHost'),
+  profile: z.string().optional(),
   rollbackEligibility: z
     .enum(['eligible', 'requiresReview', 'blocked'])
-    .default('blocked'),
+    .optional(),
   history: z
     .array(
       z.object({
@@ -153,7 +153,7 @@ const deployment = z.object({
         failureSummary: z.string().nullable(),
       }),
     )
-    .default([]),
+    .optional(),
 })
 export type DeploymentStatus = z.infer<typeof deployment>
 export const getDeploymentStatus = async (baseUrl: string) =>

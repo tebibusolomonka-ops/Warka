@@ -76,6 +76,7 @@ Spreadsheet formulas and executable transformations are rejected. Imports never 
 - Keep runtime containers non-root and their root filesystems read-only; persist database, uploads, and backups outside disposable layers.
 - Permit secret files only for an explicit key allowlist. Explicit environment values take precedence.
 - Keep smoke checks read-only, explicit-target, and production-blocked unless the operator acknowledges the exact host.
+- Never reverse database migrations automatically during application rollback. Compatibility metadata classifies rollback as eligible, review-required, or blocked.
 
 - Apply headers, origin checks, CSRF, body limits, proxy trust, and external URL validation in shared server boundaries.
 - Rotate sessions after privileged authentication changes and preserve the HttpOnly cookie model.

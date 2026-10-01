@@ -72,3 +72,5 @@ Unit and route tests cover response headers, trusted origins, session-bound CSRF
 # Deployment validation
 
 `pnpm container:check` validates image and topology policy statically. `pnpm deployment:smoke` requires `WARKA_SMOKE_TARGET`; non-local targets also require an explicit production override and exact expected host. Docker Compose and Caddy validation run when a local Docker engine is available.
+
+CI builds both runtime images, validates Compose and Caddy, checks release and manifest consistency, and rehearses rollout and rollback policy with synthetic dry runs. Focused Operations tests verify the operator boundary.

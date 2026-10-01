@@ -52,5 +52,14 @@ jobs:
       - run: pnpm build
       - run: pnpm release:checksums -- --verify
       - run: pnpm security:check
+      - run: pnpm container:check
+      - run: pnpm release:check
+      - run: pnpm deployment:manifest:check
+      - run: node --test scripts/deployment-*.test.mjs scripts/rollback-readiness.test.mjs
+      - run: node scripts/deployment-rollout.mjs --dry-run
+      - run: docker compose --env-file deploy/production.env.example -f compose.production.yml config --quiet
+      - run: docker build --target runtime -f Dockerfile.api --build-arg WARKA_RELEASE_VERSION=0.1.0 --build-arg WARKA_REVISION=${{ github.sha }} --build-arg WARKA_BUILD_CREATED=2026-10-01T00:00:00Z -t warka-api:ci .
+      - run: docker build --target runtime -f Dockerfile.web --build-arg WARKA_RELEASE_VERSION=0.1.0 --build-arg WARKA_REVISION=${{ github.sha }} --build-arg WARKA_BUILD_CREATED=2026-10-01T00:00:00Z -t warka-web:ci .
+      - run: docker run --rm -e WARKA_DOMAIN=localhost -v "${{ github.workspace }}/deploy/gateway/Caddyfile:/etc/caddy/Caddyfile:ro" caddy:2.10.2-alpine caddy validate --config /etc/caddy/Caddyfile
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm exec playwright test

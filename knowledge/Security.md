@@ -53,3 +53,5 @@ The CI workflow must cover source pushes to `main`, pin external actions to immu
 # Deployment boundary
 
 Caddy is the public TLS boundary and replaces inbound forwarding headers before requests reach the API. PostgreSQL and application containers are not published. Secret-file loading is limited to approved sensitive keys and never sends those values to the browser or logs them.
+
+Deployment APIs are read-only and Operations-only. They expose safe release and health facts without registry credentials, secret files, database URLs, or arbitrary command execution.

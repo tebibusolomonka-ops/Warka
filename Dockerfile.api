@@ -4,7 +4,9 @@ ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
 RUN corepack enable && corepack prepare pnpm@11.25.0 --activate
 WORKDIR /workspace
+RUN apt-get update && apt-get install -y --no-install-recommends openssl && rm -rf /var/lib/apt/lists/*
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY tsconfig.base.json tsconfig.base.json
 COPY apps/api/package.json apps/api/package.json
 COPY packages/auth/package.json packages/auth/package.json
 COPY packages/database/package.json packages/database/package.json
@@ -30,6 +32,7 @@ LABEL org.opencontainers.image.title="Warka API" \
   org.opencontainers.image.created=$WARKA_BUILD_CREATED \
   org.opencontainers.image.source=$WARKA_SOURCE_URL
 ENV NODE_ENV=production
+RUN apt-get update && apt-get install -y --no-install-recommends openssl && rm -rf /var/lib/apt/lists/*
 ENV WARKA_RELEASE_VERSION=$WARKA_RELEASE_VERSION WARKA_BUILD_COMMIT_SHA=$WARKA_REVISION WARKA_BUILD_TIMESTAMP=$WARKA_BUILD_CREATED
 WORKDIR /app
 COPY --from=build /opt/warka-api/ ./
