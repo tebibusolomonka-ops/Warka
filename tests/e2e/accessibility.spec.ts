@@ -11,6 +11,8 @@ test('sign in page has no automated WCAG A or AA violations', async ({
     page.getByRole('link', { name: 'Skip to main content' }),
   ).toBeFocused()
   await page.keyboard.press('Tab')
+  await expect(page.getByLabel('Language')).toBeFocused()
+  await page.keyboard.press('Tab')
   await expect(page.getByLabel('Email', { exact: true })).toBeFocused()
   await expectAccessiblePage(page)
   await page.getByLabel('Email', { exact: true }).fill('nobody@example.test')

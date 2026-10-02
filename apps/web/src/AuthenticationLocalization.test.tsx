@@ -1,12 +1,14 @@
-import { fireEvent, render, screen, within } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { PasswordChange } from './PasswordChange'
-import { PublicRecovery } from './PublicRecovery'
+import { PublicAuthentication } from './PublicAuthentication'
 
 vi.mock('./securityApi', () => ({
   requestRecovery: vi.fn(async () => undefined),
   resetRecovery: vi.fn(async () => undefined),
 }))
+
+afterEach(cleanup)
 
 describe('localized authentication forms', () => {
   it.each([
@@ -44,18 +46,21 @@ describe('localized authentication forms', () => {
   ])(
     'uses the same neutral recovery outcome in %s',
     async (locale, requestLabel, message) => {
-      const view = render(
-        <PublicRecovery baseUrl="https://api.example.test" locale={locale} />,
+      window.history.replaceState({}, '', '/forgot-password')
+      render(
+        <PublicAuthentication
+          baseUrl="https://api.example.test"
+          onAuthenticate={vi.fn(async () => undefined)}
+        />,
       )
-      const form = within(view.container)
-      fireEvent.change(form.getAllByRole('textbox')[0]!, {
+      fireEvent.change(screen.getByLabelText('Language'), {
+        target: { value: locale },
+      })
+      fireEvent.change(screen.getByLabelText(/Recovery email|መልሶ|deebis/i), {
         target: { value: 'known-or-unknown@example.test' },
       })
-      fireEvent.click(form.getByRole('button', { name: requestLabel }))
-      expect(await form.findByRole('status')).toHaveProperty(
-        'textContent',
-        message,
-      )
+      fireEvent.click(screen.getByRole('button', { name: requestLabel }))
+      expect((await screen.findByRole('status')).textContent).toContain(message)
     },
   )
 })

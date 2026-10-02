@@ -1,8 +1,6 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { WorkspaceFocus } from './WorkspaceFocus'
-import { FormErrorSummary } from './FormErrorSummary'
 import {
-  LoginCredentialsSchema,
   createTranslator,
   type AccessibleSchool,
   type OrganizationAccess,
@@ -52,7 +50,10 @@ import { OperationsWorkspace } from './OperationsWorkspace'
 import { SupportWorkspace } from './SupportWorkspace'
 import { AccountSecurity, AdminRecovery } from './AccountSecurity'
 import { CommunicationPreferencesWorkspace } from './CommunicationPreferencesWorkspace'
-import { PublicRecovery } from './PublicRecovery'
+import {
+  PublicAuthentication,
+  navigatePublicAuth,
+} from './PublicAuthentication'
 import { SearchWorkspace } from './SearchWorkspace'
 import { LocalizedNavigation, browserLocale } from './LocalizedNavigation'
 import { StaffWorkflowNavigation } from './StaffWorkflowNavigation'
@@ -674,10 +675,6 @@ function AuthenticatedApp() {
   const [authentication, setAuthentication] = useState<Authentication>({
     status: 'checking',
   })
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [formError, setFormError] = useState('')
-  const [busy, setBusy] = useState(false)
   const [signingOut, setSigningOut] = useState(false)
   const [refresh, setRefresh] = useState(0)
   useEffect(() => {
@@ -724,34 +721,15 @@ function AuthenticatedApp() {
     }
   }, [baseUrl, refresh])
 
-  async function signIn(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    if (!baseUrl) return
-    const parsed = LoginCredentialsSchema.safeParse({ email, password })
-    if (!parsed.success) {
-      setFormError('Enter a valid email and password.')
-      return
-    }
-    setBusy(true)
-    setFormError('')
-    try {
-      await login(baseUrl, parsed.data.email, parsed.data.password)
-      const user = await getCurrentUser(baseUrl)
-      setPassword('')
-      setAuthentication({ status: 'signedIn', user })
-    } catch (error) {
-      setFormError(
-        error instanceof ApiError && error.code === 'INVALID_CREDENTIALS'
-          ? 'Invalid email or password.'
-          : 'Could not sign in. Please try again.',
-      )
-    } finally {
-      setBusy(false)
-    }
+  async function authenticate(email: string, password: string) {
+    if (!baseUrl) throw new Error('API is not configured')
+    await login(baseUrl, email, password)
+    const user = await getCurrentUser(baseUrl)
+    setAuthentication({ status: 'signedIn', user })
   }
 
   const signedOut = useCallback((message?: string) => {
-    setPassword('')
+    navigatePublicAuth('/login', true)
     setAuthentication(
       message ? { status: 'signedOut', message } : { status: 'signedOut' },
     )
@@ -759,7 +737,7 @@ function AuthenticatedApp() {
 
   const signOut = useCallback(async () => {
     if (!baseUrl) return
-    setPassword('')
+    navigatePublicAuth('/login', true)
     setAuthentication({ status: 'signedOut' })
     setSigningOut(true)
     try {
@@ -780,76 +758,43 @@ function AuthenticatedApp() {
       <a className="skip-link" href="#main-content">
         {publicTranslator('navigation.skip')}
       </a>
-      <main className="shell" id="main-content" tabIndex={-1}>
-        <header>
-          <h1>Warka</h1>
-          <p>School records and services</p>
-        </header>
+      <main
+        className={authentication.status === 'signedIn' ? 'shell' : 'auth-page'}
+        id="main-content"
+        tabIndex={-1}
+      >
+        {authentication.status === 'signedIn' && (
+          <header>
+            <h1>Warka</h1>
+            <p>School records and services</p>
+          </header>
+        )}
         {authentication.status === 'checking' && (
-          <p role="status">Checking authentication</p>
+          <div className="auth-checking" role="status">
+            <span className="auth-spinner" aria-hidden="true" />
+            <span>Checking authentication</span>
+          </div>
         )}
         {authentication.status === 'signedOut' && (
-          <section aria-labelledby="signin-heading">
-            <h2 id="signin-heading">{publicTranslator('navigation.signIn')}</h2>
-            {authentication.message && (
-              <div role="alert">
-                <p>{authentication.message}</p>
-                {baseUrl && (
-                  <button
-                    type="button"
-                    disabled={signingOut}
-                    onClick={() => {
-                      if (authentication.retryLogout) {
-                        void signOut()
-                      } else {
-                        setAuthentication({ status: 'checking' })
-                        setRefresh((value) => value + 1)
-                      }
-                    }}
-                  >
-                    {authentication.retryLogout ? 'Retry sign out' : 'Retry'}
-                  </button>
-                )}
-              </div>
-            )}
-            <form onSubmit={signIn}>
-              <div className="field">
-                <label htmlFor="email">{publicTranslator('auth.email')}</label>
-                <input
-                  id="email"
-                  aria-invalid={!!formError}
-                  aria-describedby={formError ? 'signin-error' : undefined}
-                  type="email"
-                  autoComplete="username"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  required
-                />
-              </div>
-              <div className="field">
-                <label htmlFor="password">
-                  {publicTranslator('auth.password')}
-                </label>
-                <input
-                  id="password"
-                  aria-invalid={!!formError}
-                  aria-describedby={formError ? 'signin-error' : undefined}
-                  type="password"
-                  autoComplete="current-password"
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  required
-                />
-              </div>
-              <button type="submit" disabled={busy || signingOut || !baseUrl}>
-                {busy
-                  ? publicTranslator('auth.signingIn')
-                  : publicTranslator('navigation.signIn')}
-              </button>
-            </form>
-            <FormErrorSummary id="signin-error" message={formError} />
-            {baseUrl && <PublicRecovery baseUrl={baseUrl} />}
-          </section>
+          <PublicAuthentication
+            baseUrl={baseUrl}
+            onAuthenticate={authenticate}
+            serviceMessage={authentication.message}
+            serviceAction={
+              baseUrl
+                ? () => {
+                    if (authentication.retryLogout) void signOut()
+                    else {
+                      setAuthentication({ status: 'checking' })
+                      setRefresh((value) => value + 1)
+                    }
+                  }
+                : undefined
+            }
+            serviceActionLabel={
+              authentication.retryLogout ? 'Retry sign out' : 'Retry'
+            }
+          />
         )}
         {authentication.status === 'signedIn' &&
           baseUrl &&

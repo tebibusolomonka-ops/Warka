@@ -112,6 +112,7 @@ test('account security, recovery, and administrator scope', async ({
     await page.getByRole('button', { name: 'Initiate recovery' }).click()
     await expect(page.getByText('Could not initiate recovery')).toBeVisible()
     await page.getByRole('button', { name: 'Sign out' }).click()
+    await page.getByRole('link', { name: 'Forgot your password?' }).click()
     await page.getByLabel('Recovery email').fill(email)
     await page.getByRole('button', { name: 'Request recovery' }).click()
     await expect(
@@ -153,9 +154,9 @@ test('account security, recovery, and administrator scope', async ({
     )?.[0]
     expect(recoveryUrl).toBeDefined()
     await page.goto(recoveryUrl!)
-    await expect(page.getByLabel('Recovery token')).toHaveValue(token)
-    await page.getByLabel('Recovery token').fill(token)
-    await page.getByLabel('New recovery password').fill(recovered)
+    await expect(page).toHaveURL(/\/reset-password$/)
+    await page.getByLabel('New password', { exact: true }).fill(recovered)
+    await page.getByLabel('Confirm new password').fill(recovered)
     await page.getByRole('button', { name: 'Reset password' }).click()
     await expect(
       page.getByText('Password reset. Sign in with your new password.'),
@@ -168,8 +169,9 @@ test('account security, recovery, and administrator scope', async ({
         },
       }),
     ).toBeNull()
-    await page.getByLabel('Recovery token').fill(token)
-    await page.getByLabel('New recovery password').fill(recovered)
+    await page.goto(`/?recoveryToken=${encodeURIComponent(token)}`)
+    await page.getByLabel('New password', { exact: true }).fill(recovered)
+    await page.getByLabel('Confirm new password').fill(recovered)
     await page.getByRole('button', { name: 'Reset password' }).click()
     await expect(
       page.getByText('Invalid or expired recovery token'),

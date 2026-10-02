@@ -7,13 +7,10 @@ import {
   waitFor,
 } from '@testing-library/react'
 import { AccountSecurity, AdminRecovery } from './AccountSecurity'
-import { PublicRecovery } from './PublicRecovery'
 import { changePassword } from './api'
 import {
   assistRecovery,
   getOwnSessions,
-  requestRecovery,
-  resetRecovery,
   revokeOtherSessions,
   revokeOwnSession,
 } from './securityApi'
@@ -22,8 +19,6 @@ vi.mock('./api', () => ({ changePassword: vi.fn() }))
 vi.mock('./securityApi', () => ({
   assistRecovery: vi.fn(),
   getOwnSessions: vi.fn(),
-  requestRecovery: vi.fn(),
-  resetRecovery: vi.fn(),
   revokeOtherSessions: vi.fn(),
   revokeOwnSession: vi.fn(),
 }))
@@ -50,22 +45,9 @@ describe('account security workspace', () => {
     await waitFor(() => expect(revokeOwnSession).toHaveBeenCalled())
     expect(screen.queryByText(/tokenHash/)).toBeNull()
   })
-  it('keeps recovery requests neutral and exposes assistance only when mounted for an admin', async () => {
-    vi.mocked(requestRecovery).mockResolvedValue()
-    vi.mocked(resetRecovery).mockResolvedValue()
+  it('exposes recovery assistance only when mounted for an admin', async () => {
     vi.mocked(assistRecovery).mockResolvedValue({ status: 'requested' })
-    const { rerender } = render(<PublicRecovery baseUrl="/api" />)
-    fireEvent.change(screen.getByLabelText('Recovery email'), {
-      target: { value: 'any@example.test' },
-    })
-    fireEvent.click(screen.getByRole('button', { name: 'Request recovery' }))
-    expect(
-      await screen.findByText(
-        'If the account exists, recovery instructions will be sent.',
-      ),
-    ).toBeTruthy()
-    expect(screen.queryByText('Assist account recovery')).toBeNull()
-    rerender(
+    render(
       <AdminRecovery
         baseUrl="/api"
         schoolId="123e4567-e89b-42d3-a456-426614174002"

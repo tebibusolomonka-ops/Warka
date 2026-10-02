@@ -214,7 +214,10 @@ test('unsupported browser locale falls back and recovery remains neutral', async
     }),
   )
   await page.goto('/')
-  await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible()
+  await expect(
+    page.getByRole('heading', { name: 'Welcome back' }),
+  ).toBeVisible()
+  await page.getByRole('link', { name: 'Forgot your password?' }).click()
   await page.getByLabel('Recovery email').fill('unknown@example.test')
   await page.getByRole('button', { name: 'Request recovery' }).click()
   await expect(
